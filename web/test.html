@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html><head>
+<title>mnm - {{.Title}}</title>
+</head><body>
+
+<table border="1"><tr>
+<td>service get:</td>
+<td id="get?s">.</td>
+<td id="get?t">.</td>
+<td id="get?m">.</td>
+<td id="get?o">.</td>
+</tr></table>
+
+<p>
+<form method="POST" action="/t/trial" enctype="multipart/form-data">
+<input type="file" name="filename">
+<input type="submit" value="upload">
+<a href="/t/trial">download</a>
+</form>
+</p>
+
+<p><a href="/web/service.html">get web file</a></p>
+
+<div id="stat"></div>
+<div id="msg"></div>
+
+<script>
+;(function() {
+  fXhr('s'); fXhr('t'); fXhr('m'); fXhr('o');
+  function fXhr(i) {
+    var aXhr = new XMLHttpRequest()
+    aXhr.onload = function() { document.getElementById('get?'+i).innerHTML = aXhr.responseText }
+    aXhr.open('GET', '?'+i)
+    aXhr.send()
+  }
+  window.onload = function() {
+    var aSvc = window.location.pathname.split('/')[1]
+    var sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
+    sWs.onopen = function (event) { sWs.send('{"op":"ohi"}') };
+    sWs.onmessage = function (event) { document.getElementById('msg').innerHTML += event.data+'<br>' };
+    sWs.onclose = function(event) { document.getElementById('stat').innerHTML = 'closed' };
+    sWs.onerror = function(event) { document.getElementById('stat').innerHTML = event.data };
+  };
+}).call(this);
+</script>
+
+</body></html>
