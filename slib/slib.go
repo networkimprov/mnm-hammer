@@ -29,10 +29,16 @@ type Header struct {
    Uid, NodeId string
    Info string
    From string
-   DataLen int64
+   DataLen, DataHead int64
+   SubHead struct {
+   }
 }
 
 func (o *Header) Check() bool {
+   return true
+}
+
+func (o *Header) CheckSub() bool {
    return true
 }
 

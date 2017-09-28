@@ -253,7 +253,7 @@ func runLink(iName string) {
 func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
    aQ := getService(iName).queue
    aBuf := make([]byte, kMsgHeaderMaxLen+4) //todo start smaller, realloc as needed
-   var aPos, aHeadEnd int64
+   var aPos, aHeadEnd, aHeadStart int64 = 0, 0, 4
 
    for {
       if iIdleMax > 0 {
@@ -297,11 +297,27 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
       if aHeadEnd > aPos {
          continue
       }
-      aHead := &slib.Header{Op:""}
-      err = json.Unmarshal(aBuf[4:aHeadEnd], aHead)
-      if err != nil || !aHead.Check() {
-         fmt.Fprintf(os.Stderr, "runservice %s: invalid header\n", iName)
-         break
+      var aHead *slib.Header
+      if aHeadStart == 4 {
+         aHead = &slib.Header{Op:""}
+         err = json.Unmarshal(aBuf[4:aHeadEnd], aHead)
+         if err != nil || !aHead.Check() {
+            fmt.Fprintf(os.Stderr, "runservice %s: invalid header\n", iName)
+            break
+         }
+         aHeadStart = aHeadEnd
+         aHeadEnd += aHead.DataHead
+         aHead.DataLen -= aHead.DataHead
+         if aHeadEnd > aPos {
+            continue
+         }
+      }
+      if aHeadEnd > aHeadStart {
+         err = json.Unmarshal(aBuf[aHeadStart:aHeadEnd], &aHead.SubHead)
+         if err != nil || !aHead.CheckSub() {
+            fmt.Fprintf(os.Stderr, "runservice %s: invalid header\n", iName)
+            break
+         }
       }
       aData := aBuf[aHeadEnd:aHeadEnd] // ref aBuf even if DataLen==0
       if aPos > aHeadEnd && aHead.DataLen > 0 {
@@ -338,10 +354,10 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
       }
       if aPos > aHeadEnd + aHead.DataLen {
          aPos = int64(copy(aBuf, aBuf[aHeadEnd + aHead.DataLen : aPos]))
-         aHeadEnd = 0
+         aHeadEnd, aHeadStart = 0, 4
          goto Parse
       }
-      aPos, aHeadEnd = 0,0
+      aPos, aHeadEnd, aHeadStart = 0, 0, 4
    }
    <-aQ.connSrc
 }
