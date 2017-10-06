@@ -324,23 +324,17 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          aEnd := aHeadEnd + aHead.DataLen; if aPos < aEnd { aEnd = aPos }
          aData = aBuf[aHeadEnd:aEnd]
       }
-      if aHead.DataLen > 0 {
-         err = slib.RecvFile(iName, aHead.Id, aData, iConn, aHead.DataLen)
-         if err != nil {
-            fmt.Fprintf(os.Stderr, "runservice %s: recvFile %s\n", iName, err.Error())
-            break
-         }
-      }
       if aHead.Info == "login ok" {
          aQ.connSrc <- iConn
-      } else if aHead.Op == "ack" {
-         select {
-         case aQ.ack <- aHead.Id:
-         default:
-            fmt.Fprintf(os.Stderr, "runservice %s: ack channel blocked\n", iName)
-         }
       } else {
-         aMsg := slib.HandleMsg(iName, aHead)
+         if aHead.Op == "ack" {
+            select {
+            case aQ.ack <- aHead.Id:
+            default:
+               fmt.Fprintf(os.Stderr, "runservice %s: ack channel blocked\n", iName)
+            }
+         }
+         aMsg := slib.HandleMsg(iName, aHead, aData, iConn)
          if aMsg == nil {
             break
          }
@@ -363,9 +357,9 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
 }
 
 func runService(iResp http.ResponseWriter, iReq *http.Request) {
+   var err error
    // url is "/service[?op]"
    aSvc := iReq.URL.Path[1:]; if aSvc == "" { aSvc = "local" }
-   aOp := iReq.URL.RawQuery
    aClientId, _ := iReq.Cookie("clientid")
 
    if slib.GetData(aSvc) == nil {
@@ -374,7 +368,8 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       return
    }
 
-   switch aOp {
+   aOp_Id := strings.SplitN(iReq.URL.RawQuery, "=", 2)
+   switch aOp_Id[0] {
    case "": // service template
       if aClientId == nil {
          aClientId = &http.Cookie{Name: "clientid", Value: fmt.Sprint(time.Now().UTC().UnixNano())}
@@ -390,14 +385,19 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "t": // thread list
       iResp.Write([]byte("threads "+aSvc))
    case "m": // msg list
-      iResp.Write([]byte("msgs "+aClientId.Value))
+      aIdx := slib.GetMsgIdx(aSvc, aClientId.Value)
+      err = json.NewEncoder(iResp).Encode(aIdx)
+      if err != nil { panic(err) }
    case "o": // open msgs
-      iResp.Write([]byte("open msgs "+aClientId.Value))
+      slib.WriteOpenMsgs(iResp, aSvc, aClientId.Value, "")
+   case "p": // open single msg
+      if len(aOp_Id) < 2 { break }
+      slib.WriteOpenMsgs(iResp, aSvc, aClientId.Value, aOp_Id[1])
    default:
       iResp.WriteHeader(http.StatusNotFound)
-      iResp.Write([]byte("unknown op " + aOp))
+      iResp.Write([]byte("unknown op " + aOp_Id[0]))
    }
-   fmt.Printf("svc %s op %s id %s\n", aSvc, aOp, aClientId.Value)
+   fmt.Printf("svc %s op %s id %s\n", aSvc, aOp_Id[0], aClientId.Value)
 }
 
 func runUpload(iResp http.ResponseWriter, iReq *http.Request) {

@@ -9,8 +9,10 @@
 package slib
 
 import (
+   "hash/crc32"
    "fmt"
    "io"
+   "encoding/json"
    "os"
    "sync"
 )
@@ -22,15 +24,20 @@ const UploadDir   = kStorageDir + "upload/"
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]*tService)
 
+var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
+
 
 type Header struct {
    Op string
-   Id string
+   Id, MsgId string
    Uid, NodeId string
    Info string
    From string
+   Posted string
    DataLen, DataHead int64
    SubHead struct {
+      ThreadId string
+      Subject string
    }
 }
 
@@ -44,6 +51,12 @@ func (o *Header) CheckSub() bool {
 
 type Update struct {
    Op string
+   Thread *struct {
+      Id string
+      Subject string
+      Data string
+      New bool //temp
+   }
 }
 
 type SendRecord struct {
@@ -78,7 +91,8 @@ type tService struct {
    Node string
 }
 
-func tempDir(iSvc string) string { return kServiceDir + iSvc + "/temp/" }
+func tempDir  (iSvc string) string { return kServiceDir + iSvc + "/temp/"   }
+func threadDir(iSvc string) string { return kServiceDir + iSvc + "/thread/" }
 
 func GetData(iSvc string) *tService {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
@@ -86,8 +100,14 @@ func GetData(iSvc string) *tService {
 }
 
 func AddService(iSvc, iAddr string, iPeriod int) (*tService, error) {
-   err := os.MkdirAll(tempDir(iSvc), 0700)
-   if err != nil { return nil, err }
+   var err error
+   for _, aDir := range [...]string{tempDir(iSvc), threadDir(iSvc)} {
+      err = os.MkdirAll(aDir, 0700)
+      if err != nil {
+         os.RemoveAll(kServiceDir + iSvc)
+         return nil, err
+      }
+   }
    sServicesDoor.Lock(); defer sServicesDoor.Unlock()
    if sServices[iSvc] != nil {
       return nil, tError(fmt.Sprintf("AddService: name %s already exists", iSvc))
@@ -105,19 +125,68 @@ func GetQueue(iSvc string) ([]*SendRecord, error) {
    return nil, nil
 }
 
-func HandleMsg(iSvc string, iHead *Header) Msg {
+func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) Msg {
    aSvc := GetData(iSvc)
-   if iHead.Op == "registered" {
+   switch iHead.Op {
+   case "registered":
       aSvc.Uid = iHead.Uid
       aSvc.Node = iHead.NodeId
+   case "delivery":
+      storeReceived(aSvc.Name, iHead, iData, iR)
+      sState[iSvc].thread = iHead.SubHead.ThreadId; if sState[iSvc].thread == "" { sState[iSvc].thread = iHead.Id } //temp
+      sState[iSvc].msgs = map[string]bool{iHead.Id:true}
+   case "ack":
+      if iHead.Id == "22" { break }
+      storeSaved(iSvc, iHead)
+      if iHead.Id[0] == '_' {
+         sState[iSvc].thread = iHead.MsgId
+      }
+      delete(sState[iSvc].msgs, iHead.Id)
+      sState[iSvc].msgs[iHead.MsgId] = true
+      iHead.Id = iHead.MsgId
    }
-   return Msg{"op":iHead.Op, "id":iHead.Id}
+   return Msg{"op":iHead.Op, "id":iHead.Id, "threadid":iHead.SubHead.ThreadId}
 }
 
 func HandleUpdt(iSvc string, iUpdt *Update) (Msg, *SendRecord) {
-   aSrec := &SendRecord{Head: Msg{"Op":7, "Id":"22", "DataLen":3,
-                        "For":[]Msg{{"Id":GetData(iSvc).Uid, "Type":1}} }, Data:[]byte("ohi")}
-   return Msg{"op":iUpdt.Op, "etc":"posting msg"}, aSrec
+   switch iUpdt.Op {
+   case "thread_ohi":
+      aData, _ := json.Marshal(Msg{"ThreadId":sState[iSvc].thread})
+      aHeadLen := len(aData)
+      aData = append(aData, "ohi there"...)
+      aSrec := &SendRecord{Head: Msg{"Op":7, "Id":"22", "DataLen":len(aData), "DataHead":aHeadLen,
+                           "For":[]Msg{{"Id":GetData(iSvc).Uid, "Type":1}} }, Data:aData}
+      return Msg{"op":iUpdt.Op, "etc":"posting msg"}, aSrec
+   case "thread_save":
+      if iUpdt.Thread.New {
+         sState[iSvc].thread = ""
+      }
+      writeSaved(iSvc, iUpdt)
+      if iUpdt.Thread.New {
+         sState[iSvc].thread = iUpdt.Thread.Id
+         sState[iSvc].msgs = map[string]bool{}
+      }
+      sState[iSvc].msgs[iUpdt.Thread.Id] = true
+      return Msg{"op":iUpdt.Op, "etc":"save reply", "id":iUpdt.Thread.Id}, nil
+   case "thread_discard":
+      deleteSaved(iSvc, iUpdt)
+      if iUpdt.Thread.Id[0] == '_' {
+         sState[iSvc].thread = ""
+      }
+      delete(sState[iSvc].msgs, iUpdt.Thread.Id)
+      return Msg{"op":iUpdt.Op, "etc":"discard"}, nil
+   case "thread_send":
+      if iUpdt.Thread.Id == "" {
+         return Msg{"op":iUpdt.Op, "etc":"no op"}, nil
+      }
+      aSrec := &SendRecord{Head: Msg{"Op":7, "Id":iUpdt.Thread.Id, "DataLen":1,
+                  "For":[]Msg{{"Id":"LG3KCJGZPVVNDPV6%JRK4H6FC6LS8P37", "Type":1}} }, Data:[]byte{'1'}}
+      return Msg{"op":iUpdt.Op, "etc":"send reply"}, aSrec
+   case "thread_close":
+      sState[iSvc].msgs[iUpdt.Thread.Id] = false
+      return Msg{"op":iUpdt.Op, "etc":"closed"}, nil
+   }
+   return Msg{"op":iUpdt.Op, "etc":"unknown op"}, nil
 }
 
 func RecvFile(iSvc, iId string, iData []byte, iStream io.Reader, iLen int64) error {
