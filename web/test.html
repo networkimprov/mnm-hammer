@@ -3,13 +3,26 @@
 <title>mnm - {{.Title}}</title>
 </head><body>
 
-<table border="1"><tr>
-<td>service get:</td>
-<td id="get?s">.</td>
-<td id="get?t">.</td>
-<td id="get?m">.</td>
-<td id="get?o">.</td>
-</tr></table>
+<style>
+.pre { font-family:monospace; white-space:pre-wrap; }
+</style>
+
+<table border="1">
+<tr><td>services </td><td class="pre" id="get?s">.</td></tr>
+<tr><td>threads  </td><td class="pre" id="get?t">.</td></tr>
+<tr><td>msg index</td><td class="pre" id="get?m">.</td></tr>
+<tr><td>open msgs</td><td class="pre" id="get?o">.</td></tr>
+<tr><td>last msg </td><td class="pre" id="get?p">.</td></tr>
+</table>
+
+<p>
+<button onclick="gRecv()">Receive</button>
+<button onclick="gThread()">New Thread</button>
+<button onclick="gReply()">Reply</button>
+<button onclick="gSend()">Send</button>
+<button onclick="gClose()">Close</button>
+<button onclick="gDiscard()">Discard</button>
+</p>
 
 <p>
 <form method="POST" action="/t/trial" enctype="multipart/form-data">
@@ -25,19 +38,65 @@
 <div id="msg"></div>
 
 <script>
+var gRecv, gReply, gSend, gThread, gClose, gDiscard;
 ;(function() {
   fXhr('s'); fXhr('t'); fXhr('m'); fXhr('o');
-  function fXhr(i) {
+  function fXhr(i, iP) {
     var aXhr = new XMLHttpRequest()
     aXhr.onload = function() { document.getElementById('get?'+i).innerHTML = aXhr.responseText }
-    aXhr.open('GET', '?'+i)
+    aXhr.open('GET', '?'+i+(iP ? '='+iP : ''))
     aXhr.send()
+  }
+  var sWs = null;
+  var sSave='', sData='you dont say';
+  gRecv = function() {
+    sWs.send(JSON.stringify({op:'thread_ohi', thread:{}}))
+  }
+  gThread = function() {
+    sWs.send(JSON.stringify({op:'thread_save', thread:{id:'', data:'start thread', new:true}}))
+  }
+  gReply = function() {
+    sWs.send(JSON.stringify({op:'thread_save', thread:{id:sSave, data:sData+='.'}}))
+  }
+  gSend = function() {
+    sWs.send(JSON.stringify({op:'thread_send', thread:{id:sSave}}))
+  }
+  gClose = function() {
+    sWs.send(JSON.stringify({op:'thread_close', thread:{id:sSave}}))
+  }
+  gDiscard = function() {
+    sWs.send(JSON.stringify({op:'thread_discard', thread:{id:sSave}}))
   }
   window.onload = function() {
     var aSvc = window.location.pathname.split('/')[1]
-    var sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
-    sWs.onopen = function (event) { sWs.send('{"op":"ohi"}') };
-    sWs.onmessage = function (event) { document.getElementById('msg').innerHTML += event.data+'<br>' };
+    sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
+    sWs.onopen = function (event) { };
+    sWs.onmessage = function (event) {
+      document.getElementById('msg').innerHTML += event.data+'<br>';
+      var aObj = JSON.parse(event.data);
+      switch (aObj.op) {
+      case 'delivery':
+        sSave = '';
+        fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        break;
+      case 'ack':
+        sSave = '';
+        fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        break;
+      case 'thread_save':
+        sSave = aObj.id;
+        fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        break;
+      case 'thread_discard':
+        sSave = '';
+        fXhr('m'); fXhr('o');
+        document.getElementById('get?p').innerHTML = '';
+        break;
+      case 'thread_close':
+        fXhr('o');
+        break;
+      }
+    };
     sWs.onclose = function(event) { document.getElementById('stat').innerHTML = 'closed' };
     sWs.onerror = function(event) { document.getElementById('stat').innerHTML = event.data };
   };
