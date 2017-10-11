@@ -1,0 +1,211 @@
+struct Update.Thread for thread fields
+print err and return if storeReceived can't find threadid
+
+certain buttons show confirmation pop-up next to click point
+  send, discard new msg, close search tab
+
+forms
+  list of fields
+    label, id, name, type, option names/values, default, layout column ref
+    types: checkbox, radio, menu, date, phone, zip code, etc
+      labels & checkbox/radio/menu can reference image attachment
+    containers: table (fieldnames=col+row), tab/panel
+  robot test
+  single or multiple column layout
+  stylesheet: colors, fonts, borders
+  version number
+  define standard forms for common data types
+
+one service per window/tab/page
+  view panels: [msg editor], msgs (under editor), threads, services
+    have service-specified look & ringtone; adjustable by user
+  text-boxes over each panel to search: thread, service, all services
+    results highlight text in msg panel
+    results add tab in thread panel
+    search-all jumps to you-service tab?
+
+msg panel
+  panel history, per client: panel back/forward buttons change msg list panel
+  give thread subject/s
+  attachment list pop-up pane
+    links jump to relevant msg?
+  tabs for msg subsets, per client: user-opened, search result, reply-to chain, all
+    pin tab saves state, broadcasts to clients
+  list of msgs in archaeological order
+    remember which msgs are open, per client
+    combine consecutive msgs from single user chronologically, tag each with date-time
+    ohi status of sender
+    reply-to chain link/button per msg
+  reply editor opens above msgs
+  overlay panel with iframe to view pdf/html/video attachments in browser
+  thread-summary popup or tab
+    list of excerpts and optional notes, with link to msg of excerpt
+    to add item, select text in msg, right-click for add-to-summary, write optional note
+  form-table view (alternate panel layout)
+    presents table of all data received via a certain form
+    include ref column with link to thread+msg data source
+    drag to order columns, click column to sort rows
+    form editor
+    form revision history
+    export to csv, json, etc
+
+thread panel
+  archaeological order
+  infinite scrolling or back/forward buttons
+  permanent All & Form-table tabs
+  search tabs are client-specific unless saved
+    save-search pins tab, notify other clients
+  search relevance slider (# positions varies with result set size?)
+    lower relevance yields more results
+  NewThread button
+  you-service
+    have origin service's look in msg panel
+    permanent thread tabs: todo/tag, contact
+    transient thread tabs: search-all results
+    thread items include column for svc name
+    group consecutive same-service items with color
+
+ohi panels
+  slide out from services panel
+  whos-on normally retracted, can pin display
+  who-i-ohi
+
+services (notifications) panel
+  click item opens tab
+  back/forward buttons? switch tab if possible
+  panes
+    all services, sorted by recent activity
+    deadlines, sorted by date
+    services with user-defined tags
+  new msg button?
+    enter contact name (aided by menu)
+    jumps to relevant service
+    thread list panel shows recent threads including the contact/s
+  find/join service widget
+    display service certificate
+    user can specify network (e.g. NIC)
+    select other nodes to add on service
+
+msg viewer
+  see/hide-chain button opens/closes reply-to chain
+  way to link attachment in upload dir for future use
+  button to copy form to our collection
+  enable revision of last-sent msg
+    single item on msg panel if no intervening msgs (ie combine consecutive)
+    list rev history on revised msgs
+  lookup/rewrite bit.ly etc links
+
+msg editor
+  use markdown format
+    change linebreak to ^ or non-ascii character
+    change em & strong to ~
+    insert > when dividing >'d paragraph
+  upload attachment
+    drag/drop or copy/paste file, file dialog box
+    menu of upload dir; sort by date/filename
+  accept pasted HTML
+    display in iframe
+    make attachment
+  on msg add-CC, copy only last msg
+    provide buttons for copy-next, copy-all
+  branch-reply/forward
+    make new thread with copy of replied msg
+    buttons copy-next, copy-all
+    ref parent thread & msg
+  forms menu & editor
+    can fill in form or leave blank
+  slides/pages
+    slide hrefs
+  thread/message hyperlinks
+
+require app password for certain ops after idle period
+
+groups
+  popup with aliases on msg panel (enable when group in recipients)
+    drop & contact & write-to links
+  popup with groups on thread panel
+    edit & select links, select opens tab
+  group-invite option on compose/reply UI
+
+aliases
+  popup with aliases on compose/reply UI
+    drop & revive links, add-new link
+
+nodes
+  popup with ref names on you-service
+
+make browser cache data URIs for fast service reload
+  getSvcs, getTodos, getThreads, getThreadTabs, getMsgs, getPicture, getMsgHistory
+  on websocket update msg, silently reload relevant URL?
+
+distribute tool state to other nodes
+  services, saved searches, tags, contacts
+
+msg signing and signature validation
+
+define in-msg header
+  dates: authored, received, read (client)
+  subject
+  recipients
+  ack-requested/acknowledged
+  action requested by [recipients]
+
+choose number of months to store unreplied incoming threads from each group (or service?)
+
+streaming de/compression on get/post attachment, except for compressed formats
+
+on attachment re-send, upload diff (placeholder if no difference)
+track revisions for attachment
+store 1 of any attachment received/sent multiple times
+
+new-thread draft list
+
+tag/todo lists
+  select msg, add tags & optional deadline-date & comment
+  tag view sorted in deadline chronological order, no-deadline items last
+
+contacts
+  (list of form-tables? contact tag instead of separate database?)
+  distribution & receipt of contact info doc
+  std metadata, cached signature
+  pinged alias
+
+support plugins for non-messaging threads
+
+storage
+  state directory
+    directory per client
+      file per service
+  service directory, subdirectory per service
+    config file
+    ohi file
+    groups file
+    aliases file
+    tabs file
+    styling directory: css & image files
+    temp directory
+    outbound msg directory
+    attachment directory: link file if checksum matches
+    form-table directory
+    thread tabs directory
+    thread directory
+      file per thread, checksum each msg
+        order msgs by server msg ID
+        metadata at end of file: tags
+      push old threads into zip
+      store reply in separate file until ack'd
+    msg index with thread id, msg offset count, msg metadata
+      keep backup db copy
+      rebuild database from files to recover from db corruption & backup failure
+  upload directory
+    flag unsent items with name_
+    drop items sent and untouched for >N days
+    can pin items in place?
+  forms directory
+    file per form with all revs
+  index directory
+    attachment index: checksum, filename
+    msg index here?
+    tag index
+    full-text index
+  nodes file
