@@ -189,24 +189,15 @@ func HandleUpdt(iSvc string, iUpdt *Update) (Msg, *SendRecord) {
    return Msg{"op":iUpdt.Op, "etc":"unknown op"}, nil
 }
 
-func RecvFile(iSvc, iId string, iData []byte, iStream io.Reader, iLen int64) error {
-   if iSvc != "" && GetData(iSvc) == nil {
-      return tError(fmt.Sprintf("recvfile: service %s not found", iSvc))
-   }
-   aDir := UploadDir; if iSvc != "" { aDir = tempDir(iSvc) }
-   aFd, err := os.OpenFile(aDir+iId, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+func Upload(iId string, iR io.Reader, iLen int64) error {
+   aFd, err := os.OpenFile(UploadDir+iId, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
    if err != nil { return err }
    defer aFd.Close()
-   for aPos, aLen := 0,0; aPos < len(iData); aPos += aLen {
-      aLen, err = aFd.Write(iData[aPos:])
-      if err != nil && err != io.ErrShortWrite { return err }
-   }
-   _,err = io.CopyN(aFd, iStream, iLen - int64(len(iData)))
+   _, err = io.CopyN(aFd, iR, iLen)
    if err != nil { return err }
    err = aFd.Sync()
-   if err == nil && aDir == UploadDir {
-      err = syncDir(UploadDir)
-   }
+   if err != nil { return err }
+   err = syncDir(UploadDir)
    return err
 }
 

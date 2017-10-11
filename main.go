@@ -415,7 +415,7 @@ func runUpload(iResp http.ResponseWriter, iReq *http.Request) {
          return
       }
       defer aF.Close()
-      err = slib.RecvFile("", aId, nil, aF, aHead.Size)
+      err = slib.Upload(aId, aF, aHead.Size)
       if err != nil {
          iResp.WriteHeader(http.StatusInternalServerError)
          iResp.Write([]byte("recvFile error: " + err.Error()))
