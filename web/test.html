@@ -15,13 +15,17 @@
 <tr><td>last msg </td><td class="pre" id="get?p">.</td></tr>
 </table>
 
-<p>
+<p>Thread
 <button onclick="gRecv()">Receive</button>
-<button onclick="gThread()">New Thread</button>
+<button onclick="gThread()">New</button>
 <button onclick="gReply()">Reply</button>
 <button onclick="gSend()">Send</button>
 <button onclick="gClose()">Close</button>
 <button onclick="gDiscard()">Discard</button>
+</p>
+
+<p>Service
+<button onclick="gSvcAdd()">Add</button>
 </p>
 
 <p>
@@ -38,7 +42,7 @@
 <div id="msg"></div>
 
 <script>
-var gRecv, gReply, gSend, gThread, gClose, gDiscard;
+var gRecv, gReply, gSend, gThread, gClose, gDiscard, gSvcAdd;
 ;(function() {
   fXhr('s'); fXhr('t'); fXhr('m'); fXhr('o');
   function fXhr(i, iP) {
@@ -49,6 +53,10 @@ var gRecv, gReply, gSend, gThread, gClose, gDiscard;
   }
   var sWs = null;
   var sSave='', sData='you dont say';
+  gSvcAdd = function() {
+    sWs.send(JSON.stringify({op:'service_add', service:{
+      name:'take2', addr:'localhost:8888', loginperiod:600}}))
+  }
   gRecv = function() {
     sWs.send(JSON.stringify({op:'thread_ohi', thread:{}}))
   }
@@ -75,6 +83,9 @@ var gRecv, gReply, gSend, gThread, gClose, gDiscard;
       document.getElementById('msg').innerHTML += event.data+'<br>';
       var aObj = JSON.parse(event.data);
       switch (aObj.op) {
+      case 'service_add':
+        fXhr('s');
+        break;
       case 'delivery':
         sSave = '';
         fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
