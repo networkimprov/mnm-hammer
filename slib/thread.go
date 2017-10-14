@@ -447,7 +447,7 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
    if err != nil { panic(err) }
 }
 
-func CompletePending(iSvc string) {
+func completePending(iSvc string) {
    aFd, err := os.Open(tempDir(iSvc))
    if err != nil { panic(err) }
    aTmps, err := aFd.Readdirnames(0)
@@ -461,7 +461,7 @@ func CompletePending(iSvc string) {
       } else {
          aRec := parseTempOk(aTmp)
          if len(aRec) != 5 {
-            fmt.Fprintf(os.Stderr, "CompletePending: unexpected file %s%s\n", tempDir(iSvc), aTmp)
+            fmt.Fprintf(os.Stderr, "completePending: unexpected file %s%s\n", tempDir(iSvc), aTmp)
             continue
          }
          var aFd, aTd *os.File
@@ -485,7 +485,7 @@ func CompletePending(iSvc string) {
          case "ds":
             completeDeleteSaved(iSvc, aTmp, aFd, aTd)
          default:
-            fmt.Fprintf(os.Stderr, "CompletePending: unexpected op %s%s\n", tempDir(iSvc), aTmp)
+            fmt.Fprintf(os.Stderr, "completePending: unexpected op %s%s\n", tempDir(iSvc), aTmp)
          }
       }
    }

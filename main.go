@@ -67,7 +67,7 @@ func mainResult() int {
 
    fmt.Printf("mnm-hammer tmtp client v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
 
-   slib.Init()
+   slib.Init(startService)
    slib.Test()
 
    sServiceTmpl, err = template.ParseFiles("web/service.html")
@@ -77,8 +77,7 @@ func mainResult() int {
    }
 
    for _, aName := range slib.GetServices() {
-      sServices[aName] = tService{queue: newQueue(aName), ccs: newClientConns()}
-      go runLink(aName)
+      startService(aName)
    }
 
    http.HandleFunc("/"  , runService)
@@ -94,6 +93,15 @@ func mainResult() int {
 type tService struct {
    queue *tQueue
    ccs *tClientConns
+}
+
+func startService(iSvc string) {
+   sServicesDoor.Lock(); defer sServicesDoor.Unlock()
+   if sServices[iSvc].queue != nil {
+      panic(fmt.Sprintf("startService %s: already started", iSvc))
+   }
+   sServices[iSvc] = tService{queue: newQueue(iSvc), ccs: newClientConns()}
+   go runLink(iSvc)
 }
 
 func getService(iSvc string) tService {
@@ -381,7 +389,9 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          iResp.Write([]byte("error sending template: "+err.Error()))
       }
    case "s": // service list
-      iResp.Write([]byte("services "))
+      aSvcs := slib.GetServices()
+      err = json.NewEncoder(iResp).Encode(aSvcs)
+      if err != nil { panic(err) }
    case "t": // thread list
       iResp.Write([]byte("threads "+aSvc))
    case "m": // msg list

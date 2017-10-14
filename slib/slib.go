@@ -14,6 +14,7 @@ import (
    "io"
    "encoding/json"
    "os"
+   "strings"
    "sync"
 )
 
@@ -23,6 +24,7 @@ const UploadDir   = kStorageDir + "upload/"
 
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]*tService)
+var sServiceStartFn func(string)
 
 var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
@@ -57,6 +59,7 @@ type Update struct {
       Data string
       New bool //temp
    }
+   Service *tService
 }
 
 type SendRecord struct {
@@ -68,11 +71,50 @@ type SendRecord struct {
 type Msg map[string]interface{}
 
 
-func Init() {
-   err := os.MkdirAll(UploadDir, 0700)
+func Init(iFn func(string)) {
+   var err error
+   for _, aDir := range [...]string{UploadDir, kServiceDir} {
+      err = os.MkdirAll(aDir, 0700)
+      if err != nil { panic(err) }
+   }
+
+   var aFd *os.File
+   aFd, err = os.Open(kServiceDir)
    if err != nil { panic(err) }
-   _, err = AddService("test", "localhost:8888", 30)
+   aSvcs, err := aFd.Readdirnames(0)
+   aFd.Close()
    if err != nil { panic(err) }
+
+   for _, aSvc := range aSvcs {
+      if strings.HasSuffix(aSvc, ".tmp") {
+         err = os.RemoveAll(svcDir(aSvc))
+         if err != nil { panic(err) }
+         continue
+      }
+      completePending(aSvc)
+      err = os.Rename(cfgFile(aSvc) + ".tmp", cfgFile(aSvc))
+      if err != nil {
+         if os.IsNotExist(err) {
+            // ok
+         } else if os.IsExist(err) {
+            err = os.Remove(cfgFile(aSvc) + ".tmp")
+            if err != nil { panic(err) }
+         } else { panic(err) }
+      }
+      aService := &tService{}
+      aFd, err = os.Open(cfgFile(aSvc))
+      if err != nil { panic(err) }
+      err = json.NewDecoder(aFd).Decode(aService)
+      aFd.Close()
+      if err != nil { panic(err) }
+      sServices[aSvc] = aService
+      sState[aSvc] = &tState{}
+   }
+   if sServices["test"] == nil {
+      err = addService(&tService{Name:"test", Addr:"localhost:8888", LoginPeriod:30})
+      if err != nil { panic(err) }
+   }
+   sServiceStartFn = iFn
 }
 
 func GetServices() (aS []string) {
@@ -83,38 +125,89 @@ func GetServices() (aS []string) {
    return aS
 }
 
+func GetData(iSvc string) *tService {
+   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
+   return sServices[iSvc]
+}
+
 type tService struct {
    Name string
+   Description string
    LoginPeriod int // seconds
    Addr string // for Dial()
    Uid string
    Node string
 }
 
+func svcDir   (iSvc string) string { return kServiceDir + iSvc + "/"        }
 func tempDir  (iSvc string) string { return kServiceDir + iSvc + "/temp/"   }
 func threadDir(iSvc string) string { return kServiceDir + iSvc + "/thread/" }
+func cfgFile  (iSvc string) string { return kServiceDir + iSvc + "/config"  }
 
-func GetData(iSvc string) *tService {
-   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   return sServices[iSvc]
-}
-
-func AddService(iSvc, iAddr string, iPeriod int) (*tService, error) {
+func addService(iService *tService) error {
    var err error
-   for _, aDir := range [...]string{tempDir(iSvc), threadDir(iSvc)} {
-      err = os.MkdirAll(aDir, 0700)
-      if err != nil {
-         os.RemoveAll(kServiceDir + iSvc)
-         return nil, err
-      }
+   if len(iService.Name) < 5 || strings.HasSuffix(iService.Name, ".tmp") {
+      return tError(fmt.Sprintf("AddService: name %s not valid", iService.Name))
    }
    sServicesDoor.Lock(); defer sServicesDoor.Unlock()
-   if sServices[iSvc] != nil {
-      return nil, tError(fmt.Sprintf("AddService: name %s already exists", iSvc))
+   if sServices[iService.Name] != nil {
+      return tError(fmt.Sprintf("AddService: name %s already exists", iService.Name))
    }
-   aSvc := &tService{Name: iSvc, Addr: iAddr, LoginPeriod: iPeriod}
-   sServices[iSvc] = aSvc
-   return aSvc, nil
+   aTemp := iService.Name + ".tmp"
+   defer os.RemoveAll(svcDir(aTemp))
+   for _, aDir := range [...]string{tempDir(aTemp), threadDir(aTemp)} {
+      err = os.MkdirAll(aDir, 0700)
+      if err != nil { return err }
+   }
+   aFd, err := os.OpenFile(cfgFile(aTemp), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+   if err != nil { return err }
+   defer aFd.Close()
+   err = json.NewEncoder(aFd).Encode(iService)
+   if err != nil { return err }
+   err = aFd.Sync()
+   if err != nil { return err }
+
+   err = syncDir(svcDir(aTemp))
+   if err != nil { return err }
+   err = os.Rename(svcDir(aTemp), svcDir(iService.Name))
+   if err != nil { return err }
+
+   sServices[iService.Name] = iService
+   sState[iService.Name] = &tState{}
+   if sServiceStartFn != nil {
+      sServiceStartFn(iService.Name)
+   }
+   return nil
+}
+
+func updateService(iService *tService) error {
+   var err error
+   sServicesDoor.Lock(); defer sServicesDoor.Unlock()
+   if sServices[iService.Name] == nil {
+      return tError(fmt.Sprintf("UpdateService: %s not found", iService.Name))
+   }
+   aTemp := cfgFile(iService.Name) + ".tmp"
+   defer os.Remove(aTemp)
+   aFd, err := os.OpenFile(aTemp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+   if err != nil { return err }
+   defer aFd.Close()
+   err = json.NewEncoder(aFd).Encode(iService)
+   if err != nil { return err }
+   err = aFd.Sync()
+   if err != nil { return err }
+
+   err = syncDir(svcDir(iService.Name))
+   if err != nil { return err }
+   err = os.Remove(cfgFile(iService.Name))
+   if err != nil { return err }
+   err = os.Rename(aTemp, cfgFile(iService.Name))
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "UpdateService %s: transaction failed: %s\n", iService.Name, err.Error())
+      os.Exit(1) // skip deferred Remove(aTemp)
+   }
+
+   sServices[iService.Name] = iService
+   return nil
 }
 
 func GetQueue(iSvc string) ([]*SendRecord, error) {
@@ -126,13 +219,15 @@ func GetQueue(iSvc string) ([]*SendRecord, error) {
 }
 
 func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) Msg {
-   aSvc := GetData(iSvc)
    switch iHead.Op {
    case "registered":
-      aSvc.Uid = iHead.Uid
-      aSvc.Node = iHead.NodeId
+      aNewSvc := *GetData(iSvc)
+      aNewSvc.Uid = iHead.Uid
+      aNewSvc.Node = iHead.NodeId
+      err := updateService(&aNewSvc)
+      if err != nil { return Msg{"op":iHead.Op, "err":err.Error()} }
    case "delivery":
-      storeReceived(aSvc.Name, iHead, iData, iR)
+      storeReceived(iSvc, iHead, iData, iR)
       sState[iSvc].thread = iHead.SubHead.ThreadId; if sState[iSvc].thread == "" { sState[iSvc].thread = iHead.Id } //temp
       sState[iSvc].msgs = map[string]bool{iHead.Id:true}
    case "ack":
@@ -150,6 +245,18 @@ func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) Msg {
 
 func HandleUpdt(iSvc string, iUpdt *Update) (Msg, *SendRecord) {
    switch iUpdt.Op {
+   case "service_add":
+      err := addService(iUpdt.Service)
+      if err != nil {
+         return Msg{"op":iUpdt.Op, "err":err.Error()}, nil
+      }
+      return Msg{"op":iUpdt.Op, "etc":"add service"}, nil
+   case "service_update":
+      err := updateService(iUpdt.Service)
+      if err != nil {
+         return Msg{"op":iUpdt.Op, "err":err.Error()}, nil
+      }
+      return Msg{"op":iUpdt.Op, "etc":"update service"}, nil
    case "thread_ohi":
       aData, _ := json.Marshal(Msg{"ThreadId":sState[iSvc].thread})
       aHeadLen := len(aData)
