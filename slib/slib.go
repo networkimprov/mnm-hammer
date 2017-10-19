@@ -181,10 +181,6 @@ func updateService(iService *tService) error {
 }
 
 func GetQueue(iSvc string) ([]*SendRecord, error) {
-   aSvc := GetData(iSvc)
-   if aSvc == nil {
-      return nil, tError(fmt.Sprintf("getqueue: service %s not found", iSvc))
-   }
    return nil, nil
 }
 
