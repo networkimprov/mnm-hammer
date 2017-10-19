@@ -9,11 +9,13 @@
 package slib
 
 import (
+   "runtime/debug"
    "hash/crc32"
    "fmt"
    "io"
    "encoding/json"
    "os"
+   "path"
    "strings"
    "sync"
 )
@@ -75,44 +77,34 @@ func Init(iFn func(string)) {
    var err error
    for _, aDir := range [...]string{UploadDir, kServiceDir} {
       err = os.MkdirAll(aDir, 0700)
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
    }
 
-   var aFd *os.File
-   aFd, err = os.Open(kServiceDir)
-   if err != nil { panic(err) }
-   aSvcs, err := aFd.Readdirnames(0)
-   aFd.Close()
-   if err != nil { panic(err) }
+   aSvcs, err := readDirNames(kServiceDir)
+   if err != nil { quit(err) }
 
    for _, aSvc := range aSvcs {
       if strings.HasSuffix(aSvc, ".tmp") {
          err = os.RemoveAll(svcDir(aSvc))
-         if err != nil { panic(err) }
+         if err != nil { quit(err) }
          continue
       }
       completePending(aSvc)
-      err = os.Rename(cfgFile(aSvc) + ".tmp", cfgFile(aSvc))
-      if err != nil {
-         if os.IsNotExist(err) {
-            // ok
-         } else if os.IsExist(err) {
-            err = os.Remove(cfgFile(aSvc) + ".tmp")
-            if err != nil { panic(err) }
-         } else { panic(err) }
-      }
+      err = resolveTmpFile(cfgFile(aSvc) + ".tmp")
+      if err != nil { quit(err) }
       aService := &tService{}
+      var aFd *os.File
       aFd, err = os.Open(cfgFile(aSvc))
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       err = json.NewDecoder(aFd).Decode(aService)
       aFd.Close()
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       sServices[aSvc] = aService
       sState[aSvc] = &tState{}
    }
    if sServices["test"] == nil {
       err = addService(&tService{Name:"test", Addr:"localhost:8888", LoginPeriod:30})
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
    }
    sServiceStartFn = iFn
 }
@@ -157,20 +149,15 @@ func addService(iService *tService) error {
    defer os.RemoveAll(svcDir(aTemp))
    for _, aDir := range [...]string{tempDir(aTemp), threadDir(aTemp)} {
       err = os.MkdirAll(aDir, 0700)
-      if err != nil { return err }
+      if err != nil { quit(err) }
    }
-   aFd, err := os.OpenFile(cfgFile(aTemp), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-   if err != nil { return err }
-   defer aFd.Close()
-   err = json.NewEncoder(aFd).Encode(iService)
-   if err != nil { return err }
-   err = aFd.Sync()
-   if err != nil { return err }
+   err = writeJsonFile(cfgFile(aTemp), iService)
+   if err != nil { quit(err) }
 
    err = syncDir(svcDir(aTemp))
-   if err != nil { return err }
+   if err != nil { quit(err) }
    err = os.Rename(svcDir(aTemp), svcDir(iService.Name))
-   if err != nil { return err }
+   if err != nil { quit(err) }
 
    sServices[iService.Name] = iService
    sState[iService.Name] = &tState{}
@@ -186,25 +173,8 @@ func updateService(iService *tService) error {
    if sServices[iService.Name] == nil {
       return tError(fmt.Sprintf("UpdateService: %s not found", iService.Name))
    }
-   aTemp := cfgFile(iService.Name) + ".tmp"
-   defer os.Remove(aTemp)
-   aFd, err := os.OpenFile(aTemp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-   if err != nil { return err }
-   defer aFd.Close()
-   err = json.NewEncoder(aFd).Encode(iService)
-   if err != nil { return err }
-   err = aFd.Sync()
-   if err != nil { return err }
-
-   err = syncDir(svcDir(iService.Name))
-   if err != nil { return err }
-   err = os.Remove(cfgFile(iService.Name))
-   if err != nil { return err }
-   err = os.Rename(aTemp, cfgFile(iService.Name))
-   if err != nil {
-      fmt.Fprintf(os.Stderr, "UpdateService %s: transaction failed: %s\n", iService.Name, err.Error())
-      os.Exit(1) // skip deferred Remove(aTemp)
-   }
+   err = storeFile(cfgFile(iService.Name), iService)
+   if err != nil { quit(err) }
 
    sServices[iService.Name] = iService
    return nil
@@ -308,12 +278,65 @@ func Upload(iId string, iR io.Reader, iLen int64) error {
    return err
 }
 
+func readDirNames(iPath string) ([]string, error) {
+   aFd, err := os.Open(iPath)
+   if err != nil { return nil, err }
+   aList, err := aFd.Readdirnames(0)
+   aFd.Close()
+   return aList, err
+}
+
+func storeFile(iPath string, iData interface{}) error {
+   aTemp := iPath + ".tmp"
+   defer os.Remove(aTemp)
+   err := writeJsonFile(aTemp, iData)
+   if err != nil { return err }
+   err = syncDir(path.Dir(iPath))
+   if err != nil { return err }
+   err = os.Remove(iPath)
+   if err != nil && !os.IsNotExist(err) { return err }
+   err = os.Rename(aTemp, iPath)
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "transaction failed...")
+      quit(err)
+   }
+   return nil
+}
+
+func writeJsonFile(iPath string, iData interface{}) error {
+   aFd, err := os.OpenFile(iPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+   if err != nil { return err }
+   defer aFd.Close()
+   err = json.NewEncoder(aFd).Encode(iData)
+   if err != nil { return err }
+   err = aFd.Sync()
+   return err
+}
+
+func resolveTmpFile(iPath string) error {
+   err := os.Rename(iPath, iPath[:len(iPath)-4])
+   if err != nil {
+      if os.IsNotExist(err) {
+         err = nil
+      } else if os.IsExist(err) {
+         err = os.Remove(iPath)
+      }
+   }
+   return err
+}
+
 func syncDir(iPath string) error {
    aFd, err := os.Open(iPath)
    if err != nil { return err }
    err = aFd.Sync()
    aFd.Close()
    return err
+}
+
+func quit(err error) {
+   fmt.Fprintf(os.Stderr, "quit after %s\n", err.Error())
+   debug.PrintStack()
+   os.Exit(3)
 }
 
 type tError string

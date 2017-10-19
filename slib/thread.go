@@ -448,10 +448,7 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
 }
 
 func completePending(iSvc string) {
-   aFd, err := os.Open(tempDir(iSvc))
-   if err != nil { panic(err) }
-   aTmps, err := aFd.Readdirnames(0)
-   aFd.Close()
+   aTmps, err := readDirNames(tempDir(iSvc))
    if err != nil { panic(err) }
 
    for _, aTmp := range aTmps {
