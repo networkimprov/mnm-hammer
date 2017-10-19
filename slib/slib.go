@@ -145,7 +145,7 @@ func cfgFile  (iSvc string) string { return kServiceDir + iSvc + "/config"  }
 
 func addService(iService *tService) error {
    var err error
-   if len(iService.Name) < 5 || strings.HasSuffix(iService.Name, ".tmp") {
+   if len(iService.Name) < 4 || strings.HasSuffix(iService.Name, ".tmp") {
       return tError(fmt.Sprintf("AddService: name %s not valid", iService.Name))
    }
    sServicesDoor.Lock(); defer sServicesDoor.Unlock()
