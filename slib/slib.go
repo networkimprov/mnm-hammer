@@ -22,6 +22,7 @@ import (
 
 const kStorageDir = "store/"
 const kServiceDir = kStorageDir + "svc/"
+const kStateDir   = kStorageDir + "state/"
 const UploadDir   = kStorageDir + "upload/"
 
 var sServicesDoor sync.RWMutex
@@ -59,7 +60,10 @@ type Update struct {
       Id string
       Subject string
       Data string
-      New bool //temp
+      New bool
+   }
+   Navigate *struct {
+      History int
    }
    Service *tService
 }
@@ -74,12 +78,16 @@ type Msg map[string]interface{}
 
 
 func Init(iFn func(string)) {
-   var err error
-   for _, aDir := range [...]string{UploadDir, kServiceDir} {
-      err = os.MkdirAll(aDir, 0700)
+   for _, aDir := range [...]string{UploadDir, kServiceDir, kStateDir} {
+      err := os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
+   initStates()
+   initServices(iFn)
+}
 
+func initServices(iFn func(string)) {
+   var err error
    aSvcs, err := readDirNames(kServiceDir)
    if err != nil { quit(err) }
 
@@ -100,7 +108,6 @@ func Init(iFn func(string)) {
       aFd.Close()
       if err != nil { quit(err) }
       sServices[aSvc] = aService
-      sState[aSvc] = &tState{}
    }
    if sServices["test"] == nil {
       err = addService(&tService{Name:"test", Addr:"localhost:8888", LoginPeriod:30})
@@ -160,7 +167,6 @@ func addService(iService *tService) error {
    if err != nil { quit(err) }
 
    sServices[iService.Name] = iService
-   sState[iService.Name] = &tState{}
    if sServiceStartFn != nil {
       sServiceStartFn(iService.Name)
    }
@@ -184,82 +190,96 @@ func GetQueue(iSvc string) ([]*SendRecord, error) {
    return nil, nil
 }
 
-func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) Msg {
+func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (Msg, func(*ClientState)) {
+   var aFn func(*ClientState)
+   var aMsgId string
    switch iHead.Op {
    case "registered":
       aNewSvc := *GetData(iSvc)
       aNewSvc.Uid = iHead.Uid
       aNewSvc.Node = iHead.NodeId
       err := updateService(&aNewSvc)
-      if err != nil { return Msg{"op":iHead.Op, "err":err.Error()} }
+      if err != nil { return Msg{"op":iHead.Op, "err":err.Error()}, nil }
    case "delivery":
       storeReceived(iSvc, iHead, iData, iR)
-      sState[iSvc].thread = iHead.SubHead.ThreadId; if sState[iSvc].thread == "" { sState[iSvc].thread = iHead.Id } //temp
-      sState[iSvc].msgs = map[string]bool{iHead.Id:true}
+      if iHead.SubHead.ThreadId == "" { // temp
+         aFn = func(c *ClientState) { c.addThread(iHead.Id, iHead.Id) }
+      } else {
+         aFn = func(c *ClientState) {
+            if c.getThread() == iHead.SubHead.ThreadId { c.openMsg(iHead.Id, true) }
+         }
+      }
+      aMsgId = iHead.Id
    case "ack":
       if iHead.Id == "22" { break }
       storeSaved(iSvc, iHead)
       if iHead.Id[0] == '_' {
-         sState[iSvc].thread = iHead.MsgId
+         aFn = func(c *ClientState) { c.renameThread(iHead.Id, iHead.MsgId) }
+      } else {
+         aTid := parseSaveId(iHead.Id).tid()
+         aFn = func(c *ClientState) { c.renameMsg(aTid, iHead.Id, iHead.MsgId) }
       }
-      delete(sState[iSvc].msgs, iHead.Id)
-      sState[iSvc].msgs[iHead.MsgId] = true
-      iHead.Id = iHead.MsgId
+      aMsgId = iHead.MsgId
    }
-   return Msg{"op":iHead.Op, "id":iHead.Id, "threadid":iHead.SubHead.ThreadId}
+   return Msg{"op":iHead.Op, "id":aMsgId}, aFn
 }
 
-func HandleUpdt(iSvc string, iUpdt *Update) (Msg, *SendRecord) {
+func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (Msg, *SendRecord, func(*ClientState)) {
    switch iUpdt.Op {
    case "service_add":
       err := addService(iUpdt.Service)
       if err != nil {
-         return Msg{"op":iUpdt.Op, "err":err.Error()}, nil
+         return Msg{"op":iUpdt.Op, "err":err.Error()}, nil, nil
       }
-      return Msg{"op":iUpdt.Op, "etc":"add service"}, nil
    case "service_update":
       err := updateService(iUpdt.Service)
       if err != nil {
-         return Msg{"op":iUpdt.Op, "err":err.Error()}, nil
+         return Msg{"op":iUpdt.Op, "err":err.Error()}, nil, nil
       }
-      return Msg{"op":iUpdt.Op, "etc":"update service"}, nil
    case "thread_ohi":
-      aData, _ := json.Marshal(Msg{"ThreadId":sState[iSvc].thread})
+      aTid := iState.getThread()
+      if len(aTid) > 0 && aTid[0] == '_' { break }
+      aData, _ := json.Marshal(Msg{"ThreadId":aTid})
       aHeadLen := len(aData)
       aData = append(aData, "ohi there"...)
       aSrec := &SendRecord{Head: Msg{"Op":7, "Id":"22", "DataLen":len(aData), "DataHead":aHeadLen,
                            "For":[]Msg{{"Id":GetData(iSvc).Uid, "Type":1}} }, Data:aData}
-      return Msg{"op":iUpdt.Op, "etc":"posting msg"}, aSrec
+      return Msg{"op":iUpdt.Op}, aSrec, nil
    case "thread_save":
-      if iUpdt.Thread.New {
-         sState[iSvc].thread = ""
+      if iUpdt.Thread.Id == "" {
+         aTid := ""; if !iUpdt.Thread.New { aTid = iState.getThread() }
+         iUpdt.Thread.Id = makeSaveId(aTid)
       }
       writeSaved(iSvc, iUpdt)
       if iUpdt.Thread.New {
-         sState[iSvc].thread = iUpdt.Thread.Id
-         sState[iSvc].msgs = map[string]bool{}
+         iState.addThread(iUpdt.Thread.Id, iUpdt.Thread.Id)
+      } else {
+         iState.openMsg(iUpdt.Thread.Id, true)
       }
-      sState[iSvc].msgs[iUpdt.Thread.Id] = true
-      return Msg{"op":iUpdt.Op, "etc":"save reply", "id":iUpdt.Thread.Id}, nil
+      return Msg{"op":iUpdt.Op, "id":iUpdt.Thread.Id}, nil, nil
    case "thread_discard":
       deleteSaved(iSvc, iUpdt)
+      var aFn func(*ClientState)
       if iUpdt.Thread.Id[0] == '_' {
-         sState[iSvc].thread = ""
+         aTid := iState.getThread()
+         aFn = func(c *ClientState) { c.discardThread(aTid) }
+      } else {
+         aFn = func(c *ClientState) { c.openMsg(iUpdt.Thread.Id, false) }
       }
-      delete(sState[iSvc].msgs, iUpdt.Thread.Id)
-      return Msg{"op":iUpdt.Op, "etc":"discard"}, nil
+      return Msg{"op":iUpdt.Op}, nil, aFn
    case "thread_send":
-      if iUpdt.Thread.Id == "" {
-         return Msg{"op":iUpdt.Op, "etc":"no op"}, nil
-      }
+      if iUpdt.Thread.Id == "" { break }
       aSrec := &SendRecord{Head: Msg{"Op":7, "Id":iUpdt.Thread.Id, "DataLen":1,
                   "For":[]Msg{{"Id":"LG3KCJGZPVVNDPV6%JRK4H6FC6LS8P37", "Type":1}} }, Data:[]byte{'1'}}
-      return Msg{"op":iUpdt.Op, "etc":"send reply"}, aSrec
+      return Msg{"op":iUpdt.Op}, aSrec, nil
    case "thread_close":
-      sState[iSvc].msgs[iUpdt.Thread.Id] = false
-      return Msg{"op":iUpdt.Op, "etc":"closed"}, nil
+      iState.openMsg(iUpdt.Thread.Id, false)
+   case "history":
+      iState.goThread(iUpdt.Navigate.History)
+   default:
+      return Msg{"op":iUpdt.Op, "err":"unknown op"}, nil, nil
    }
-   return Msg{"op":iUpdt.Op, "etc":"unknown op"}, nil
+   return Msg{"op":iUpdt.Op}, nil, nil
 }
 
 func Upload(iId string, iR io.Reader, iLen int64) error {

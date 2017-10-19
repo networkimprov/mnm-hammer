@@ -35,15 +35,9 @@ func makeIndexEl(iHead *Header, iPos int64) tIndexEl {
                    Subject:iHead.SubHead.Subject}
 }
 
-var sState = make(map[string]*tState)
-type tState struct { // temp
-   thread string
-   msgs map[string]bool
-}
-
-func GetMsgIdx(iSvc string, iClientId string) []tIndexEl {
-   if sState[iSvc].thread == "" { return nil }
-   aFd, err := os.Open(threadDir(iSvc) + sState[iSvc].thread)
+func GetMsgIdx(iSvc string, iState *ClientState) []tIndexEl {
+   if iState.getThread() == "" { return nil }
+   aFd, err := os.Open(threadDir(iSvc) + iState.getThread())
    if err != nil { panic(err) }
    defer aFd.Close()
    var aIdx []tIndexEl
@@ -51,18 +45,18 @@ func GetMsgIdx(iSvc string, iClientId string) []tIndexEl {
    return aIdx
 }
 
-func WriteOpenMsgs(iW io.Writer, iSvc string, iClientId string, iId string) {
-   if sState[iSvc].thread == "" { return }
+func WriteOpenMsgs(iW io.Writer, iSvc string, iState *ClientState, iId string) {
+   if iState.getThread() == "" { return }
    if iId != "" {
-      sState[iSvc].msgs[iId] = true
+      iState.openMsg(iId, true)
    }
-   aFd, err := os.Open(threadDir(iSvc) + sState[iSvc].thread)
+   aFd, err := os.Open(threadDir(iSvc) + iState.getThread())
    if err != nil { panic(err) }
    defer aFd.Close()
    var aIdx []tIndexEl
    _ = readIndex(aFd, &aIdx)
    for a, _ := range aIdx {
-      if iId != "" && aIdx[a].Id == iId || iId == "" && sState[iSvc].msgs[aIdx[a].Id] {
+      if iId != "" && aIdx[a].Id == iId || iId == "" && iState.isOpen(aIdx[a].Id) {
          var aRd, aXd *os.File
          if aIdx[a].Offset >= 0 {
             _, err = aFd.Seek(aIdx[a].Offset, io.SeekStart)
@@ -231,9 +225,6 @@ func completeStoreSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
 }
 
 func writeSaved(iSvc string, iUpdt *Update) {
-   if iUpdt.Thread.Id == "" {
-      iUpdt.Thread.Id = fmt.Sprintf("%s_%012x", sState[iSvc].thread, time.Now().UTC().UnixNano() / 1e6) // milliseconds
-   }
    aId := parseSaveId(iUpdt.Thread.Id)
    aOrig := threadDir(iSvc) + aId.tid()
    aTempOk := tempDir(iSvc) + aId.tid() + "__ws_" + aId.sid() + "_"
@@ -355,6 +346,10 @@ func parseHeader(iFd *os.File, iHead interface{}) {
    if err != nil { panic(err) }
    err = json.Unmarshal(aBuf[:aUi], iHead)
    if err != nil { panic(err) }
+}
+
+func makeSaveId(iTid string) string {
+   return fmt.Sprintf("%s_%012x", iTid, time.Now().UTC().UnixNano() / 1e6) // milliseconds
 }
 
 type tSaveId []string
