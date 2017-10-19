@@ -38,7 +38,7 @@ func makeIndexEl(iHead *Header, iPos int64) tIndexEl {
 func GetMsgIdx(iSvc string, iState *ClientState) []tIndexEl {
    if iState.getThread() == "" { return nil }
    aFd, err := os.Open(threadDir(iSvc) + iState.getThread())
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    defer aFd.Close()
    var aIdx []tIndexEl
    _ = readIndex(aFd, &aIdx)
@@ -51,7 +51,7 @@ func WriteOpenMsgs(iW io.Writer, iSvc string, iState *ClientState, iId string) {
       iState.openMsg(iId, true)
    }
    aFd, err := os.Open(threadDir(iSvc) + iState.getThread())
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    defer aFd.Close()
    var aIdx []tIndexEl
    _ = readIndex(aFd, &aIdx)
@@ -60,16 +60,16 @@ func WriteOpenMsgs(iW io.Writer, iSvc string, iState *ClientState, iId string) {
          var aRd, aXd *os.File
          if aIdx[a].Offset >= 0 {
             _, err = aFd.Seek(aIdx[a].Offset, io.SeekStart)
-            if err != nil { panic(err) }
+            if err != nil { quit(err) }
             aXd = aFd
          } else {
             aRd, err = os.Open(threadDir(iSvc) + aIdx[a].Id)
-            if err != nil { panic(err) }
+            if err != nil { quit(err) }
             defer aRd.Close()
             aXd = aRd
          }
          _, err = io.CopyN(iW, aXd, aIdx[a].Size)
-         if err != nil { panic(err) }
+         if err != nil { quit(err) }
          if iId != "" {
             break
          }
@@ -117,7 +117,7 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
             aEl = a
             copy(aIdx[a+1:], aIdx[a:])
             _, err = aFd.Seek(aPos, io.SeekStart)
-            if err != nil { panic(err) }
+            if err != nil { quit(err) }
             break
          }
       }
@@ -126,20 +126,20 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
    aTempOk += fmt.Sprint(aPos)
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    defer aTd.Close()
    writeMsgTemp(aTd, iHead, iData, iR, aIdx, aEl)
    if aCopyLen > 0 {
       _, err = io.CopyN(aTd, aFd, aCopyLen)
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       _, err = aFd.Seek(aPos, io.SeekStart)
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
    }
    writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    completeStoreReceived(iSvc, path.Base(aTempOk), aFd, aTd)
 }
 
@@ -150,17 +150,17 @@ func completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
 
    if aRec.tid() == aRec.mid() {
       err = os.Link(aTempOk, threadDir(iSvc) + aRec.tid())
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       err = syncDir(threadDir(iSvc))
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
    } else {
       _, err = io.Copy(iFd, iTd) // iFd has correct pos from readIndex
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       err = iFd.Sync()
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
    }
    err = os.Remove(aTempOk)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
 }
 
 func storeSaved(iSvc string, iHead *Header) {
@@ -180,7 +180,7 @@ func storeSaved(iSvc string, iHead *Header) {
          fmt.Fprintf(os.Stderr, "storeSaved %s: saved file was cleared %s\n", iSvc, iHead.Id)
          return
       }
-      panic(err)
+      quit(err)
    }
    defer aSd.Close()
    var aJson struct { Len int64 }
@@ -193,7 +193,7 @@ func storeSaved(iSvc string, iHead *Header) {
    var aPos int64
    if aId.tid() != iHead.MsgId {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       defer aFd.Close()
       aPos = readIndex(aFd, &aIdx)
       a := -1
@@ -206,21 +206,21 @@ func storeSaved(iSvc string, iHead *Header) {
    aTempOk += fmt.Sprint(aPos)
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    defer aTd.Close()
    writeMsgTemp(aTd, &aHead, nil, aSd, aIdx, len(aIdx)-1)
    writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    completeStoreSaved(iSvc, path.Base(aTempOk), aFd, aTd)
 }
 
 func completeStoreSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
    aRec := parseTempOk(iTmp)
    err := os.Remove(threadDir(iSvc) + aRec.tid() + "_" + aRec.sid())
-   if err != nil && !os.IsNotExist(err) { panic(err) }
+   if err != nil && !os.IsNotExist(err) { quit(err) }
    completeStoreReceived(iSvc, iTmp, iFd, iTd)
 }
 
@@ -239,7 +239,7 @@ func writeSaved(iSvc string, iUpdt *Update) {
    aEl := -1
    if aId.tid() != "" {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       defer aFd.Close()
       aPos = readIndex(aFd, &aIdx)
       for a, _ := range aIdx {
@@ -257,15 +257,15 @@ func writeSaved(iSvc string, iUpdt *Update) {
    aTempOk += fmt.Sprint(aPos)
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    defer aTd.Close()
    aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(len(aData))}
    writeMsgTemp(aTd, &aHead, aData, nil, aIdx, aEl) //todo stream from client
    writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    completeWriteSaved(iSvc, path.Base(aTempOk), aFd, aTd)
 }
 
@@ -276,25 +276,25 @@ func completeWriteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
    aTempOk := tempDir(iSvc) + iTmp
 
    err = os.Remove(aSave)
-   if err != nil && !os.IsNotExist(err) { panic(err) }
+   if err != nil && !os.IsNotExist(err) { quit(err) }
    if aRec.op() == "ws" {
       err = os.Link(aTempOk, aSave)
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
    }
    err = syncDir(threadDir(iSvc))
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
 
    if aRec.tid() != "" {
       _ = readIndex(iTd, nil)
       err = iFd.Truncate(aRec.pos())
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       _, err = io.Copy(iFd, iTd)
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       err = iFd.Sync()
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
    }
    err = os.Remove(aTempOk)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
 }
 
 func deleteSaved(iSvc string, iUpdt *Update) {
@@ -309,7 +309,7 @@ func deleteSaved(iSvc string, iUpdt *Update) {
    var aPos int64
    if aId.tid() != "" {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       defer aFd.Close()
       aPos = readIndex(aFd, &aIdx)
       a := -1
@@ -321,13 +321,13 @@ func deleteSaved(iSvc string, iUpdt *Update) {
    aTempOk += fmt.Sprint(aPos)
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    defer aTd.Close()
    writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    completeDeleteSaved(iSvc, path.Base(aTempOk), aFd, aTd)
 }
 
@@ -340,12 +340,12 @@ func dateRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
 func parseHeader(iFd *os.File, iHead interface{}) {
    aBuf := make([]byte, 65536)
    _, err := iFd.Read(aBuf[:4])
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    aUi, _ := strconv.ParseUint(string(aBuf[:4]), 16, 0)
    _, err = iFd.Read(aBuf[:aUi+1])
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    err = json.Unmarshal(aBuf[:aUi], iHead)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
 }
 
 func makeSaveId(iTid string) string {
@@ -369,42 +369,42 @@ func (o tComplete) sid() string { return o[3] } // saved id
 
 func (o tComplete) pos() int64 { // thread offset to index
    aPos, err := strconv.ParseInt(o[4], 10, 64)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    return aPos
 }
 
 func readIndex(iFd *os.File, iIdx *[]tIndexEl) int64 {
    _, err := iFd.Seek(-8, io.SeekEnd)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    aBuf := make([]byte, 8)
    _, err = iFd.Read(aBuf)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    aIdxLen, err := strconv.ParseUint(string(aBuf), 16, 0)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    aPos, err := iFd.Seek(-8 - int64(aIdxLen), io.SeekEnd)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    if iIdx == nil {
       return aPos
    }
    aBuf = make([]byte, aIdxLen)
    _, err = iFd.Read(aBuf) //todo ensure all read
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    err = json.Unmarshal(aBuf, iIdx)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    aPos, err = iFd.Seek(-8 - int64(aIdxLen), io.SeekEnd)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    return aPos
 }
 
 func writeIndex(iTd *os.File, iIdx []tIndexEl) {
    aBuf, err := json.Marshal(iIdx)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    _, err = iTd.Write(append(aBuf, fmt.Sprintf("%08x", len(aBuf))...))
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    err = iTd.Sync()
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    _, err = iTd.Seek(0, io.SeekStart)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
 }
 
 type tCrcWriter struct { sum uint32 }
@@ -421,35 +421,35 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
    aTee := io.MultiWriter(iTd, &aCw)
    aBuf, err := json.Marshal(Msg{"Id":iHead.Id, "From":iHead.From, "Posted":iHead.Posted,
                                  "Len":iHead.DataLen})
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    aLen, err := aTee.Write([]byte(fmt.Sprintf("%04x", len(aBuf))))
-   if err != nil { panic(err) }
-   if aLen != 4 { panic("json input too long") }
+   if err != nil { quit(err) }
+   if aLen != 4 { quit(tError("json input too long")) }
    _, err = aTee.Write(append(aBuf, '\n'))
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    if iHead.DataLen > 0 {
       _, err = aTee.Write(iData)
-      if err != nil { panic(err) }
+      if err != nil { quit(err) }
       if iR != nil {
          _, err = io.CopyN(aTee, iR, iHead.DataLen - int64(len(iData)))
-         if err != nil { panic(err) }
+         if err != nil { quit(err) }
       }
    }
    _, err = aTee.Write([]byte{'\n'})
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
    iIdx[iEl].Checksum = aCw.sum
    iIdx[iEl].Size, err = iTd.Seek(0, io.SeekCurrent)
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
 }
 
 func completePending(iSvc string) {
    aTmps, err := readDirNames(tempDir(iSvc))
-   if err != nil { panic(err) }
+   if err != nil { quit(err) }
 
    for _, aTmp := range aTmps {
       if strings.HasSuffix(aTmp, ".tmp") {
          err = os.Remove(tempDir(iSvc) + aTmp)
-         if err != nil { panic(err) }
+         if err != nil { quit(err) }
       } else {
          aRec := parseTempOk(aTmp)
          if len(aRec) != 5 {
@@ -459,13 +459,13 @@ func completePending(iSvc string) {
          var aFd, aTd *os.File
          if aRec.tid() != "" && aRec.tid() != aRec.mid() {
             aFd, err = os.OpenFile(threadDir(iSvc)+aRec.tid(), os.O_RDWR, 0600)
-            if err != nil { panic(err) }
+            if err != nil { quit(err) }
             defer aFd.Close()
             _, err = aFd.Seek(aRec.pos(), io.SeekStart)
-            if err != nil { panic(err) }
+            if err != nil { quit(err) }
          }
          aTd, err = os.Open(tempDir(iSvc)+aTmp)
-         if err != nil { panic(err) }
+         if err != nil { quit(err) }
          defer aTd.Close()
          switch aRec.op() {
          case "sr":
