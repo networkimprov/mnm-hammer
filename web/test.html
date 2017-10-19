@@ -15,6 +15,11 @@
 <tr><td>last msg </td><td class="pre" id="get?p">.</td></tr>
 </table>
 
+<p>Navigate
+<button onclick="gHistory(-1)">Back</button>
+<button onclick="gHistory(1)">Next</button>
+</p>
+
 <p>Thread
 <button onclick="gRecv()">Receive</button>
 <button onclick="gThread()">New</button>
@@ -42,9 +47,8 @@
 <div id="msg"></div>
 
 <script>
-var gRecv, gReply, gSend, gThread, gClose, gDiscard, gSvcAdd;
+var gHistory, gRecv, gReply, gSend, gThread, gClose, gDiscard, gSvcAdd;
 ;(function() {
-  fXhr('s'); fXhr('t'); fXhr('m'); fXhr('o');
   function fXhr(i, iP) {
     var aXhr = new XMLHttpRequest()
     aXhr.onload = function() { document.getElementById('get?'+i).innerHTML = aXhr.responseText }
@@ -53,6 +57,9 @@ var gRecv, gReply, gSend, gThread, gClose, gDiscard, gSvcAdd;
   }
   var sWs = null;
   var sSave='', sData='you dont say';
+  gHistory = function(i) {
+    sWs.send(JSON.stringify({op:'history', navigate:{history:i}}))
+  }
   gSvcAdd = function() {
     sWs.send(JSON.stringify({op:'service_add', service:{
       name:'take2', addr:'localhost:8888', loginperiod:600}}))
@@ -78,7 +85,9 @@ var gRecv, gReply, gSend, gThread, gClose, gDiscard, gSvcAdd;
   window.onload = function() {
     var aSvc = window.location.pathname.split('/')[1]
     sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
-    sWs.onopen = function (event) { };
+    sWs.onopen = function (event) {
+      fXhr('s'); fXhr('t'); fXhr('m'); fXhr('o');
+    };
     sWs.onmessage = function (event) {
       document.getElementById('msg').innerHTML += event.data+'<br>';
       var aObj = JSON.parse(event.data);
@@ -105,6 +114,10 @@ var gRecv, gReply, gSend, gThread, gClose, gDiscard, gSvcAdd;
         break;
       case 'thread_close':
         fXhr('o');
+        break;
+      case 'history':
+        sSave = '';
+        fXhr('m'); fXhr('o');
         break;
       }
     };
