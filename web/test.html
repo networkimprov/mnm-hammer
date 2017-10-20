@@ -7,6 +7,26 @@
 .pre { font-family:monospace; white-space:pre-wrap; }
 </style>
 
+<p>
+<form method="POST" action="/t/trial" enctype="multipart/form-data">
+<a href="/web/service.html">get web file</a>
+<input type="file" name="filename">
+<input type="submit" value="upload">
+<a href="/t/trial">download</a>
+</form>
+</p>
+
+<div>
+<button onclick="gM.SvcAdd()">Add Service</button>
+</div>
+
+<div>
+<button onclick="gM.History(-1)">Back</button>
+<button onclick="gM.History(1)">Next</button>
+<button onclick="gM.Thread()">New Thread</button>
+<button onclick="gM.Recv()">Receive Msg</button>
+</div>
+
 <table border="1">
 <tr><td>services </td><td class="pre" id="get?s">.</td></tr>
 <tr><td>threads  </td><td class="pre" id="get?t">.</td></tr>
@@ -15,114 +35,111 @@
 <tr><td>last msg </td><td class="pre" id="get?p">.</td></tr>
 </table>
 
-<p>Navigate
-<button onclick="gHistory(-1)">Back</button>
-<button onclick="gHistory(1)">Next</button>
-</p>
-
-<p>Thread
-<button onclick="gRecv()">Receive</button>
-<button onclick="gThread()">New</button>
-<button onclick="gReply()">Reply</button>
-<button onclick="gSend()">Send</button>
-<button onclick="gClose()">Close</button>
-<button onclick="gDiscard()">Discard</button>
-</p>
-
-<p>Service
-<button onclick="gSvcAdd()">Add</button>
-</p>
-
-<p>
-<form method="POST" action="/t/trial" enctype="multipart/form-data">
-<input type="file" name="filename">
-<input type="submit" value="upload">
-<a href="/t/trial">download</a>
-</form>
-</p>
-
-<p><a href="/web/service.html">get web file</a></p>
-
 <div id="stat"></div>
 <div id="msg"></div>
 
 <script>
-var gHistory, gRecv, gReply, gSend, gThread, gClose, gDiscard, gSvcAdd;
-;(function() {
+;var gM = {};
+(function() {
+  function fDrawMsgIndex(iList) {
+    var aS = '';
+    for (var a=0; a < iList.length; ++a) {
+      var aId = "'"+iList[a].Id+"'";
+      aS += '<div>'+
+        '<button onclick="gM.Xhr(\'p\','+aId+')">O</button>'+
+        '<button onclick="gM.Close('+aId+')"    >X</button> ';
+      if (iList[a].Offset >= 0)
+        aS +=
+        '<button onclick="gM.Reply(\'\')"       >Reply</button>';
+      else
+        aS +=
+        '<button onclick="gM.Reply('+aId+')"    >Save</button>'+
+        '<button onclick="gM.Send('+aId+')"     >Send</button>'+
+        '<button onclick="gM.Discard('+aId+')"  >Discard</button>';
+      aS += '\n' + JSON.stringify(iList[a]) + '</div>\n';
+    }
+    document.getElementById('get?m').innerHTML = aS;
+  }
   function fXhr(i, iP) {
-    var aXhr = new XMLHttpRequest()
-    aXhr.onload = function() { document.getElementById('get?'+i).innerHTML = aXhr.responseText }
-    aXhr.open('GET', '?'+i+(iP ? '='+iP : ''))
-    aXhr.send()
+    var aXhr = new XMLHttpRequest();
+    aXhr.onload = function() {
+      if (i === 'm')
+        fDrawMsgIndex(JSON.parse(aXhr.responseText));
+      else
+        document.getElementById('get?'+i).innerText = aXhr.responseText;
+    };
+    aXhr.open('GET', '?'+i+(iP ? '='+iP : ''));
+    aXhr.send();
   }
+
   var sWs = null;
-  var sSave='', sData='you dont say';
-  gHistory = function(i) {
-    sWs.send(JSON.stringify({op:'history', navigate:{history:i}}))
-  }
-  gSvcAdd = function() {
+  var sData='you dont say';
+
+  gM.Xhr = fXhr;
+  gM.SvcAdd = function() {
     sWs.send(JSON.stringify({op:'service_add', service:{
       name:'take2', addr:'localhost:8888', loginperiod:600}}))
-  }
-  gRecv = function() {
-    sWs.send(JSON.stringify({op:'thread_ohi', thread:{}}))
-  }
-  gThread = function() {
+  };
+  gM.History = function(i) {
+    sWs.send(JSON.stringify({op:'history', navigate:{history:i}}))
+  };
+  gM.Thread = function() {
     sWs.send(JSON.stringify({op:'thread_save', thread:{id:'', data:'start thread', new:true}}))
-  }
-  gReply = function() {
-    sWs.send(JSON.stringify({op:'thread_save', thread:{id:sSave, data:sData+='.'}}))
-  }
-  gSend = function() {
-    sWs.send(JSON.stringify({op:'thread_send', thread:{id:sSave}}))
-  }
-  gClose = function() {
-    sWs.send(JSON.stringify({op:'thread_close', thread:{id:sSave}}))
-  }
-  gDiscard = function() {
-    sWs.send(JSON.stringify({op:'thread_discard', thread:{id:sSave}}))
-  }
+  };
+  gM.Recv = function() {
+    sWs.send(JSON.stringify({op:'thread_ohi', thread:{}}))
+  };
+  gM.Close = function(i) {
+    sWs.send(JSON.stringify({op:'thread_close', thread:{id:i}}))
+  };
+  gM.Reply = function(i) {
+    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, data:sData+='.'}}))
+  };
+  gM.Send = function(i) {
+    sWs.send(JSON.stringify({op:'thread_send', thread:{id:i}}))
+  };
+  gM.Discard = function(i) {
+    sWs.send(JSON.stringify({op:'thread_discard', thread:{id:i}}))
+  };
+
   window.onload = function() {
-    var aSvc = window.location.pathname.split('/')[1]
+    var aSvc = window.location.pathname.split('/')[1];
     sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
-    sWs.onopen = function (event) {
+    sWs.onopen = function (iEvent) {
       fXhr('s'); fXhr('t'); fXhr('m'); fXhr('o');
     };
-    sWs.onmessage = function (event) {
-      document.getElementById('msg').innerHTML += event.data+'<br>';
-      var aObj = JSON.parse(event.data);
+    sWs.onmessage = function (iEvent) {
+      var aLog = document.getElementById('msg').innerText;
+      document.getElementById('msg').innerText = iEvent.data+' '+aLog;
+      var aObj = JSON.parse(iEvent.data);
       switch (aObj.op) {
       case 'service_add':
         fXhr('s');
         break;
       case 'delivery':
-        sSave = '';
         fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'ack':
-        sSave = '';
         fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        sData = 'you dont say';
         break;
       case 'thread_save':
-        sSave = aObj.id;
         fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'thread_discard':
-        sSave = '';
         fXhr('m'); fXhr('o');
-        document.getElementById('get?p').innerHTML = '';
+        document.getElementById('get?p').innerText = '';
         break;
       case 'thread_close':
         fXhr('o');
         break;
       case 'history':
-        sSave = '';
         fXhr('m'); fXhr('o');
         break;
       }
     };
-    sWs.onclose = function(event) { document.getElementById('stat').innerHTML = 'closed' };
-    sWs.onerror = function(event) { document.getElementById('stat').innerHTML = event.data };
+    sWs.onclose = function(iEvent) { document.getElementById('stat').innerText = 'closed' };
+    sWs.onerror = function(iEvent) { document.getElementById('stat').innerText = iEvent.data };
   };
 }).call(this);
 </script>
