@@ -90,6 +90,9 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
          fmt.Fprintf(os.Stderr, "storeReceived %s: thread %s already stored\n", iSvc, iHead.Id)
          return
       }
+   } else if iHead.SubHead.ThreadId[0] == '_' {
+      fmt.Fprintf(os.Stderr, "storeReceived %s: invalid thread id %s\n", iSvc, iHead.SubHead.ThreadId)
+      return
    }
    var aTd, aFd *os.File
    var aIdx []tIndexEl = []tIndexEl{{}}
