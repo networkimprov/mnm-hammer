@@ -30,6 +30,7 @@
 <table border="1">
 <tr><td>services </td><td class="pre" id="get?s">.</td></tr>
 <tr><td>threads  </td><td class="pre" id="get?t">.</td></tr>
+<tr><td>tabs     </td><td class="pre" id="get?c">.</td></tr>
 <tr><td>msg index</td><td class="pre" id="get?m">.</td></tr>
 <tr><td>open msgs</td><td class="pre" id="get?o">.</td></tr>
 <tr><td>last msg </td><td class="pre" id="get?p">.</td></tr>
@@ -41,6 +42,21 @@
 <script>
 ;var gM = {};
 (function() {
+  function fDrawThreadTabs(iSt) {
+    if (iSt.Thread === 'none')
+      return;
+    var aS =  '<button onclick="gM.SelectTab(0,0,0)">Opened</button>';
+    aS +=     '<button onclick="gM.SelectTab(0,0,1)">All</button>';
+    if (iSt.ThreadTabs.Terms) {
+      var aList = iSt.ThreadTabs.Terms;
+      for (var a=0; a < aList.length; ++a)
+        aS += '<button onclick="gM.SelectTab(0,1,'+a+')">'+aList[a]+'</button>';
+    }
+    aS +=     '<button onclick="gM.DropTab  (0)" id="tabdrop">X</button>';
+    aS +=     '<button onclick="gM.AddTab   (0,null)">Add</button>';
+    document.getElementById('get?c').innerHTML = aS;
+    document.getElementById('tabdrop').style.display = iSt.ThreadTabs.PosFor ? 'inline' : 'none';
+  }
   function fDrawMsgIndex(iList) {
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
@@ -63,7 +79,9 @@
   function fXhr(i, iP) {
     var aXhr = new XMLHttpRequest();
     aXhr.onload = function() {
-      if (i === 'm')
+      if (i === 'c')
+        fDrawThreadTabs(JSON.parse(aXhr.responseText));
+      else if (i === 'm')
         fDrawMsgIndex(JSON.parse(aXhr.responseText));
       else
         document.getElementById('get?'+i).innerText = aXhr.responseText;
@@ -101,12 +119,22 @@
   gM.Discard = function(i) {
     sWs.send(JSON.stringify({op:'thread_discard', thread:{id:i}}))
   };
+  gM.AddTab = function(iId, iTerm) {
+    sWs.send(JSON.stringify({op:'tab_add', tab:{threadid:iId, term:sData+='-'}}))
+  };
+  gM.SelectTab = function(iId, iPosFor, iPos) {
+    document.getElementById('tabdrop').style.display = iPosFor ? 'inline' : 'none';
+    sWs.send(JSON.stringify({op:'tab_select', tab:{threadid:iId, posfor:iPosFor, pos:iPos}}))
+  };
+  gM.DropTab = function(iId) {
+    sWs.send(JSON.stringify({op:'tab_drop', tab:{threadid:iId}}))
+  };
 
   window.onload = function() {
     var aSvc = window.location.pathname.split('/')[1];
     sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
     sWs.onopen = function (iEvent) {
-      fXhr('s'); fXhr('t'); fXhr('m'); fXhr('o');
+      fXhr('s'); fXhr('c'); fXhr('t'); fXhr('m'); fXhr('o');
     };
     sWs.onmessage = function (iEvent) {
       var aLog = document.getElementById('msg').innerText;
@@ -117,24 +145,31 @@
         fXhr('s');
         break;
       case 'delivery':
-        fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        fXhr('c'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'ack':
         fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         sData = 'you dont say';
         break;
       case 'thread_save':
-        fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        fXhr('c'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'thread_discard':
-        fXhr('m'); fXhr('o');
+        fXhr('c'); fXhr('m'); fXhr('o');
         document.getElementById('get?p').innerText = '';
         break;
       case 'thread_close':
         fXhr('o');
         break;
       case 'history':
-        fXhr('m'); fXhr('o');
+        fXhr('c'); fXhr('m'); fXhr('o');
+        break;
+      case 'tab_select':
+        fXhr('o');
+        break;
+      case 'tab_add':
+      case 'tab_drop':
+        fXhr('c'); fXhr('o');
         break;
       }
     };
