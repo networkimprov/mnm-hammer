@@ -9,6 +9,7 @@
 package slib
 
 import (
+   "fmt"
    "encoding/json"
    "os"
    "strings"
@@ -140,6 +141,9 @@ func (o *ClientState) addThread(iId, iLastMsgId string) {
    o.Lock(); defer o.Unlock()
    if o.Thread[iId] == nil {
       o.Thread[iId] = &tThreadState{Open: tOpenState{iLastMsgId:true}}
+   } else if iId == o.History[o.Hpos] {
+      fmt.Fprintf(os.Stderr, "addThread: ignored attempt to readd %s\n", iId)
+      return
    }
    o.Thread[iId].Refs++
    fDropRef := func(cPos int) {
@@ -149,8 +153,12 @@ func (o *ClientState) addThread(iId, iLastMsgId string) {
          delete(o.Thread, o.History[cPos])
       }
    }
-   o.Hpos += 1
-   if len(o.History)-1 < o.Hpos {
+   if o.Hpos >= 2 && iId == o.History[o.Hpos-1] && o.History[o.Hpos] == o.History[o.Hpos-2] {
+      o.Hpos-- // prevent ABAB repetition
+   } else {
+      o.Hpos++
+   }
+   if o.Hpos > len(o.History)-1 {
       o.History = append(o.History, iId)
       if o.Hpos >= kHistoryLen {
          fDropRef(0)
