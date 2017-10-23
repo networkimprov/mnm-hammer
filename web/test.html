@@ -58,6 +58,7 @@
     document.getElementById('tabdrop').style.display = iSt.ThreadTabs.PosFor ? 'inline' : 'none';
   }
   function fDrawMsgIndex(iList) {
+    sIdx = iList
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
       var aId = "'"+iList[a].Id+"'";
@@ -92,6 +93,7 @@
 
   var sWs = null;
   var sData='you dont say';
+  var sIdx = null;
 
   gM.Xhr = fXhr;
   gM.SvcAdd = function() {
@@ -106,6 +108,9 @@
   };
   gM.Recv = function() {
     sWs.send(JSON.stringify({op:'thread_ohi', thread:{}}))
+  };
+  gM.Go = function(i) {
+    sWs.send(JSON.stringify({op:'thread_set', thread:{id:i}}))
   };
   gM.Close = function(i) {
     sWs.send(JSON.stringify({op:'thread_close', thread:{id:i}}))
@@ -150,6 +155,9 @@
       case 'ack':
         fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         sData = 'you dont say';
+        if (sIdx.length === 1)
+          document.getElementById('get?t').innerHTML +=
+            '<button onclick="gM.Go(\''+aObj.id+'\')">'+aObj.id.slice(-5)+'</button>';
         break;
       case 'thread_save':
         fXhr('c'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
@@ -161,6 +169,7 @@
       case 'thread_close':
         fXhr('o');
         break;
+      case 'thread_set':
       case 'history':
         fXhr('c'); fXhr('m'); fXhr('o');
         break;
