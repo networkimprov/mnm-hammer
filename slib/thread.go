@@ -77,6 +77,16 @@ func WriteOpenMsgs(iW io.Writer, iSvc string, iState *ClientState, iId string) {
    }
 }
 
+//todo return open-msg map
+func loadThread(iSvc string, iId string) string {
+   aFd, err := os.Open(threadDir(iSvc) + iId)
+   if err != nil { quit(err) }
+   defer aFd.Close()
+   var aIdx []tIndexEl
+   _ = readIndex(aFd, &aIdx)
+   return aIdx[len(aIdx)-1].Id
+}
+
 func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
    var err error
    aThreadId := iHead.SubHead.ThreadId; if aThreadId == "" { aThreadId = iHead.Id }

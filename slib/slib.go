@@ -251,6 +251,9 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (Msg, *SendReco
       aSrec := &SendRecord{Head: Msg{"Op":7, "Id":"22", "DataLen":len(aData), "DataHead":aHeadLen,
                            "For":[]Msg{{"Id":GetData(iSvc).Uid, "Type":1}} }, Data:aData}
       return Msg{"op":iUpdt.Op}, aSrec, nil
+   case "thread_set":
+      aLastId := loadThread(iSvc, iUpdt.Thread.Id)
+      iState.addThread(iUpdt.Thread.Id, aLastId)
    case "thread_save":
       if iUpdt.Thread.Id == "" {
          aTid := ""; if !iUpdt.Thread.New { aTid = iState.getThread() }
