@@ -70,12 +70,24 @@ type ClientState struct {
    Hpos int // indexes History
    History []string // thread id
    Thread map[string]*tThreadState // key thread id
+   SvcTabs tTabs
 }
 
 type tThreadState struct {
    Open tOpenState
+   Tabs tTabs
    Discard bool
    Refs int
+}
+
+const ( eTabThread=iota; eTabService )
+
+const ( ePosForDefault=iota; ePosForTerms; ePosForPinned; ePosForEnd )
+
+type tTabs struct {
+   Pos int
+   PosFor int8
+   Terms []string
 }
 
 type tOpenState map[string]bool // key msg id
@@ -91,6 +103,24 @@ func (o tOpenState) MarshalJSON() ([]byte, error) {
    return append(aBuf, '}'), nil
 }
 
+func (o *ClientState) GetSummary() Msg {
+   o.RLock(); defer o.RUnlock()
+   aS := Msg{"Thread":"none"}
+   if o.Hpos >= 0 {
+      aS["Thread"] = o.History[o.Hpos]
+      aS["ThreadTabs"] = o.Thread[o.History[o.Hpos]].Tabs
+      aH := 0
+      if o.Hpos == 0 {
+         aH = -1
+      } else if o.Hpos == len(o.History)-1 {
+         aH = 1
+      }
+      aS["History"] = aH
+   }
+   aS["SvcTabs"] = o.SvcTabs
+   return aS
+}
+
 func (o *ClientState) getThread() string {
    o.RLock(); defer o.RUnlock()
    if o.Hpos < 0 {
@@ -101,7 +131,9 @@ func (o *ClientState) getThread() string {
 
 func (o *ClientState) isOpen(iMsgId string) bool {
    o.RLock(); defer o.RUnlock()
-   return o.Thread[o.History[o.Hpos]].Open[iMsgId]
+   aT := o.Thread[o.History[o.Hpos]]
+   return aT.Tabs.PosFor == ePosForDefault &&
+         (aT.Tabs.Pos == 1 || aT.Tabs.Pos == 0 && aT.Open[iMsgId])
 }
 
 func (o *ClientState) addThread(iId, iLastMsgId string) {
@@ -207,3 +239,49 @@ func (o *ClientState) discardThread(iId string) {
    if err != nil { quit(err) }
 }
 
+func (o *ClientState) addTab(iType int8, iTerm string) {
+   o.Lock(); defer o.Unlock()
+   aTabs := &o.SvcTabs; if iType == eTabThread { aTabs = &o.Thread[o.History[o.Hpos]].Tabs }
+   aTabs.Pos = len(aTabs.Terms)
+   aTabs.PosFor = ePosForTerms
+   aTabs.Terms = append(aTabs.Terms, iTerm)
+   err := storeFile(o.filePath, o)
+   if err != nil { quit(err) }
+}
+
+func (o *ClientState) setTab(iType int8, iPosFor int8, iPos int) {
+   o.Lock(); defer o.Unlock()
+   aTabs := &o.SvcTabs; if iType == eTabThread { aTabs = &o.Thread[o.History[o.Hpos]].Tabs }
+   if iPosFor < 0 || iPosFor >= ePosForEnd { quit(tError("setTab: iPosFor out of range")) }
+   if iPos >= len(aTabs.Terms) && iPosFor == ePosForTerms ||
+      iPos < 0 { quit(tError("setTab: iPos out of range")) }
+
+   aTabs.PosFor = iPosFor
+   aTabs.Pos = iPos
+   err := storeFile(o.filePath, o)
+   if err != nil { quit(err) }
+}
+
+func (o *ClientState) dropTab(iType int8) {
+   o.Lock(); defer o.Unlock()
+   aTabs := &o.SvcTabs; if iType == eTabThread { aTabs = &o.Thread[o.History[o.Hpos]].Tabs }
+   if aTabs.PosFor != ePosForTerms { quit(tError("dropTab: not ePosForTerms")) }
+   if len(aTabs.Terms) == 0 { quit(tError("dropTab: no terms to drop")) }
+
+   if aTabs.Pos == len(aTabs.Terms)-1 {
+      if aTabs.Pos == 0 {
+         aTabs.PosFor = ePosForDefault
+      } else {
+         aTabs.Pos--
+      }
+   } else {
+      copy(aTabs.Terms[aTabs.Pos:], aTabs.Terms[aTabs.Pos+1:])
+   }
+   if len(aTabs.Terms) == 1 {
+      aTabs.Terms = nil
+   } else {
+      aTabs.Terms = aTabs.Terms[:len(aTabs.Terms)-1]
+   }
+   err := storeFile(o.filePath, o)
+   if err != nil { quit(err) }
+}

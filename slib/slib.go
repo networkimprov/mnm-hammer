@@ -65,6 +65,12 @@ type Update struct {
    Navigate *struct {
       History int
    }
+   Tab *struct {
+      Type int8
+      Term string
+      PosFor int8
+      Pos int
+   }
    Service *tService
 }
 
@@ -276,6 +282,12 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (Msg, *SendReco
       iState.openMsg(iUpdt.Thread.Id, false)
    case "history":
       iState.goThread(iUpdt.Navigate.History)
+   case "tab_add":
+      iState.addTab(iUpdt.Tab.Type, iUpdt.Tab.Term)
+   case "tab_drop":
+      iState.dropTab(iUpdt.Tab.Type)
+   case "tab_select":
+      iState.setTab(iUpdt.Tab.Type, iUpdt.Tab.PosFor, iUpdt.Tab.Pos)
    default:
       return Msg{"op":iUpdt.Op, "err":"unknown op"}, nil, nil
    }

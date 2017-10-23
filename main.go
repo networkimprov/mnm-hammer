@@ -398,6 +398,10 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          iResp.WriteHeader(http.StatusInternalServerError)
          iResp.Write([]byte("error sending template: "+err.Error()))
       }
+   case "c": // client state
+      aMsg := aState.GetSummary()
+      err = json.NewEncoder(iResp).Encode(aMsg)
+      if err != nil { panic(err) }
    case "s": // service list
       aSvcs := slib.GetServices()
       err = json.NewEncoder(iResp).Encode(aSvcs)
