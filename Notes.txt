@@ -1,5 +1,8 @@
-struct Update.Thread for thread fields
-print err and return if storeReceived can't find threadid
+checksum thread index and service config
+
+"cs" request provides clientstate
+  history status, thread tabs, selected tab
+  selected thread, service tabs, selected tab
 
 certain buttons show confirmation pop-up next to click point
   send, discard new msg, close search tab
@@ -15,6 +18,16 @@ forms
   stylesheet: colors, fonts, borders
   version number
   define standard forms for common data types
+  functions
+    spec: download list, download item, upload & validate, upload with transient defaults
+    result: download form-table, download item/draft, upload draft, append to form-table
+    markdown tags form-blank & form-filled
+    send attaches spec or results draft
+    send/receive form-filled appends results to form-table
+    receive form-spec saves to attachments dir
+    renderSpec (js) in form-blank preview and form-filled compose
+    renderResult (js) in form-blank preview and form-filled preview
+    on reply, copy selected form-filled ref to text
 
 one service per window/tab/page
   view panels: [msg editor], msgs (under editor), threads, services
@@ -26,6 +39,7 @@ one service per window/tab/page
 
 msg panel
   panel history, per client: panel back/forward buttons change msg list panel
+    drop last item if last pair would repeat: abcb + c -> abc
   give thread subject/s
   attachment list pop-up pane
     links jump to relevant msg?
@@ -70,6 +84,9 @@ ohi panels
   whos-on normally retracted, can pin display
   who-i-ohi
 
+attachment panel
+  slide out from services panel
+
 services (notifications) panel
   click item opens tab
   back/forward buttons? switch tab if possible
@@ -100,9 +117,12 @@ msg editor
     change linebreak to ^ or non-ascii character
     change em & strong to ~
     insert > when dividing >'d paragraph
+    img/etc hrefs must be to attachment
   upload attachment
     drag/drop or copy/paste file, file dialog box
     menu of upload dir; sort by date/filename
+    attachment hrefs
+  attach by reference to previous attachment
   accept pasted HTML
     display in iframe
     make attachment
@@ -117,6 +137,7 @@ msg editor
   slides/pages
     slide hrefs
   thread/message hyperlinks
+  form-table queries?
 
 require app password for certain ops after idle period
 
@@ -171,6 +192,17 @@ contacts
   pinged alias
 
 support plugins for non-messaging threads
+
+elembe features
+  tab for collections/projects
+  collection has
+    layout file: any number of screen/document layouts
+    data files, ref'd in layouts
+    revision history
+    associated mnm group
+  alternate msg panel design
+  layout manager, history view
+  plugins for data object view/edit
 
 storage
   state directory
