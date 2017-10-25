@@ -93,6 +93,7 @@
 
   var sWs = null;
   var sData='you dont say';
+  var sTestFor = [{Id:'LG3KCJGZPVVNDPV6%JRK4H6FC6LS8P37', Type:1}];
   var sIdx = null;
 
   gM.Xhr = fXhr;
@@ -104,7 +105,8 @@
     sWs.send(JSON.stringify({op:'history', navigate:{history:i}}))
   };
   gM.Thread = function() {
-    sWs.send(JSON.stringify({op:'thread_save', thread:{id:'', data:'start thread', new:true}}))
+    sWs.send(JSON.stringify({op:'thread_save', thread:{id:'', data:'start thread', new:true,
+                             for:sTestFor}}))
   };
   gM.Recv = function() {
     sWs.send(JSON.stringify({op:'thread_ohi', thread:{}}))
@@ -116,7 +118,7 @@
     sWs.send(JSON.stringify({op:'thread_close', thread:{id:i}}))
   };
   gM.Reply = function(i) {
-    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, data:sData+='.'}}))
+    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, data:sData+='.', for:sTestFor}}))
   };
   gM.Send = function(i) {
     sWs.send(JSON.stringify({op:'thread_send', thread:{id:i}}))
