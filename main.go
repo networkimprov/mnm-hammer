@@ -166,22 +166,20 @@ func runQueue(o *tQueue) {
       case o.wakeup <- true:
          aConn = <-o.connSrc
       }
-      _, err := aConn.Write(packMsg(tMsg(aSrec.Head), aSrec.Data))
-      if err != nil { panic(err) }
-      for _, aFn := range aSrec.Files {
-         aFd, err := os.Open(aFn)
-         if err != nil { panic(err) }
-         _, err = io.Copy(aConn, aFd)
-         if err != nil { panic(err) }
-         aFd.Close()
-      }
+      err := slib.SendSaved(aConn, o.service, aSrec)
       o.connSrc <- aConn
+      if err != nil { //todo retry transient error
+         fmt.Fprintf(os.Stderr, "runQueue %s: send error %s\n", o.service, err.Error())
+         time.Sleep(5 * time.Millisecond)
+         continue
+      }
       aTmr := time.NewTimer(15 * time.Second)
    WaitForAck:
       select {
       case aMsgId := <-o.ack:
-         if aMsgId != aSrec.Head["Id"] {
-            fmt.Fprintf(os.Stderr, "runqueue %s: got ack for %s, expected %s\n", o.service, aMsgId, aSrec.Head["Id"])
+         if aMsgId != aSrec.SaveId {
+            fmt.Fprintf(os.Stderr, "runqueue %s: got ack for %s, expected %s\n",
+                        o.service, aMsgId, aSrec.SaveId)
             goto WaitForAck
          }
          aTmr.Stop()

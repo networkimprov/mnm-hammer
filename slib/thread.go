@@ -13,6 +13,7 @@ import (
    "fmt"
    "io"
    "encoding/json"
+   "net"
    "os"
    "path"
    "strconv"
@@ -75,6 +76,34 @@ func WriteOpenMsgs(iW io.Writer, iSvc string, iState *ClientState, iId string) {
          }
       }
    }
+}
+
+func SendSaved(iConn net.Conn, iSvc string, iSrec *SendRecord) error {
+   aFd, err := os.Open(threadDir(iSvc) + iSrec.SaveId)
+   if err != nil { quit(err) }
+   defer aFd.Close()
+
+   var aJson struct { Len int64; SubHead tHeader2 }
+   parseHeader(aFd, &aJson)
+   if len(aJson.SubHead.For) == 0 { quit(tError("missing to field")) }
+
+   aBuf1, err := json.Marshal(aJson.SubHead)
+   if err != nil { quit(err) }
+   aHead := Msg{"Op":7, "Id":iSrec.SaveId, "For":aJson.SubHead.For,
+                "DataHead": len(aBuf1), "DataLen": int64(len(aBuf1)) + aJson.Len }
+   aBuf0, err := json.Marshal(aHead)
+   if err != nil { quit(err) }
+   aLen := fmt.Sprintf("%04x", len(aBuf0))
+   if len(aLen) > 4 { quit(tError(fmt.Sprintf("header too long: %s %s", iSvc, iSrec.SaveId))) }
+
+   _, err = iConn.Write([]byte(aLen))
+   if err != nil { return err }
+   _, err = iConn.Write(aBuf0)
+   if err != nil { return err }
+   _, err = iConn.Write(aBuf1)
+   if err != nil { return err }
+   _, err = io.CopyN(iConn, aFd, aJson.Len) //todo only return network errors
+   return err
 }
 
 //todo return open-msg map
@@ -196,10 +225,11 @@ func storeSaved(iSvc string, iHead *Header) {
       quit(err)
    }
    defer aSd.Close()
-   var aJson struct { Len int64 }
+   var aJson struct { Len int64; SubHead tHeader2 }
    parseHeader(aSd, &aJson)
-   aHead := Header{Id:iHead.MsgId, From:GetData(iSvc).Uid, Posted:iHead.Posted, DataLen:aJson.Len,
-                   SubHead:iHead.SubHead}
+   aHead := Header{Id:iHead.MsgId, From:GetData(iSvc).Uid, Posted:iHead.Posted,
+                   DataLen:aJson.Len, SubHead:aJson.SubHead}
+   aHead.SubHead.ThreadId = aId.tid()
 
    var aIdx []tIndexEl
    var aTd, aFd *os.File
@@ -272,7 +302,8 @@ func writeSaved(iSvc string, iUpdt *Update) {
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(len(aData))}
+   aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(len(aData)), SubHead:
+                   tHeader2{ThreadId:aId.tid(), For:iUpdt.Thread.For, Subject:iUpdt.Thread.Subject}}
    writeMsgTemp(aTd, &aHead, aData, nil, aIdx, aEl) //todo stream from client
    writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
@@ -433,7 +464,7 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
    var aCw tCrcWriter
    aTee := io.MultiWriter(iTd, &aCw)
    aBuf, err := json.Marshal(Msg{"Id":iHead.Id, "From":iHead.From, "Posted":iHead.Posted,
-                                 "Len":iHead.DataLen})
+                                 "Len":iHead.DataLen, "SubHead":iHead.SubHead})
    if err != nil { quit(err) }
    aLen, err := aTee.Write([]byte(fmt.Sprintf("%04x", len(aBuf))))
    if err != nil { quit(err) }

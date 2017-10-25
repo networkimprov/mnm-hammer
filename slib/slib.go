@@ -40,10 +40,13 @@ type Header struct {
    From string
    Posted string
    DataLen, DataHead int64
-   SubHead struct {
-      ThreadId string
-      Subject string
-   }
+   SubHead tHeader2
+}
+
+type tHeader2 struct {
+   ThreadId string
+   For []tHeaderFor
+   Subject string
 }
 
 func (o *Header) Check() bool {
@@ -54,10 +57,13 @@ func (o *Header) CheckSub() bool {
    return true
 }
 
+type tHeaderFor struct { Id string; Type int8 }
+
 type Update struct {
    Op string
    Thread *struct {
       Id string
+      For []tHeaderFor
       Subject string
       Data string
       New bool
@@ -74,11 +80,7 @@ type Update struct {
    Service *tService
 }
 
-type SendRecord struct {
-   Head Msg
-   Data []byte
-   Files []string
-}
+type SendRecord struct { SaveId string }
 
 type Msg map[string]interface{}
 
@@ -245,12 +247,14 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (Msg, *SendReco
    case "thread_ohi":
       aTid := iState.getThread()
       if len(aTid) > 0 && aTid[0] == '_' { break }
-      aData, _ := json.Marshal(Msg{"ThreadId":aTid})
-      aHeadLen := len(aData)
-      aData = append(aData, "ohi there"...)
-      aSrec := &SendRecord{Head: Msg{"Op":7, "Id":"22", "DataLen":len(aData), "DataHead":aHeadLen,
-                           "For":[]Msg{{"Id":GetData(iSvc).Uid, "Type":1}} }, Data:aData}
-      return Msg{"op":iUpdt.Op}, aSrec, nil
+      aFd, err := os.OpenFile(threadDir(iSvc) + "22", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+      if err != nil { quit(err) }
+      aData := []byte("ohi there")
+      aHead := Header{DataLen:int64(len(aData)), SubHead:
+                      tHeader2{ThreadId:aTid, For:[]tHeaderFor{{Id:GetData(iSvc).Uid, Type:1}} }}
+      writeMsgTemp(aFd, &aHead, aData, nil, []tIndexEl{{}}, 0)
+      aFd.Close()
+      return Msg{"op":iUpdt.Op}, &SendRecord{SaveId: "22"}, nil
    case "thread_set":
       aLastId := loadThread(iSvc, iUpdt.Thread.Id)
       iState.addThread(iUpdt.Thread.Id, aLastId)
@@ -278,9 +282,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (Msg, *SendReco
       return Msg{"op":iUpdt.Op}, nil, aFn
    case "thread_send":
       if iUpdt.Thread.Id == "" { break }
-      aSrec := &SendRecord{Head: Msg{"Op":7, "Id":iUpdt.Thread.Id, "DataLen":1,
-                  "For":[]Msg{{"Id":"LG3KCJGZPVVNDPV6%JRK4H6FC6LS8P37", "Type":1}} }, Data:[]byte{'1'}}
-      return Msg{"op":iUpdt.Op}, aSrec, nil
+      return Msg{"op":iUpdt.Op}, &SendRecord{SaveId:iUpdt.Thread.Id}, nil
    case "thread_close":
       iState.openMsg(iUpdt.Thread.Id, false)
    case "history":
