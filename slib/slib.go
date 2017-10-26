@@ -232,17 +232,19 @@ func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (Msg, fun
    return Msg{"op":iHead.Op, "id":aMsgId}, aFn
 }
 
-func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (Msg, *SendRecord, func(*ClientState)) {
+func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
+                aMsg Msg, aSrec *SendRecord, aFn func(*ClientState)) {
+   aMsg = Msg{"op":iUpdt.Op}
    switch iUpdt.Op {
    case "service_add":
       err := addService(iUpdt.Service)
       if err != nil {
-         return Msg{"op":iUpdt.Op, "err":err.Error()}, nil, nil
+         aMsg["err"] = err.Error()
       }
    case "service_update":
       err := updateService(iUpdt.Service)
       if err != nil {
-         return Msg{"op":iUpdt.Op, "err":err.Error()}, nil, nil
+         aMsg["err"] = err.Error()
       }
    case "thread_ohi":
       aTid := iState.getThread()
@@ -254,7 +256,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (Msg, *SendReco
                       tHeader2{ThreadId:aTid, For:[]tHeaderFor{{Id:GetData(iSvc).Uid, Type:1}} }}
       writeMsgTemp(aFd, &aHead, aData, nil, []tIndexEl{{}}, 0)
       aFd.Close()
-      return Msg{"op":iUpdt.Op}, &SendRecord{SaveId: "22"}, nil
+      aSrec = &SendRecord{SaveId: "22"}
    case "thread_set":
       aLastId := loadThread(iSvc, iUpdt.Thread.Id)
       iState.addThread(iUpdt.Thread.Id, aLastId)
@@ -269,20 +271,18 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (Msg, *SendReco
       } else {
          iState.openMsg(iUpdt.Thread.Id, true)
       }
-      return Msg{"op":iUpdt.Op, "id":iUpdt.Thread.Id}, nil, nil
+      aMsg["id"] = iUpdt.Thread.Id
    case "thread_discard":
       deleteSaved(iSvc, iUpdt)
-      var aFn func(*ClientState)
       if iUpdt.Thread.Id[0] == '_' {
          aTid := iState.getThread()
          aFn = func(c *ClientState) { c.discardThread(aTid) }
       } else {
          aFn = func(c *ClientState) { c.openMsg(iUpdt.Thread.Id, false) }
       }
-      return Msg{"op":iUpdt.Op}, nil, aFn
    case "thread_send":
       if iUpdt.Thread.Id == "" { break }
-      return Msg{"op":iUpdt.Op}, &SendRecord{SaveId:iUpdt.Thread.Id}, nil
+      aSrec = &SendRecord{SaveId:iUpdt.Thread.Id}
    case "thread_close":
       iState.openMsg(iUpdt.Thread.Id, false)
    case "history":
@@ -294,9 +294,9 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (Msg, *SendReco
    case "tab_select":
       iState.setTab(iUpdt.Tab.Type, iUpdt.Tab.PosFor, iUpdt.Tab.Pos)
    default:
-      return Msg{"op":iUpdt.Op, "err":"unknown op"}, nil, nil
+      aMsg["err"] = "unknown op"
    }
-   return Msg{"op":iUpdt.Op}, nil, nil
+   return aMsg, aSrec, aFn
 }
 
 func Upload(iId string, iR io.Reader, iLen int64) error {
