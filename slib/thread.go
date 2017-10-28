@@ -262,7 +262,8 @@ func storeSaved(iSvc string, iHead *Header) {
 
 func completeStoreSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
    aRec := parseTempOk(iTmp)
-   err := os.Remove(threadDir(iSvc) + aRec.tid() + "_" + aRec.sid())
+   aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
+   err := os.Remove(threadDir(iSvc) + aTid + "_" + aRec.sid())
    if err != nil && !os.IsNotExist(err) { quit(err) }
    completeStoreReceived(iSvc, iTmp, iFd, iTd)
 }
