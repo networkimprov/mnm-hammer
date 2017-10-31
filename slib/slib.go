@@ -24,6 +24,7 @@ const kStorageDir = "store/"
 const kServiceDir = kStorageDir + "svc/"
 const kStateDir   = kStorageDir + "state/"
 const UploadDir   = kStorageDir + "upload/"
+const kUploadTmp  = UploadDir   + "temp/"
 
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]*tService)
@@ -86,12 +87,22 @@ type Msg map[string]interface{}
 
 
 func Init(iFn func(string)) {
-   for _, aDir := range [...]string{UploadDir, kServiceDir, kStateDir} {
+   for _, aDir := range [...]string{kUploadTmp, kServiceDir, kStateDir} {
       err := os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
+   initUpload()
    initStates()
    initServices(iFn)
+}
+
+func initUpload() {
+   aFiles, err := readDirNames(kUploadTmp)
+   if err != nil { quit(err) }
+   for _, aFn := range aFiles {
+      err = renameRemove(kUploadTmp + aFn, UploadDir + aFn)
+      if err != nil { quit(err) }
+   }
 }
 
 func initServices(iFn func(string)) {
@@ -310,15 +321,29 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
 }
 
 func Upload(iId string, iR io.Reader, iLen int64) error {
-   aFd, err := os.OpenFile(UploadDir+iId, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-   if err != nil { return err }
+   aOrig := UploadDir + iId
+   aTemp := kUploadTmp + iId
+   err := os.Symlink("upload_aborted", aOrig)
+   if err != nil {
+      if !os.IsExist(err) { quit(err) }
+   } else {
+      err = syncDir(UploadDir)
+      if err != nil { quit(err) }
+   }
+   aFd, err := os.OpenFile(aTemp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+   if err != nil { quit(err) }
    defer aFd.Close()
    _, err = io.CopyN(aFd, iR, iLen)
-   if err != nil { return err }
+   if err != nil { return err } //todo only return network errors
    err = aFd.Sync()
-   if err != nil { return err }
-   err = syncDir(UploadDir)
-   return err
+   if err != nil { quit(err) }
+   err = syncDir(kUploadTmp)
+   if err != nil { quit(err) }
+   err = os.Remove(aOrig)
+   if err != nil { quit(err) }
+   err = os.Rename(aTemp, aOrig)
+   if err != nil { quit(err) }
+   return nil
 }
 
 func readDirNames(iPath string) ([]string, error) {

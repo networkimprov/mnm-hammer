@@ -440,7 +440,7 @@ func runUpload(iResp http.ResponseWriter, iReq *http.Request) {
       err = slib.Upload(aId, aF, aHead.Size)
       if err != nil {
          iResp.WriteHeader(http.StatusInternalServerError)
-         iResp.Write([]byte("recvFile error: " + err.Error()))
+         iResp.Write([]byte("upload error: " + err.Error()))
          return
       }
       iResp.Write(packMsg(tMsg{"op:":"ack", "id":aId}, nil))
