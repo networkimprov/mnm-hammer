@@ -105,6 +105,7 @@ func initServices(iFn func(string)) {
          if err != nil { quit(err) }
          continue
       }
+      mktreeService(aSvc)
       completePending(aSvc)
       err = resolveTmpFile(cfgFile(aSvc) + ".tmp")
       if err != nil { quit(err) }
@@ -146,6 +147,13 @@ type tService struct {
    Node string
 }
 
+func mktreeService(iSvc string) {
+   for _, aDir := range [...]string{tempDir(iSvc), threadDir(iSvc)} {
+      err := os.MkdirAll(aDir, 0700)
+      if err != nil { quit(err) }
+   }
+}
+
 func svcDir   (iSvc string) string { return kServiceDir + iSvc + "/"        }
 func tempDir  (iSvc string) string { return kServiceDir + iSvc + "/temp/"   }
 func threadDir(iSvc string) string { return kServiceDir + iSvc + "/thread/" }
@@ -162,10 +170,7 @@ func addService(iService *tService) error {
    }
    aTemp := iService.Name + ".tmp"
    defer os.RemoveAll(svcDir(aTemp))
-   for _, aDir := range [...]string{tempDir(aTemp), threadDir(aTemp)} {
-      err = os.MkdirAll(aDir, 0700)
-      if err != nil { quit(err) }
-   }
+   mktreeService(aTemp)
    err = writeJsonFile(cfgFile(aTemp), iService)
    if err != nil { quit(err) }
 
