@@ -357,12 +357,16 @@ func writeJsonFile(iPath string, iData interface{}) error {
 }
 
 func resolveTmpFile(iPath string) error {
-   err := os.Rename(iPath, iPath[:len(iPath)-4])
+   return renameRemove(iPath, iPath[:len(iPath)-4])
+}
+
+func renameRemove(iA, iB string) error {
+   err := os.Rename(iA, iB)
    if err != nil {
       if os.IsNotExist(err) {
          err = nil
       } else if os.IsExist(err) {
-         err = os.Remove(iPath)
+         err = os.Remove(iA)
       }
    }
    return err
