@@ -268,6 +268,19 @@ func completeStoreSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
    completeStoreReceived(iSvc, iTmp, iFd, iTd)
 }
 
+func validateSaved(iSvc string, iUpdt *Update) error {
+   aId := parseSaveId(iUpdt.Thread.Id)
+   aFd, err := os.Open(threadDir(iSvc) + aId.tid() + "_" + aId.sid())
+   if err != nil { quit(err) }
+   defer aFd.Close()
+   var aJson struct { SubHead tHeader2 }
+   parseHeader(aFd, &aJson)
+   if len(aJson.SubHead.For) == 0 {
+      return tError(fmt.Sprintf("%s to-list empty", iUpdt.Thread.Id))
+   }
+   return nil
+}
+
 func writeSaved(iSvc string, iUpdt *Update) {
    aId := parseSaveId(iUpdt.Thread.Id)
    aOrig := threadDir(iSvc) + aId.tid()

@@ -287,7 +287,12 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
       }
    case "thread_send":
       if iUpdt.Thread.Id == "" { break }
-      aSrec = &SendRecord{SaveId:iUpdt.Thread.Id}
+      err := validateSaved(iSvc, iUpdt)
+      if err != nil {
+         aMsg["err"] = err.Error()
+      } else {
+         aSrec = &SendRecord{SaveId:iUpdt.Thread.Id}
+      }
    case "thread_close":
       iState.openMsg(iUpdt.Thread.Id, false)
    case "history":
