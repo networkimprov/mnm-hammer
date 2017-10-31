@@ -406,6 +406,14 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       if err != nil { panic(err) }
    case "t": // thread list
       iResp.Write([]byte("threads "+aSvc))
+   case "a": // attachment list
+      if len(aOp_Id) > 1 {
+         http.ServeFile(iResp, iReq, slib.GetPathAttach(aSvc, aState, aOp_Id[1]))
+      } else {
+         aIdx := slib.GetIdxAttach(aSvc, aState)
+         err = json.NewEncoder(iResp).Encode(aIdx)
+         if err != nil { panic(err) }
+      }
    case "m": // msg list
       aIdx := slib.GetMsgIdx(aSvc, aState)
       err = json.NewEncoder(iResp).Encode(aIdx)

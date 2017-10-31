@@ -48,6 +48,20 @@ type tHeader2 struct {
    ThreadId string
    For []tHeaderFor
    Subject string
+   Attach []tHeader2Attach `json:",omitempty"`
+}
+
+type tHeader2Attach struct {
+   Name string
+   Size int64 `json:",omitempty"`
+}
+
+func (o *tHeader2) set(iThreadId string, i *Update) {
+   o.ThreadId = iThreadId
+   o.For = i.Thread.For
+   o.Subject = i.Thread.Subject
+   o.Attach = make([]tHeader2Attach, len(i.Thread.Attach))
+   for a, aName := range i.Thread.Attach { o.Attach[a].Name = aName }
 }
 
 func (o *Header) Check() bool {
@@ -67,6 +81,7 @@ type Update struct {
       For []tHeaderFor
       Subject string
       Data string
+      Attach []string
       New bool
    }
    Navigate *struct {
@@ -159,7 +174,7 @@ type tService struct {
 }
 
 func mktreeService(iSvc string) {
-   for _, aDir := range [...]string{tempDir(iSvc), threadDir(iSvc)} {
+   for _, aDir := range [...]string{tempDir(iSvc), threadDir(iSvc), attachDir(iSvc)} {
       err := os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
@@ -168,6 +183,7 @@ func mktreeService(iSvc string) {
 func svcDir   (iSvc string) string { return kServiceDir + iSvc + "/"        }
 func tempDir  (iSvc string) string { return kServiceDir + iSvc + "/temp/"   }
 func threadDir(iSvc string) string { return kServiceDir + iSvc + "/thread/" }
+func attachDir(iSvc string) string { return kServiceDir + iSvc + "/attach/" }
 func cfgFile  (iSvc string) string { return kServiceDir + iSvc + "/config"  }
 
 func addService(iService *tService) error {
@@ -269,9 +285,12 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
       if err != nil { quit(err) }
       aData := []byte("ohi there")
       aHead := Header{DataLen:int64(len(aData)), SubHead:
-                      tHeader2{ThreadId:aTid, For:[]tHeaderFor{{Id:GetData(iSvc).Uid, Type:1}} }}
+                      tHeader2{ThreadId:aTid, For:[]tHeaderFor{{Id:GetData(iSvc).Uid, Type:1}},
+                               Attach:[]tHeader2Attach{{Name:"upload/trial"}} }}
       writeMsgTemp(aFd, &aHead, aData, nil, []tIndexEl{{}}, 0)
       aFd.Close()
+      os.Mkdir(attachSub(iSvc, "_22"), 0700)
+      os.Link(UploadDir + "trial", attachSub(iSvc, "_22") + "22_trial")
       aSrec = &SendRecord{SaveId: "_22"}
    case "thread_set":
       aLastId := loadThread(iSvc, iUpdt.Thread.Id)

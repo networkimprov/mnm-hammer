@@ -87,10 +87,12 @@ func SendSaved(iConn net.Conn, iSvc string, iSrec *SendRecord) error {
    parseHeader(aFd, &aJson)
    if len(aJson.SubHead.For) == 0 { quit(tError("missing to field")) }
 
+   aId := parseSaveId(iSrec.SaveId)
+   aAttachLen := sizeSavedAttach(iSvc, &aJson.SubHead, aId) // revs subhead
    aBuf1, err := json.Marshal(aJson.SubHead)
    if err != nil { quit(err) }
    aHead := Msg{"Op":7, "Id":iSrec.SaveId, "For":aJson.SubHead.For,
-                "DataHead": len(aBuf1), "DataLen": int64(len(aBuf1)) + aJson.Len }
+                "DataHead": len(aBuf1), "DataLen": int64(len(aBuf1)) + aJson.Len + aAttachLen }
    aBuf0, err := json.Marshal(aHead)
    if err != nil { quit(err) }
    aLen := fmt.Sprintf("%04x", len(aBuf0))
@@ -103,6 +105,8 @@ func SendSaved(iConn net.Conn, iSvc string, iSrec *SendRecord) error {
    _, err = iConn.Write(aBuf1)
    if err != nil { return err }
    _, err = io.CopyN(iConn, aFd, aJson.Len) //todo only return network errors
+   if err != nil { return err }
+   err = sendSavedAttach(iConn, iSvc, &aJson.SubHead, aId)
    return err
 }
 
@@ -178,17 +182,21 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
       if err != nil { quit(err) }
    }
    writeIndex(aTd, aIdx)
+   err = writeReceivedAttach(iSvc, iHead, iData, iR)
+   if err != nil { quit(err) }
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   completeStoreReceived(iSvc, path.Base(aTempOk), aFd, aTd)
+   completeStoreReceived(iSvc, path.Base(aTempOk), &iHead.SubHead, aFd, aTd)
 }
 
-func completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
+func completeStoreReceived(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
    var err error
    aRec := parseTempOk(iTmp)
    aTempOk := tempDir(iSvc) + iTmp
+
+   storeReceivedAttach(iSvc, iSubHead, aRec)
 
    if aRec.tid() == aRec.mid() {
       err = os.Link(aTempOk, threadDir(iSvc) + aRec.tid())
@@ -257,15 +265,19 @@ func storeSaved(iSvc string, iHead *Header) {
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   completeStoreSaved(iSvc, path.Base(aTempOk), aFd, aTd)
+   completeStoreSaved(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
 }
 
-func completeStoreSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
+func completeStoreSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
    aRec := parseTempOk(iTmp)
+
+   storeSavedAttach(iSvc, iSubHead, aRec)
+
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
    err := os.Remove(threadDir(iSvc) + aTid + "_" + aRec.sid())
    if err != nil && !os.IsNotExist(err) { quit(err) }
-   completeStoreReceived(iSvc, iTmp, iFd, iTd)
+
+   completeStoreReceived(iSvc, iTmp, nil, iFd, iTd)
 }
 
 func validateSaved(iSvc string, iUpdt *Update) error {
@@ -278,7 +290,8 @@ func validateSaved(iSvc string, iUpdt *Update) error {
    if len(aJson.SubHead.For) == 0 {
       return tError(fmt.Sprintf("%s to-list empty", iUpdt.Thread.Id))
    }
-   return nil
+   err = validateSavedAttach(iSvc, &aJson.SubHead, aId)
+   return err
 }
 
 func writeSaved(iSvc string, iUpdt *Update) {
@@ -316,22 +329,24 @@ func writeSaved(iSvc string, iUpdt *Update) {
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(len(aData)), SubHead:
-                   tHeader2{ThreadId:aId.tid(), For:iUpdt.Thread.For, Subject:iUpdt.Thread.Subject}}
+   aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(len(aData))}
+   aHead.SubHead.set(aId.tid(), iUpdt)
    writeMsgTemp(aTd, &aHead, aData, nil, aIdx, aEl) //todo stream from client
    writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   completeWriteSaved(iSvc, path.Base(aTempOk), aFd, aTd)
+   completeWriteSaved(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
 }
 
-func completeWriteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
+func completeWriteSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
    var err error
    aRec := parseTempOk(iTmp)
    aSave := threadDir(iSvc) + aRec.tid() + "_" + aRec.sid()
    aTempOk := tempDir(iSvc) + iTmp
+
+   writeSavedAttach(iSvc, iSubHead, aRec)
 
    err = os.Remove(aSave)
    if err != nil && !os.IsNotExist(err) { quit(err) }
@@ -390,7 +405,15 @@ func deleteSaved(iSvc string, iUpdt *Update) {
 }
 
 func completeDeleteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
-   completeWriteSaved(iSvc, iTmp, iFd, iTd)
+   aRec := parseTempOk(iTmp)
+   aSd, err := os.Open(threadDir(iSvc) + aRec.tid() + "_" + aRec.sid())
+   if err != nil { quit(err) }
+   var aJson struct { SubHead tHeader2 }
+   parseHeader(aSd, &aJson)
+   aSd.Close()
+   deleteSavedAttach(iSvc, &aJson.SubHead, aRec)
+
+   completeWriteSaved(iSvc, iTmp, nil, iFd, iTd)
 }
 
 func dateRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
@@ -485,11 +508,13 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
    if aLen != 4 { quit(tError("json input too long")) }
    _, err = aTee.Write(append(aBuf, '\n'))
    if err != nil { quit(err) }
-   if iHead.DataLen > 0 {
-      _, err = aTee.Write(iData)
+   aSize := iHead.DataLen - totalAttach(&iHead.SubHead)
+   if aSize > 0 {
+      aLen := int64(len(iData)); if aLen > aSize { aLen = aSize }
+      _, err = aTee.Write(iData[:aLen])
       if err != nil { quit(err) }
       if iR != nil {
-         _, err = io.CopyN(aTee, iR, iHead.DataLen - int64(len(iData)))
+         _, err = io.CopyN(aTee, iR, aSize - aLen)
          if err != nil { quit(err) }
       }
    }
@@ -508,6 +533,8 @@ func completePending(iSvc string) {
       if strings.HasSuffix(aTmp, ".tmp") {
          err = os.Remove(tempDir(iSvc) + aTmp)
          if err != nil { quit(err) }
+      } else if strings.HasSuffix(aTmp, ".atc") {
+         // ok
       } else {
          aRec := parseTempOk(aTmp)
          if len(aRec) != 5 {
@@ -525,13 +552,19 @@ func completePending(iSvc string) {
          aTd, err = os.Open(tempDir(iSvc)+aTmp)
          if err != nil { quit(err) }
          defer aTd.Close()
+         fGetSubHead := func() *tHeader2 {
+            var cJson struct { SubHead tHeader2 }
+            parseHeader(aTd, &cJson)
+            aTd.Seek(0, io.SeekStart)
+            return &cJson.SubHead
+         }
          switch aRec.op() {
          case "sr":
-            completeStoreReceived(iSvc, aTmp, aFd, aTd)
+            completeStoreReceived(iSvc, aTmp, fGetSubHead(), aFd, aTd)
          case "ss":
-            completeStoreSaved(iSvc, aTmp, aFd, aTd)
+            completeStoreSaved(iSvc, aTmp, fGetSubHead(), aFd, aTd)
          case "ws":
-            completeWriteSaved(iSvc, aTmp, aFd, aTd)
+            completeWriteSaved(iSvc, aTmp, fGetSubHead(), aFd, aTd)
          case "ds":
             completeDeleteSaved(iSvc, aTmp, aFd, aTd)
          default:
