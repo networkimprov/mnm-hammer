@@ -192,7 +192,7 @@ func completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
 
    if aRec.tid() == aRec.mid() {
       err = os.Link(aTempOk, threadDir(iSvc) + aRec.tid())
-      if err != nil { quit(err) }
+      if err != nil && !os.IsExist(err) { quit(err) }
       err = syncDir(threadDir(iSvc))
       if err != nil { quit(err) }
    } else {
