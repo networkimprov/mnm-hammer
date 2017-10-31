@@ -224,7 +224,7 @@ func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (Msg, fun
       }
       aMsgId = iHead.Id
    case "ack":
-      if iHead.Id == "22" { break }
+      if iHead.Id == "_22" { break }
       storeSaved(iSvc, iHead)
       if iHead.Id[0] == '_' {
          aFn = func(c *ClientState) { c.renameThread(iHead.Id, iHead.MsgId) }
@@ -254,14 +254,14 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
    case "thread_ohi":
       aTid := iState.getThread()
       if len(aTid) > 0 && aTid[0] == '_' { break }
-      aFd, err := os.OpenFile(threadDir(iSvc) + "22", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+      aFd, err := os.OpenFile(threadDir(iSvc) + "_22", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
       if err != nil { quit(err) }
       aData := []byte("ohi there")
       aHead := Header{DataLen:int64(len(aData)), SubHead:
                       tHeader2{ThreadId:aTid, For:[]tHeaderFor{{Id:GetData(iSvc).Uid, Type:1}} }}
       writeMsgTemp(aFd, &aHead, aData, nil, []tIndexEl{{}}, 0)
       aFd.Close()
-      aSrec = &SendRecord{SaveId: "22"}
+      aSrec = &SendRecord{SaveId: "_22"}
    case "thread_set":
       aLastId := loadThread(iSvc, iUpdt.Thread.Id)
       iState.addThread(iUpdt.Thread.Id, aLastId)
