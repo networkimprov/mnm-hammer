@@ -84,8 +84,7 @@ func SendSaved(iConn net.Conn, iSvc string, iSrec *SendRecord) error {
    if err != nil { quit(err) }
    defer aFd.Close()
 
-   var aJson struct { Len int64; SubHead tHeader2 }
-   parseHeader(aFd, &aJson)
+   aJson := parseHeader(aFd)
    if len(aJson.SubHead.For) == 0 { quit(tError("missing to field")) }
 
    aId := parseSaveId(iSrec.SaveId)
@@ -240,8 +239,7 @@ func storeSaved(iSvc string, iHead *Header) {
       quit(err)
    }
    defer aSd.Close()
-   var aJson struct { Len int64; SubHead tHeader2 }
-   parseHeader(aSd, &aJson)
+   aJson := parseHeader(aSd)
    aHead := Header{Id:iHead.MsgId, From:GetData(iSvc).Uid, Posted:iHead.Posted,
                    DataLen:aJson.Len, SubHead:aJson.SubHead}
    aHead.SubHead.ThreadId = aId.tid()
@@ -292,8 +290,7 @@ func validateSaved(iSvc string, iUpdt *Update) error {
    aFd, err := os.Open(threadDir(iSvc) + aId.tid() + "_" + aId.sid())
    if err != nil { quit(err) }
    defer aFd.Close()
-   var aJson struct { SubHead tHeader2 }
-   parseHeader(aFd, &aJson)
+   aJson := parseHeader(aFd)
    if len(aJson.SubHead.For) == 0 {
       return tError(fmt.Sprintf("%s to-list empty", iUpdt.Thread.Id))
    }
@@ -415,8 +412,7 @@ func completeDeleteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
    aRec := parseTempOk(iTmp)
    aSd, err := os.Open(threadDir(iSvc) + aRec.tid() + "_" + aRec.sid())
    if err != nil { quit(err) }
-   var aJson struct { SubHead tHeader2 }
-   parseHeader(aSd, &aJson)
+   aJson := parseHeader(aSd)
    aSd.Close()
    deleteSavedAttach(iSvc, &aJson.SubHead, aRec)
 
@@ -425,15 +421,19 @@ func completeDeleteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
 
 func dateRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
 
-func parseHeader(iFd *os.File, iHead interface{}) {
+type tHeadSaved struct { Len int64; SubHead tHeader2 }
+
+func parseHeader(iFd *os.File) *tHeadSaved {
+   var aHead tHeadSaved
    aBuf := make([]byte, 65536)
    _, err := iFd.Read(aBuf[:4])
    if err != nil { quit(err) }
    aUi, _ := strconv.ParseUint(string(aBuf[:4]), 16, 0)
    _, err = iFd.Read(aBuf[:aUi+1])
    if err != nil { quit(err) }
-   err = json.Unmarshal(aBuf[:aUi], iHead)
+   err = json.Unmarshal(aBuf[:aUi], &aHead)
    if err != nil { quit(err) }
+   return &aHead
 }
 
 func makeSaveId(iTid string) string {
@@ -561,8 +561,7 @@ func completePending(iSvc string) {
          if err != nil { quit(err) }
          defer aTd.Close()
          fGetSubHead := func() *tHeader2 {
-            var cJson struct { SubHead tHeader2 }
-            parseHeader(aTd, &cJson)
+            cJson := parseHeader(aTd)
             aTd.Seek(0, io.SeekStart)
             return &cJson.SubHead
          }
