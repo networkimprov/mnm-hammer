@@ -30,6 +30,7 @@
 <table border="1">
 <tr><td>services </td><td class="pre" id="get?s">.</td></tr>
 <tr><td>threads  </td><td class="pre" id="get?t">.</td></tr>
+<tr><td>attached </td><td class="pre" id="get?a">.</td></tr>
 <tr><td>tabs     </td><td class="pre" id="get?c">.</td></tr>
 <tr><td>msg index</td><td class="pre" id="get?m">.</td></tr>
 <tr><td>open msgs</td><td class="pre" id="get?o">.</td></tr>
@@ -42,6 +43,12 @@
 <script>
 ;var gM = {};
 (function() {
+  function fDrawAttached(iList) {
+    var aS = '';
+    for (var a=0; a < iList.length; ++a)
+      aS += '<a href="?a='+iList[a].File+'">'+JSON.stringify(iList[a])+'</a> ';
+    document.getElementById('get?a').innerHTML = aS;
+  }
   function fDrawThreadTabs(iSt) {
     if (iSt.Thread === 'none')
       return;
@@ -59,6 +66,8 @@
   }
   function fDrawMsgIndex(iList) {
     sIdx = iList
+    if (iList[0].Id !== sThread.id)
+      sThread = {id: iList[0].Id, reply: {}};
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
       var aId = "'"+iList[a].Id+"'";
@@ -70,6 +79,7 @@
         '<button onclick="gM.Reply(\'\')"       >Reply</button>';
       else
         aS +=
+        '<button onclick="gM.Attach('+aId+')"   >Attach</button>'+
         '<button onclick="gM.Reply('+aId+')"    >Save</button>'+
         '<button onclick="gM.Send('+aId+')"     >Send</button>'+
         '<button onclick="gM.Discard('+aId+')"  >Discard</button>';
@@ -80,18 +90,20 @@
   function fXhr(i, iP) {
     var aXhr = new XMLHttpRequest();
     aXhr.onload = function() {
-      if (i === 'c')
-        fDrawThreadTabs(JSON.parse(aXhr.responseText));
-      else if (i === 'm')
-        fDrawMsgIndex(JSON.parse(aXhr.responseText));
-      else
-        document.getElementById('get?'+i).innerText = aXhr.responseText;
+      switch (i) {
+      case 'a': fDrawAttached(JSON.parse(aXhr.responseText)); break;
+      case 'c': fDrawThreadTabs(JSON.parse(aXhr.responseText)); break;
+      case 'm': fDrawMsgIndex(JSON.parse(aXhr.responseText)); break;
+      default:  document.getElementById('get?'+i).innerText = aXhr.responseText;
+      }
     };
     aXhr.open('GET', '?'+i+(iP ? '='+iP : ''));
     aXhr.send();
   }
+  function fSetReply(i) { if (!sThread.reply[i]) sThread.reply[i] = {data:'', attach:null} }
 
   var sWs = null;
+  var sThread = {id:null, reply:null};
   var sData='you dont say';
   var sTestFor = [{Id:'LG3KCJGZPVVNDPV6%JRK4H6FC6LS8P37', Type:1}];
   var sIdx = null;
@@ -118,7 +130,17 @@
     sWs.send(JSON.stringify({op:'thread_close', thread:{id:i}}))
   };
   gM.Reply = function(i) {
-    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, data:sData+='.', for:sTestFor}}))
+    if (i) fSetReply(i);
+    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, for:sTestFor,
+                             data:   i ? sThread.reply[i].data += '.' : 'first save',
+                             attach: i ? sThread.reply[i].attach : null}}))
+  };
+  gM.Attach = function(i) {
+    fSetReply(i);
+    if (!sThread.reply[i].attach) sThread.reply[i].attach = ['upload/trial'];
+    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, for:sTestFor,
+                             data:   sThread.reply[i].data,
+                             attach: sThread.reply[i].attach}}))
   };
   gM.Send = function(i) {
     sWs.send(JSON.stringify({op:'thread_send', thread:{id:i}}))
@@ -141,7 +163,7 @@
     var aSvc = window.location.pathname.split('/')[1];
     sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
     sWs.onopen = function (iEvent) {
-      fXhr('s'); fXhr('c'); fXhr('t'); fXhr('m'); fXhr('o');
+      fXhr('s'); fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o');
     };
     sWs.onmessage = function (iEvent) {
       var aLog = document.getElementById('msg').innerText;
@@ -152,20 +174,20 @@
         fXhr('s');
         break;
       case 'delivery':
-        fXhr('c'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'ack':
-        fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         sData = 'you dont say';
         if (sIdx.length === 1)
           document.getElementById('get?t').innerHTML +=
             '<button onclick="gM.Go(\''+aObj.id+'\')">'+aObj.id.slice(-5)+'</button>';
         break;
       case 'thread_save':
-        fXhr('c'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'thread_discard':
-        fXhr('c'); fXhr('m'); fXhr('o');
+        fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o');
         document.getElementById('get?p').innerText = '';
         break;
       case 'thread_close':
@@ -173,7 +195,7 @@
         break;
       case 'thread_set':
       case 'history':
-        fXhr('c'); fXhr('m'); fXhr('o');
+        fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o');
         break;
       case 'tab_select':
         fXhr('o');
