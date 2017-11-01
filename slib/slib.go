@@ -241,7 +241,11 @@ func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (Msg, fun
       err := updateService(&aNewSvc)
       if err != nil { return Msg{"op":iHead.Op, "err":err.Error()}, nil }
    case "delivery":
-      storeReceived(iSvc, iHead, iData, iR)
+      err := storeReceived(iSvc, iHead, iData, iR)
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "HandleMsg %s: delivery error %s\n", iSvc, err.Error())
+         return nil, nil
+      }
       if iHead.SubHead.ThreadId == "" { // temp
          aFn = func(c *ClientState) { c.addThread(iHead.Id, iHead.Id) }
       } else {

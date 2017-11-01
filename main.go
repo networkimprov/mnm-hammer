@@ -391,43 +391,38 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          aClientId = &http.Cookie{Name: "clientid", Value: fmt.Sprint(time.Now().UTC().UnixNano())}
          http.SetCookie(iResp, aClientId)
       }
-      err := sServiceTmpl.Execute(iResp, tMsg{"Title":aSvc})
-      if err != nil {
-         iResp.WriteHeader(http.StatusInternalServerError)
-         iResp.Write([]byte("error sending template: "+err.Error()))
-      }
+      err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvc})
    case "c": // client state
       aMsg := aState.GetSummary()
       err = json.NewEncoder(iResp).Encode(aMsg)
-      if err != nil { panic(err) }
    case "s": // service list
       aSvcs := slib.GetServices()
       err = json.NewEncoder(iResp).Encode(aSvcs)
-      if err != nil { panic(err) }
    case "t": // thread list
-      iResp.Write([]byte("threads "+aSvc))
+      _, err = iResp.Write([]byte("threads "+aSvc))
    case "a": // attachment list
       if len(aOp_Id) > 1 {
          http.ServeFile(iResp, iReq, slib.GetPathAttach(aSvc, aState, aOp_Id[1]))
       } else {
          aIdx := slib.GetIdxAttach(aSvc, aState)
          err = json.NewEncoder(iResp).Encode(aIdx)
-         if err != nil { panic(err) }
       }
    case "m": // msg list
       aIdx := slib.GetMsgIdx(aSvc, aState)
       err = json.NewEncoder(iResp).Encode(aIdx)
-      if err != nil { panic(err) }
    case "o": // open msgs
-      slib.WriteOpenMsgs(iResp, aSvc, aState, "")
+      err = slib.WriteOpenMsgs(iResp, aSvc, aState, "")
    case "p": // open single msg
       if len(aOp_Id) < 2 { break }
-      slib.WriteOpenMsgs(iResp, aSvc, aState, aOp_Id[1])
+      err = slib.WriteOpenMsgs(iResp, aSvc, aState, aOp_Id[1])
    default:
       iResp.WriteHeader(http.StatusNotFound)
       iResp.Write([]byte("unknown op " + aOp_Id[0]))
    }
    fmt.Printf("svc %s op %s id %s\n", aSvc, aOp_Id[0], aClientId.Value)
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "runService %s: op %s error %s\n", aSvc, aOp_Id[0], err.Error())
+   }
 }
 
 func runUpload(iResp http.ResponseWriter, iReq *http.Request) {

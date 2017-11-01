@@ -46,8 +46,8 @@ func GetMsgIdx(iSvc string, iState *ClientState) []tIndexEl {
    return aIdx
 }
 
-func WriteOpenMsgs(iW io.Writer, iSvc string, iState *ClientState, iId string) {
-   if iState.getThread() == "" { return }
+func WriteOpenMsgs(iW io.Writer, iSvc string, iState *ClientState, iId string) error {
+   if iState.getThread() == "" { return nil }
    if iId != "" {
       iState.openMsg(iId, true)
    }
@@ -70,12 +70,13 @@ func WriteOpenMsgs(iW io.Writer, iSvc string, iState *ClientState, iId string) {
             aXd = aRd
          }
          _, err = io.CopyN(iW, aXd, aIdx[a].Size)
-         if err != nil { quit(err) }
+         if err != nil { return err } //todo only return network errors
          if iId != "" {
             break
          }
       }
    }
+   return nil
 }
 
 func SendSaved(iConn net.Conn, iSvc string, iSrec *SendRecord) error {
@@ -120,7 +121,7 @@ func loadThread(iSvc string, iId string) string {
    return aIdx[len(aIdx)-1].Id
 }
 
-func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
+func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) error {
    var err error
    aThreadId := iHead.SubHead.ThreadId; if aThreadId == "" { aThreadId = iHead.Id }
    aOrig := threadDir(iSvc) + aThreadId
@@ -131,11 +132,11 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
       _, err = os.Lstat(aOrig)
       if err == nil {
          fmt.Fprintf(os.Stderr, "storeReceived %s: thread %s already stored\n", iSvc, iHead.Id)
-         return
+         return nil
       }
    } else if iHead.SubHead.ThreadId[0] == '_' {
       fmt.Fprintf(os.Stderr, "storeReceived %s: invalid thread id %s\n", iSvc, iHead.SubHead.ThreadId)
-      return
+      return nil
    }
    var aTd, aFd *os.File
    var aIdx []tIndexEl = []tIndexEl{{}}
@@ -146,7 +147,7 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil {
          fmt.Fprintf(os.Stderr, "storeReceived %s: thread %s not found\n", iSvc, aThreadId)
-         return
+         return nil
       }
       defer aFd.Close()
       aPos = readIndex(aFd, &aIdx)
@@ -155,7 +156,7 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
       for a, _ := range aIdx {
          if aIdx[a].Id == iHead.Id {
             fmt.Fprintf(os.Stderr, "storeReceived %s: msg %s already stored\n", iSvc, iHead.Id)
-            return
+            return nil
          }
          if aIdx[a].Id > iHead.Id {
             aCopyLen = aPos - aIdx[a].Offset
@@ -174,7 +175,14 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   writeMsgTemp(aTd, iHead, iData, iR, aIdx, aEl)
+   err = writeMsgTemp(aTd, iHead, iData, iR, aIdx, aEl)
+   if err == nil {
+      err = writeReceivedAttach(iSvc, iHead, iData, iR)
+   }
+   if err != nil {
+      os.Remove(aTemp)
+      return err
+   }
    if aCopyLen > 0 {
       _, err = io.CopyN(aTd, aFd, aCopyLen)
       if err != nil { quit(err) }
@@ -182,13 +190,12 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) {
       if err != nil { quit(err) }
    }
    writeIndex(aTd, aIdx)
-   err = writeReceivedAttach(iSvc, iHead, iData, iR)
-   if err != nil { quit(err) }
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
    completeStoreReceived(iSvc, path.Base(aTempOk), &iHead.SubHead, aFd, aTd)
+   return nil
 }
 
 func completeStoreReceived(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
@@ -496,7 +503,7 @@ func (o *tCrcWriter) Write(i []byte) (int, error) {
 }
 
 func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
-                  iIdx []tIndexEl, iEl int) {
+                  iIdx []tIndexEl, iEl int) error {
    var err error
    var aCw tCrcWriter
    aTee := io.MultiWriter(iTd, &aCw)
@@ -515,7 +522,7 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
       if err != nil { quit(err) }
       if iR != nil {
          _, err = io.CopyN(aTee, iR, aSize - aLen)
-         if err != nil { quit(err) }
+         if err != nil { return err } //todo only return network errors
       }
    }
    _, err = aTee.Write([]byte{'\n'})
@@ -523,6 +530,7 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
    iIdx[iEl].Checksum = aCw.sum
    iIdx[iEl].Size, err = iTd.Seek(0, io.SeekCurrent)
    if err != nil { quit(err) }
+   return nil
 }
 
 func completePending(iSvc string) {
