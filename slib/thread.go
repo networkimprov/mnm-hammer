@@ -350,7 +350,15 @@ func completeWriteSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *
    aSave := threadDir(iSvc) + aRec.tid() + "_" + aRec.sid()
    aTempOk := tempDir(iSvc) + iTmp
 
-   writeSavedAttach(iSvc, iSubHead, aRec)
+   var aSubHeadOld *tHeader2
+   aSd, err := os.Open(aSave)
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+   } else {
+      aSubHeadOld = &parseHeader(aSd).SubHead
+      aSd.Close()
+   }
+   updateSavedAttach(iSvc, aSubHeadOld, iSubHead, aRec)
 
    err = os.Remove(aSave)
    if err != nil && !os.IsNotExist(err) { quit(err) }
@@ -409,13 +417,6 @@ func deleteSaved(iSvc string, iUpdt *Update) {
 }
 
 func completeDeleteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
-   aRec := parseTempOk(iTmp)
-   aSd, err := os.Open(threadDir(iSvc) + aRec.tid() + "_" + aRec.sid())
-   if err != nil { quit(err) }
-   aJson := parseHeader(aSd)
-   aSd.Close()
-   deleteSavedAttach(iSvc, &aJson.SubHead, aRec)
-
    completeWriteSaved(iSvc, iTmp, nil, iFd, iTd)
 }
 

@@ -15,6 +15,7 @@ import (
    "os"
    "path"
    "strings"
+   "syscall"
 )
 
 type tAttachEl struct {
@@ -175,49 +176,47 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) error {
    return nil
 }
 
-func writeSavedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
-   if iSubHead == nil || len(iSubHead.Attach) == 0 {
-      return
-   }
+func updateSavedAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tComplete) {
    var err error
+   aHasOld := iSubHeadOld != nil && len(iSubHeadOld.Attach) > 0
+   aHasNew := iSubHeadNew != nil && len(iSubHeadNew.Attach) > 0
    aTid := iRec.tid(); if aTid == "" { aTid = "_" + iRec.sid() }
-   err = os.Mkdir(attachSub(iSvc, aTid), 0700)
-   if err != nil {
-      if !os.IsExist(err) { quit(err) }
-   } else {
-      err = syncDir(attachDir(iSvc))
-      if err != nil { quit(err) }
-   }
-   for _, aFile := range iSubHead.Attach {
-      aLink := attachSub(iSvc, aTid) + iRec.sid() + "_" + path.Base(aFile.Name)
-      err = os.Remove(aLink)
-      if err != nil && !os.IsNotExist(err) { quit(err) }
-      err = os.Link(kStorageDir + aFile.Name, aLink)
-      if err != nil {
-         if !os.IsNotExist(err) { quit(err) }
-         fmt.Fprintf(os.Stderr, "writeSavedAttach: %s missing", aFile.Name) //todo inform user
+
+   if aHasOld {
+      for _, aFile := range iSubHeadOld.Attach {
+         err = os.Remove(attachSub(iSvc, aTid) + iRec.sid() + "_" + path.Base(aFile.Name))
+         if err != nil && !os.IsNotExist(err) { quit(err) }
+      }
+      if !aHasNew {
+         err = os.Remove(attachSub(iSvc, aTid))
+         if err != nil {
+            if !os.IsNotExist(err) && err.(*os.PathError).Err != syscall.ENOTEMPTY { quit(err) }
+         } else {
+            err = syncDir(attachDir(iSvc))
+            if err != nil { quit(err) }
+            return
+         }
       }
    }
-   err = syncDir(attachSub(iSvc, aTid))
-   if err != nil { quit(err) }
-}
-
-func deleteSavedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
-   if len(iSubHead.Attach) == 0 {
-      return
-   }
-   var err error
-   if iRec.tid() == "" {
-      err = os.RemoveAll(attachSub(iSvc, "_" + iRec.sid()))
-      if err != nil { quit(err) }
-      err = syncDir(attachDir(iSvc))
-      if err != nil { quit(err) }
-   } else {
-      for _, aFile := range iSubHead.Attach {
-         err = os.Remove(attachSub(iSvc, iRec.tid()) + iRec.sid() + "_" + path.Base(aFile.Name))
+   if aHasNew {
+      err = os.Mkdir(attachSub(iSvc, aTid), 0700)
+      if err != nil {
+         if !os.IsExist(err) { quit(err) }
+      } else {
+         err = syncDir(attachDir(iSvc))
          if err != nil { quit(err) }
       }
-      err = syncDir(attachSub(iSvc, iRec.tid()))
+      for _, aFile := range iSubHeadNew.Attach {
+         err = os.Link(kStorageDir + aFile.Name,
+                       attachSub(iSvc, aTid) + iRec.sid() + "_" + path.Base(aFile.Name))
+         if err != nil {
+            if !os.IsNotExist(err) { quit(err) }
+            fmt.Fprintf(os.Stderr, "updateSavedAttach %s: %s missing\n", iSvc, aFile.Name) //todo inform user
+         }
+      }
+   }
+   if aHasOld || aHasNew {
+      err = syncDir(attachSub(iSvc, aTid))
       if err != nil { quit(err) }
    }
 }
