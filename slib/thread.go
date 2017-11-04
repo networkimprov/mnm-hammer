@@ -430,9 +430,11 @@ func parseHeader(iFd *os.File) *tHeadSaved {
    _, err := iFd.Read(aBuf[:4])
    if err != nil { quit(err) }
    aUi, _ := strconv.ParseUint(string(aBuf[:4]), 16, 0)
-   _, err = iFd.Read(aBuf[:aUi+1])
+   _, err = iFd.Read(aBuf[:aUi])
    if err != nil { quit(err) }
    err = json.Unmarshal(aBuf[:aUi], &aHead)
+   if err != nil { quit(err) }
+   _, err = iFd.Seek(1, io.SeekCurrent) // consume newline
    if err != nil { quit(err) }
    return &aHead
 }
