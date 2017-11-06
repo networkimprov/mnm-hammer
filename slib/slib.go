@@ -133,8 +133,6 @@ func initServices(iFn func(string)) {
       }
       mktreeService(aSvc)
       completePending(aSvc)
-      err = resolveTmpFile(cfgFile(aSvc) + ".tmp")
-      if err != nil { quit(err) }
       aService := &tService{}
       var aFd *os.File
       aFd, err = os.Open(cfgFile(aSvc))
@@ -149,6 +147,25 @@ func initServices(iFn func(string)) {
       if err != nil { quit(err) }
    }
    sServiceStartFn = iFn
+}
+
+func completePending(iSvc string) {
+   err := resolveTmpFile(cfgFile(iSvc) + ".tmp")
+   if err != nil { quit(err) }
+
+   aTmps, err := readDirNames(tempDir(iSvc))
+   if err != nil { quit(err) }
+
+   for _, aTmp := range aTmps {
+      if strings.HasSuffix(aTmp, ".tmp") {
+         err = os.Remove(tempDir(iSvc) + aTmp)
+         if err != nil { quit(err) }
+      } else if strings.HasSuffix(aTmp, ".atc") {
+         // ok
+      } else {
+         completeThread(iSvc, aTmp)
+      }
+   }
 }
 
 func GetServices() (aS []string) {

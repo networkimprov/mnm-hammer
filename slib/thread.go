@@ -536,51 +536,40 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
    return nil
 }
 
-func completePending(iSvc string) {
-   aTmps, err := readDirNames(tempDir(iSvc))
+func completeThread(iSvc string, iTempOk string) {
+   var err error
+   aRec := parseTempOk(iTempOk)
+   if len(aRec) != 5 {
+      fmt.Fprintf(os.Stderr, "completeThread: unexpected file %s%s\n", tempDir(iSvc), iTempOk)
+      return
+   }
+   fmt.Printf("complete %s\n", iTempOk)
+   var aFd, aTd *os.File
+   if aRec.tid() != "" && aRec.tid() != aRec.mid() {
+      aFd, err = os.OpenFile(threadDir(iSvc)+aRec.tid(), os.O_RDWR, 0600)
+      if err != nil { quit(err) }
+      defer aFd.Close()
+      _, err = aFd.Seek(aRec.pos(), io.SeekStart)
+      if err != nil { quit(err) }
+   }
+   aTd, err = os.Open(tempDir(iSvc)+iTempOk)
    if err != nil { quit(err) }
-
-   for _, aTmp := range aTmps {
-      if strings.HasSuffix(aTmp, ".tmp") {
-         err = os.Remove(tempDir(iSvc) + aTmp)
-         if err != nil { quit(err) }
-      } else if strings.HasSuffix(aTmp, ".atc") {
-         // ok
-      } else {
-         aRec := parseTempOk(aTmp)
-         if len(aRec) != 5 {
-            fmt.Fprintf(os.Stderr, "completePending: unexpected file %s%s\n", tempDir(iSvc), aTmp)
-            continue
-         }
-         var aFd, aTd *os.File
-         if aRec.tid() != "" && aRec.tid() != aRec.mid() {
-            aFd, err = os.OpenFile(threadDir(iSvc)+aRec.tid(), os.O_RDWR, 0600)
-            if err != nil { quit(err) }
-            defer aFd.Close()
-            _, err = aFd.Seek(aRec.pos(), io.SeekStart)
-            if err != nil { quit(err) }
-         }
-         aTd, err = os.Open(tempDir(iSvc)+aTmp)
-         if err != nil { quit(err) }
-         defer aTd.Close()
-         fGetSubHead := func() *tHeader2 {
-            cJson := parseHeader(aTd)
-            aTd.Seek(0, io.SeekStart)
-            return &cJson.SubHead
-         }
-         switch aRec.op() {
-         case "sr":
-            completeStoreReceived(iSvc, aTmp, fGetSubHead(), aFd, aTd)
-         case "ss":
-            completeStoreSaved(iSvc, aTmp, fGetSubHead(), aFd, aTd)
-         case "ws":
-            completeWriteSaved(iSvc, aTmp, fGetSubHead(), aFd, aTd)
-         case "ds":
-            completeDeleteSaved(iSvc, aTmp, aFd, aTd)
-         default:
-            fmt.Fprintf(os.Stderr, "completePending: unexpected op %s%s\n", tempDir(iSvc), aTmp)
-         }
-      }
+   defer aTd.Close()
+   fGetSubHead := func() *tHeader2 {
+      cJson := parseHeader(aTd)
+      aTd.Seek(0, io.SeekStart)
+      return &cJson.SubHead
+   }
+   switch aRec.op() {
+   case "sr":
+      completeStoreReceived(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+   case "ss":
+      completeStoreSaved(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+   case "ws":
+      completeWriteSaved(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+   case "ds":
+      completeDeleteSaved(iSvc, iTempOk, aFd, aTd)
+   default:
+      fmt.Fprintf(os.Stderr, "completeThread: unexpected op %s%s\n", tempDir(iSvc), iTempOk)
    }
 }
-
