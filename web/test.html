@@ -16,6 +16,11 @@
 </form>
 </p>
 
+<p>Form Tables:
+<a target="mnm_recv" href="?form=abc_recv">Received</a>
+<a target="mnm_sent" href="?form=xyz_sent">Sent</a>
+</p>
+
 <div>
 <button onclick="gM.SvcAdd()">Add Service</button>
 </div>
@@ -80,6 +85,8 @@
       else
         aS +=
         '<button onclick="gM.Attach('+aId+')"   >Attach</button>'+
+        '<button onclick="gM.Form('+aId+')"     >Form</button>'+
+        '<button onclick="gM.Drop('+aId+')"     >Drop</button> '+
         '<button onclick="gM.Reply('+aId+')"    >Save</button>'+
         '<button onclick="gM.Send('+aId+')"     >Send</button>'+
         '<button onclick="gM.Discard('+aId+')"  >Discard</button>';
@@ -100,7 +107,6 @@
     aXhr.open('GET', '?'+i+(iP ? '='+iP : ''));
     aXhr.send();
   }
-  function fSetReply(i) { if (!sThread.reply[i]) sThread.reply[i] = {data:'', attach:null} }
 
   var sWs = null;
   var sThread = {id:null, reply:null};
@@ -129,18 +135,39 @@
   gM.Close = function(i) {
     sWs.send(JSON.stringify({op:'thread_close', thread:{id:i}}))
   };
-  gM.Reply = function(i) {
-    if (i) fSetReply(i);
+  function fSetReply(i) {
+    if (!sThread.reply[i])
+      sThread.reply[i] = { data:'', attach:[], form_fill:{} };
+  }
+  function fSend(i) {
     sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, for:sTestFor,
-                             data:   i ? sThread.reply[i].data += '.' : 'first save',
-                             attach: i ? sThread.reply[i].attach : null}}))
+                             data:     i ? sThread.reply[i].data : '',
+                             attach:   i ? sThread.reply[i].attach : null,
+                             formFill: i ? sThread.reply[i].form_fill : null}}))
+  }
+  gM.Reply = function(i) {
+    if (i) {
+      fSetReply(i);
+      sThread.reply[i].data += '.';
+    }
+    fSend(i);
   };
   gM.Attach = function(i) {
     fSetReply(i);
-    if (!sThread.reply[i].attach) sThread.reply[i].attach = ['upload/trial'];
-    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, for:sTestFor,
-                             data:   sThread.reply[i].data,
-                             attach: sThread.reply[i].attach}}))
+    sThread.reply[i].attach.push('upload/trial');
+    fSend(i);
+  };
+  gM.Form = function(i) {
+    fSetReply(i);
+    sThread.reply[i].form_fill['xyz'] = '{"field":"value"}';
+    sThread.reply[i].attach.push('form_fill/xyz');
+    fSend(i);
+  };
+  gM.Drop = function(i) {
+    fSetReply(i);
+    sThread.reply[i].form_fill = {};
+    sThread.reply[i].attach = [];
+    fSend(i);
   };
   gM.Send = function(i) {
     sWs.send(JSON.stringify({op:'thread_send', thread:{id:i}}))
