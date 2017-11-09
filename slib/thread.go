@@ -519,6 +519,7 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
    _, err = aTee.Write(append(aBuf, '\n'))
    if err != nil { quit(err) }
    aSize := iHead.DataLen - totalAttach(&iHead.SubHead)
+   if aSize < 0 { return tError("attachment size total exceeds DataLen") }
    if aSize > 0 {
       aLen := int64(len(iData)); if aLen > aSize { aLen = aSize }
       _, err = aTee.Write(iData[:aLen])
