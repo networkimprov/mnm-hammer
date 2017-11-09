@@ -106,7 +106,7 @@ func SendSaved(iConn net.Conn, iSvc string, iSrec *SendRecord) error {
    if err != nil { return err }
    _, err = io.CopyN(iConn, aFd, aJson.Len) //todo only return network errors
    if err != nil { return err }
-   err = sendSavedAttach(iConn, iSvc, &aJson.SubHead, aId)
+   err = sendSavedAttach(iConn, iSvc, &aJson.SubHead, aId, aFd)
    return err
 }
 
@@ -176,7 +176,7 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) error
    defer aTd.Close()
    err = writeMsgTemp(aTd, iHead, iData, iR, aIdx, aEl)
    if err == nil {
-      err = writeReceivedAttach(iSvc, iHead, iData, iR)
+      err = tempReceivedAttach(iSvc, iHead, iData, iR)
    }
    if err != nil {
       os.Remove(aTemp)
@@ -242,7 +242,7 @@ func storeSaved(iSvc string, iHead *Header) {
    aJson := parseHeader(aSd)
    aHead := Header{Id:iHead.MsgId, From:GetData(iSvc).Uid, Posted:iHead.Posted,
                    DataLen:aJson.Len, SubHead:aJson.SubHead}
-   aHead.SubHead.ThreadId = aId.tid()
+   aHead.SubHead.setStore(aId.tid())
 
    var aIdx []tIndexEl
    var aTd, aFd *os.File
@@ -266,6 +266,7 @@ func storeSaved(iSvc string, iHead *Header) {
    defer aTd.Close()
    writeMsgTemp(aTd, &aHead, nil, aSd, aIdx, len(aIdx)-1)
    writeIndex(aTd, aIdx)
+   tempSavedAttach(iSvc, &aHead, aSd)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
@@ -334,8 +335,9 @@ func writeSaved(iSvc string, iUpdt *Update) {
    if err != nil { quit(err) }
    defer aTd.Close()
    aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(len(aData))}
-   aHead.SubHead.set(aId.tid(), iUpdt)
+   aHead.SubHead.setWrite(aId.tid(), iUpdt)
    writeMsgTemp(aTd, &aHead, aData, nil, aIdx, aEl) //todo stream from client
+   writeFormFillAttach(aTd, &aHead.SubHead, iUpdt.Thread.FormFill, &aIdx[aEl])
    writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
@@ -529,9 +531,9 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
          if err != nil { return err } //todo only return network errors
       }
    }
-   _, err = aTee.Write([]byte{'\n'})
+   _, err = iTd.Write([]byte{'\n'})
    if err != nil { quit(err) }
-   iIdx[iEl].Checksum = aCw.sum
+   iIdx[iEl].Checksum = aCw.sum // excludes final '\n'
    iIdx[iEl].Size, err = iTd.Seek(0, io.SeekCurrent)
    if err != nil { quit(err) }
    return nil

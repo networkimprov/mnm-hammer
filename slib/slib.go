@@ -49,6 +49,7 @@ type tHeader2 struct {
    For []tHeaderFor
    Subject string
    Attach []tHeader2Attach `json:",omitempty"`
+   isSaved bool
 }
 
 type tHeader2Attach struct {
@@ -56,12 +57,17 @@ type tHeader2Attach struct {
    Size int64 `json:",omitempty"`
 }
 
-func (o *tHeader2) set(iThreadId string, i *Update) {
+func (o *tHeader2) setWrite(iThreadId string, i *Update) {
    o.ThreadId = iThreadId
    o.For = i.Thread.For
    o.Subject = i.Thread.Subject
-   o.Attach = make([]tHeader2Attach, len(i.Thread.Attach))
-   for a, aName := range i.Thread.Attach { o.Attach[a].Name = aName }
+   o.Attach = makeAttach(i)
+   o.isSaved = true
+}
+
+func (o *tHeader2) setStore(iThreadId string) {
+   o.ThreadId = iThreadId
+   o.isSaved = true
 }
 
 func (o *Header) Check() bool {
@@ -82,6 +88,7 @@ type Update struct {
       Subject string
       Data string
       Attach []string
+      FormFill map[string]string
       New bool
    }
    Navigate *struct {
@@ -158,8 +165,7 @@ func completePending(iSvc string) {
 
    for _, aTmp := range aTmps {
       if strings.HasSuffix(aTmp, ".tmp") {
-         err = os.Remove(tempDir(iSvc) + aTmp)
-         if err != nil { quit(err) }
+         defer os.Remove(tempDir(iSvc) + aTmp)
       } else if strings.HasSuffix(aTmp, ".atc") {
          // ok
       } else {
@@ -191,7 +197,7 @@ type tService struct {
 }
 
 func mktreeService(iSvc string) {
-   for _, aDir := range [...]string{tempDir(iSvc), threadDir(iSvc), attachDir(iSvc)} {
+   for _, aDir := range [...]string{tempDir(iSvc), threadDir(iSvc), attachDir(iSvc), formDir(iSvc)} {
       err := os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
@@ -201,6 +207,7 @@ func svcDir   (iSvc string) string { return kServiceDir + iSvc + "/"        }
 func tempDir  (iSvc string) string { return kServiceDir + iSvc + "/temp/"   }
 func threadDir(iSvc string) string { return kServiceDir + iSvc + "/thread/" }
 func attachDir(iSvc string) string { return kServiceDir + iSvc + "/attach/" }
+func formDir  (iSvc string) string { return kServiceDir + iSvc + "/form/"   }
 func cfgFile  (iSvc string) string { return kServiceDir + iSvc + "/config"  }
 
 func addService(iService *tService) error {
@@ -306,9 +313,12 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
       if err != nil { quit(err) }
       aData := []byte("ohi there")
       aHead := Header{DataLen:int64(len(aData)), SubHead:
-                      tHeader2{ThreadId:aTid, For:[]tHeaderFor{{Id:GetData(iSvc).Uid, Type:1}},
-                               Attach:[]tHeader2Attach{{Name:"upload/trial"}} }}
+               tHeader2{ThreadId:aTid, isSaved:true, For:
+               []tHeaderFor{{Id:GetData(iSvc).Uid, Type:1}}, Attach:
+               []tHeader2Attach{{Name:"upload/trial"}, {Name:"form_fill/abc", Size:13}} }}
+      aForm := map[string]string{"abc":`{"key":"val"}`}
       writeMsgTemp(aFd, &aHead, aData, nil, []tIndexEl{{}}, 0)
+      writeFormFillAttach(aFd, &aHead.SubHead, aForm, &tIndexEl{})
       aFd.Close()
       os.Mkdir(attachSub(iSvc, "_22"), 0700)
       os.Link(UploadDir + "trial", attachSub(iSvc, "_22") + "22_trial")

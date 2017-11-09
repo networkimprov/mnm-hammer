@@ -415,6 +415,8 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "p": // open single msg
       if len(aOp_Id) < 2 { break }
       err = slib.WriteOpenMsgs(iResp, aSvc, aState, aOp_Id[1])
+   case "form":
+      http.ServeFile(iResp, iReq, slib.GetPathForm(aSvc, aOp_Id[1]))
    default:
       iResp.WriteHeader(http.StatusNotFound)
       iResp.Write([]byte("unknown op " + aOp_Id[0]))
