@@ -7,14 +7,16 @@
 .pre { font-family:monospace; white-space:pre-wrap; }
 </style>
 
-<p>
-<form method="POST" action="/t/trial" enctype="multipart/form-data">
-<a href="/web/service.html">get web file</a>
-<input type="file" name="filename">
-<input type="submit" value="upload">
-<a href="/t/trial">download</a>
-</form>
-</p>
+<div>
+<a target="mnm_web" href="/web/service.html">web file</a>
+<form method="POST" action="/t/+trial" enctype="multipart/form-data" style="display:inline!important">
+  <input type="file" name="filename">
+  <input type="submit" value="upload"></form>
+<form method="POST" action="/t/-trial" style="display:inline!important">
+  <input type="submit" value="drop"></form>
+<a target="mnm_upload" href="/t/trial">download</a>
+<a target="mnm_upload" href="/t/">list</a>
+</div>
 
 <p>Form Tables:
 <a target="mnm_recv" href="?form=abc_recv">Received</a>
