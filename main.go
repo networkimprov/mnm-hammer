@@ -429,26 +429,34 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
 
 func runUpload(iResp http.ResponseWriter, iReq *http.Request) {
    aId := iReq.URL.Path[3:]
-   if aId == "" {
-      iResp.WriteHeader(http.StatusNotAcceptable)
-      iResp.Write([]byte("requires /t/temp_id"))
-      return
-   }
    if iReq.Method == "POST" {
-      aF, aHead, err := iReq.FormFile("filename")
-      if err != nil {
-         iResp.WriteHeader(http.StatusNotAcceptable)
-         iResp.Write([]byte("formfile error: " + err.Error()))
+      fErr := func(cSt int, cMsg string) { iResp.WriteHeader(cSt); iResp.Write([]byte(cMsg)) }
+      aStatus := "ok"
+      if aId[0] == '+' {
+         aF, aHead, err := iReq.FormFile("filename")
+         if err != nil {
+            fErr(http.StatusNotAcceptable, "formfile error: " + err.Error())
+            return
+         }
+         defer aF.Close()
+         err = slib.AddUpload(aId[1:], aF, aHead.Size)
+         if err != nil {
+            fErr(http.StatusInternalServerError, "upload error: " + err.Error())
+            return
+         }
+      } else if aId[0] == '-' {
+         if !slib.DropUpload(aId[1:]) {
+            aStatus = "not found"
+         }
+      } else {
+         fErr(http.StatusNotAcceptable, "missing +/- operator")
          return
       }
-      defer aF.Close()
-      err = slib.Upload(aId, aF, aHead.Size)
-      if err != nil {
-         iResp.WriteHeader(http.StatusInternalServerError)
-         iResp.Write([]byte("upload error: " + err.Error()))
-         return
-      }
-      iResp.Write(packMsg(tMsg{"op:":"ack", "id":aId}, nil))
+      iResp.Write(packMsg(tMsg{"op:":"ack", "id":aId, "status":aStatus}, nil))
+   } else if aId == "" {
+      aIdx := slib.GetIdxUpload()
+      err := json.NewEncoder(iResp).Encode(aIdx)
+      if err != nil { fmt.Fprintf(os.Stderr, "runUpload: %s\n", err.Error()) }
    } else {
       http.ServeFile(iResp, iReq, slib.UploadDir + aId)
    }
