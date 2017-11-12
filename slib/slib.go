@@ -432,6 +432,8 @@ func DropUpload(iId string) bool {
    return err == nil
 }
 
+func MakeMsgUpload() Msg { return Msg{"op":"upload"} }
+
 func readDirNames(iPath string) ([]string, error) {
    aFd, err := os.Open(iPath)
    if err != nil { return nil, err }

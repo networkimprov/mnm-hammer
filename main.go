@@ -109,6 +109,17 @@ func getService(iSvc string) tService {
    return sServices[iSvc]
 }
 
+func toAllClients(iMsg slib.Msg) {
+   aJson, err := json.Marshal(iMsg)
+   if err != nil { panic(err) }
+   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
+   for _, aV := range sServices {
+      aV.ccs.Range(func(cC *tWsConn) {
+         cC.WriteMessage(gws.TextMessage, aJson)
+      })
+   }
+}
+
 type tQueue struct {
    sync.Once // to start runQueue
    once func() // input to .Do()
@@ -452,6 +463,7 @@ func runUpload(iResp http.ResponseWriter, iReq *http.Request) {
          fErr(http.StatusNotAcceptable, "missing +/- operator")
          return
       }
+      toAllClients(slib.MakeMsgUpload())
       iResp.Write(packMsg(tMsg{"op:":"ack", "id":aId, "status":aStatus}, nil))
    } else if aId == "" {
       aIdx := slib.GetIdxUpload()
