@@ -522,10 +522,7 @@ func runWs(iResp http.ResponseWriter, iReq *http.Request) {
       aJson, err = json.Marshal(aCmsg)
       if err != nil { panic(err) }
       aClients.Range(func(cC *tWsConn) {
-         err = cC.WriteMessage(gws.TextMessage, aJson)
-         if err != nil {
-            fmt.Fprintf(os.Stderr, "runws %s: writemsg: %s\n", aSvc, err.Error())
-         }
+         cC.WriteMessage(gws.TextMessage, aJson)
          if aFn != nil { aFn(cC.state) }
       })
       if aSrec != nil {
@@ -575,9 +572,12 @@ type tWsConn struct {
    state *slib.ClientState
 }
 
-func (o *tWsConn) WriteMessage(iT int, iB []byte) error {
+func (o *tWsConn) WriteMessage(iT int, iB []byte) {
    o.Lock(); defer o.Unlock()
-   return o.conn.WriteMessage(iT, iB)
+   err := o.conn.WriteMessage(iT, iB)
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "WriteMessage: %s\n", err.Error())
+   }
 }
 
 type tMsg map[string]interface{}
