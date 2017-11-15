@@ -81,7 +81,7 @@ func mainResult() int {
    }
 
    http.HandleFunc("/"  , runService)
-   http.HandleFunc("/t/", runUpload)
+   http.HandleFunc("/t/", runPost)
    http.HandleFunc("/s/", runWs)
    http.HandleFunc("/web/", runFile)
    err = sHttpSrvr.ListenAndServe()
@@ -438,39 +438,56 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    }
 }
 
-func runUpload(iResp http.ResponseWriter, iReq *http.Request) {
+type tPostSet struct {
+   add func(string, string, io.Reader) error
+   drop func(string) bool
+   updt func() slib.Msg
+   list func() []interface{}
+   path func(string) string
+}
+
+var sUpload = tPostSet{
+   add: slib.AddUpload,
+   drop: slib.DropUpload,
+   updt: slib.MakeMsgUpload,
+   list: slib.GetIdxUpload,
+   path: slib.GetPathUpload,
+}
+
+func runPost(iResp http.ResponseWriter, iReq *http.Request) {
+   aSet := sUpload
    aId := iReq.URL.Path[3:]
    if iReq.Method == "POST" {
       fErr := func(cSt int, cMsg string) { iResp.WriteHeader(cSt); iResp.Write([]byte(cMsg)) }
       aStatus := "ok"
       if aId[0] == '+' {
-         aF, aHead, err := iReq.FormFile("filename")
+         aF, _, err := iReq.FormFile("filename")
          if err != nil {
             fErr(http.StatusNotAcceptable, "formfile error: " + err.Error())
             return
          }
          defer aF.Close()
-         err = slib.AddUpload(aId[1:], aF, aHead.Size)
+         err = aSet.add(aId[1:], "", aF)
          if err != nil {
             fErr(http.StatusInternalServerError, "upload error: " + err.Error())
             return
          }
       } else if aId[0] == '-' {
-         if !slib.DropUpload(aId[1:]) {
+         if !aSet.drop(aId[1:]) {
             aStatus = "not found"
          }
       } else {
          fErr(http.StatusNotAcceptable, "missing +/- operator")
          return
       }
-      toAllClients(slib.MakeMsgUpload())
+      toAllClients(aSet.updt())
       iResp.Write(packMsg(tMsg{"op:":"ack", "id":aId, "status":aStatus}, nil))
    } else if aId == "" {
-      aIdx := slib.GetIdxUpload()
+      aIdx := aSet.list()
       err := json.NewEncoder(iResp).Encode(aIdx)
-      if err != nil { fmt.Fprintf(os.Stderr, "runUpload: %s\n", err.Error()) }
+      if err != nil { fmt.Fprintf(os.Stderr, "runPost: %s\n", err.Error()) }
    } else {
-      http.ServeFile(iResp, iReq, slib.UploadDir + aId)
+      http.ServeFile(iResp, iReq, aSet.path(aId))
    }
 }
 

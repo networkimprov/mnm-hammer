@@ -26,31 +26,39 @@ func initUpload() {
 
 type tUploadEl struct { Name string; Size int64; Date string }
 
-func GetIdxUpload() []tUploadEl {
+func GetIdxUpload() []interface{} {
    var err error
    aDir, err := readDirNames(UploadDir)
    if err != nil { quit(err) }
-   aList := make([]tUploadEl, len(aDir)-1) // omit temp/
+   aList := make([]interface{}, len(aDir)-1) // omit temp/
    var a int
    for _, aFn := range aDir {
       if aFn == "temp" { continue }
+      var aEl tUploadEl
       var aFi os.FileInfo
       aFi, err = os.Lstat(UploadDir + aFn)
       if err != nil && !os.IsNotExist(err) { quit(err) }
       if err == nil {
-         aList[a].Size = aFi.Size()
-         aList[a].Date = aFi.ModTime().UTC().Format(time.RFC3339)
+         aEl.Size = aFi.Size()
+         aEl.Date = aFi.ModTime().UTC().Format(time.RFC3339)
       } else {
-         aList[a].Date = " dropped" // sorts to top
+         aEl.Date = " dropped" // sorts to top
       }
-      aList[a].Name = aFn
+      aEl.Name = aFn
+      aList[a] = &aEl
       a++
    }
-   sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Date > aList[cB].Date })
+   sort.Slice(aList, func(cA, cB int) bool {
+      return aList[cA].(*tUploadEl).Date > aList[cB].(*tUploadEl).Date
+   })
    return aList
 }
 
-func AddUpload(iId string, iR io.Reader, iLen int64) error {
+func GetPathUpload(iId string) string {
+   return UploadDir + iId
+}
+
+func AddUpload(iId, iDupe string, iR io.Reader) error {
    if iId == "" { quit(tError("missing filename")) }
    aOrig := UploadDir + iId
    aTemp := kUploadTmp + iId
@@ -64,7 +72,7 @@ func AddUpload(iId string, iR io.Reader, iLen int64) error {
    aFd, err := os.OpenFile(aTemp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aFd.Close()
-   _, err = io.CopyN(aFd, iR, iLen)
+   _, err = io.Copy(aFd, iR)
    if err != nil { return err } //todo only return network errors
    err = aFd.Sync()
    if err != nil { quit(err) }
