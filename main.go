@@ -344,7 +344,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
       if aHead.Info == "login ok" {
          aQ.connSrc <- iConn
       } else {
-         if aHead.Op == "ack" {
+         if aHead.Op == "ack" && aHead.Error == "" {
             select {
             case aQ.ack <- aHead.Id:
             default:

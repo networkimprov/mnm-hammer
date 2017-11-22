@@ -35,6 +35,7 @@ var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
 type Header struct {
    Op string
+   Error string
    Id, MsgId string
    Uid, NodeId string
    Info string
@@ -245,16 +246,16 @@ func GetQueue(iSvc string) ([]*SendRecord, error) {
    return nil, nil
 }
 
-func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (Msg, func(*ClientState)) {
-   var aFn func(*ClientState)
-   var aMsgId string
+func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (
+               aMsg Msg, aFn func(*ClientState)) {
+   aMsg = Msg{"op":iHead.Op}
    switch iHead.Op {
    case "registered":
       aNewSvc := *GetData(iSvc)
       aNewSvc.Uid = iHead.Uid
       aNewSvc.Node = iHead.NodeId
       err := updateService(&aNewSvc)
-      if err != nil { return Msg{"op":iHead.Op, "err":err.Error()}, nil }
+      if err != nil { aMsg["err"] = err.Error() }
    case "delivery":
       err := storeReceived(iSvc, iHead, iData, iR)
       if err != nil {
@@ -268,9 +269,14 @@ func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (Msg, fun
             if c.getThread() == iHead.SubHead.ThreadId { c.openMsg(iHead.Id, true) }
          }
       }
-      aMsgId = iHead.Id
+      aMsg["id"] = iHead.Id
    case "ack":
       if iHead.Id == "_22" { break }
+      aMsg["msgid"] = iHead.MsgId
+      if iHead.Error != "" {
+         aMsg["err"] = iHead.Error
+         break
+      }
       storeSaved(iSvc, iHead)
       if iHead.Id[0] == '_' {
          aFn = func(c *ClientState) { c.renameThread(iHead.Id, iHead.MsgId) }
@@ -278,9 +284,8 @@ func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (Msg, fun
          aTid := parseSaveId(iHead.Id).tid()
          aFn = func(c *ClientState) { c.renameMsg(aTid, iHead.Id, iHead.MsgId) }
       }
-      aMsgId = iHead.MsgId
    }
-   return Msg{"op":iHead.Op, "id":aMsgId}, aFn
+   return aMsg, aFn
 }
 
 func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
