@@ -18,6 +18,18 @@
 <a target="mnm_upload" href="/t/">list</a>
 </div>
 
+<div>Blank Forms
+<form method="POST" action="/f/+trial" enctype="multipart/form-data" style="display:inline!important">
+  <input type="hidden" name="filename" value='{"key":"value"}'>
+  <input type="submit" value="upload"></form>
+<form method="POST" action="/f/*trial+2nd" style="display:inline!important">
+  <input type="submit" value="duplicate"></form>
+<form method="POST" action="/f/-trial" style="display:inline!important">
+  <input type="submit" value="drop"></form>
+<a target="mnm_upload" href="/f/trial">download</a>
+<a target="mnm_upload" href="/f/">list</a>
+</div>
+
 <p>Form Tables:
 <a target="mnm_recv" href="?form=abc_recv">Received</a>
 <a target="mnm_sent" href="?form=xyz_sent">Sent</a>
@@ -87,7 +99,8 @@
       else
         aS +=
         '<button onclick="gM.Attach('+aId+')"   >Attach</button>'+
-        '<button onclick="gM.Form('+aId+')"     >Form</button>'+
+        '<button onclick="gM.Blank('+aId+')"    >Blank</button>'+
+        '<button onclick="gM.Fill('+aId+')"     >Fill</button>'+
         '<button onclick="gM.Drop('+aId+')"     >Drop</button> '+
         '<button onclick="gM.Reply('+aId+')"    >Save</button>'+
         '<button onclick="gM.Send('+aId+')"     >Send</button>'+
@@ -159,7 +172,12 @@
     sThread.reply[i].attach.push('upload/trial');
     fSend(i);
   };
-  gM.Form = function(i) {
+  gM.Blank = function(i) {
+    fSetReply(i);
+    sThread.reply[i].attach.push('form/trial');
+    fSend(i);
+  };
+  gM.Fill = function(i) {
     fSetReply(i);
     sThread.reply[i].form_fill['xyz'] = '{"field":"value"}';
     sThread.reply[i].attach.push('form_fill/xyz');
