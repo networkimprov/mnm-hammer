@@ -68,6 +68,7 @@ func (o *tHeader2) setWrite(iThreadId string, i *Update) {
 
 func (o *tHeader2) setStore(iThreadId string) {
    o.ThreadId = iThreadId
+   o.Attach = sentAttach(o.Attach)
    o.isSaved = true
 }
 
@@ -317,7 +318,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
       writeFormFillAttach(aFd, &aHead.SubHead, aForm, &tIndexEl{})
       aFd.Close()
       os.Mkdir(attachSub(iSvc, "_22"), 0700)
-      os.Link(UploadDir + "trial", attachSub(iSvc, "_22") + "22_trial")
+      os.Link(UploadDir + "trial", attachSub(iSvc, "_22") + "22_u:trial")
       aSrec = &SendRecord{SaveId: "_22"}
    case "thread_set":
       aLastId := loadThread(iSvc, iUpdt.Thread.Id)

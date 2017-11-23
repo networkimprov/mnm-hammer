@@ -46,7 +46,7 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
       } else {
          aSend[a].MsgId = aPair[0]
       }
-      aSend[a].Name = aPair[1]
+      aSend[a].Name = aPair[1][2:] // omit x: tag
       var aFi os.FileInfo
       aFi, err = os.Lstat(attachSub(iSvc, aId) + aFn)
       if err != nil { quit(err) }
@@ -79,10 +79,10 @@ func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) int64 {
 
    for a, aFile := range iSubHead.Attach {
       if aFile.Size == 0 {
-         aFi, err := os.Lstat(aPrefix + path.Base(aFile.Name))
+         aFi, err := os.Lstat(aPrefix + _pathToTag(aFile.Name))
          if err != nil { quit(err) }
          iSubHead.Attach[a].Size = aFi.Size()
-         iSubHead.Attach[a].Name = path.Base(aFile.Name)
+         iSubHead.Attach[a].Name = _pathToTag(aFile.Name)
       }
       aTotal += iSubHead.Attach[a].Size
    }
@@ -97,7 +97,7 @@ func sendSavedAttach(iConn net.Conn, iSvc string, iSubHead *tHeader2, iId tSaveI
       var aXd, aFd *os.File = iFd, nil
       var aFi os.FileInfo
       if !strings.HasPrefix(aFile.Name, "form_fill/") {
-         aFd, err = os.Open(aPrefix + path.Base(aFile.Name))
+         aFd, err = os.Open(aPrefix + aFile.Name)
          if err != nil { quit(err) }
          defer aFd.Close()
          aFi, err = aFd.Stat()
@@ -185,6 +185,14 @@ func storeReceivedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    _storeFormAttach(iSvc, iSubHead, iRec)
 }
 
+func sentAttach(i []tHeader2Attach) []tHeader2Attach {
+   for a, _ := range i {
+      if strings.HasPrefix(i[a].Name, "form_fill/") { continue }
+      i[a].Name = _pathToTag(i[a].Name)
+   }
+   return i
+}
+
 func tempSavedAttach(iSvc string, iHead *Header, iSd *os.File) {
    var err error
    aDoSync := false
@@ -215,8 +223,8 @@ func storeSavedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    for _, aFile := range iSubHead.Attach {
       if strings.HasPrefix(aFile.Name, "form_fill/") { continue }
       aDoSync = true
-      err = renameRemove(attachSub(iSvc, iRec.tid()) + iRec.sid() + "_" + path.Base(aFile.Name),
-                         attachSub(iSvc, iRec.tid()) + iRec.mid() + "_" + path.Base(aFile.Name))
+      err = renameRemove(attachSub(iSvc, iRec.tid()) + iRec.sid() + "_" + aFile.Name,
+                         attachSub(iSvc, iRec.tid()) + iRec.mid() + "_" + aFile.Name)
       if err != nil { quit(err) }
    }
    if aDoSync {
@@ -244,7 +252,7 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) error {
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
    for _, aFile := range iSubHead.Attach {
       if strings.HasPrefix(aFile.Name, "form_fill/") { continue }
-      _, err := os.Lstat(attachSub(iSvc, aTid) + iId.sid() + "_" + path.Base(aFile.Name))
+      _, err := os.Lstat(attachSub(iSvc, aTid) + iId.sid() + "_" + _pathToTag(aFile.Name))
       if err != nil {
          return tError(fmt.Sprintf("%s missing %s", aTid, aFile.Name))
       }
@@ -290,7 +298,7 @@ func updateSavedAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
    if aHasOld {
       for _, aFile := range iSubHeadOld.Attach {
          if strings.HasPrefix(aFile.Name, "form_fill/") { continue }
-         err = os.Remove(attachSub(iSvc, aTid) + iRec.sid() + "_" + path.Base(aFile.Name))
+         err = os.Remove(attachSub(iSvc, aTid) + iRec.sid() + "_" + _pathToTag(aFile.Name))
          if err != nil && !os.IsNotExist(err) { quit(err) }
       }
       if !aHasNew {
@@ -315,7 +323,7 @@ func updateSavedAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
       for _, aFile := range iSubHeadNew.Attach {
          if strings.HasPrefix(aFile.Name, "form_fill/") { continue }
          err = os.Link(kStorageDir + aFile.Name,
-                       attachSub(iSvc, aTid) + iRec.sid() + "_" + path.Base(aFile.Name))
+                       attachSub(iSvc, aTid) + iRec.sid() + "_" + _pathToTag(aFile.Name))
          if err != nil {
             if !os.IsNotExist(err) { quit(err) }
             fmt.Fprintf(os.Stderr, "updateSavedAttach %s: %s missing\n", iSvc, aFile.Name) //todo inform user
@@ -333,5 +341,9 @@ func totalAttach(iSubHead *tHeader2) int64 {
    var aLen int64
    for _, aFile := range iSubHead.Attach { aLen += aFile.Size }
    return aLen
+}
+
+func _pathToTag(i string) string {
+   return i[:1] + ":" + path.Base(i)
 }
 
