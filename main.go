@@ -27,6 +27,7 @@ import (
    "net/http"
    "io"
    "encoding/json"
+   "mime/multipart"
    "net"
    "os"
    "mnm-hammer/slib"
@@ -461,13 +462,17 @@ func runPost(iResp http.ResponseWriter, iReq *http.Request) {
       fErr := func(cSt int, cMsg string) { iResp.WriteHeader(cSt); iResp.Write([]byte(cMsg)) }
       aStatus := "ok"
       if aId[0] == '+' {
-         aF, _, err := iReq.FormFile("filename")
+         var aPart *multipart.Part
+         aR, err := iReq.MultipartReader()
+         if err == nil {
+            aPart, err = aR.NextPart()
+         }
          if err != nil {
-            fErr(http.StatusNotAcceptable, "formfile error: " + err.Error())
+            fErr(http.StatusNotAcceptable, "form error: " + err.Error())
             return
          }
-         defer aF.Close()
-         err = aSet.add(aId[1:], "", aF)
+         defer aPart.Close()
+         err = aSet.add(aId[1:], "", aPart)
          if err != nil {
             fErr(http.StatusInternalServerError, "upload error: " + err.Error())
             return
