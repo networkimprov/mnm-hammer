@@ -18,6 +18,7 @@ import (
    "path"
    "strings"
    "sync"
+   "time"
 )
 
 const kStorageDir = "store/"
@@ -25,6 +26,7 @@ const kServiceDir = kStorageDir + "svc/"
 const kStateDir   = kStorageDir + "state/"
 const UploadDir   = kStorageDir + "upload/"
 const kUploadTmp  = UploadDir   + "temp/"
+const kFormDir    = kStorageDir + "form/"
 
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]*tService)
@@ -56,13 +58,14 @@ type tHeader2 struct {
 type tHeader2Attach struct {
    Name string
    Size int64 `json:",omitempty"`
+   Ffn string `json:",omitempty"`
 }
 
-func (o *tHeader2) setWrite(iThreadId string, i *Update) {
+func (o *tHeader2) setWrite(iThreadId string, i *Update, iSvc string) {
    o.ThreadId = iThreadId
    o.For = i.Thread.For
    o.Subject = i.Thread.Subject
-   o.Attach = makeAttach(i)
+   o.Attach = savedAttach(iSvc, i)
    o.isSaved = true
 }
 
@@ -111,11 +114,12 @@ type Msg map[string]interface{}
 
 
 func Init(iFn func(string)) {
-   for _, aDir := range [...]string{kUploadTmp, kServiceDir, kStateDir} {
+   for _, aDir := range [...]string{kUploadTmp, kServiceDir, kStateDir, kFormDir} {
       err := os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
    initUpload()
+   initForms()
    initStates()
    initServices(iFn)
 }
@@ -178,6 +182,12 @@ func GetServices() (aS []string) {
 func GetData(iSvc string) *tService {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
    return sServices[iSvc]
+}
+
+func getUriService(iSvc string) string {
+   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
+   aSvc := sServices[iSvc]
+   return aSvc.Addr +"/"+ aSvc.Uid +"/"
 }
 
 type tService struct {
@@ -425,6 +435,8 @@ func syncDir(iPath string) error {
    aFd.Close()
    return err
 }
+
+func dateRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
 
 func quit(err error) {
    fmt.Fprintf(os.Stderr, "quit after %s\n", err.Error())

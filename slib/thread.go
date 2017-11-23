@@ -335,7 +335,7 @@ func writeSaved(iSvc string, iUpdt *Update) {
    if err != nil { quit(err) }
    defer aTd.Close()
    aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(len(aData))}
-   aHead.SubHead.setWrite(aId.tid(), iUpdt)
+   aHead.SubHead.setWrite(aId.tid(), iUpdt, iSvc)
    writeMsgTemp(aTd, &aHead, aData, nil, aIdx, aEl) //todo stream from client
    writeFormFillAttach(aTd, &aHead.SubHead, iUpdt.Thread.FormFill, &aIdx[aEl])
    writeIndex(aTd, aIdx)
@@ -421,8 +421,6 @@ func deleteSaved(iSvc string, iUpdt *Update) {
 func completeDeleteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
    completeWriteSaved(iSvc, iTmp, nil, iFd, iTd)
 }
-
-func dateRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
 
 type tHeadSaved struct { Len int64; SubHead tHeader2 }
 

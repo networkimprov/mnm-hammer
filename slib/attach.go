@@ -61,12 +61,17 @@ func GetPathAttach(iSvc string, iState *ClientState, iFile string) string {
 
 func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
 
-func makeAttach(i *Update) []tHeader2Attach {
+func savedAttach(iSvc string, i *Update) []tHeader2Attach {
    aAtc := make([]tHeader2Attach, len(i.Thread.Attach))
    for a, aName := range i.Thread.Attach {
       aAtc[a].Name = aName
       if strings.HasPrefix(aName, "form_fill/") {
          aAtc[a].Size = int64(len(i.Thread.FormFill[aName[10:]]))
+      } else if strings.HasPrefix(aName, "form/") {
+         aAtc[a].Ffn = readFfnBlankForm(aName[5:])
+         if aAtc[a].Ffn == "local" {
+            aAtc[a].Ffn = getUriService(iSvc) + aName[5:]
+         }
       }
    }
    return aAtc
@@ -252,6 +257,9 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) error {
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
    for _, aFile := range iSubHead.Attach {
       if strings.HasPrefix(aFile.Name, "form_fill/") { continue }
+      if strings.HasPrefix(aFile.Name, "form/") && aFile.Ffn[0] == '#' {
+         return tError(aFile.Ffn[1:])
+      }
       _, err := os.Lstat(attachSub(iSvc, aTid) + iId.sid() + "_" + _pathToTag(aFile.Name))
       if err != nil {
          return tError(fmt.Sprintf("%s missing %s", aTid, aFile.Name))

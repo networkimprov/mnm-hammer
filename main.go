@@ -83,6 +83,7 @@ func mainResult() int {
 
    http.HandleFunc("/"  , runService)
    http.HandleFunc("/t/", runPost)
+   http.HandleFunc("/f/", runPost)
    http.HandleFunc("/s/", runWs)
    http.HandleFunc("/web/", runFile)
    err = sHttpSrvr.ListenAndServe()
@@ -455,8 +456,16 @@ var sUpload = tPostSet{
    path: slib.GetPathUpload,
 }
 
+var sForm = tPostSet{
+   add: slib.AddBlankForm,
+   drop: slib.DropBlankForm,
+   updt: slib.MakeMsgBlankForm,
+   list: slib.GetIdxBlankForm,
+   path: slib.GetPathBlankForm,
+}
+
 func runPost(iResp http.ResponseWriter, iReq *http.Request) {
-   aSet := sUpload
+   aSet := sUpload; if iReq.URL.Path[1] == 'f' { aSet = sForm }
    aId := iReq.URL.Path[3:]
    if iReq.Method == "POST" {
       fErr := func(cSt int, cMsg string) { iResp.WriteHeader(cSt); iResp.Write([]byte(cMsg)) }
@@ -475,6 +484,18 @@ func runPost(iResp http.ResponseWriter, iReq *http.Request) {
          err = aSet.add(aId[1:], "", aPart)
          if err != nil {
             fErr(http.StatusInternalServerError, "upload error: " + err.Error())
+            return
+         }
+      } else if aId[0] == '*' {
+         var err error
+         aPrev_New := strings.SplitN(aId[1:], "+", 2)
+         if len(aPrev_New) < 2 || aPrev_New[1] == "" {
+            err = tError("missing + param")
+         } else {
+            err = aSet.add(aPrev_New[0], aPrev_New[1], nil)
+         }
+         if err != nil {
+            fErr(http.StatusNotAcceptable, "duplicate error: " + err.Error())
             return
          }
       } else if aId[0] == '-' {
@@ -615,4 +636,7 @@ func packMsg(iJso tMsg, iData []byte) []byte {
    aBuf = append(aBuf, iData...)
    return aBuf
 }
+
+type tError string
+func (o tError) Error() string { return string(o) }
 
