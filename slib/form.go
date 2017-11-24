@@ -253,12 +253,12 @@ func tempForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHea
               iData []byte, iR io.Reader) error {
    var err error
    var aFd *os.File
-   aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name[10:] + ".tmp"
+   aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name + ".tmp"
    aFd, err = os.OpenFile(aFn, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
 
    var aFi os.FileInfo
-   aFi, err = os.Lstat(formDir(iSvc) + iFile.Name[10:] + iSuffix)
+   aFi, err = os.Lstat(formDir(iSvc) + iFile.Name[2:] + iSuffix)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos := int64(2); if err == nil { aPos = aFi.Size() }
    _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x", aPos, aPos))) // 2 copies for safety
@@ -291,7 +291,7 @@ func tempForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHea
 func storeForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach) bool {
    var err error
    var aFd, aTd *os.File
-   aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name[10:] + ".tmp"
+   aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name + ".tmp"
    aTd, err = os.Open(aFn)
    if err != nil { quit(err) }
    aBuf := make([]byte, 32)
@@ -306,7 +306,7 @@ func storeForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach
       quit(tError(fmt.Sprintf("position values do not match in %s", aFn)))
       //todo recovery instructions
    }
-   aFtable := formDir(iSvc) + iFile.Name[10:] + iSuffix
+   aFtable := formDir(iSvc) + iFile.Name[2:] + iSuffix
    _, err = os.Lstat(aFtable)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aDoSync := err != nil

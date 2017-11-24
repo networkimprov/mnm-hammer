@@ -66,6 +66,7 @@ func savedAttach(iSvc string, i *Update) []tHeader2Attach {
    for a, aName := range i.Thread.Attach {
       aAtc[a].Name = aName
       if strings.HasPrefix(aName, "form_fill/") {
+         aAtc[a].Name = "r:" + aName[10:]
          aAtc[a].Size = int64(len(i.Thread.FormFill[aName[10:]]))
       } else if strings.HasPrefix(aName, "form/") {
          aAtc[a].Ffn = readFfnBlankForm(aName[5:])
@@ -101,7 +102,7 @@ func sendSavedAttach(iConn net.Conn, iSvc string, iSubHead *tHeader2, iId tSaveI
    for _, aFile := range iSubHead.Attach {
       var aXd, aFd *os.File = iFd, nil
       var aFi os.FileInfo
-      if !strings.HasPrefix(aFile.Name, "form_fill/") {
+      if !_isFormFill(aFile.Name) {
          aFd, err = os.Open(aPrefix + aFile.Name)
          if err != nil { quit(err) }
          defer aFd.Close()
@@ -128,15 +129,17 @@ func tempReceivedAttach(iSvc string, iHead *Header, iData []byte, iR io.Reader) 
    aPath := make([]string, len(iHead.SubHead.Attach))
    for a, aFile := range iHead.SubHead.Attach {
       aDoSync = true
-      if strings.HasPrefix(aFile.Name, "form_fill/") {
+      aPath[a] = tempDir(iSvc) + iHead.Id + "_" + aFile.Name + ".tmp" //todo escape '/' in .Name
+      if _isFormFill(aFile.Name) {
          aTid := iHead.SubHead.ThreadId; if aTid == "" { aTid = iHead.Id }
          err = tempForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iData, iR)
-         if err != nil { break }
-         aPath[a] = tempDir(iSvc) + iHead.Id + "_" + aFile.Name[10:] + ".tmp"
+         if err != nil {
+            aPath[a] = "" // tempForm() removed file
+            break
+         }
          if aFile.Size >= int64(len(iData)) { iData = nil } else { iData = iData[aFile.Size:] }
          continue
       }
-      aPath[a] = tempDir(iSvc) + iHead.Id + "_" + aFile.Name + ".tmp" //todo escape '/' in .Name
       var aFd *os.File
       aFd, err = os.OpenFile(aPath[a], os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
       if err != nil { quit(err) }
@@ -184,7 +187,7 @@ func storeReceivedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    }
    aDoSync := false
    for _, aFile := range iSubHead.Attach {
-      if strings.HasPrefix(aFile.Name, "form_fill/") { continue }
+      if _isFormFill(aFile.Name) { continue }
       aDoSync = true
       err = renameRemove(tempDir(iSvc) + iRec.mid() + "_" + aFile.Name + ".tmp",
                          attachSub(iSvc, iRec.tid()) + iRec.mid() + "_" + aFile.Name)
@@ -199,7 +202,7 @@ func storeReceivedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
 
 func sentAttach(i []tHeader2Attach) []tHeader2Attach {
    for a, _ := range i {
-      if strings.HasPrefix(i[a].Name, "form_fill/") { continue }
+      if _isFormFill(i[a].Name) { continue }
       i[a].Name = _pathToTag(i[a].Name)
    }
    return i
@@ -209,7 +212,7 @@ func tempSavedAttach(iSvc string, iHead *Header, iSd *os.File) {
    var err error
    aDoSync := false
    for _, aFile := range iHead.SubHead.Attach {
-      if !strings.HasPrefix(aFile.Name, "form_fill/") { continue }
+      if !_isFormFill(aFile.Name) { continue }
       aDoSync = true
       err = tempForm(iSvc, iHead.SubHead.ThreadId, iHead.Id, kSuffixSent, &aFile, nil, iSd)
       if err != nil { quit(err) }
@@ -233,7 +236,7 @@ func storeSavedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    }
    aDoSync := false
    for _, aFile := range iSubHead.Attach {
-      if strings.HasPrefix(aFile.Name, "form_fill/") { continue }
+      if _isFormFill(aFile.Name) { continue }
       aDoSync = true
       err = renameRemove(attachSub(iSvc, iRec.tid()) + iRec.sid() + "_" + aFile.Name,
                          attachSub(iSvc, iRec.tid()) + iRec.mid() + "_" + aFile.Name)
@@ -250,7 +253,7 @@ func _storeFormAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    aSuffix := kSuffixRecv; if iRec.sid() != "" { aSuffix = kSuffixSent }
    aDoSync := false
    for _, aFile := range iSubHead.Attach {
-      if !strings.HasPrefix(aFile.Name, "form_fill/") { continue }
+      if !_isFormFill(aFile.Name) { continue }
       aOk := storeForm(iSvc, iRec.mid(), aSuffix, &aFile)
       aDoSync = aDoSync || aOk
    }
@@ -263,7 +266,7 @@ func _storeFormAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
 func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) error {
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
    for _, aFile := range iSubHead.Attach {
-      if strings.HasPrefix(aFile.Name, "form_fill/") { continue }
+      if _isFormFill(aFile.Name) { continue }
       if strings.HasPrefix(aFile.Name, "form/") && aFile.Ffn[0] == '#' {
          return tError(aFile.Ffn[1:])
       }
@@ -282,12 +285,12 @@ func writeFormFillAttach(iFd *os.File, iSubHead *tHeader2, iMap map[string]strin
    aSize := iEl.Size
 
    for _, aFile := range iSubHead.Attach {
-      if !strings.HasPrefix(aFile.Name, "form_fill/") { continue }
+      if !_isFormFill(aFile.Name) { continue }
       if iEl.Size == aSize {
          _, err = iFd.Seek(-1, io.SeekCurrent) // overwrite '\n'
          if err != nil { quit(err) }
       }
-      aS := []byte(iMap[aFile.Name[10:]])
+      aS := []byte(iMap[aFile.Name[2:]])
       if int64(len(aS)) != aFile.Size || aFile.Size <= 0 {
          quit(tError("empty or mis-sized " + aFile.Name))
       }
@@ -312,7 +315,7 @@ func updateSavedAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
 
    if aHasOld {
       for _, aFile := range iSubHeadOld.Attach {
-         if strings.HasPrefix(aFile.Name, "form_fill/") { continue }
+         if _isFormFill(aFile.Name) { continue }
          err = os.Remove(attachSub(iSvc, aTid) + iRec.sid() + "_" + _pathToTag(aFile.Name))
          if err != nil && !os.IsNotExist(err) { quit(err) }
       }
@@ -336,7 +339,7 @@ func updateSavedAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
          if err != nil { quit(err) }
       }
       for _, aFile := range iSubHeadNew.Attach {
-         if strings.HasPrefix(aFile.Name, "form_fill/") { continue }
+         if _isFormFill(aFile.Name) { continue }
          err = os.Link(kStorageDir + aFile.Name,
                        attachSub(iSvc, aTid) + iRec.sid() + "_" + _pathToTag(aFile.Name))
          if err != nil {
@@ -356,6 +359,10 @@ func totalAttach(iSubHead *tHeader2) int64 {
    var aLen int64
    for _, aFile := range iSubHead.Attach { aLen += aFile.Size }
    return aLen
+}
+
+func _isFormFill(iName string) bool {
+   return strings.HasPrefix(iName, "r:")
 }
 
 func _pathToTag(i string) string {

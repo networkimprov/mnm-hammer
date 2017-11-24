@@ -322,7 +322,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
       aHead := Header{DataLen:int64(len(aData)), SubHead:
                tHeader2{ThreadId:aTid, isSaved:true, For:
                []tHeaderFor{{Id:GetData(iSvc).Uid, Type:1}}, Attach:
-               []tHeader2Attach{{Name:"upload/trial"}, {Name:"form_fill/abc", Size:13}} }}
+               []tHeader2Attach{{Name:"upload/trial"}, {Name:"r:abc", Size:13}} }}
       aForm := map[string]string{"abc":`{"key":"val"}`}
       writeMsgTemp(aFd, &aHead, aData, nil, []tIndexEl{{}}, 0)
       writeFormFillAttach(aFd, &aHead.SubHead, aForm, &tIndexEl{})
