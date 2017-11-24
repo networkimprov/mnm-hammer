@@ -125,18 +125,20 @@ func tempReceivedAttach(iSvc string, iHead *Header, iData []byte, iR io.Reader) 
       iData = iData[aWritten:]
    }
    aDoSync := false
-   for _, aFile := range iHead.SubHead.Attach {
+   aPath := make([]string, len(iHead.SubHead.Attach))
+   for a, aFile := range iHead.SubHead.Attach {
       aDoSync = true
       if strings.HasPrefix(aFile.Name, "form_fill/") {
          aTid := iHead.SubHead.ThreadId; if aTid == "" { aTid = iHead.Id }
          err = tempForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iData, iR)
-         if err != nil { return err }
+         if err != nil { break }
+         aPath[a] = tempDir(iSvc) + iHead.Id + "_" + aFile.Name[10:] + ".tmp"
          if aFile.Size >= int64(len(iData)) { iData = nil } else { iData = iData[aFile.Size:] }
          continue
       }
-      aPath := tempDir(iSvc) + iHead.Id + "_" + aFile.Name + ".tmp" //todo escape '/' in .Name
+      aPath[a] = tempDir(iSvc) + iHead.Id + "_" + aFile.Name + ".tmp" //todo escape '/' in .Name
       var aFd *os.File
-      aFd, err = os.OpenFile(aPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+      aFd, err = os.OpenFile(aPath[a], os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
       if err != nil { quit(err) }
       defer aFd.Close()
       var aLen int64 = 0
@@ -149,12 +151,17 @@ func tempReceivedAttach(iSvc string, iHead *Header, iData []byte, iR io.Reader) 
       if aLen < aFile.Size {
          _, err = io.CopyN(aFd, iR, aFile.Size - aLen)
          if err != nil {
-            os.Remove(aPath)
-            return err //todo only return net errors
+            break //todo only return net errors
          }
       }
       err = aFd.Sync()
       if err != nil { quit(err) }
+   }
+   if err != nil {
+      for _, aP := range aPath {
+         if aP != "" { os.Remove(aP) }
+      }
+      return err
    }
    if aDoSync {
       err = syncDir(tempDir(iSvc))
