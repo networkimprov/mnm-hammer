@@ -510,16 +510,16 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
    var err error
    var aCw tCrcWriter
    aTee := io.MultiWriter(iTd, &aCw)
+   aSize := iHead.DataLen - totalAttach(&iHead.SubHead)
+   if aSize < 0 { return tError("attachment size total exceeds DataLen") }
    aBuf, err := json.Marshal(Msg{"Id":iHead.Id, "From":iHead.From, "Posted":iHead.Posted,
-                                 "Len":iHead.DataLen, "SubHead":iHead.SubHead})
+                                 "Len":aSize, "SubHead":iHead.SubHead})
    if err != nil { quit(err) }
    aLen, err := aTee.Write([]byte(fmt.Sprintf("%04x", len(aBuf))))
    if err != nil { quit(err) }
    if aLen != 4 { quit(tError("json input too long")) }
    _, err = aTee.Write(append(aBuf, '\n'))
    if err != nil { quit(err) }
-   aSize := iHead.DataLen - totalAttach(&iHead.SubHead)
-   if aSize < 0 { return tError("attachment size total exceeds DataLen") }
    if aSize > 0 {
       aLen := int64(len(iData)); if aLen > aSize { aLen = aSize }
       _, err = aTee.Write(iData[:aLen])
