@@ -172,7 +172,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iData []byte, iR io.Reader)
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   err = _writeMsgTemp(aTd, iHead, iData, iR, aIdx, aEl)
+   err = _writeMsgTemp(aTd, iHead, iData, iR, &aIdx[aEl])
    if err == nil {
       err = tempReceivedAttach(iSvc, iHead, iData, iR)
    }
@@ -262,7 +262,7 @@ func storeSentThread(iSvc string, iHead *Header) {
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   _writeMsgTemp(aTd, &aHead, nil, aSd, aIdx, len(aIdx)-1)
+   _writeMsgTemp(aTd, &aHead, nil, aSd, &aIdx[len(aIdx)-1])
    _writeIndex(aTd, aIdx)
    tempSentAttach(iSvc, &aHead, aSd)
    err = os.Rename(aTemp, aTempOk)
@@ -336,7 +336,7 @@ func storeSavedThread(iSvc string, iUpdt *Update) {
    defer aTd.Close()
    aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(len(aData))}
    aHead.SubHead.setWrite(aId.tid(), iUpdt, iSvc)
-   _writeMsgTemp(aTd, &aHead, aData, nil, aIdx, aEl) //todo stream from client
+   _writeMsgTemp(aTd, &aHead, aData, nil, &aIdx[aEl]) //todo stream from client
    writeFormFillAttach(aTd, &aHead.SubHead, iUpdt.Thread.FormFill, &aIdx[aEl])
    _writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
@@ -487,8 +487,7 @@ func _writeIndex(iTd *os.File, iIdx []tIndexEl) {
    if err != nil { quit(err) }
 }
 
-func _writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
-                  iIdx []tIndexEl, iEl int) error {
+func _writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader, iEl *tIndexEl) error {
    var err error
    var aCw tCrcWriter
    aTee := io.MultiWriter(iTd, &aCw)
@@ -513,8 +512,8 @@ func _writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
    }
    _, err = iTd.Write([]byte{'\n'})
    if err != nil { quit(err) }
-   iIdx[iEl].Checksum = aCw.sum // excludes final '\n'
-   iIdx[iEl].Size, err = iTd.Seek(0, io.SeekCurrent)
+   iEl.Checksum = aCw.sum // excludes final '\n'
+   iEl.Size, err = iTd.Seek(0, io.SeekCurrent)
    if err != nil { quit(err) }
    return nil
 }

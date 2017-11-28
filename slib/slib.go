@@ -330,7 +330,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
                   {Name:"form/trial", Ffn:"form-reg.github.io/cat/trial"} }}}
       aForm := map[string]string{"abc":
          `{"nr":1, "so":"s", "bd":true, "or":{ "anr":[[1,2],[1,2]], "aso":["s","s","s"] }}`}
-      _writeMsgTemp(aFd, &aHead, aData, nil, []tIndexEl{{}}, 0)
+      _writeMsgTemp(aFd, &aHead, aData, nil, &tIndexEl{})
       writeFormFillAttach(aFd, &aHead.SubHead, aForm, &tIndexEl{})
       aFd.Close()
       os.Mkdir(attachSub(iSvc, "_22"), 0700)
