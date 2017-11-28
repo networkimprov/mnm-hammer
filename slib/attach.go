@@ -63,15 +63,16 @@ func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
 
 func savedAttach(iSvc string, i *Update) []tHeader2Attach {
    aAtc := make([]tHeader2Attach, len(i.Thread.Attach))
-   for a, aName := range i.Thread.Attach {
-      aAtc[a].Name = aName
-      if strings.HasPrefix(aName, "form_fill/") {
-         aAtc[a].Name = "r:" + aName[10:]
-         aAtc[a].Size = int64(len(i.Thread.FormFill[aName[10:]]))
-      } else if strings.HasPrefix(aName, "form/") {
-         aAtc[a].Ffn = readFfnBlankForm(aName[5:])
+   for a, aObj := range i.Thread.Attach {
+      aAtc[a].Name = aObj.Name
+      if strings.HasPrefix(aObj.Name, "form_fill/") {
+         aAtc[a].Name = "r:" + aObj.Name[10:]
+         aAtc[a].Size = int64(len(i.Thread.FormFill[aObj.Name[10:]]))
+         aAtc[a].Ffn = aObj.Ffn
+      } else if strings.HasPrefix(aObj.Name, "form/") {
+         aAtc[a].Ffn = readFfnBlankForm(aObj.Name[5:])
          if aAtc[a].Ffn == "local" {
-            aAtc[a].Ffn = getUriService(iSvc) + aName[5:]
+            aAtc[a].Ffn = getUriService(iSvc) + aObj.Name[5:]
          }
       }
    }
@@ -263,14 +264,22 @@ func _storeFormAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    }
 }
 
-func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) error {
+func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.File) error {
+   var err error
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
    for _, aFile := range iSubHead.Attach {
-      if _isFormFill(aFile.Name) { continue }
+      if _isFormFill(aFile.Name) {
+         aBuf := make([]byte, aFile.Size)
+         _, err = iFd.Read(aBuf)
+         if err != nil { quit(err) }
+         err = validateForm(iSvc, aBuf, aFile.Ffn)
+         if err != nil { return err }
+         continue
+      }
       if strings.HasPrefix(aFile.Name, "form/") && aFile.Ffn[0] == '#' {
          return tError(aFile.Ffn[1:])
       }
-      _, err := os.Lstat(attachSub(iSvc, aTid) + iId.sid() + "_" + _pathToTag(aFile.Name))
+      _, err = os.Lstat(attachSub(iSvc, aTid) + iId.sid() + "_" + _pathToTag(aFile.Name))
       if err != nil {
          return tError(fmt.Sprintf("%s missing %s", aTid, aFile.Name))
       }

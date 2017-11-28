@@ -14,6 +14,7 @@ import (
    "io/ioutil"
    "encoding/json"
    "os"
+   "path"
    "sort"
    "strconv"
    "strings"
@@ -174,7 +175,7 @@ func readFfnBlankForm(iFileName string) string {
       return "local"
    }
    var aData map[string]interface{}
-   err := _readForm(aData, kFormDir + aName + ".spec")
+   err := readJsonFile(&aData, kFormDir + aName + ".spec")
    if err != nil {
       if os.IsNotExist(err) { quit(err) }
       return "#" + err.Error()
@@ -194,14 +195,14 @@ func _parseFileName(i string) (string, string) {
    return aPair[0], ""
 }
 
-func _readForm(iForm map[string]interface{}, iPath string) error {
+func readJsonFile(iForm interface{}, iPath string) error {
    aFd, err := os.Open(iPath)
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
       return err
    }
    defer aFd.Close()
-   err = json.NewDecoder(aFd).Decode(&iForm)
+   err = json.NewDecoder(aFd).Decode(iForm)
    if err != nil && err != io.ErrUnexpectedEOF {
       if _, ok := err.(*json.SyntaxError); !ok { quit(err) }
    }
@@ -230,12 +231,12 @@ func _insertBlank(iName, iRev string, iDate string) {
    }
 }
 
-func GetPathForm(iSvc string, iFormId string) string {
-   return formDir(iSvc) + iFormId
+func GetPathForm(iSvc string, iFfn string) string {
+   return formDir(iSvc) + _ffnFileName(iSvc, iFfn) // suffix appended by client
 }
 
-func GetRecordForm(iSvc string, iFormId, iMsgId string) Msg {
-   aFd, err := os.Open(formDir(iSvc) + iFormId)
+func GetRecordForm(iSvc string, iFfn, iMsgId string) Msg {
+   aFd, err := os.Open(formDir(iSvc) + _ffnFileName(iSvc, iFfn))
    if err != nil { quit(err) }
    defer aFd.Close()
    aData := []Msg{}
@@ -249,16 +250,102 @@ func GetRecordForm(iSvc string, iFormId, iMsgId string) Msg {
    return nil
 }
 
+func validateForm(iSvc string, iBuf []byte, iFfn string) error {
+   var err error
+   var aForm map[string]interface{}
+   err = json.Unmarshal(iBuf, &aForm)
+   if err != nil { return err }
+
+   var aPath string
+   aLocalUri := getUriService(iSvc)
+   if strings.HasPrefix(iFfn, aLocalUri) {
+      aPath = kFormDir + iFfn[len(aLocalUri):] + ".spec"
+   } else {
+      aPath = kFormRegDir + iFfn
+      err = _retrieveSpec(iFfn)
+      if err != nil { return err }
+   }
+   var aJson struct { Spec []tSpecEl; Ffn string }
+   err = readJsonFile(&aJson, aPath)
+   if err != nil && !os.IsNotExist(err) { return err }
+   if aJson.Spec == nil { return nil } //todo indicate spec not found?
+
+   var aResult []byte
+   _validateObject(&aResult, "", aForm, aJson.Spec)
+   if aResult != nil { return tError(aResult) }
+   return nil
+}
+
+type tSpecEl struct {
+   Name, Type string
+   Status string // required, optional, deprecated
+   Array int // N-dimensional array of the specified type
+   Spec []tSpecEl // for Type "object"
+}
+
+func _retrieveSpec(iFfn string) error {
+   //todo download from registry
+   aTd, err := os.Open("./formspec")
+   if err != nil { quit(err) }
+   err = os.MkdirAll(path.Dir(kFormRegDir + iFfn), 0700)
+   if err != nil { quit(err) }
+   aFd, err := os.OpenFile(kFormRegDir + iFfn, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+   if err != nil { quit(err) }
+   _, err = io.Copy(aFd, aTd)
+   if err != nil { quit(err) }
+   err = aFd.Sync()
+   if err != nil { quit(err) }
+   aFd.Close()
+   aTd.Close()
+   return nil
+}
+
+func _validateObject(iResult *[]byte, iParent string, iForm map[string]interface{}, iSpec []tSpecEl) {
+   fAppend := func(c string) { *iResult = append(*iResult, iParent+c+"; "...) }
+   for _, aEl := range iSpec {
+      aField := iForm[aEl.Name]
+      if aEl.Status == "required" {
+         if aField == nil { fAppend(aEl.Name+" missing") }
+      } else if aEl.Status == "deprecated" {
+         if aField != nil { fAppend(aEl.Name+" deprecated") }
+      }
+      if !_validateType(iResult, iParent, aField, &aEl, aEl.Array) {
+         aWant := aEl.Type; if aEl.Array > 0 { aWant = fmt.Sprint(aEl.Array)+"D array of "+aEl.Type }
+         fAppend(aEl.Name+" must be "+aWant)
+      }
+      delete(iForm, aEl.Name)
+   }
+   for aK, _ := range iForm {
+      fAppend(aK+" not defined in spec")
+   }
+}
+
+func _validateType(iResult *[]byte, iParent string, iField interface{}, iEl *tSpecEl, iArray int) bool {
+   switch iField.(type) {
+   case bool:                   if iArray > 0 || iEl.Type != "bool"   { return false }
+   case string:                 if iArray > 0 || iEl.Type != "string" { return false }
+   case float64:                if iArray > 0 || iEl.Type != "number" { return false }
+   case map[string]interface{}: if iArray > 0 || iEl.Type != "object" { return false }
+      _validateObject(iResult, iParent+iEl.Name+".", iField.(map[string]interface{}), iEl.Spec)
+   case []interface{}:          if iArray < 1          { return false }
+      for _, aI := range iField.([]interface{}) {
+         if !_validateType(iResult, iParent, aI, iEl, iArray-1) { return false }
+      }
+   }
+   return true
+}
+
 func tempForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHeader2Attach,
               iData []byte, iR io.Reader) error {
    var err error
-   var aFd *os.File
-   aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name + ".tmp"
-   aFd, err = os.OpenFile(aFn, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+   aFmTbl := _ffnFileName(iSvc, iFile.Ffn)
+   aFn := tempDir(iSvc) + iMsgId + "_" + aFmTbl + ".tmp"
+   aFd, err := os.OpenFile(aFn, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
+   defer aFd.Close()
 
    var aFi os.FileInfo
-   aFi, err = os.Lstat(formDir(iSvc) + iFile.Name[2:] + iSuffix)
+   aFi, err = os.Lstat(formDir(iSvc) + aFmTbl + iSuffix)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos := int64(2); if err == nil { aPos = aFi.Size() }
    _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x", aPos, aPos))) // 2 copies for safety
@@ -284,15 +371,14 @@ func tempForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHea
 
    err = aFd.Sync()
    if err != nil { quit(err) }
-   aFd.Close()
    return nil
 }
 
 func storeForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach) bool {
    var err error
-   var aFd, aTd *os.File
-   aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name + ".tmp"
-   aTd, err = os.Open(aFn)
+   aFmTbl := _ffnFileName(iSvc, iFile.Ffn)
+   aFn := tempDir(iSvc) + iMsgId + "_" + aFmTbl + ".tmp"
+   aTd, err := os.Open(aFn)
    if err != nil { quit(err) }
    aBuf := make([]byte, 32)
    _, err = aTd.Read(aBuf)
@@ -306,11 +392,11 @@ func storeForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach
       quit(tError(fmt.Sprintf("position values do not match in %s", aFn)))
       //todo recovery instructions
    }
-   aFtable := formDir(iSvc) + iFile.Name[2:] + iSuffix
-   _, err = os.Lstat(aFtable)
+   aPath := formDir(iSvc) + aFmTbl + iSuffix
+   _, err = os.Lstat(aPath)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aDoSync := err != nil
-   aFd, err = os.OpenFile(aFtable, os.O_WRONLY|os.O_CREATE, 0600)
+   aFd, err := os.OpenFile(aPath, os.O_WRONLY|os.O_CREATE, 0600)
    if err != nil { quit(err) }
    if aPos[0] == 2 {
       _, err = aFd.Write([]byte{'[','\n'})
@@ -329,5 +415,14 @@ func storeForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach
    aFd.Close()
    aTd.Close()
    return aDoSync
+}
+
+func _ffnFileName(iSvc, iFfn string) string {
+   aUri := getUriService(iSvc)
+   if strings.HasPrefix(iFfn, aUri) {
+      return iFfn[len(aUri):]
+   } else {
+      return strings.Replace(iFfn, "/", "%", -1)
+   }
 }
 

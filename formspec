@@ -1,0 +1,9 @@
+{"ffn":"networkimprov.github.io/mnm-registry/first", "spec":[
+  {"name":"nr", "status":"required",   "type":"number" },
+  {"name":"so", "status":"optional",   "type":"string" },
+  {"name":"bd", "status":"deprecated", "type":"bool"   },
+  {"name":"or", "status":"required",   "type":"object", "spec":[
+    {"name":"anr", "status":"required", "type":"number", "array":2},
+    {"name":"aso", "status":"optional", "type":"string", "array":1}
+  ]}
+]}

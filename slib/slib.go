@@ -27,6 +27,7 @@ const kStateDir   = kStorageDir + "state/"
 const UploadDir   = kStorageDir + "upload/"
 const kUploadTmp  = UploadDir   + "temp/"
 const kFormDir    = kStorageDir + "form/"
+const kFormRegDir = kStorageDir + "reg-cache/"
 
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]*tService)
@@ -92,7 +93,7 @@ type Update struct {
       For []tHeaderFor
       Subject string
       Data string
-      Attach []string
+      Attach []struct{ Name, Ffn string }
       FormFill map[string]string
       New bool
    }
@@ -322,13 +323,17 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
       aHead := Header{DataLen:int64(len(aData)), SubHead:
                tHeader2{ThreadId:aTid, isSaved:true, For:
                []tHeaderFor{{Id:GetData(iSvc).Uid, Type:1}}, Attach:
-               []tHeader2Attach{{Name:"upload/trial"}, {Name:"r:abc", Size:13}} }}
-      aForm := map[string]string{"abc":`{"key":"val"}`}
+               []tHeader2Attach{{Name:"upload/trial"},
+                  {Name:"r:abc", Size:80, Ffn:"localhost:8888/5X8SZWGW7MLR+4GNB1LF+P8YGXCZF4BN/abc"},
+                  {Name:"form/trial", Ffn:"form-reg.github.io/cat/trial"} }}}
+      aForm := map[string]string{"abc":
+         `{"nr":1, "so":"s", "bd":true, "or":{ "anr":[[1,2],[1,2]], "aso":["s","s","s"] }}`}
       writeMsgTemp(aFd, &aHead, aData, nil, []tIndexEl{{}}, 0)
       writeFormFillAttach(aFd, &aHead.SubHead, aForm, &tIndexEl{})
       aFd.Close()
       os.Mkdir(attachSub(iSvc, "_22"), 0700)
       os.Link(UploadDir + "trial", attachSub(iSvc, "_22") + "22_u:trial")
+      os.Link(kFormDir  + "trial", attachSub(iSvc, "_22") + "22_f:trial")
       aSrec = &SendRecord{SaveId: "_22"}
    case "thread_set":
       aLastId := loadThread(iSvc, iUpdt.Thread.Id)

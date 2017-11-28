@@ -295,7 +295,9 @@ func validateSaved(iSvc string, iUpdt *Update) error {
    if len(aJson.SubHead.For) == 0 {
       return tError(fmt.Sprintf("%s to-list empty", iUpdt.Thread.Id))
    }
-   err = validateSavedAttach(iSvc, &aJson.SubHead, aId)
+   _, err = aFd.Seek(aJson.Len, io.SeekCurrent)
+   if err != nil { quit(err) }
+   err = validateSavedAttach(iSvc, &aJson.SubHead, aId, aFd)
    return err
 }
 
