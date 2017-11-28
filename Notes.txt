@@ -1,8 +1,24 @@
 checksum thread index and service config
 
-"cs" request provides clientstate
-  history status, thread tabs, selected tab
-  selected thread, service tabs, selected tab
+prevent empty .tmp file in renameRemove case
+
+synchronize access to thread/* form/* etc
+
+tempXyz(...) functions to prevent tmp name conflicts
+
+before thread_save, thread_new to request ID
+
+pathescape filename on upload and storeReceived
+unescape in upload index and .attach[n].name
+
+storeSaved -> storeSent, writeSaved -> storeSaved
+prefix file-internal functions with _
+
+writeMsgTemp take *tIndexEl
+
+func to xfer iData []byte, iR io.Reader and return net errors
+
+msgs to client indicate what changed
 
 certain buttons show confirmation pop-up next to click point
   send, discard new msg, close search tab
@@ -16,18 +32,18 @@ forms
   robot test
   single or multiple column layout
   stylesheet: colors, fonts, borders
-  version number
-  define standard forms for common data types
+  online registries define unique FFNs and required/optional/deprecated fields
+    name: domain.name/[path/]form_def
+    offer recommended form_blank?
   functions
-    spec: download list, download item, upload & validate, upload with transient defaults
-    result: download form-table, download item/draft, upload draft, append to form-table
-    markdown tags form-blank & form-filled
-    send attaches spec or results draft
-    send/receive form-filled appends results to form-table
-    receive form-spec saves to attachments dir
+    blank: per-msg defaults?
+      prevent reuse of generated FFN after form dropped?
+    on receive, validate result vs registry
+    query form-table, form-table item patches (incl omit flag)
+    markdown tags form-blank & form-filled, reference attachment
     renderSpec (js) in form-blank preview and form-filled compose
     renderResult (js) in form-blank preview and form-filled preview
-    on reply, copy selected form-filled ref to text
+    on reply, copy selected form ref to text
 
 one service per window/tab/page
   view panels: [msg editor], msgs (under editor), threads, services
@@ -138,6 +154,18 @@ msg editor
     slide hrefs
   thread/message hyperlinks
   form-table queries?
+  message templates menu
+
+address book
+  array of alias, id; generate from file
+  linked list of alias-string, array-pointer; generate on service load
+    2nd list with backward strings for s$ term
+  query s,n returns n matches starting with s
+    s$ ending in s
+
+clientstate
+  history status, thread tabs, selected tab
+  selected thread, service tabs, selected tab
 
 require app password for certain ops after idle period
 
@@ -210,6 +238,7 @@ storage
       file per service
   service directory, subdirectory per service
     config file
+    address-book file
     ohi file
     groups file
     aliases file
