@@ -59,8 +59,6 @@ func GetPathAttach(iSvc string, iState *ClientState, iFile string) string {
    return attachSub(iSvc, iState.getThread()) + iFile
 }
 
-func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
-
 func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) int64 {
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
    aPrefix := attachSub(iSvc, aTid) + iId.sid() + "_"

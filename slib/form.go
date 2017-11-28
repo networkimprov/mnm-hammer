@@ -195,20 +195,6 @@ func _parseFileName(i string) (string, string) {
    return aPair[0], ""
 }
 
-func readJsonFile(iForm interface{}, iPath string) error {
-   aFd, err := os.Open(iPath)
-   if err != nil {
-      if !os.IsNotExist(err) { quit(err) }
-      return err
-   }
-   defer aFd.Close()
-   err = json.NewDecoder(aFd).Decode(iForm)
-   if err != nil && err != io.ErrUnexpectedEOF {
-      if _, ok := err.(*json.SyntaxError); !ok { quit(err) }
-   }
-   return err
-}
-
 func _insertBlank(iName, iRev string, iDate string) {
    aBf := sBlankForms[iName]
    if aBf == nil {

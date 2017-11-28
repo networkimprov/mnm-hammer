@@ -214,6 +214,8 @@ func attachDir(iSvc string) string { return kServiceDir + iSvc + "/attach/" }
 func formDir  (iSvc string) string { return kServiceDir + iSvc + "/form/"   }
 func cfgFile  (iSvc string) string { return kServiceDir + iSvc + "/config"  }
 
+func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
+
 func addService(iService *tService) error {
    var err error
    if len(iService.Name) < 4 || strings.HasSuffix(iService.Name, ".tmp") {
@@ -328,7 +330,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
                   {Name:"form/trial", Ffn:"form-reg.github.io/cat/trial"} }}}
       aForm := map[string]string{"abc":
          `{"nr":1, "so":"s", "bd":true, "or":{ "anr":[[1,2],[1,2]], "aso":["s","s","s"] }}`}
-      writeMsgTemp(aFd, &aHead, aData, nil, []tIndexEl{{}}, 0)
+      _writeMsgTemp(aFd, &aHead, aData, nil, []tIndexEl{{}}, 0)
       writeFormFillAttach(aFd, &aHead.SubHead, aForm, &tIndexEl{})
       aFd.Close()
       os.Mkdir(attachSub(iSvc, "_22"), 0700)
@@ -382,6 +384,25 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
    return aMsg, aSrec, aFn
 }
 
+// utilities follow
+
+func makeSaveId(iTid string) string {
+   return fmt.Sprintf("%s_%012x", iTid, time.Now().UTC().UnixNano() / 1e6) // milliseconds
+}
+
+func parseSaveId(i string) tSaveId { return strings.SplitN(i, "_", 2) }
+type tSaveId []string
+func (o tSaveId) tidSet(i string) { o[0] = i }
+func (o tSaveId) tid() string { return o[0] }
+func (o tSaveId) sid() string { return o[1] }
+
+type tCrcWriter struct { sum uint32 }
+
+func (o *tCrcWriter) Write(i []byte) (int, error) {
+   o.sum = crc32.Update(o.sum, sCrc32c, i)
+   return len(i), nil
+}
+
 func readDirNames(iPath string) ([]string, error) {
    aFd, err := os.Open(iPath)
    if err != nil { return nil, err }
@@ -405,6 +426,20 @@ func storeFile(iPath string, iData interface{}) error {
       quit(err)
    }
    return nil
+}
+
+func readJsonFile(iObj interface{}, iPath string) error {
+   aFd, err := os.Open(iPath)
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+      return err
+   }
+   defer aFd.Close()
+   err = json.NewDecoder(aFd).Decode(iObj)
+   if err != nil && err != io.ErrUnexpectedEOF {
+      if _, ok := err.(*json.SyntaxError); !ok { quit(err) }
+   }
+   return err
 }
 
 func writeJsonFile(iPath string, iData interface{}) error {

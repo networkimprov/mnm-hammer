@@ -9,7 +9,6 @@
 package slib
 
 import (
-   "hash/crc32"
    "fmt"
    "io"
    "encoding/json"
@@ -18,7 +17,6 @@ import (
    "path"
    "strconv"
    "strings"
-   "time"
 )
 
 type tIndexEl struct {
@@ -31,7 +29,7 @@ type tIndexEl struct {
    Checksum uint32
 }
 
-func makeIndexEl(iHead *Header, iPos int64) tIndexEl {
+func _makeIndexEl(iHead *Header, iPos int64) tIndexEl {
    return tIndexEl{Id:iHead.Id, From:iHead.From, Date:iHead.Posted, Offset:iPos,
                    Subject:iHead.SubHead.Subject}
 }
@@ -42,7 +40,7 @@ func GetIdxThread(iSvc string, iState *ClientState) []tIndexEl {
    if err != nil { quit(err) }
    defer aFd.Close()
    var aIdx []tIndexEl
-   _ = readIndex(aFd, &aIdx)
+   _ = _readIndex(aFd, &aIdx)
    return aIdx
 }
 
@@ -55,7 +53,7 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    if err != nil { quit(err) }
    defer aFd.Close()
    var aIdx []tIndexEl
-   _ = readIndex(aFd, &aIdx)
+   _ = _readIndex(aFd, &aIdx)
    for a, _ := range aIdx {
       if iId != "" && aIdx[a].Id == iId || iId == "" && iState.isOpen(aIdx[a].Id) {
          var aRd, aXd *os.File
@@ -84,7 +82,7 @@ func SendSavedThread(iConn net.Conn, iSvc string, iSrec *SendRecord) error {
    if err != nil { quit(err) }
    defer aFd.Close()
 
-   aJson := parseHeader(aFd)
+   aJson := _parseHeader(aFd)
    if len(aJson.SubHead.For) == 0 { quit(tError("missing to field")) }
 
    aId := parseSaveId(iSrec.SaveId)
@@ -116,7 +114,7 @@ func loadThread(iSvc string, iId string) string {
    if err != nil { quit(err) }
    defer aFd.Close()
    var aIdx []tIndexEl
-   _ = readIndex(aFd, &aIdx)
+   _ = _readIndex(aFd, &aIdx)
    return aIdx[len(aIdx)-1].Id
 }
 
@@ -149,7 +147,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iData []byte, iR io.Reader)
          return nil
       }
       defer aFd.Close()
-      aPos = readIndex(aFd, &aIdx)
+      aPos = _readIndex(aFd, &aIdx)
       aEl = len(aIdx)
       aIdx = append(aIdx, tIndexEl{})
       for a, _ := range aIdx {
@@ -168,13 +166,13 @@ func storeReceivedThread(iSvc string, iHead *Header, iData []byte, iR io.Reader)
          }
       }
    }
-   aIdx[aEl] = makeIndexEl(iHead, aPos)
+   aIdx[aEl] = _makeIndexEl(iHead, aPos)
    aTempOk += fmt.Sprint(aPos)
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   err = writeMsgTemp(aTd, iHead, iData, iR, aIdx, aEl)
+   err = _writeMsgTemp(aTd, iHead, iData, iR, aIdx, aEl)
    if err == nil {
       err = tempReceivedAttach(iSvc, iHead, iData, iR)
    }
@@ -188,18 +186,18 @@ func storeReceivedThread(iSvc string, iHead *Header, iData []byte, iR io.Reader)
       _, err = aFd.Seek(aPos, io.SeekStart)
       if err != nil { quit(err) }
    }
-   writeIndex(aTd, aIdx)
+   _writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   completeStoreReceived(iSvc, path.Base(aTempOk), &iHead.SubHead, aFd, aTd)
+   _completeStoreReceived(iSvc, path.Base(aTempOk), &iHead.SubHead, aFd, aTd)
    return nil
 }
 
-func completeStoreReceived(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
+func _completeStoreReceived(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
    var err error
-   aRec := parseTempOk(iTmp)
+   aRec := _parseTempOk(iTmp)
    aTempOk := tempDir(iSvc) + iTmp
 
    storeReceivedAttach(iSvc, iSubHead, aRec)
@@ -210,7 +208,7 @@ func completeStoreReceived(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iT
       err = syncDir(threadDir(iSvc))
       if err != nil { quit(err) }
    } else {
-      _, err = io.Copy(iFd, iTd) // iFd has correct pos from readIndex
+      _, err = io.Copy(iFd, iTd) // iFd has correct pos from _readIndex
       if err != nil { quit(err) }
       err = iFd.Sync()
       if err != nil { quit(err) }
@@ -239,7 +237,7 @@ func storeSentThread(iSvc string, iHead *Header) {
       quit(err)
    }
    defer aSd.Close()
-   aJson := parseHeader(aSd)
+   aJson := _parseHeader(aSd)
    aHead := Header{Id:iHead.MsgId, From:GetData(iSvc).Uid, Posted:iHead.Posted,
                    DataLen:aJson.Len, SubHead:aJson.SubHead}
    aHead.SubHead.setStore(aId.tid())
@@ -251,31 +249,31 @@ func storeSentThread(iSvc string, iHead *Header) {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil { quit(err) }
       defer aFd.Close()
-      aPos = readIndex(aFd, &aIdx)
+      aPos = _readIndex(aFd, &aIdx)
       a := -1
       for a, _ = range aIdx {
          if aIdx[a].Id == iHead.Id { break }
       }
       aIdx = aIdx[:a + copy(aIdx[a:], aIdx[a+1:])]
    }
-   aIdx = append(aIdx, makeIndexEl(&aHead, aPos))
+   aIdx = append(aIdx, _makeIndexEl(&aHead, aPos))
    aTempOk += fmt.Sprint(aPos)
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   writeMsgTemp(aTd, &aHead, nil, aSd, aIdx, len(aIdx)-1)
-   writeIndex(aTd, aIdx)
+   _writeMsgTemp(aTd, &aHead, nil, aSd, aIdx, len(aIdx)-1)
+   _writeIndex(aTd, aIdx)
    tempSentAttach(iSvc, &aHead, aSd)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   completeStoreSent(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
+   _completeStoreSent(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
 }
 
-func completeStoreSent(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
-   aRec := parseTempOk(iTmp)
+func _completeStoreSent(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
+   aRec := _parseTempOk(iTmp)
 
    storeSentAttach(iSvc, iSubHead, aRec)
 
@@ -283,7 +281,7 @@ func completeStoreSent(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *o
    err := os.Remove(threadDir(iSvc) + aTid + "_" + aRec.sid())
    if err != nil && !os.IsNotExist(err) { quit(err) }
 
-   completeStoreReceived(iSvc, iTmp, nil, iFd, iTd)
+   _completeStoreReceived(iSvc, iTmp, nil, iFd, iTd)
 }
 
 func validateSavedThread(iSvc string, iUpdt *Update) error {
@@ -291,7 +289,7 @@ func validateSavedThread(iSvc string, iUpdt *Update) error {
    aFd, err := os.Open(threadDir(iSvc) + aId.tid() + "_" + aId.sid())
    if err != nil { quit(err) }
    defer aFd.Close()
-   aJson := parseHeader(aFd)
+   aJson := _parseHeader(aFd)
    if len(aJson.SubHead.For) == 0 {
       return tError(fmt.Sprintf("%s to-list empty", iUpdt.Thread.Id))
    }
@@ -318,7 +316,7 @@ func storeSavedThread(iSvc string, iUpdt *Update) {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil { quit(err) }
       defer aFd.Close()
-      aPos = readIndex(aFd, &aIdx)
+      aPos = _readIndex(aFd, &aIdx)
       for a, _ := range aIdx {
          if aIdx[a].Id == iUpdt.Thread.Id {
             aIdx[a] = aEldata
@@ -338,19 +336,19 @@ func storeSavedThread(iSvc string, iUpdt *Update) {
    defer aTd.Close()
    aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(len(aData))}
    aHead.SubHead.setWrite(aId.tid(), iUpdt, iSvc)
-   writeMsgTemp(aTd, &aHead, aData, nil, aIdx, aEl) //todo stream from client
+   _writeMsgTemp(aTd, &aHead, aData, nil, aIdx, aEl) //todo stream from client
    writeFormFillAttach(aTd, &aHead.SubHead, iUpdt.Thread.FormFill, &aIdx[aEl])
-   writeIndex(aTd, aIdx)
+   _writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   completeStoreSaved(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
+   _completeStoreSaved(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
 }
 
-func completeStoreSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
+func _completeStoreSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
    var err error
-   aRec := parseTempOk(iTmp)
+   aRec := _parseTempOk(iTmp)
    aSave := threadDir(iSvc) + aRec.tid() + "_" + aRec.sid()
    aTempOk := tempDir(iSvc) + iTmp
 
@@ -359,7 +357,7 @@ func completeStoreSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
    } else {
-      aSubHeadOld = &parseHeader(aSd).SubHead
+      aSubHeadOld = &_parseHeader(aSd).SubHead
       aSd.Close()
    }
    updateSavedAttach(iSvc, aSubHeadOld, iSubHead, aRec)
@@ -374,7 +372,7 @@ func completeStoreSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *
    if err != nil { quit(err) }
 
    if aRec.tid() != "" {
-      _ = readIndex(iTd, nil)
+      _ = _readIndex(iTd, nil)
       err = iFd.Truncate(aRec.pos())
       if err != nil { quit(err) }
       _, err = io.Copy(iFd, iTd)
@@ -400,7 +398,7 @@ func deleteSavedThread(iSvc string, iUpdt *Update) {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil { quit(err) }
       defer aFd.Close()
-      aPos = readIndex(aFd, &aIdx)
+      aPos = _readIndex(aFd, &aIdx)
       a := -1
       for a, _ = range aIdx {
          if aIdx[a].Id == iUpdt.Thread.Id { break }
@@ -412,21 +410,21 @@ func deleteSavedThread(iSvc string, iUpdt *Update) {
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   writeIndex(aTd, aIdx)
+   _writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   completeDeleteSaved(iSvc, path.Base(aTempOk), aFd, aTd)
+   _completeDeleteSaved(iSvc, path.Base(aTempOk), aFd, aTd)
 }
 
-func completeDeleteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
-   completeStoreSaved(iSvc, iTmp, nil, iFd, iTd)
+func _completeDeleteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
+   _completeStoreSaved(iSvc, iTmp, nil, iFd, iTd)
 }
 
 type tHeadSaved struct { Len int64; SubHead tHeader2 }
 
-func parseHeader(iFd *os.File) *tHeadSaved {
+func _parseHeader(iFd *os.File) *tHeadSaved {
    var aHead tHeadSaved
    aBuf := make([]byte, 65536)
    _, err := iFd.Read(aBuf[:4])
@@ -441,19 +439,8 @@ func parseHeader(iFd *os.File) *tHeadSaved {
    return &aHead
 }
 
-func makeSaveId(iTid string) string {
-   return fmt.Sprintf("%s_%012x", iTid, time.Now().UTC().UnixNano() / 1e6) // milliseconds
-}
-
-type tSaveId []string
-func parseSaveId(i string) tSaveId { return strings.SplitN(i, "_", 2) }
-
-func (o tSaveId) tidSet(i string) { o[0] = i }
-func (o tSaveId) tid() string { return o[0] }
-func (o tSaveId) sid() string { return o[1] }
-
+func _parseTempOk(i string) tComplete { return strings.SplitN(i, "_", 5) }
 type tComplete []string
-func parseTempOk(i string) tComplete { return strings.SplitN(i, "_", 5) }
 
 func (o tComplete) tid() string { return o[0] } // thread id
 func (o tComplete) mid() string { return o[1] } // message id
@@ -466,7 +453,7 @@ func (o tComplete) pos() int64 { // thread offset to index
    return aPos
 }
 
-func readIndex(iFd *os.File, iIdx *[]tIndexEl) int64 {
+func _readIndex(iFd *os.File, iIdx *[]tIndexEl) int64 {
    _, err := iFd.Seek(-8, io.SeekEnd)
    if err != nil { quit(err) }
    aBuf := make([]byte, 8)
@@ -489,7 +476,7 @@ func readIndex(iFd *os.File, iIdx *[]tIndexEl) int64 {
    return aPos
 }
 
-func writeIndex(iTd *os.File, iIdx []tIndexEl) {
+func _writeIndex(iTd *os.File, iIdx []tIndexEl) {
    aBuf, err := json.Marshal(iIdx)
    if err != nil { quit(err) }
    _, err = iTd.Write(append(aBuf, fmt.Sprintf("%08x", len(aBuf))...))
@@ -500,14 +487,7 @@ func writeIndex(iTd *os.File, iIdx []tIndexEl) {
    if err != nil { quit(err) }
 }
 
-type tCrcWriter struct { sum uint32 }
-
-func (o *tCrcWriter) Write(i []byte) (int, error) {
-   o.sum = crc32.Update(o.sum, sCrc32c, i)
-   return len(i), nil
-}
-
-func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
+func _writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
                   iIdx []tIndexEl, iEl int) error {
    var err error
    var aCw tCrcWriter
@@ -541,7 +521,7 @@ func writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader,
 
 func completeThread(iSvc string, iTempOk string) {
    var err error
-   aRec := parseTempOk(iTempOk)
+   aRec := _parseTempOk(iTempOk)
    if len(aRec) != 5 {
       fmt.Fprintf(os.Stderr, "completeThread: unexpected file %s%s\n", tempDir(iSvc), iTempOk)
       return
@@ -559,19 +539,19 @@ func completeThread(iSvc string, iTempOk string) {
    if err != nil { quit(err) }
    defer aTd.Close()
    fGetSubHead := func() *tHeader2 {
-      cJson := parseHeader(aTd)
+      cJson := _parseHeader(aTd)
       aTd.Seek(0, io.SeekStart)
       return &cJson.SubHead
    }
    switch aRec.op() {
    case "sr":
-      completeStoreReceived(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+      _completeStoreReceived(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
    case "ss":
-      completeStoreSent(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+      _completeStoreSent(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
    case "ws":
-      completeStoreSaved(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+      _completeStoreSaved(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
    case "ds":
-      completeDeleteSaved(iSvc, iTempOk, aFd, aTd)
+      _completeDeleteSaved(iSvc, iTempOk, aFd, aTd)
    default:
       fmt.Fprintf(os.Stderr, "completeThread: unexpected op %s%s\n", tempDir(iSvc), iTempOk)
    }
