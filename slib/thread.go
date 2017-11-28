@@ -36,7 +36,7 @@ func makeIndexEl(iHead *Header, iPos int64) tIndexEl {
                    Subject:iHead.SubHead.Subject}
 }
 
-func GetMsgIdx(iSvc string, iState *ClientState) []tIndexEl {
+func GetIdxThread(iSvc string, iState *ClientState) []tIndexEl {
    if iState.getThread() == "" { return nil }
    aFd, err := os.Open(threadDir(iSvc) + iState.getThread())
    if err != nil { quit(err) }
@@ -46,7 +46,7 @@ func GetMsgIdx(iSvc string, iState *ClientState) []tIndexEl {
    return aIdx
 }
 
-func WriteOpenMsgs(iW io.Writer, iSvc string, iState *ClientState, iId string) error {
+func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId string) error {
    if iState.getThread() == "" { return nil }
    if iId != "" {
       iState.openMsg(iId, true)
@@ -79,7 +79,7 @@ func WriteOpenMsgs(iW io.Writer, iSvc string, iState *ClientState, iId string) e
    return nil
 }
 
-func SendSaved(iConn net.Conn, iSvc string, iSrec *SendRecord) error {
+func SendSavedThread(iConn net.Conn, iSvc string, iSrec *SendRecord) error {
    aFd, err := os.Open(threadDir(iSvc) + iSrec.SaveId)
    if err != nil { quit(err) }
    defer aFd.Close()
@@ -120,7 +120,7 @@ func loadThread(iSvc string, iId string) string {
    return aIdx[len(aIdx)-1].Id
 }
 
-func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) error {
+func storeReceivedThread(iSvc string, iHead *Header, iData []byte, iR io.Reader) error {
    var err error
    aThreadId := iHead.SubHead.ThreadId; if aThreadId == "" { aThreadId = iHead.Id }
    aOrig := threadDir(iSvc) + aThreadId
@@ -130,11 +130,11 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) error
    if iHead.SubHead.ThreadId == "" {
       _, err = os.Lstat(aOrig)
       if err == nil {
-         fmt.Fprintf(os.Stderr, "storeReceived %s: thread %s already stored\n", iSvc, iHead.Id)
+         fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s already stored\n", iSvc, iHead.Id)
          return nil
       }
    } else if iHead.SubHead.ThreadId[0] == '_' {
-      fmt.Fprintf(os.Stderr, "storeReceived %s: invalid thread id %s\n", iSvc, iHead.SubHead.ThreadId)
+      fmt.Fprintf(os.Stderr, "storeReceivedThread %s: invalid thread id %s\n", iSvc, iHead.SubHead.ThreadId)
       return nil
    }
    var aTd, aFd *os.File
@@ -145,7 +145,7 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) error
    if aThreadId != iHead.Id {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil {
-         fmt.Fprintf(os.Stderr, "storeReceived %s: thread %s not found\n", iSvc, aThreadId)
+         fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s not found\n", iSvc, aThreadId)
          return nil
       }
       defer aFd.Close()
@@ -154,7 +154,7 @@ func storeReceived(iSvc string, iHead *Header, iData []byte, iR io.Reader) error
       aIdx = append(aIdx, tIndexEl{})
       for a, _ := range aIdx {
          if aIdx[a].Id == iHead.Id {
-            fmt.Fprintf(os.Stderr, "storeReceived %s: msg %s already stored\n", iSvc, iHead.Id)
+            fmt.Fprintf(os.Stderr, "storeReceivedThread %s: msg %s already stored\n", iSvc, iHead.Id)
             return nil
          }
          if aIdx[a].Id > iHead.Id {
@@ -219,7 +219,7 @@ func completeStoreReceived(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iT
    if err != nil { quit(err) }
 }
 
-func storeSaved(iSvc string, iHead *Header) {
+func storeSentThread(iSvc string, iHead *Header) {
    var err error
    aId := parseSaveId(iHead.Id)
    if aId.tid() == "" {
@@ -233,7 +233,7 @@ func storeSaved(iSvc string, iHead *Header) {
    aSd, err := os.Open(aSave)
    if err != nil {
       if os.IsNotExist(err) {
-         fmt.Fprintf(os.Stderr, "storeSaved %s: saved file was cleared %s\n", iSvc, iHead.Id)
+         fmt.Fprintf(os.Stderr, "storeSentThread %s: saved file was cleared %s\n", iSvc, iHead.Id)
          return
       }
       quit(err)
@@ -266,18 +266,18 @@ func storeSaved(iSvc string, iHead *Header) {
    defer aTd.Close()
    writeMsgTemp(aTd, &aHead, nil, aSd, aIdx, len(aIdx)-1)
    writeIndex(aTd, aIdx)
-   tempSavedAttach(iSvc, &aHead, aSd)
+   tempSentAttach(iSvc, &aHead, aSd)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   completeStoreSaved(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
+   completeStoreSent(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
 }
 
-func completeStoreSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
+func completeStoreSent(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
    aRec := parseTempOk(iTmp)
 
-   storeSavedAttach(iSvc, iSubHead, aRec)
+   storeSentAttach(iSvc, iSubHead, aRec)
 
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
    err := os.Remove(threadDir(iSvc) + aTid + "_" + aRec.sid())
@@ -286,7 +286,7 @@ func completeStoreSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *
    completeStoreReceived(iSvc, iTmp, nil, iFd, iTd)
 }
 
-func validateSaved(iSvc string, iUpdt *Update) error {
+func validateSavedThread(iSvc string, iUpdt *Update) error {
    aId := parseSaveId(iUpdt.Thread.Id)
    aFd, err := os.Open(threadDir(iSvc) + aId.tid() + "_" + aId.sid())
    if err != nil { quit(err) }
@@ -301,7 +301,7 @@ func validateSaved(iSvc string, iUpdt *Update) error {
    return err
 }
 
-func writeSaved(iSvc string, iUpdt *Update) {
+func storeSavedThread(iSvc string, iUpdt *Update) {
    aId := parseSaveId(iUpdt.Thread.Id)
    aOrig := threadDir(iSvc) + aId.tid()
    aTempOk := tempDir(iSvc) + aId.tid() + "__ws_" + aId.sid() + "_"
@@ -345,10 +345,10 @@ func writeSaved(iSvc string, iUpdt *Update) {
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   completeWriteSaved(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
+   completeStoreSaved(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
 }
 
-func completeWriteSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
+func completeStoreSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
    var err error
    aRec := parseTempOk(iTmp)
    aSave := threadDir(iSvc) + aRec.tid() + "_" + aRec.sid()
@@ -386,7 +386,7 @@ func completeWriteSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *
    if err != nil { quit(err) }
 }
 
-func deleteSaved(iSvc string, iUpdt *Update) {
+func deleteSavedThread(iSvc string, iUpdt *Update) {
    aId := parseSaveId(iUpdt.Thread.Id)
    aOrig := threadDir(iSvc) + aId.tid()
    aTempOk := tempDir(iSvc) + aId.tid() + "__ds_" + aId.sid() + "_"
@@ -421,7 +421,7 @@ func deleteSaved(iSvc string, iUpdt *Update) {
 }
 
 func completeDeleteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
-   completeWriteSaved(iSvc, iTmp, nil, iFd, iTd)
+   completeStoreSaved(iSvc, iTmp, nil, iFd, iTd)
 }
 
 type tHeadSaved struct { Len int64; SubHead tHeader2 }
@@ -567,9 +567,9 @@ func completeThread(iSvc string, iTempOk string) {
    case "sr":
       completeStoreReceived(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
    case "ss":
-      completeStoreSaved(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+      completeStoreSent(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
    case "ws":
-      completeWriteSaved(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+      completeStoreSaved(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
    case "ds":
       completeDeleteSaved(iSvc, iTempOk, aFd, aTd)
    default:

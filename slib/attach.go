@@ -61,24 +61,6 @@ func GetPathAttach(iSvc string, iState *ClientState, iFile string) string {
 
 func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
 
-func savedAttach(iSvc string, i *Update) []tHeader2Attach {
-   aAtc := make([]tHeader2Attach, len(i.Thread.Attach))
-   for a, aObj := range i.Thread.Attach {
-      aAtc[a].Name = aObj.Name
-      if strings.HasPrefix(aObj.Name, "form_fill/") {
-         aAtc[a].Name = "r:" + aObj.Name[10:]
-         aAtc[a].Size = int64(len(i.Thread.FormFill[aObj.Name[10:]]))
-         aAtc[a].Ffn = aObj.Ffn
-      } else if strings.HasPrefix(aObj.Name, "form/") {
-         aAtc[a].Ffn = readFfnBlankForm(aObj.Name[5:])
-         if aAtc[a].Ffn == "local" {
-            aAtc[a].Ffn = getUriService(iSvc) + aObj.Name[5:]
-         }
-      }
-   }
-   return aAtc
-}
-
 func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) int64 {
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
    aPrefix := attachSub(iSvc, aTid) + iId.sid() + "_"
@@ -133,9 +115,9 @@ func tempReceivedAttach(iSvc string, iHead *Header, iData []byte, iR io.Reader) 
       aPath[a] = tempDir(iSvc) + iHead.Id + "_" + aFile.Name + ".tmp" //todo escape '/' in .Name
       if _isFormFill(aFile.Name) {
          aTid := iHead.SubHead.ThreadId; if aTid == "" { aTid = iHead.Id }
-         err = tempForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iData, iR)
+         err = tempFilledForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iData, iR)
          if err != nil {
-            aPath[a] = "" // tempForm() removed file
+            aPath[a] = "" // tempFilledForm() removed file
             break
          }
          if aFile.Size >= int64(len(iData)) { iData = nil } else { iData = iData[aFile.Size:] }
@@ -209,13 +191,13 @@ func sentAttach(i []tHeader2Attach) []tHeader2Attach {
    return i
 }
 
-func tempSavedAttach(iSvc string, iHead *Header, iSd *os.File) {
+func tempSentAttach(iSvc string, iHead *Header, iSd *os.File) {
    var err error
    aDoSync := false
    for _, aFile := range iHead.SubHead.Attach {
       if !_isFormFill(aFile.Name) { continue }
       aDoSync = true
-      err = tempForm(iSvc, iHead.SubHead.ThreadId, iHead.Id, kSuffixSent, &aFile, nil, iSd)
+      err = tempFilledForm(iSvc, iHead.SubHead.ThreadId, iHead.Id, kSuffixSent, &aFile, nil, iSd)
       if err != nil { quit(err) }
    }
    if aDoSync {
@@ -224,7 +206,7 @@ func tempSavedAttach(iSvc string, iHead *Header, iSd *os.File) {
    }
 }
 
-func storeSavedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
+func storeSentAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    if len(iSubHead.Attach) == 0 {
       return
    }
@@ -255,7 +237,7 @@ func _storeFormAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    aDoSync := false
    for _, aFile := range iSubHead.Attach {
       if !_isFormFill(aFile.Name) { continue }
-      aOk := storeForm(iSvc, iRec.mid(), aSuffix, &aFile)
+      aOk := storeFilledForm(iSvc, iRec.mid(), aSuffix, &aFile)
       aDoSync = aDoSync || aOk
    }
    if aDoSync {
@@ -272,7 +254,7 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.F
          aBuf := make([]byte, aFile.Size)
          _, err = iFd.Read(aBuf)
          if err != nil { quit(err) }
-         err = validateForm(iSvc, aBuf, aFile.Ffn)
+         err = validateFilledForm(iSvc, aBuf, aFile.Ffn)
          if err != nil { return err }
          continue
       }
@@ -285,6 +267,24 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.F
       }
    }
    return nil
+}
+
+func savedAttach(iSvc string, i *Update) []tHeader2Attach {
+   aAtc := make([]tHeader2Attach, len(i.Thread.Attach))
+   for a, aObj := range i.Thread.Attach {
+      aAtc[a].Name = aObj.Name
+      if strings.HasPrefix(aObj.Name, "form_fill/") {
+         aAtc[a].Name = "r:" + aObj.Name[10:]
+         aAtc[a].Size = int64(len(i.Thread.FormFill[aObj.Name[10:]]))
+         aAtc[a].Ffn = aObj.Ffn
+      } else if strings.HasPrefix(aObj.Name, "form/") {
+         aAtc[a].Ffn = readFfnBlankForm(aObj.Name[5:])
+         if aAtc[a].Ffn == "local" {
+            aAtc[a].Ffn = getUriService(iSvc) + aObj.Name[5:]
+         }
+      }
+   }
+   return aAtc
 }
 
 func writeFormFillAttach(iFd *os.File, iSubHead *tHeader2, iMap map[string]string, iEl *tIndexEl) {

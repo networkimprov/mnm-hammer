@@ -231,11 +231,11 @@ func _insertBlank(iName, iRev string, iDate string) {
    }
 }
 
-func GetPathForm(iSvc string, iFfn string) string {
+func GetPathFilledForm(iSvc string, iFfn string) string {
    return formDir(iSvc) + _ffnFileName(iSvc, iFfn) // suffix appended by client
 }
 
-func GetRecordForm(iSvc string, iFfn, iMsgId string) Msg {
+func GetRecordFilledForm(iSvc string, iFfn, iMsgId string) Msg {
    aFd, err := os.Open(formDir(iSvc) + _ffnFileName(iSvc, iFfn))
    if err != nil { quit(err) }
    defer aFd.Close()
@@ -250,7 +250,7 @@ func GetRecordForm(iSvc string, iFfn, iMsgId string) Msg {
    return nil
 }
 
-func validateForm(iSvc string, iBuf []byte, iFfn string) error {
+func validateFilledForm(iSvc string, iBuf []byte, iFfn string) error {
    var err error
    var aForm map[string]interface{}
    err = json.Unmarshal(iBuf, &aForm)
@@ -335,7 +335,7 @@ func _validateType(iResult *[]byte, iParent string, iField interface{}, iEl *tSp
    return true
 }
 
-func tempForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHeader2Attach,
+func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHeader2Attach,
               iData []byte, iR io.Reader) error {
    var err error
    aFmTbl := _ffnFileName(iSvc, iFile.Ffn)
@@ -374,7 +374,7 @@ func tempForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHea
    return nil
 }
 
-func storeForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach) bool {
+func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach) bool {
    var err error
    aFmTbl := _ffnFileName(iSvc, iFile.Ffn)
    aFn := tempDir(iSvc) + iMsgId + "_" + aFmTbl + ".tmp"

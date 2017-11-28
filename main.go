@@ -179,7 +179,7 @@ func runQueue(o *tQueue) {
       case o.wakeup <- true:
          aConn = <-o.connSrc
       }
-      err := slib.SendSaved(aConn, o.service, aSrec)
+      err := slib.SendSavedThread(aConn, o.service, aSrec)
       o.connSrc <- aConn
       if err != nil { //todo retry transient error
          fmt.Fprintf(os.Stderr, "runQueue %s: send error %s\n", o.service, err.Error())
@@ -353,7 +353,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
                fmt.Fprintf(os.Stderr, "runservice %s: ack channel blocked\n", iName)
             }
          }
-         aMsg, aFn := slib.HandleMsg(iName, aHead, aData, iConn)
+         aMsg, aFn := slib.HandleTmtp(iName, aHead, aData, iConn)
          if aMsg == nil {
             break
          }
@@ -421,15 +421,15 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          err = json.NewEncoder(iResp).Encode(aIdx)
       }
    case "m": // msg list
-      aIdx := slib.GetMsgIdx(aSvc, aState)
+      aIdx := slib.GetIdxThread(aSvc, aState)
       err = json.NewEncoder(iResp).Encode(aIdx)
    case "o": // open msgs
-      err = slib.WriteOpenMsgs(iResp, aSvc, aState, "")
+      err = slib.WriteMessagesThread(iResp, aSvc, aState, "")
    case "p": // open single msg
       if len(aOp_Id) < 2 { break }
-      err = slib.WriteOpenMsgs(iResp, aSvc, aState, aOp_Id[1])
+      err = slib.WriteMessagesThread(iResp, aSvc, aState, aOp_Id[1])
    case "form":
-      http.ServeFile(iResp, iReq, slib.GetPathForm(aSvc, aOp_Id[1]))
+      http.ServeFile(iResp, iReq, slib.GetPathFilledForm(aSvc, aOp_Id[1]))
    default:
       iResp.WriteHeader(http.StatusNotFound)
       iResp.Write([]byte("unknown op " + aOp_Id[0]))

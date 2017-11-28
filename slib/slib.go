@@ -258,7 +258,7 @@ func GetQueue(iSvc string) ([]*SendRecord, error) {
    return nil, nil
 }
 
-func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (
+func HandleTmtp(iSvc string, iHead *Header, iData []byte, iR io.Reader) (
                aMsg Msg, aFn func(*ClientState)) {
    aMsg = Msg{"op":iHead.Op}
    switch iHead.Op {
@@ -269,7 +269,7 @@ func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (
       err := updateService(&aNewSvc)
       if err != nil { aMsg["err"] = err.Error() }
    case "delivery":
-      err := storeReceived(iSvc, iHead, iData, iR)
+      err := storeReceivedThread(iSvc, iHead, iData, iR)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleMsg %s: delivery error %s\n", iSvc, err.Error())
          return nil, nil
@@ -289,7 +289,7 @@ func HandleMsg(iSvc string, iHead *Header, iData []byte, iR io.Reader) (
          aMsg["err"] = iHead.Error
          break
       }
-      storeSaved(iSvc, iHead)
+      storeSentThread(iSvc, iHead)
       if iHead.Id[0] == '_' {
          aFn = func(c *ClientState) { c.renameThread(iHead.Id, iHead.MsgId) }
       } else {
@@ -343,7 +343,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
          aTid := ""; if !iUpdt.Thread.New { aTid = iState.getThread() }
          iUpdt.Thread.Id = makeSaveId(aTid)
       }
-      writeSaved(iSvc, iUpdt)
+      storeSavedThread(iSvc, iUpdt)
       if iUpdt.Thread.New {
          iState.addThread(iUpdt.Thread.Id, iUpdt.Thread.Id)
       } else {
@@ -351,7 +351,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
       }
       aMsg["id"] = iUpdt.Thread.Id
    case "thread_discard":
-      deleteSaved(iSvc, iUpdt)
+      deleteSavedThread(iSvc, iUpdt)
       if iUpdt.Thread.Id[0] == '_' {
          aTid := iState.getThread()
          aFn = func(c *ClientState) { c.discardThread(aTid) }
@@ -360,7 +360,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
       }
    case "thread_send":
       if iUpdt.Thread.Id == "" { break }
-      err := validateSaved(iSvc, iUpdt)
+      err := validateSavedThread(iSvc, iUpdt)
       if err != nil {
          aMsg["err"] = err.Error()
       } else {
