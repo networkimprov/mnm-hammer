@@ -18,7 +18,8 @@
 <a target="mnm_upload" href="/t/">list</a>
 </div>
 
-<div>Blank Forms
+<p><div>
+Blank Forms
 <form method="POST" action="/f/+trial" enctype="multipart/form-data" style="display:inline!important">
   <input type="hidden" name="filename" value='{"key":"value"}'>
   <input type="submit" value="upload"></form>
@@ -29,10 +30,9 @@
 <a target="mnm_upload" href="/f/trial">download</a>
 <a target="mnm_upload" href="/f/">list</a>
 </div>
-
-<p>Form Tables:
+Form Tables:
 <a target="mnm_recv" href="?form=abc_recv">Received</a>
-<a target="mnm_sent" href="?form=xyz_sent">Sent</a>
+<a target="mnm_sent" href="?form=xyz_sent" id="mnm_sent">Sent</a>
 </p>
 
 <div>
@@ -91,23 +91,39 @@
     for (var a=0; a < iList.length; ++a) {
       var aId = "'"+iList[a].Id+"'";
       aS += '<div>'+
-        '<button onclick="gM.Xhr(\'p\','+aId+')">O</button>'+
-        '<button onclick="gM.Close('+aId+')"    >X</button> ';
+        '<button onclick="gM.Xhr(\'p\','+aId+')"  >O</button>'+
+        '<button onclick="gM.Close('+aId+')"      >X</button> ';
       if (iList[a].Offset >= 0)
         aS +=
-        '<button onclick="gM.Reply(\'\')"       >Reply</button>';
+        '<button onclick="gM.Reply(\'\','+aId+')" >Reply</button>';
       else
         aS +=
-        '<button onclick="gM.Attach('+aId+')"   >Attach</button>'+
-        '<button onclick="gM.Blank('+aId+')"    >Blank</button>'+
-        '<button onclick="gM.Fill('+aId+')"     >Fill</button>'+
-        '<button onclick="gM.Drop('+aId+')"     >Drop</button> '+
-        '<button onclick="gM.Reply('+aId+')"    >Save</button>'+
-        '<button onclick="gM.Send('+aId+')"     >Send</button>'+
-        '<button onclick="gM.Discard('+aId+')"  >Discard</button>';
+        '<button onclick="gM.Attach('+aId+')"     >Attach</button>'+
+        '<button onclick="gM.Blank('+aId+')"      >Blank</button>'+
+        '<button onclick="gM.Fill('+aId+')"       >Fill</button>'+
+        '<button onclick="gM.Drop('+aId+')"       >Drop</button> '+
+        '<button onclick="gM.Reply('+aId+')"      >Save</button>'+
+        '<button onclick="gM.Send('+aId+')"       >Send</button>'+
+        '<button onclick="gM.Discard('+aId+')"    >Discard</button>';
       aS += '\n' + JSON.stringify(iList[a]) + '</div>\n';
     }
     document.getElementById('get?m').innerHTML = aS;
+  }
+  function fDrawOpen(iText) {
+    document.getElementById('get?o').innerText = iText;
+    sHeadMap = {};
+    for (var a=0; a < iText.length; ) {
+      var aHeadLen = parseInt(iText.substr(a,4), 16);
+      var aHead = JSON.parse(iText.substr(a+4,aHeadLen));
+      sHeadMap[aHead.Id] = aHead;
+      a += 4 + aHeadLen + aHead.Len + 2;
+      if (aHead.From === 'self' && aHead.SubHead.Attach) {
+        var aAtc = aHead.SubHead.Attach;
+        for (var aA=0; aA < aAtc.length; ++aA)
+          if (aAtc[aA].Name.charAt(0) === 'r')
+            a += aAtc[aA].Size;
+      }
+    }
   }
   function fXhr(i, iP) {
     var aXhr = new XMLHttpRequest();
@@ -116,6 +132,7 @@
       case 'a': fDrawAttached(JSON.parse(aXhr.responseText)); break;
       case 'c': fDrawThreadTabs(JSON.parse(aXhr.responseText)); break;
       case 'm': fDrawMsgIndex(JSON.parse(aXhr.responseText)); break;
+      case 'o': fDrawOpen(aXhr.responseText); break;
       default:  document.getElementById('get?'+i).innerText = aXhr.responseText;
       }
     };
@@ -124,6 +141,8 @@
   }
 
   var sWs = null;
+  var sHeadMap = null;
+  var sLastFfn = null;
   var sThread = {id:null, reply:null};
   var sData='you dont say';
   var sTestFor = [{Id:'LG3KCJGZPVVNDPV6%JRK4H6FC6LS8P37', Type:1}];
@@ -160,27 +179,36 @@
                              attach:   i ? sThread.reply[i].attach : null,
                              formFill: i ? sThread.reply[i].form_fill : null}}))
   }
-  gM.Reply = function(i) {
+  gM.Reply = function(i, iOrig) {
     if (i) {
       fSetReply(i);
       sThread.reply[i].data += '.';
+    } else {
+      var aAtc = sHeadMap[iOrig].SubHead.Attach;
+      for (var a=0; a < aAtc.length; ++a) {
+        if (!aAtc[a].Ffn) continue;
+        sLastFfn = aAtc[a];
+        document.getElementById('mnm_sent').href = '?form='+sLastFfn.Ffn+'_sent';
+      }
     }
     fSend(i);
   };
   gM.Attach = function(i) {
     fSetReply(i);
-    sThread.reply[i].attach.push('upload/trial');
+    sThread.reply[i].attach.push({name:'upload/trial'});
     fSend(i);
   };
   gM.Blank = function(i) {
     fSetReply(i);
-    sThread.reply[i].attach.push('form/trial');
+    sThread.reply[i].attach.push({name:'form/trial'});
     fSend(i);
   };
   gM.Fill = function(i) {
+    var aName = sLastFfn.Name.substr(2);
     fSetReply(i);
-    sThread.reply[i].form_fill['xyz'] = '{"field":"value"}';
-    sThread.reply[i].attach.push('form_fill/xyz');
+    sThread.reply[i].form_fill[aName] = JSON.stringify({
+      nr:1, so:'s', or:{ anr:[[1,2],[1,2]], aso:['s','s','s'] }});
+    sThread.reply[i].attach.push({name:'form_fill/'+aName, ffn:sLastFfn.Ffn});
     fSend(i);
   };
   gM.Drop = function(i) {
@@ -224,11 +252,11 @@
         fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'ack':
-        fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.msgid);
         sData = 'you dont say';
         if (sIdx.length === 1)
           document.getElementById('get?t').innerHTML +=
-            '<button onclick="gM.Go(\''+aObj.id+'\')">'+aObj.id.slice(-5)+'</button>';
+            '<button onclick="gM.Go(\''+aObj.msgid+'\')">'+aObj.msgid.slice(-5)+'</button>';
         break;
       case 'thread_save':
         fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
