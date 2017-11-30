@@ -420,7 +420,7 @@ func storeFile(iPath string, iData interface{}) error {
    err = syncDir(path.Dir(iPath))
    if err != nil { return err }
    err = os.Remove(iPath)
-   if err != nil && !os.IsNotExist(err) { return err }
+   if err != nil { return err }
    err = os.Rename(aTemp, iPath)
    if err != nil {
       fmt.Fprintf(os.Stderr, "transaction failed...")

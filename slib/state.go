@@ -53,10 +53,14 @@ func OpenState(iClientId, iSvc string) *ClientState {
    sStateDoor.Unlock()
    aState := &ClientState{Hpos: -1, Thread: make(map[string]*tThreadState),
                           filePath: kStateDir + iClientId + "/" + iSvc}
-   var aFd *os.File
-   aFd, err = os.Open(aState.filePath)
+   aFd, err := os.Open(aState.filePath)
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
+      err = os.Symlink("new_state", aState.filePath)
+      if err == nil {
+         err = syncDir(kStateDir + iClientId)
+      }
+      if err != nil && !os.IsExist(err) { quit(err) }
    } else {
       err = json.NewDecoder(aFd).Decode(aState)
       aFd.Close()
