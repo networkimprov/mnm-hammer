@@ -36,8 +36,11 @@ func _makeIndexEl(iHead *Header, iPos int64) tIndexEl {
 }
 
 func GetIdxThread(iSvc string, iState *ClientState) []tIndexEl {
-   if iState.getThread() == "" { return nil }
-   aFd, err := os.Open(threadDir(iSvc) + iState.getThread())
+   aTid := iState.getThread()
+   if aTid == "" {
+      return []tIndexEl{}
+   }
+   aFd, err := os.Open(threadDir(iSvc) + aTid)
    if err != nil { quit(err) }
    defer aFd.Close()
    var aIdx []tIndexEl

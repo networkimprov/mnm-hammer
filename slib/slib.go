@@ -173,11 +173,11 @@ func completePending(iSvc string) {
    }
 }
 
-func GetServices() (aS []string) {
+func GetServices() []string {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   for aK, _ := range sServices {
-      aS = append(aS, aK)
-   }
+   aS := make([]string, len(sServices))
+   a := 0
+   for aS[a], _ = range sServices { a++ }
    return aS
 }
 

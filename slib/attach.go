@@ -30,6 +30,9 @@ type tAttachEl struct {
 
 func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
    aId := iState.getThread()
+   if aId == "" {
+      return []tAttachEl{}
+   }
    aList, err := readDirNames(attachSub(iSvc, aId))
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
