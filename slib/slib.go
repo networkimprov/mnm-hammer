@@ -9,6 +9,7 @@
 package slib
 
 import (
+   "bytes"
    "runtime/debug"
    "hash/crc32"
    "fmt"
@@ -260,8 +261,8 @@ func GetQueue(iSvc string) ([]*SendRecord, error) {
    return nil, nil
 }
 
-func HandleTmtp(iSvc string, iHead *Header, iData []byte, iR io.Reader) (
-               aMsg Msg, aFn func(*ClientState)) {
+func HandleTmtp(iSvc string, iHead *Header, iR io.Reader) (
+                aMsg Msg, aFn func(*ClientState)) {
    aMsg = Msg{"op":iHead.Op}
    switch iHead.Op {
    case "registered":
@@ -271,7 +272,7 @@ func HandleTmtp(iSvc string, iHead *Header, iData []byte, iR io.Reader) (
       err := updateService(&aNewSvc)
       if err != nil { aMsg["err"] = err.Error() }
    case "delivery":
-      err := storeReceivedThread(iSvc, iHead, iData, iR)
+      err := storeReceivedThread(iSvc, iHead, iR)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleMsg %s: delivery error %s\n", iSvc, err.Error())
          return nil, nil
@@ -321,8 +322,8 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
       if len(aTid) > 0 && aTid[0] == '_' { break }
       aFd, err := os.OpenFile(threadDir(iSvc) + "_22", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
       if err != nil { quit(err) }
-      aData := []byte("ohi there")
-      aHead := Header{DataLen:int64(len(aData)), SubHead:
+      aData := bytes.NewBufferString("ohi there")
+      aHead := Header{DataLen:int64(aData.Len()), SubHead:
                tHeader2{ThreadId:aTid, isSaved:true, For:
                []tHeaderFor{{Id:GetData(iSvc).Uid, Type:1}}, Attach:
                []tHeader2Attach{{Name:"upload/trial"},
@@ -330,7 +331,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
                   {Name:"form/trial", Ffn:"form-reg.github.io/cat/trial"} }}}
       aForm := map[string]string{"abc":
          `{"nr":1, "so":"s", "bd":true, "or":{ "anr":[[1,2],[1,2]], "aso":["s","s","s"] }}`}
-      _writeMsgTemp(aFd, &aHead, aData, nil, &tIndexEl{})
+      _writeMsgTemp(aFd, &aHead, aData, &tIndexEl{})
       writeFormFillAttach(aFd, &aHead.SubHead, aForm, &tIndexEl{})
       aFd.Close()
       os.Mkdir(attachSub(iSvc, "_22"), 0700)

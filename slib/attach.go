@@ -98,14 +98,8 @@ func sendSavedAttach(iConn net.Conn, iSvc string, iSubHead *tHeader2, iId tSaveI
    return nil
 }
 
-func tempReceivedAttach(iSvc string, iHead *Header, iData []byte, iR io.Reader) error {
+func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
    var err error
-   aWritten := iHead.DataLen - totalAttach(&iHead.SubHead)
-   if aWritten >= int64(len(iData)) {
-      iData = nil
-   } else {
-      iData = iData[aWritten:]
-   }
    aDoSync := false
    aPath := make([]string, len(iHead.SubHead.Attach))
    for a, aFile := range iHead.SubHead.Attach {
@@ -113,30 +107,20 @@ func tempReceivedAttach(iSvc string, iHead *Header, iData []byte, iR io.Reader) 
       aPath[a] = tempDir(iSvc) + iHead.Id + "_" + aFile.Name + ".tmp" //todo escape '/' in .Name
       if _isFormFill(aFile.Name) {
          aTid := iHead.SubHead.ThreadId; if aTid == "" { aTid = iHead.Id }
-         err = tempFilledForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iData, iR)
+         err = tempFilledForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iR)
          if err != nil {
             aPath[a] = "" // tempFilledForm() removed file
             break
          }
-         if aFile.Size >= int64(len(iData)) { iData = nil } else { iData = iData[aFile.Size:] }
          continue
       }
       var aFd *os.File
       aFd, err = os.OpenFile(aPath[a], os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
       if err != nil { quit(err) }
       defer aFd.Close()
-      var aLen int64 = 0
-      if len(iData) > 0 {
-         aLen = int64(len(iData)); if aLen > aFile.Size { aLen = aFile.Size }
-         _, err = aFd.Write(iData[:aLen])
-         if err != nil { quit(err) }
-         iData = iData[aLen:]
-      }
-      if aLen < aFile.Size {
-         _, err = io.CopyN(aFd, iR, aFile.Size - aLen)
-         if err != nil {
-            break //todo only return net errors
-         }
+      _, err = io.CopyN(aFd, iR, aFile.Size)
+      if err != nil {
+         break
       }
       err = aFd.Sync()
       if err != nil { quit(err) }
@@ -195,7 +179,7 @@ func tempSentAttach(iSvc string, iHead *Header, iSd *os.File) {
    for _, aFile := range iHead.SubHead.Attach {
       if !_isFormFill(aFile.Name) { continue }
       aDoSync = true
-      err = tempFilledForm(iSvc, iHead.SubHead.ThreadId, iHead.Id, kSuffixSent, &aFile, nil, iSd)
+      err = tempFilledForm(iSvc, iHead.SubHead.ThreadId, iHead.Id, kSuffixSent, &aFile, iSd)
       if err != nil { quit(err) }
    }
    if aDoSync {

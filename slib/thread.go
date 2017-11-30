@@ -9,6 +9,7 @@
 package slib
 
 import (
+   "bytes"
    "fmt"
    "io"
    "encoding/json"
@@ -118,7 +119,7 @@ func loadThread(iSvc string, iId string) string {
    return aIdx[len(aIdx)-1].Id
 }
 
-func storeReceivedThread(iSvc string, iHead *Header, iData []byte, iR io.Reader) error {
+func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
    var err error
    aThreadId := iHead.SubHead.ThreadId; if aThreadId == "" { aThreadId = iHead.Id }
    aOrig := threadDir(iSvc) + aThreadId
@@ -172,9 +173,9 @@ func storeReceivedThread(iSvc string, iHead *Header, iData []byte, iR io.Reader)
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   err = _writeMsgTemp(aTd, iHead, iData, iR, &aIdx[aEl])
+   err = _writeMsgTemp(aTd, iHead, iR, &aIdx[aEl])
    if err == nil {
-      err = tempReceivedAttach(iSvc, iHead, iData, iR)
+      err = tempReceivedAttach(iSvc, iHead, iR)
    }
    if err != nil {
       os.Remove(aTemp)
@@ -262,7 +263,7 @@ func storeSentThread(iSvc string, iHead *Header) {
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   _writeMsgTemp(aTd, &aHead, nil, aSd, &aIdx[len(aIdx)-1])
+   _writeMsgTemp(aTd, &aHead, aSd, &aIdx[len(aIdx)-1])
    _writeIndex(aTd, aIdx)
    tempSentAttach(iSvc, &aHead, aSd)
    err = os.Rename(aTemp, aTempOk)
@@ -304,7 +305,7 @@ func storeSavedThread(iSvc string, iUpdt *Update) {
    aOrig := threadDir(iSvc) + aId.tid()
    aTempOk := tempDir(iSvc) + aId.tid() + "__ws_" + aId.sid() + "_"
    aTemp := aTempOk + ".tmp"
-   aData := []byte(iUpdt.Thread.Data)
+   aData := bytes.NewBufferString(iUpdt.Thread.Data)
    var err error
 
    var aIdx []tIndexEl
@@ -334,9 +335,9 @@ func storeSavedThread(iSvc string, iUpdt *Update) {
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(len(aData))}
+   aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(aData.Len())}
    aHead.SubHead.setWrite(aId.tid(), iUpdt, iSvc)
-   _writeMsgTemp(aTd, &aHead, aData, nil, &aIdx[aEl]) //todo stream from client
+   _writeMsgTemp(aTd, &aHead, aData, &aIdx[aEl]) //todo stream from client
    writeFormFillAttach(aTd, &aHead.SubHead, iUpdt.Thread.FormFill, &aIdx[aEl])
    _writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
@@ -487,7 +488,7 @@ func _writeIndex(iTd *os.File, iIdx []tIndexEl) {
    if err != nil { quit(err) }
 }
 
-func _writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader, iEl *tIndexEl) error {
+func _writeMsgTemp(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) error {
    var err error
    var aCw tCrcWriter
    aTee := io.MultiWriter(iTd, &aCw)
@@ -502,13 +503,8 @@ func _writeMsgTemp(iTd *os.File, iHead *Header, iData []byte, iR io.Reader, iEl 
    _, err = aTee.Write(append(aBuf, '\n'))
    if err != nil { quit(err) }
    if aSize > 0 {
-      aLen := int64(len(iData)); if aLen > aSize { aLen = aSize }
-      _, err = aTee.Write(iData[:aLen])
-      if err != nil { quit(err) }
-      if iR != nil {
-         _, err = io.CopyN(aTee, iR, aSize - aLen)
-         if err != nil { return err } //todo only return network errors
-      }
+      _, err = io.CopyN(aTee, iR, aSize)
+      if err != nil { return err }
    }
    _, err = iTd.Write([]byte{'\n'})
    if err != nil { quit(err) }

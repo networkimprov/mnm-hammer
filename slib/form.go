@@ -322,7 +322,7 @@ func _validateType(iResult *[]byte, iParent string, iField interface{}, iEl *tSp
 }
 
 func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHeader2Attach,
-              iData []byte, iR io.Reader) error {
+                    iR io.Reader) error {
    var err error
    aFmTbl := _ffnFileName(iSvc, iFile.Ffn)
    aFn := tempDir(iSvc) + iMsgId + "_" + aFmTbl + ".tmp"
@@ -339,11 +339,10 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
 
    aCw := tCrcWriter{}
    aTee := io.MultiWriter(aFd, &aCw)
-   aSize := iFile.Size - 1 // omit closing '}'
-   aLen := int64(len(iData)); if aLen > aSize { aLen = aSize }
-   _, err = aTee.Write(iData[:aLen])
-   if err != nil { quit(err) }
-   _, err = io.CopyN(aTee, iR, aSize - aLen)
+   _, err = io.CopyN(aTee, iR, iFile.Size - 1) // omit closing '}'
+   if err == nil {
+      _, err = iR.Read([]byte{0})
+   }
    if err != nil {
       os.Remove(aFn)
       return err //todo only return network error
@@ -351,7 +350,6 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    _, err = aTee.Write([]byte(fmt.Sprintf(`,"threadid":"%s","msgid":"%s"`, iThreadId, iMsgId)))
    if err != nil { quit(err) }
    aCw.Write([]byte{'}'}) // include closing '}' in checksum
-   if iFile.Size > int64(len(iData)) { iR.Read([]byte{0}) }
    _, err = aFd.Write([]byte(fmt.Sprintf(`,"checksum":%d}`, aCw.sum)))
    if err != nil { quit(err) }
 

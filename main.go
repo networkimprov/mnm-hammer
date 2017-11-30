@@ -353,7 +353,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
                fmt.Fprintf(os.Stderr, "runservice %s: ack channel blocked\n", iName)
             }
          }
-         aMsg, aFn := slib.HandleTmtp(iName, aHead, aData, iConn)
+         aMsg, aFn := slib.HandleTmtp(iName, aHead, &tTmtpInput{aData, iConn})
          if aMsg == nil {
             break
          }
@@ -374,6 +374,23 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
       aPos, aHeadEnd, aHeadStart = 0, 0, 4
    }
    <-aQ.connSrc
+}
+
+type tTmtpInput struct { Buf []byte; R io.Reader }
+
+func (o *tTmtpInput) Read(iOut []byte) (int, error) {
+   aLen := 0
+   if len(o.Buf) > 0 {
+      aLen = copy(iOut, o.Buf)
+      o.Buf = o.Buf[aLen:]
+   }
+   if aLen < len(iOut) {
+      aLen2, err := o.R.Read(iOut[aLen:])
+      if err != nil {
+         return aLen+aLen2, err //todo only network errors
+      }
+   }
+   return len(iOut), nil
 }
 
 func runService(iResp http.ResponseWriter, iReq *http.Request) {
