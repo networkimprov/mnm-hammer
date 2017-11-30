@@ -109,7 +109,6 @@ func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
          aTid := iHead.SubHead.ThreadId; if aTid == "" { aTid = iHead.Id }
          err = tempFilledForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iR)
          if err != nil {
-            aPath[a] = "" // tempFilledForm() removed file
             break
          }
          continue

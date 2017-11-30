@@ -324,14 +324,13 @@ func _validateType(iResult *[]byte, iParent string, iField interface{}, iEl *tSp
 func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHeader2Attach,
                     iR io.Reader) error {
    var err error
-   aFmTbl := _ffnFileName(iSvc, iFile.Ffn)
-   aFn := tempDir(iSvc) + iMsgId + "_" + aFmTbl + ".tmp"
+   aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name + ".tmp"
    aFd, err := os.OpenFile(aFn, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aFd.Close()
 
    var aFi os.FileInfo
-   aFi, err = os.Lstat(formDir(iSvc) + aFmTbl + iSuffix)
+   aFi, err = os.Lstat(formDir(iSvc) + _ffnFileName(iSvc, iFile.Ffn) + iSuffix)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos := int64(2); if err == nil { aPos = aFi.Size() }
    _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x", aPos, aPos))) // 2 copies for safety
@@ -344,7 +343,6 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
       _, err = iR.Read([]byte{0})
    }
    if err != nil {
-      os.Remove(aFn)
       return err //todo only return network error
    }
    _, err = aTee.Write([]byte(fmt.Sprintf(`,"threadid":"%s","msgid":"%s"`, iThreadId, iMsgId)))
@@ -360,8 +358,7 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
 
 func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach) bool {
    var err error
-   aFmTbl := _ffnFileName(iSvc, iFile.Ffn)
-   aFn := tempDir(iSvc) + iMsgId + "_" + aFmTbl + ".tmp"
+   aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name + ".tmp"
    aTd, err := os.Open(aFn)
    if err != nil { quit(err) }
    aBuf := make([]byte, 32)
@@ -376,7 +373,7 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
       quit(tError(fmt.Sprintf("position values do not match in %s", aFn)))
       //todo recovery instructions
    }
-   aPath := formDir(iSvc) + aFmTbl + iSuffix
+   aPath := formDir(iSvc) + _ffnFileName(iSvc, iFile.Ffn) + iSuffix
    _, err = os.Lstat(aPath)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aDoSync := err != nil
