@@ -12,6 +12,7 @@ import (
    "io"
    "os"
    "sort"
+   "strings"
    "time"
 )
 
@@ -59,7 +60,9 @@ func GetPathUpload(iId string) string {
 }
 
 func AddUpload(iId, iDupe string, iR io.Reader) error {
-   if iId == "" { quit(tError("missing filename")) }
+   if iId == "" || strings.ContainsRune(iId, '/') {
+      return tError("missing or invalid filename")
+   }
    aOrig := kUploadDir + iId
    aTemp := kUploadTmp + iId
    err := os.Symlink("upload_aborted", aOrig)

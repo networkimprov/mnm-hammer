@@ -80,9 +80,10 @@ func AddBlankForm(iFileName, iDupeRev string, iR io.Reader) error {
    var err error
    aName, aRev := _parseFileName(iFileName)
    if iDupeRev != "" { aRev = iDupeRev }
-   if aRev == "tmp" || aRev == "tok" || strings.ContainsRune(aRev, '.') ||
+   if strings.ContainsRune(iFileName, '/') || strings.ContainsRune(aRev, '.') ||
+      aRev == "tmp" || aRev == "tok" ||
       aRev == "spec" && iDupeRev != "" {
-      return tError("invalid form name suffix")
+      return tError("invalid form name")
    }
    aPath := kFormDir + aName
    if aRev != "" { aPath += "." + aRev }
