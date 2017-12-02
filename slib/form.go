@@ -38,7 +38,7 @@ func initForms() {
    var err error
    aDir, err := ioutil.ReadDir(kFormDir)
    if err != nil { quit(err) }
-   sort.Slice(aDir, func (cA, cB int) bool { return aDir[cA].ModTime().After(aDir[cB].ModTime()) })
+   sort.Slice(aDir, func (cA, cB int) bool { return aDir[cA].ModTime().Before(aDir[cB].ModTime()) })
 
    for _, aFi := range aDir {
       aFn := aFi.Name()
@@ -47,9 +47,11 @@ func initForms() {
          if err != nil { quit(err) }
          continue
       } else if strings.HasSuffix(aFn, ".tok") {
-         err = resolveTmpFile(kFormDir + aFn)
-         if err != nil { quit(err) }
          aFn = aFn[:len(aFn)-4]
+         err = os.Remove(kFormDir + aFn)
+         if err != nil && !os.IsNotExist(err) { quit(err) }
+         err = os.Rename(kFormDir + aFn + ".tok", kFormDir + aFn)
+         if err != nil { quit(err) }
       }
       aName, aRev := _parseFileName(aFn)
       _insertBlank(aName, aRev, aFi.ModTime().UTC().Format(time.RFC3339))
