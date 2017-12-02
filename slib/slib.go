@@ -25,8 +25,8 @@ import (
 const kStorageDir = "store/"
 const kServiceDir = kStorageDir + "svc/"
 const kStateDir   = kStorageDir + "state/"
-const UploadDir   = kStorageDir + "upload/"
-const kUploadTmp  = UploadDir   + "temp/"
+const kUploadDir  = kStorageDir + "upload/"
+const kUploadTmp  = kUploadDir  + "temp/"
 const kFormDir    = kStorageDir + "form/"
 const kFormRegDir = kStorageDir + "reg-cache/"
 
@@ -335,7 +335,7 @@ func HandleUpdt(iSvc string, iState *ClientState, iUpdt *Update) (
       writeFormFillAttach(aFd, &aHead.SubHead, aForm, &tIndexEl{})
       aFd.Close()
       os.Mkdir(attachSub(iSvc, "_22"), 0700)
-      os.Link(UploadDir + "trial", attachSub(iSvc, "_22") + "22_u:trial")
+      os.Link(kUploadDir + "trial", attachSub(iSvc, "_22") + "22_u:trial")
       os.Link(kFormDir  + "trial", attachSub(iSvc, "_22") + "22_f:trial")
       aSrec = &SendRecord{SaveId: "_22"}
    case "thread_set":

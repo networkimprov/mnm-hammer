@@ -19,7 +19,7 @@ func initUpload() {
    aFiles, err := readDirNames(kUploadTmp)
    if err != nil { quit(err) }
    for _, aFn := range aFiles {
-      err = renameRemove(kUploadTmp + aFn, UploadDir + aFn)
+      err = renameRemove(kUploadTmp + aFn, kUploadDir + aFn)
       if err != nil { quit(err) }
    }
 }
@@ -28,7 +28,7 @@ type tUploadEl struct { Name string; Size int64; Date string }
 
 func GetIdxUpload() []interface{} {
    var err error
-   aDir, err := readDirNames(UploadDir)
+   aDir, err := readDirNames(kUploadDir)
    if err != nil { quit(err) }
    aList := make([]interface{}, len(aDir)-1) // omit temp/
    var a int
@@ -36,7 +36,7 @@ func GetIdxUpload() []interface{} {
       if aFn == "temp" { continue }
       var aEl tUploadEl
       var aFi os.FileInfo
-      aFi, err = os.Lstat(UploadDir + aFn)
+      aFi, err = os.Lstat(kUploadDir + aFn)
       if err != nil && !os.IsNotExist(err) { quit(err) }
       if err == nil {
          aEl.Size = aFi.Size()
@@ -55,18 +55,18 @@ func GetIdxUpload() []interface{} {
 }
 
 func GetPathUpload(iId string) string {
-   return UploadDir + iId
+   return kUploadDir + iId
 }
 
 func AddUpload(iId, iDupe string, iR io.Reader) error {
    if iId == "" { quit(tError("missing filename")) }
-   aOrig := UploadDir + iId
+   aOrig := kUploadDir + iId
    aTemp := kUploadTmp + iId
    err := os.Symlink("upload_aborted", aOrig)
    if err != nil {
       if !os.IsExist(err) { quit(err) }
    } else {
-      err = syncDir(UploadDir)
+      err = syncDir(kUploadDir)
       if err != nil { quit(err) }
    }
    aFd, err := os.OpenFile(aTemp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
@@ -87,7 +87,7 @@ func AddUpload(iId, iDupe string, iR io.Reader) error {
 
 func DropUpload(iId string) bool {
    if iId == "" { quit(tError("missing filename")) }
-   err := os.Remove(UploadDir + iId)
+   err := os.Remove(kUploadDir + iId)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    return err == nil
 }
