@@ -36,6 +36,7 @@ import (
    "sync"
    "html/template"
    "time"
+   "net/url"
 )
 
 const kVersionA, kVersionB, kVersionC = 0, 0, 0
@@ -413,7 +414,9 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       //}
       aState = getService(aSvc).ccs.Get(aClientId.Value).state
    }
-   aOp_Id := strings.SplitN(iReq.URL.RawQuery, "=", 2)
+   aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
+   if err != nil { aQuery = "query_error" }
+   aOp_Id := strings.SplitN(aQuery, "=", 2)
 
    switch aOp_Id[0] {
    case "": // service template
