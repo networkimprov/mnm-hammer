@@ -102,7 +102,6 @@ func _addService(iService *tService) error {
       return tError(fmt.Sprintf("name %s already exists", iService.Name))
    }
    aTemp := iService.Name + ".tmp"
-   defer os.RemoveAll(svcDir(aTemp))
    _makeTree(aTemp)
    err = writeJsonFile(cfgFile(aTemp), iService)
    if err != nil { quit(err) }
