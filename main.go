@@ -78,7 +78,7 @@ func mainResult() int {
       return 1
    }
 
-   for _, aName := range slib.GetServices() {
+   for _, aName := range slib.GetIdxService() {
       startService(aName)
    }
 
@@ -136,7 +136,7 @@ type tQueue struct {
 }
 
 func newQueue(iSvc string) *tQueue {
-   aRecs, err := slib.GetQueue(iSvc)
+   aRecs, err := slib.GetQueueService(iSvc)
    if err != nil {
       fmt.Fprintf(os.Stderr, "newqueue %s failure: %s\n", iSvc, err.Error())
       return nil
@@ -236,7 +236,7 @@ Closed:
 
 func runLink(iName string) {
    for {
-      aSvc := slib.GetData(iName)
+      aSvc := slib.GetDataService(iName)
 
       if aSvc.LoginPeriod > 0 && aSvc.Uid != "" {
          // add +/- 0-20% to aSvc.LoginPeriod
@@ -354,7 +354,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
                fmt.Fprintf(os.Stderr, "runservice %s: ack channel blocked\n", iName)
             }
          }
-         aMsg, aFn := slib.HandleTmtp(iName, aHead, &tTmtpInput{aData, iConn})
+         aMsg, aFn := slib.HandleTmtpService(iName, aHead, &tTmtpInput{aData, iConn})
          if aMsg == nil {
             break
          }
@@ -400,7 +400,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    aSvc := iReq.URL.Path[1:]; if aSvc == "" { aSvc = "local" }
    aClientId, _ := iReq.Cookie("clientid")
 
-   if slib.GetData(aSvc) == nil {
+   if slib.GetDataService(aSvc) == nil {
       iResp.WriteHeader(http.StatusNotFound)
       iResp.Write([]byte("service not found: "+aSvc))
       return
@@ -429,7 +429,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       aMsg := aState.GetSummary()
       err = json.NewEncoder(iResp).Encode(aMsg)
    case "s": // service list
-      aSvcs := slib.GetServices()
+      aSvcs := slib.GetIdxService()
       err = json.NewEncoder(iResp).Encode(aSvcs)
    case "t": // thread list
       _, err = iResp.Write([]byte("threads "+aSvc))
@@ -544,7 +544,7 @@ var sWsInit = gws.Upgrader {
 
 func runWs(iResp http.ResponseWriter, iReq *http.Request) {
    aSvc := iReq.URL.Path[3:]; if aSvc == "" { aSvc = "local" }
-   if slib.GetData(aSvc) == nil {
+   if slib.GetDataService(aSvc) == nil {
       iResp.WriteHeader(http.StatusNotFound)
       iResp.Write([]byte("service not found: "+aSvc))
       return
@@ -580,7 +580,7 @@ func runWs(iResp http.ResponseWriter, iReq *http.Request) {
       var aUpdate slib.Update
       err = json.Unmarshal(aJson, &aUpdate)
       if err != nil { panic(err) }
-      aCmsg, aSrec, aFn := slib.HandleUpdt(aSvc, aState, &aUpdate)
+      aCmsg, aSrec, aFn := slib.HandleUpdtService(aSvc, aState, &aUpdate)
 
       aJson, err = json.Marshal(aCmsg)
       if err != nil { panic(err) }

@@ -242,7 +242,7 @@ func storeSentThread(iSvc string, iHead *Header) {
    }
    defer aSd.Close()
    aJson := _parseHeader(aSd)
-   aHead := Header{Id:iHead.MsgId, From:GetData(iSvc).Uid, Posted:iHead.Posted,
+   aHead := Header{Id:iHead.MsgId, From:GetDataService(iSvc).Uid, Posted:iHead.Posted,
                    DataLen:aJson.Len, SubHead:aJson.SubHead}
    aHead.SubHead.setStore(aId.tid())
 
