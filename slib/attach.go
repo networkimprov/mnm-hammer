@@ -247,6 +247,7 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.F
       }
       _, err = os.Lstat(attachSub(iSvc, aTid) + iId.sid() + "_" + _pathToTag(aFile.Name))
       if err != nil {
+         if !os.IsNotExist(err) { quit(err) }
          return tError(fmt.Sprintf("%s missing %s", aTid, aFile.Name))
       }
    }
