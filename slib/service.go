@@ -161,18 +161,22 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       }
       aMsg["id"] = iHead.Id
    case "ack":
-      if iHead.Id == "_22" { break }
+      if iHead.Id == "t_22" { break } //todo temp
       aMsg["msgid"] = iHead.MsgId
       if iHead.Error != "" {
          aMsg["err"] = iHead.Error
          break
       }
-      storeSentThread(iSvc, iHead)
-      if iHead.Id[0] == '_' {
-         aFn = func(c *ClientState) { c.renameThread(iHead.Id, iHead.MsgId) }
-      } else {
-         aTid := parseSaveId(iHead.Id).tid()
-         aFn = func(c *ClientState) { c.renameMsg(aTid, iHead.Id, iHead.MsgId) }
+      aId := parseSaveId(iHead.Id[1:])
+      switch iHead.Id[0] {
+      case eSrecThread:
+         iHead.Id = iHead.Id[1:]
+         storeSentThread(iSvc, iHead)
+         if aId.tid() == "" {
+            aFn = func(c *ClientState) { c.renameThread(iHead.Id, iHead.MsgId) }
+         } else {
+            aFn = func(c *ClientState) { c.renameMsg(aId.tid(), iHead.Id, iHead.MsgId) }
+         }
       }
    }
    return aMsg, aFn
@@ -212,7 +216,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       os.Mkdir(attachSub(iSvc, "_22"), 0700)
       os.Link(kUploadDir + "trial", attachSub(iSvc, "_22") + "22_u:trial")
       os.Link(kFormDir  + "trial", attachSub(iSvc, "_22") + "22_f:trial")
-      aSrec = &SendRecord{SaveId: "_22"}
+      aSrec = &SendRecord{id: string(eSrecThread) + "_22"}
    case "thread_set":
       aLastId := loadThread(iSvc, iUpdt.Thread.Id)
       iState.addThread(iUpdt.Thread.Id, aLastId)
@@ -242,7 +246,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if err != nil {
          aMsg["err"] = err.Error()
       } else {
-         aSrec = &SendRecord{SaveId:iUpdt.Thread.Id}
+         aSrec = &SendRecord{id: string(eSrecThread) + iUpdt.Thread.Id}
       }
    case "thread_close":
       iState.openMsg(iUpdt.Thread.Id, false)

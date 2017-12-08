@@ -116,7 +116,21 @@ type Update struct {
    Service *tService
 }
 
-type SendRecord struct { SaveId string }
+type SendRecord struct {
+   id string
+}
+
+const eSrecThread byte = 't'
+
+func (o *SendRecord) Id() string { return o.id }
+
+func (o *SendRecord) Write(iW io.Writer, iSvc string) error {
+   switch o.id[0] {
+   case eSrecThread: return sendSavedThread(iW, iSvc, o.id[1:], o.id)
+   }
+   quit(tError(fmt.Sprintf("SendRecord.op %c unknown", o.id[0])))
+   return nil
+}
 
 type Msg map[string]interface{}
 

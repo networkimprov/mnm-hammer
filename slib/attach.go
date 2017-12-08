@@ -12,7 +12,6 @@ import (
    "fmt"
    "io"
    "encoding/json"
-   "net"
    "os"
    "path"
    "strings"
@@ -79,7 +78,7 @@ func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) int64 {
    return aTotal
 }
 
-func sendSavedAttach(iConn net.Conn, iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.File) error {
+func sendSavedAttach(iW io.Writer, iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.File) error {
    var err error
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
    aPrefix := attachSub(iSvc, aTid) + iId.sid() + "_"
@@ -95,7 +94,7 @@ func sendSavedAttach(iConn net.Conn, iSvc string, iSubHead *tHeader2, iId tSaveI
          if aFi.Size() != aFile.Size { quit(tError("file size mismatch")) }
          aXd = aFd
       }
-      _, err = io.CopyN(iConn, aXd, aFile.Size)
+      _, err = io.CopyN(iW, aXd, aFile.Size)
       if err != nil { return err } //todo only return net errors
    }
    return nil

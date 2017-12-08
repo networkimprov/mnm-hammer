@@ -13,7 +13,6 @@ import (
    "fmt"
    "io"
    "encoding/json"
-   "net"
    "os"
    "path"
    "strconv"
@@ -81,34 +80,34 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    return nil
 }
 
-func SendSavedThread(iConn net.Conn, iSvc string, iSrec *SendRecord) error {
-   aFd, err := os.Open(threadDir(iSvc) + iSrec.SaveId)
+func sendSavedThread(iW io.Writer, iSvc string, iSaveId, iId string) error {
+   aFd, err := os.Open(threadDir(iSvc) + iSaveId)
    if err != nil { quit(err) }
    defer aFd.Close()
 
    aJson := _parseHeader(aFd)
    if len(aJson.SubHead.For) == 0 { quit(tError("missing to field")) }
 
-   aId := parseSaveId(iSrec.SaveId)
+   aId := parseSaveId(iSaveId)
    aAttachLen := sizeSavedAttach(iSvc, &aJson.SubHead, aId) // revs subhead
    aBuf1, err := json.Marshal(aJson.SubHead)
    if err != nil { quit(err) }
-   aHead := Msg{"Op":7, "Id":iSrec.SaveId, "For":aJson.SubHead.For,
+   aHead := Msg{"Op":7, "Id":iId, "For":aJson.SubHead.For,
                 "DataHead": len(aBuf1), "DataLen": int64(len(aBuf1)) + aJson.Len + aAttachLen }
    aBuf0, err := json.Marshal(aHead)
    if err != nil { quit(err) }
    aLen := fmt.Sprintf("%04x", len(aBuf0))
-   if len(aLen) > 4 { quit(tError(fmt.Sprintf("header too long: %s %s", iSvc, iSrec.SaveId))) }
+   if len(aLen) > 4 { quit(tError(fmt.Sprintf("header too long: %s %s", iSvc, iSaveId))) }
 
-   _, err = iConn.Write([]byte(aLen))
+   _, err = iW.Write([]byte(aLen))
    if err != nil { return err }
-   _, err = iConn.Write(aBuf0)
+   _, err = iW.Write(aBuf0)
    if err != nil { return err }
-   _, err = iConn.Write(aBuf1)
+   _, err = iW.Write(aBuf1)
    if err != nil { return err }
-   _, err = io.CopyN(iConn, aFd, aJson.Len) //todo only return network errors
+   _, err = io.CopyN(iW, aFd, aJson.Len) //todo only return network errors
    if err != nil { return err }
-   err = sendSavedAttach(iConn, iSvc, &aJson.SubHead, aId, aFd)
+   err = sendSavedAttach(iW, iSvc, &aJson.SubHead, aId, aFd)
    return err
 }
 
