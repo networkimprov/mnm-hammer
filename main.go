@@ -263,7 +263,7 @@ func runLink(iName string) {
       aMsg := tMsg{"Op":eOpTmtpRev, "Id":"1"}
       aConn.Write(packMsg(aMsg, nil))
       if aSvc.Uid == "" {
-         aMsg = tMsg{"Op":eOpRegister, "NewAlias":"_", "NewNode":"x"}
+         aMsg = tMsg{"Op":eOpRegister, "NewAlias":aSvc.Alias, "NewNode":"x"}
       } else {
          aMsg = tMsg{"Op":eOpLogin, "Uid":aSvc.Uid, "Node":aSvc.Node}
       }

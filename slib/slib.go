@@ -53,6 +53,7 @@ type Header struct {
 }
 
 type tHeader2 struct {
+   Alias string
    ThreadId string
    For []tHeaderFor
    Subject string
@@ -68,6 +69,7 @@ type tHeader2Attach struct {
 
 func (o *tHeader2) setWrite(iThreadId string, i *Update, iSvc string) {
    o.ThreadId = iThreadId
+   o.Alias = i.Thread.Alias
    o.For = i.Thread.For
    o.Subject = i.Thread.Subject
    o.Attach = savedAttach(iSvc, i)
@@ -94,6 +96,7 @@ type Update struct {
    Op string
    Thread *struct {
       Id string
+      Alias string
       For []tHeaderFor
       Subject string
       Data string

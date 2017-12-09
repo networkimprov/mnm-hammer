@@ -27,6 +27,7 @@ type tService struct {
    LoginPeriod int // seconds
    Addr string // for Dial()
    Uid string
+   Alias string
    Node string
 }
 
@@ -60,7 +61,7 @@ func initServices(iFn func(string)) {
       sServices[aSvc] = &aService
    }
    if sServices["test"] == nil {
-      err = _addService(&tService{Name:"test", Addr:"localhost:8888", LoginPeriod:30})
+      err = _addService(&tService{Name:"test", Addr:"localhost:8888", Alias:"_", LoginPeriod:30})
       if err != nil { quit(err) }
    }
    sServiceStartFn = iFn
