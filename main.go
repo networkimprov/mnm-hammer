@@ -69,6 +69,10 @@ func mainResult() int {
 
    fmt.Printf("mnm-hammer tmtp client v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
 
+   if len(os.Args) == 2 {
+      sHttpSrvr.Addr = os.Args[1]
+   }
+
    slib.Init(startService)
    slib.Test()
 
@@ -424,7 +428,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          aClientId = &http.Cookie{Name: "clientid", Value: fmt.Sprint(time.Now().UTC().UnixNano())}
          http.SetCookie(iResp, aClientId)
       }
-      err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvc})
+      err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvc, "Addr":sHttpSrvr.Addr})
    case "c": // client state
       aMsg := aState.GetSummary()
       err = json.NewEncoder(iResp).Encode(aMsg)
