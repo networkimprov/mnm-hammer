@@ -52,8 +52,8 @@ Form Tables:
 <tr><td>attached </td><td class="pre" id="get?a">.</td></tr>
 <tr><td>tabs     </td><td class="pre" id="get?c">.</td></tr>
 <tr><td>msg index</td><td class="pre" id="get?m">.</td></tr>
-<tr><td>open msgs</td><td class="pre" id="get?o">.</td></tr>
 <tr><td>last msg </td><td class="pre" id="get?p">.</td></tr>
+<tr><td>open msgs</td><td class="pre" id="get?o">.</td></tr>
 </table>
 
 <div id="stat"></div>
@@ -65,7 +65,7 @@ Form Tables:
   function fDrawAttached(iList) {
     var aS = '';
     for (var a=0; a < iList.length; ++a)
-      aS += '<a href="?a='+iList[a].File+'">'+JSON.stringify(iList[a])+'</a> ';
+      aS += '<a href="?a='+encodeURIComponent(iList[a].File)+'">'+JSON.stringify(iList[a])+'</a> ';
     document.getElementById('get?a').innerHTML = aS;
   }
   function fDrawThreadTabs(iSt) {
@@ -85,8 +85,10 @@ Form Tables:
   }
   function fDrawMsgIndex(iList) {
     sIdx = iList
-    if (iList[0].Id !== sThread.id)
+    if (iList.length && iList[0].Id !== sThread.id) {
       sThread = {id: iList[0].Id, reply: {}};
+      sData = 'you dont say';
+    }
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
       var aId = "'"+iList[a].Id+"'";
@@ -184,7 +186,7 @@ Form Tables:
       fSetReply(i);
       sThread.reply[i].data += '.';
     } else {
-      var aAtc = sHeadMap[iOrig].SubHead.Attach;
+      var aAtc = sHeadMap[iOrig].SubHead.Attach || [];
       for (var a=0; a < aAtc.length; ++a) {
         if (!aAtc[a].Ffn) continue;
         sLastFfn = aAtc[a];
@@ -252,8 +254,8 @@ Form Tables:
         fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'ack':
+        if (!aObj.msgid) break;
         fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.msgid);
-        sData = 'you dont say';
         if (sIdx.length === 1)
           document.getElementById('get?t').innerHTML +=
             '<button onclick="gM.Go(\''+aObj.msgid+'\')">'+aObj.msgid.slice(-5)+'</button>';
