@@ -194,16 +194,16 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   _completeStoreReceived(iSvc, path.Base(aTempOk), &iHead.SubHead, aFd, aTd)
+   _completeStoreReceived(iSvc, path.Base(aTempOk), _makeHeadSaved(iHead), aFd, aTd)
    return nil
 }
 
-func _completeStoreReceived(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
+func _completeStoreReceived(iSvc string, iTmp string, iHead *tHeadSaved, iFd, iTd *os.File) {
    var err error
    aRec := _parseTempOk(iTmp)
    aTempOk := tempDir(iSvc) + iTmp
 
-   storeReceivedAttach(iSvc, iSubHead, aRec)
+   storeReceivedAttach(iSvc, &iHead.SubHead, aRec)
 
    if aRec.tid() == aRec.mid() {
       err = os.Link(aTempOk, threadDir(iSvc) + aRec.tid())
@@ -272,19 +272,19 @@ func storeSentThread(iSvc string, iHead *Header) {
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   _completeStoreSent(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
+   _completeStoreSent(iSvc, path.Base(aTempOk), _makeHeadSaved(&aHead), aFd, aTd)
 }
 
-func _completeStoreSent(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
+func _completeStoreSent(iSvc string, iTmp string, iHead *tHeadSaved, iFd, iTd *os.File) {
    aRec := _parseTempOk(iTmp)
 
-   storeSentAttach(iSvc, iSubHead, aRec)
+   storeSentAttach(iSvc, &iHead.SubHead, aRec)
 
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
    err := os.Remove(threadDir(iSvc) + aTid + "_" + aRec.sid())
    if err != nil && !os.IsNotExist(err) { quit(err) }
 
-   _completeStoreReceived(iSvc, iTmp, nil, iFd, iTd)
+   _completeStoreReceived(iSvc, iTmp, &tHeadSaved{}, iFd, iTd)
 }
 
 func validateSavedThread(iSvc string, iUpdt *Update) error {
@@ -346,10 +346,10 @@ func storeSavedThread(iSvc string, iUpdt *Update) {
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   _completeStoreSaved(iSvc, path.Base(aTempOk), &aHead.SubHead, aFd, aTd)
+   _completeStoreSaved(iSvc, path.Base(aTempOk), _makeHeadSaved(&aHead), aFd, aTd)
 }
 
-func _completeStoreSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd *os.File) {
+func _completeStoreSaved(iSvc string, iTmp string, iHead *tHeadSaved, iFd, iTd *os.File) {
    var err error
    aRec := _parseTempOk(iTmp)
    aSave := threadDir(iSvc) + aRec.tid() + "_" + aRec.sid()
@@ -363,7 +363,7 @@ func _completeStoreSaved(iSvc string, iTmp string, iSubHead *tHeader2, iFd, iTd 
       aSubHeadOld = &_parseHeader(aSd).SubHead
       aSd.Close()
    }
-   updateSavedAttach(iSvc, aSubHeadOld, iSubHead, aRec)
+   updateSavedAttach(iSvc, aSubHeadOld, &iHead.SubHead, aRec)
 
    err = os.Remove(aSave)
    if err != nil && !os.IsNotExist(err) { quit(err) }
@@ -422,10 +422,18 @@ func deleteSavedThread(iSvc string, iUpdt *Update) {
 }
 
 func _completeDeleteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
-   _completeStoreSaved(iSvc, iTmp, nil, iFd, iTd)
+   _completeStoreSaved(iSvc, iTmp, &tHeadSaved{}, iFd, iTd)
 }
 
-type tHeadSaved struct { Len int64; SubHead tHeader2 }
+type tHeadSaved struct {
+   Len int64
+   From string
+   SubHead tHeader2
+}
+
+func _makeHeadSaved(iHead *Header) *tHeadSaved {
+   return &tHeadSaved{From:iHead.From, SubHead:iHead.SubHead}
+}
 
 func _parseHeader(iFd *os.File) *tHeadSaved {
    var aHead tHeadSaved
@@ -535,18 +543,18 @@ func completeThread(iSvc string, iTempOk string) {
    aTd, err = os.Open(tempDir(iSvc)+iTempOk)
    if err != nil { quit(err) }
    defer aTd.Close()
-   fGetSubHead := func() *tHeader2 {
+   fGetHead := func() *tHeadSaved {
       cJson := _parseHeader(aTd)
       aTd.Seek(0, io.SeekStart)
-      return &cJson.SubHead
+      return cJson
    }
    switch aRec.op() {
    case "sr":
-      _completeStoreReceived(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+      _completeStoreReceived(iSvc, iTempOk, fGetHead(), aFd, aTd)
    case "ss":
-      _completeStoreSent(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+      _completeStoreSent(iSvc, iTempOk, fGetHead(), aFd, aTd)
    case "ws":
-      _completeStoreSaved(iSvc, iTempOk, fGetSubHead(), aFd, aTd)
+      _completeStoreSaved(iSvc, iTempOk, fGetHead(), aFd, aTd)
    case "ds":
       _completeDeleteSaved(iSvc, iTempOk, aFd, aTd)
    default:
