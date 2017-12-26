@@ -12,6 +12,7 @@ import (
    "bytes"
    "fmt"
    "io"
+   "io/ioutil"
    "encoding/json"
    "os"
    "path"
@@ -128,15 +129,20 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
    aTempOk := tempDir(iSvc) + aThreadId + "_" + iHead.Id + "_sr__"
    aTemp := aTempOk + ".tmp"
 
+   fConsume := func() error {
+      _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
+      return err
+   }
+
    if iHead.SubHead.ThreadId == "" {
       _, err = os.Lstat(aOrig)
       if err == nil {
          fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s already stored\n", iSvc, iHead.Id)
-         return nil
+         return fConsume()
       }
    } else if iHead.SubHead.ThreadId[0] == '_' {
       fmt.Fprintf(os.Stderr, "storeReceivedThread %s: invalid thread id %s\n", iSvc, iHead.SubHead.ThreadId)
-      return nil
+      return fConsume()
    }
    var aTd, aFd *os.File
    var aIdx []tIndexEl = []tIndexEl{{}}
@@ -147,7 +153,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil {
          fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s not found\n", iSvc, aThreadId)
-         return nil
+         return fConsume()
       }
       defer aFd.Close()
       aPos = _readIndex(aFd, &aIdx)
@@ -156,7 +162,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
       for a, _ := range aIdx {
          if aIdx[a].Id == iHead.Id {
             fmt.Fprintf(os.Stderr, "storeReceivedThread %s: msg %s already stored\n", iSvc, iHead.Id)
-            return nil
+            return fConsume()
          }
          if aIdx[a].Id > iHead.Id {
             aCopyLen = aPos - aIdx[a].Offset
