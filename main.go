@@ -256,7 +256,7 @@ func runLink(iName string) {
 
       aConn, err := net.Dial("tcp", aSvc.Addr)
       if err != nil {
-         fmt.Fprintf(os.Stderr, "runservice %s: %s\n", iName, err.Error())
+         fmt.Fprintf(os.Stderr, "runLink %s: %s\n", iName, err.Error())
          return //todo fix transient error
       }
 
@@ -287,13 +287,13 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
       if err != nil {
          //todo if recoverable continue
          if err == io.EOF {
-            fmt.Fprintf(os.Stderr, "runservice %s: server close\n", iName)
+            fmt.Fprintf(os.Stderr, "_readLink %s: server close\n", iName)
             break
          } else if err.(net.Error).Timeout() {
             select {
             case <-aQ.connSrc:
                // if runQueue is awaiting ack, we will miss it and retry
-               fmt.Printf("runservice %s: idle timeout\n", iName)
+               fmt.Printf("_readLink %s: idle timeout\n", iName)
                return
             default:
                aQ.connSrc <- <-aQ.connSrc // wait for send to finish
@@ -301,7 +301,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
                continue
             }
          } else {
-            fmt.Fprintf(os.Stderr, "runservice %s: net error %s\n", iName, err.Error())
+            fmt.Fprintf(os.Stderr, "_readLink %s: %s\n", iName, err.Error())
             break
          }
       }
@@ -314,7 +314,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          aUi,_ := strconv.ParseUint(string(aBuf[:4]), 16, 0)
          aHeadEnd = int64(aUi)+4
          if aHeadEnd-4 < kMsgHeaderMinLen {
-            fmt.Fprintf(os.Stderr, "runservice %s: invalid header length\n", iName)
+            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header length\n", iName)
             break
          }
       }
@@ -326,7 +326,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          aHead = &slib.Header{Op:""}
          err = json.Unmarshal(aBuf[4:aHeadEnd], aHead)
          if err != nil || !aHead.Check() {
-            fmt.Fprintf(os.Stderr, "runservice %s: invalid header\n", iName)
+            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header\n", iName)
             break
          }
          aHeadStart = aHeadEnd
@@ -339,7 +339,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
       if aHeadEnd > aHeadStart {
          err = json.Unmarshal(aBuf[aHeadStart:aHeadEnd], &aHead.SubHead)
          if err != nil || !aHead.CheckSub() {
-            fmt.Fprintf(os.Stderr, "runservice %s: invalid header\n", iName)
+            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header\n", iName)
             break
          }
       }
@@ -355,7 +355,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
             select {
             case aQ.ack <- aHead.Id:
             default:
-               fmt.Fprintf(os.Stderr, "runservice %s: ack channel blocked\n", iName)
+               fmt.Fprintf(os.Stderr, "_readLink %s: ack channel blocked\n", iName)
             }
          }
          aMsg, aFn := slib.HandleTmtpService(iName, aHead, &tTmtpInput{aData, iConn})
