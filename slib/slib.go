@@ -34,6 +34,8 @@ func threadDir(iSvc string) string { return kServiceDir + iSvc + "/thread/" }
 func attachDir(iSvc string) string { return kServiceDir + iSvc + "/attach/" }
 func formDir  (iSvc string) string { return kServiceDir + iSvc + "/form/"   }
 func cfgFile  (iSvc string) string { return kServiceDir + iSvc + "/config"  }
+func pingFile (iSvc string) string { return kServiceDir + iSvc + "/ping-draft" }
+func adrsFile (iSvc string) string { return kServiceDir + iSvc + "/adrsbk"  }
 
 func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
 
@@ -48,16 +50,18 @@ type Header struct {
    Info string
    From string
    Posted string
+   To string
    DataLen, DataHead int64
    SubHead tHeader2
 }
 
 type tHeader2 struct {
    Alias string
+   Cc []string
    ThreadId string
-   For []tHeaderFor
    Subject string
    Attach []tHeader2Attach `json:",omitempty"`
+   For []tHeaderFor `json:",omitempty"` // copied to outgoing Header.For
    isSaved bool
 }
 
@@ -70,7 +74,8 @@ type tHeader2Attach struct {
 func (o *tHeader2) setWrite(iThreadId string, i *Update, iSvc string) {
    o.ThreadId = iThreadId
    o.Alias = i.Thread.Alias
-   o.For = i.Thread.For
+   o.Cc = i.Thread.Cc
+   o.For = lookupAdrsbk(iSvc, o.Cc)
    o.Subject = i.Thread.Subject
    o.Attach = savedAttach(iSvc, i)
    o.isSaved = true
@@ -92,17 +97,24 @@ func (o *Header) CheckSub() bool {
 
 type tHeaderFor struct { Id string; Type int8 }
 
+const ( _=iota; eForUser; eForGroupAll; eForGroupExcl; eForSelf )
+
 type Update struct {
    Op string
    Thread *struct {
       Id string
       Alias string
-      For []tHeaderFor
+      Cc []string
       Subject string
       Data string
       Attach []struct{ Name, Ffn string }
       FormFill map[string]string
       New bool
+   }
+   Ping *struct {
+      Alias string
+      To string
+      Text string
    }
    Navigate *struct {
       History int
@@ -120,12 +132,13 @@ type SendRecord struct {
    id string
 }
 
-const eSrecThread byte = 't'
+const eSrecThread, eSrecPing byte = 't', 'p'
 
 func (o *SendRecord) Id() string { return o.id }
 
 func (o *SendRecord) Write(iW io.Writer, iSvc string) error {
    switch o.id[0] {
+   case eSrecPing:   return sendSavedAdrsbk(iW, iSvc, o.id[1:], o.id)
    case eSrecThread: return sendSavedThread(iW, iSvc, o.id[1:], o.id)
    }
    quit(tError(fmt.Sprintf("SendRecord.op %c unknown", o.id[0])))
@@ -155,8 +168,9 @@ func makeSaveId(iTid string) string {
 func parseSaveId(i string) tSaveId { return strings.SplitN(i, "_", 2) }
 type tSaveId []string
 func (o tSaveId) tidSet(i string) { o[0] = i }
-func (o tSaveId) tid() string { return o[0] }
-func (o tSaveId) sid() string { return o[1] }
+func (o tSaveId) alias() string { return o[0] }
+func (o tSaveId)   tid() string { return o[0] }
+func (o tSaveId)   sid() string { return o[1] }
 
 type tCrcWriter struct { sum uint32 }
 

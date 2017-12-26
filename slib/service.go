@@ -45,11 +45,21 @@ func initServices(iFn func(string)) {
       _makeTree(aSvc)
       err = resolveTmpFile(cfgFile(aSvc) + ".tmp")
       if err != nil { quit(err) }
+      err = resolveTmpFile(pingFile(aSvc) + ".tmp")
+      if err != nil { quit(err) }
       var aTmps []string
       aTmps, err = readDirNames(tempDir(aSvc))
       if err != nil { quit(err) }
       for _, aTmp := range aTmps {
-         if strings.HasSuffix(aTmp, ".tmp") {
+         // some adrsbk ops stem from thread ops; complete them first
+         if strings.HasPrefix(aTmp, "adrsbk_") {
+            completeAdrsbk(aSvc, aTmp)
+         }
+      }
+      for _, aTmp := range aTmps {
+         if strings.HasPrefix(aTmp, "adrsbk_") {
+            // handled above
+         } else if strings.HasSuffix(aTmp, ".tmp") {
             defer os.Remove(tempDir(aSvc) + aTmp)
          } else {
             completeThread(aSvc, aTmp)
@@ -87,10 +97,13 @@ func getUriService(iSvc string) string {
 }
 
 func _makeTree(iSvc string) {
+   var err error
    for _, aDir := range [...]string{tempDir(iSvc), threadDir(iSvc), attachDir(iSvc), formDir(iSvc)} {
-      err := os.MkdirAll(aDir, 0700)
+      err = os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
+   err = os.Symlink("new_ping-draft", pingFile(iSvc))
+   if err != nil && !os.IsExist(err) { quit(err) }
 }
 
 func _addService(iService *tService) error {
@@ -146,10 +159,16 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       aNewSvc.Node = iHead.NodeId
       err := _updateService(&aNewSvc)
       if err != nil { aMsg["err"] = err.Error() }
+   case "ping":
+      err := storeReceivedAdrsbk(iSvc, iHead, iR)
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "HandleTmtpService %s: ping error %s\n", iSvc, err.Error())
+         return nil, nil
+      }
    case "delivery":
       err := storeReceivedThread(iSvc, iHead, iR)
       if err != nil {
-         fmt.Fprintf(os.Stderr, "HandleMsg %s: delivery error %s\n", iSvc, err.Error())
+         fmt.Fprintf(os.Stderr, "HandleTmtpService %s: delivery error %s\n", iSvc, err.Error())
          return nil, nil
       }
       if iHead.SubHead.ThreadId == "" { // temp
@@ -169,6 +188,8 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       }
       aId := parseSaveId(iHead.Id[1:])
       switch iHead.Id[0] {
+      case eSrecPing:
+         storeSentAdrsbk(iSvc, aId.alias())
       case eSrecThread:
          iHead.Id = iHead.Id[1:]
          storeSentThread(iSvc, iHead)
@@ -196,6 +217,12 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if err != nil {
          aMsg["err"] = err.Error()
       }
+   case "ping_save":
+      storeSavedAdrsbk(iSvc, iUpdt)
+   case "ping_discard":
+      deleteSavedAdrsbk(iSvc, iUpdt.Ping.To)
+   case "ping_send":
+      aSrec = &SendRecord{id: string(eSrecPing) + makeSaveId(iUpdt.Ping.To)}
    case "thread_ohi":
       aTid := iState.getThread()
       if len(aTid) > 0 && aTid[0] == '_' { break }

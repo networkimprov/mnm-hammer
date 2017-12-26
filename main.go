@@ -435,6 +435,15 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "s": // service list
       aSvcs := slib.GetIdxService()
       err = json.NewEncoder(iResp).Encode(aSvcs)
+   case "ps": // saved pings
+      aList := slib.GetSavedAdrsbk(aSvc)
+      err = json.NewEncoder(iResp).Encode(aList)
+   case "pt": // sent pings
+      aList := slib.GetSentAdrsbk(aSvc)
+      err = json.NewEncoder(iResp).Encode(aList)
+   case "pf": // received pings
+      aList := slib.GetReceivedAdrsbk(aSvc)
+      err = json.NewEncoder(iResp).Encode(aList)
    case "t": // thread list
       _, err = iResp.Write([]byte("threads "+aSvc))
    case "a": // attachment list

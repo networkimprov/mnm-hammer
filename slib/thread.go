@@ -203,6 +203,7 @@ func _completeStoreReceived(iSvc string, iTmp string, iHead *tHeadSaved, iFd, iT
    aRec := _parseTempOk(iTmp)
    aTempOk := tempDir(iSvc) + iTmp
 
+   resolveSentAdrsbk(iSvc, iHead.From, iHead.SubHead.Alias, aRec.tid(), aRec.mid())
    storeReceivedAttach(iSvc, &iHead.SubHead, aRec)
 
    if aRec.tid() == aRec.mid() {
@@ -278,6 +279,7 @@ func storeSentThread(iSvc string, iHead *Header) {
 func _completeStoreSent(iSvc string, iTmp string, iHead *tHeadSaved, iFd, iTd *os.File) {
    aRec := _parseTempOk(iTmp)
 
+   resolveReceivedAdrsbk(iSvc, iHead.SubHead.For, aRec.tid(), aRec.mid())
    storeSentAttach(iSvc, &iHead.SubHead, aRec)
 
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
@@ -295,6 +297,11 @@ func validateSavedThread(iSvc string, iUpdt *Update) error {
    aJson := _parseHeader(aFd)
    if len(aJson.SubHead.For) == 0 {
       return tError(fmt.Sprintf("%s to-list empty", iUpdt.Thread.Id))
+   }
+   for a, aHf := range aJson.SubHead.For {
+      if aHf.Id == "" {
+         return tError("alias unknown: " + aJson.SubHead.Cc[a])
+      }
    }
    _, err = aFd.Seek(aJson.Len, io.SeekCurrent)
    if err != nil { quit(err) }
