@@ -37,6 +37,7 @@ Form Tables:
 
 <div>
 <button onclick="gM.SvcAdd()">Add Service</button>
+<button onclick="gM.PingSave()">Ping</button>
 </div>
 
 <div>
@@ -48,6 +49,9 @@ Form Tables:
 
 <table border="1">
 <tr><td>services </td><td class="pre" id="get?s">.</td></tr>
+<tr><td>pingdraft</td><td class="pre" id="get?ps">.</td></tr>
+<tr><td>pingto   </td><td class="pre" id="get?pt">.</td></tr>
+<tr><td>pingfrom </td><td class="pre" id="get?pf">.</td></tr>
 <tr><td>threads  </td><td class="pre" id="get?t">.</td></tr>
 <tr><td>attached </td><td class="pre" id="get?a">.</td></tr>
 <tr><td>tabs     </td><td class="pre" id="get?c">.</td></tr>
@@ -62,6 +66,16 @@ Form Tables:
 <script>
 ;var gM = {};
 (function() {
+  function fDrawPing(iList) {
+    var aS = '';
+    for (var a=0; a < iList.length; ++a) {
+      var aAlias = "'"+iList[a].Alias+"'";
+      aS += '<button onclick="gM.PingDiscard('+aAlias+')">Discard</button>';
+      aS += '<button onclick="gM.PingSend   ('+aAlias+')">Send</button> \n';
+      aS += JSON.stringify(iList[a]) + '\n';
+    }
+    document.getElementById('get?ps').innerHTML = aS;
+  }
   function fDrawAttached(iList) {
     var aS = '';
     for (var a=0; a < iList.length; ++a)
@@ -131,6 +145,7 @@ Form Tables:
     var aXhr = new XMLHttpRequest();
     aXhr.onload = function() {
       switch (i) {
+      case 'ps': fDrawPing(JSON.parse(aXhr.responseText)); break;
       case 'a': fDrawAttached(JSON.parse(aXhr.responseText)); break;
       case 'c': fDrawThreadTabs(JSON.parse(aXhr.responseText)); break;
       case 'm': fDrawMsgIndex(JSON.parse(aXhr.responseText)); break;
@@ -147,20 +162,34 @@ Form Tables:
   var sLastFfn = null;
   var sThread = {id:null, reply:null};
   var sData='you dont say';
-  var sTestFor = [{Id:'LG3KCJGZPVVNDPV6%JRK4H6FC6LS8P37', Type:1}];
   var sIdx = null;
+
+  if ('{{.Addr}}' === ':80') {
+    var sNewAlias = 'Ninetynine', sAliasTo = 'Eightysix';
+  } else {
+    var sNewAlias = 'Eightysix', sAliasTo = 'Ninetynine';
+  }
 
   gM.Xhr = fXhr;
   gM.SvcAdd = function() {
     sWs.send(JSON.stringify({op:'service_add', service:{
-      name:'take2', addr:'localhost:8888', loginperiod:600}}))
+      name:'take2', addr:'localhost:8888', alias:sNewAlias, loginperiod:0}}))
+  };
+  gM.PingSave = function() {
+    sWs.send(JSON.stringify({op:'ping_save', ping:{alias:sNewAlias, to:sAliasTo, text:'ereiamjh'}}))
+  };
+  gM.PingDiscard = function(i) {
+    sWs.send(JSON.stringify({op:'ping_discard', ping:{to:i}}))
+  };
+  gM.PingSend = function(i) {
+    sWs.send(JSON.stringify({op:'ping_send', ping:{to:i}}))
   };
   gM.History = function(i) {
     sWs.send(JSON.stringify({op:'history', navigate:{history:i}}))
   };
   gM.Thread = function() {
     sWs.send(JSON.stringify({op:'thread_save', thread:{id:'', data:'start thread', new:true,
-                             for:sTestFor}}))
+                             alias:sNewAlias, cc:[sAliasTo]}}))
   };
   gM.Recv = function() {
     sWs.send(JSON.stringify({op:'thread_ohi', thread:{}}))
@@ -176,7 +205,7 @@ Form Tables:
       sThread.reply[i] = { data:'', attach:[], form_fill:{} };
   }
   function fSend(i) {
-    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, for:sTestFor,
+    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, alias:sNewAlias, cc:[sAliasTo],
                              data:     i ? sThread.reply[i].data : '',
                              attach:   i ? sThread.reply[i].attach : null,
                              formFill: i ? sThread.reply[i].form_fill : null}}))
@@ -239,10 +268,11 @@ Form Tables:
   window.onload = function() {
     var aSvc = window.location.pathname.split('/')[1];
     sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
-    sWs.onopen = function (iEvent) {
-      fXhr('s'); fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o');
+    sWs.onopen = function(iEvent) {
+      fXhr('s'); fXhr('ps'); fXhr('pt'); fXhr('pf');
+      fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o');
     };
-    sWs.onmessage = function (iEvent) {
+    sWs.onmessage = function(iEvent) {
       var aLog = document.getElementById('msg').innerText;
       document.getElementById('msg').innerText = iEvent.data+' '+aLog;
       var aObj = JSON.parse(iEvent.data);
@@ -250,12 +280,20 @@ Form Tables:
       case 'service_add':
         fXhr('s');
         break;
+      case 'ping_save':
+      case 'ping_discard':
+      case 'ping_send':
+        fXhr('ps');
+        break;
+      case 'ping':
+        fXhr('pf'); fXhr('pt');
+        break;
       case 'delivery':
-        fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        fXhr('pt'); fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'ack':
         if (!aObj.msgid) break;
-        fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.msgid);
+        fXhr('ps'); fXhr('pt'); fXhr('pf'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.msgid);
         if (sIdx.length === 1)
           document.getElementById('get?t').innerHTML +=
             '<button onclick="gM.Go(\''+aObj.msgid+'\')">'+aObj.msgid.slice(-5)+'</button>';
