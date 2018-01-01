@@ -18,11 +18,8 @@ import (
    "sort"
    "strconv"
    "strings"
-   "sync"
 )
 
-var sSvcAdrsbkDoor sync.RWMutex
-var sSvcAdrsbk = make(map[string]tAdrsbk) // key service
 
 type tAdrsbk struct {
    pingToIdx   map[string]tAdrsbkLog // key alias
@@ -47,22 +44,21 @@ const ( eAbPingSaved int8 = iota; eAbPingQueued; eAbPingTo; eAbPingFrom; eAbMsgT
 
 
 func _getAliasIdx(iSvc string) map[string]string {
-   sSvcAdrsbkDoor.RLock(); defer sSvcAdrsbkDoor.RUnlock()
-   return sSvcAdrsbk[iSvc].aliasIdx
+   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
+   return sServices[iSvc].adrsbk.aliasIdx
 }
 
-func _loadAdrsbk(iSvc string) tAdrsbk {
-   sSvcAdrsbkDoor.Lock()
-   aSvc := sSvcAdrsbk[iSvc]
+func _loadAdrsbk(iSvc string) *tAdrsbk {
+   sServicesDoor.Lock()
+   aSvc := &sServices[iSvc].adrsbk
    if aSvc.aliasIdx != nil {
-      sSvcAdrsbkDoor.Unlock()
+      sServicesDoor.Unlock()
       return aSvc
    }
    aSvc.pingToIdx   = make(map[string]tAdrsbkLog)
    aSvc.pingFromIdx = make(map[string]tAdrsbkLog)
    aSvc.aliasIdx    = make(map[string]string)
-   sSvcAdrsbk[iSvc] = aSvc
-   sSvcAdrsbkDoor.Unlock()
+   sServicesDoor.Unlock()
 
    var aLog []tAdrsbkEl
    err := readJsonFile(&aLog, adrsFile(iSvc))

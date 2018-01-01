@@ -17,6 +17,7 @@ import (
    "os"
    "path"
    "strings"
+   "sync"
    "time"
 )
 
@@ -41,6 +42,13 @@ func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
 
 var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
+var sServicesDoor sync.RWMutex
+var sServices = make(map[string]*tService)
+
+type tService struct {
+   cfg tCfgService
+   adrsbk tAdrsbk
+}
 
 type Header struct {
    Op string
@@ -125,7 +133,7 @@ type Update struct {
       PosFor int8
       Pos int
    }
-   Service *tService
+   Service *tCfgService
 }
 
 type SendRecord struct {

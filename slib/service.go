@@ -14,14 +14,11 @@ import (
    "io"
    "os"
    "strings"
-   "sync"
 )
 
-var sServicesDoor sync.RWMutex
-var sServices = make(map[string]*tService)
 var sServiceStartFn func(string)
 
-type tService struct {
+type tCfgService struct {
    Name string
    Description string
    LoginPeriod int // seconds
@@ -65,13 +62,13 @@ func initServices(iFn func(string)) {
             completeThread(aSvc, aTmp)
          }
       }
-      var aService tService
-      err = readJsonFile(&aService, cfgFile(aSvc))
+      aService := &tService{}
+      err = readJsonFile(&aService.cfg, cfgFile(aSvc))
       if err != nil { quit(err) }
-      sServices[aSvc] = &aService
+      sServices[aSvc] = aService
    }
    if sServices["test"] == nil {
-      err = _addService(&tService{Name:"test", Addr:"localhost:8888", Alias:"_", LoginPeriod:30})
+      err = _addService(&tCfgService{Name:"test", Addr:"localhost:8888", Alias:"_", LoginPeriod:30})
       if err != nil { quit(err) }
    }
    sServiceStartFn = iFn
@@ -85,15 +82,19 @@ func GetIdxService() []string {
    return aS
 }
 
-func GetDataService(iSvc string) *tService {
+func GetDataService(iSvc string) *tCfgService {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   return sServices[iSvc]
+   aSvc := sServices[iSvc]
+   if aSvc == nil {
+      return nil
+   }
+   return &aSvc.cfg
 }
 
 func getUriService(iSvc string) string {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
    aSvc := sServices[iSvc]
-   return aSvc.Addr +"/"+ aSvc.Uid +"/"
+   return aSvc.cfg.Addr +"/"+ aSvc.cfg.Uid +"/"
 }
 
 func _makeTree(iSvc string) {
@@ -106,7 +107,7 @@ func _makeTree(iSvc string) {
    if err != nil && !os.IsExist(err) { quit(err) }
 }
 
-func _addService(iService *tService) error {
+func _addService(iService *tCfgService) error {
    var err error
    if len(iService.Name) < 4 || strings.HasSuffix(iService.Name, ".tmp") {
       return tError(fmt.Sprintf("name %s not valid", iService.Name))
@@ -125,23 +126,24 @@ func _addService(iService *tService) error {
    err = os.Rename(svcDir(aTemp), svcDir(iService.Name))
    if err != nil { quit(err) }
 
-   sServices[iService.Name] = iService
+   sServices[iService.Name] = &tService{cfg: *iService}
    if sServiceStartFn != nil {
       sServiceStartFn(iService.Name)
    }
    return nil
 }
 
-func _updateService(iService *tService) error {
+func _updateService(iService *tCfgService) error {
    var err error
    sServicesDoor.Lock(); defer sServicesDoor.Unlock()
-   if sServices[iService.Name] == nil {
+   aSvc := sServices[iService.Name]
+   if aSvc == nil {
       return tError(iService.Name + " not found")
    }
    err = storeFile(cfgFile(iService.Name), iService)
    if err != nil { quit(err) }
 
-   sServices[iService.Name] = iService
+   aSvc.cfg = *iService
    return nil
 }
 
