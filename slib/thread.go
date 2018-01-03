@@ -97,14 +97,7 @@ func sendSavedThread(iW io.Writer, iSvc string, iSaveId, iId string) error {
                 "DataHead": len(aBuf1), "DataLen": int64(len(aBuf1)) + aJson.Len + aAttachLen }
    aBuf0, err := json.Marshal(aHead)
    if err != nil { quit(err) }
-   aLen := fmt.Sprintf("%04x", len(aBuf0))
-   if len(aLen) > 4 { quit(tError(fmt.Sprintf("header too long: %s %s", iSvc, iSaveId))) }
-
-   _, err = iW.Write([]byte(aLen))
-   if err != nil { return err }
-   _, err = iW.Write(aBuf0)
-   if err != nil { return err }
-   _, err = iW.Write(aBuf1)
+   err = sendHeaders(iW, aBuf0, aBuf1)
    if err != nil { return err }
    _, err = io.CopyN(iW, aFd, aJson.Len) //todo only return network errors
    if err != nil { return err }

@@ -316,14 +316,7 @@ func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
    aHead, err := json.Marshal(Msg{"Op":8, "Id":iId, "To":aEl.Alias,
                                   "DataHead":len(aSubh), "DataLen": len(aSubh) + len(aData)})
    if err != nil { quit(err) }
-   aLen := []byte(fmt.Sprintf("%04x", len(aHead)))
-   if len(aLen) > 4 { quit(tError(fmt.Sprintf("header too long: %s %s", iSvc, iSaveId))) }
-
-   _, err = iW.Write(aLen)
-   if err != nil { return err }
-   _, err = iW.Write(aHead)
-   if err != nil { return err }
-   _, err = iW.Write(aSubh)
+   err = sendHeaders(iW, aHead, aSubh)
    if err != nil { return err }
    _, err = iW.Write(aData)
    return err

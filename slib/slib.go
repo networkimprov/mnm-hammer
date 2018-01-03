@@ -169,6 +169,21 @@ func Init(iFn func(string)) {
 
 // utilities follow
 
+func sendHeaders(iW io.Writer, iHead, iSub []byte) error {
+   var err error
+   aLen := []byte(fmt.Sprintf("%04x", len(iHead)))
+   if len(aLen) > 4 { quit(tError("header too long")) }
+   _, err = iW.Write(aLen)
+   if err != nil { return err }
+   _, err = iW.Write(iHead)
+   if iSub != nil {
+      if err != nil { return err }
+      _, err = iW.Write(iSub)
+   }
+   //fmt.Printf("sendHeaders: %s%s%s\n", aLen, iHead, iSub)
+   return err
+}
+
 func makeSaveId(iTid string) string {
    return fmt.Sprintf("%s_%012x", iTid, time.Now().UTC().UnixNano() / 1e6) // milliseconds
 }
