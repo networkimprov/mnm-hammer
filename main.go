@@ -239,6 +239,9 @@ Closed:
 }
 
 func runLink(iName string) {
+   var err error
+   var aConn net.Conn
+
    for {
       aSvc := slib.GetDataService(iName)
 
@@ -254,10 +257,12 @@ func runLink(iName string) {
          }
       }
 
-      aConn, err := net.Dial("tcp", aSvc.Addr)
-      if err != nil {
+      for {
+         aSvc = slib.GetDataService(iName)
+         aConn, err = net.DialTimeout("tcp", aSvc.Addr, 3 * time.Second)
+         if err == nil { break }
          fmt.Fprintf(os.Stderr, "runLink %s: %s\n", iName, err.Error())
-         return //todo fix transient error
+         time.Sleep(time.Duration(5000 + time.Now().Nanosecond() % 1000 * 5) * time.Millisecond)
       }
 
       aMsg := tMsg{"Op":eOpTmtpRev, "Id":"1"}
