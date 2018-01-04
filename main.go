@@ -282,6 +282,8 @@ func runLink(iName string) {
 func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
    aQ := getService(iName).queue
    aBuf := make([]byte, kMsgHeaderMaxLen+4) //todo start smaller, realloc as needed
+   aLogin := false
+   var aHead *slib.Header
    var aPos, aHeadEnd, aHeadStart int64 = 0, 0, 4
 
    for {
@@ -299,12 +301,14 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
             case <-aQ.connSrc:
                // if runQueue is awaiting ack, we will miss it and retry
                fmt.Printf("_readLink %s: idle timeout\n", iName)
-               return
             default:
-               aQ.connSrc <- <-aQ.connSrc // wait for send to finish
-               iIdleMax += 15 * time.Second // allow time for ack
-               continue
+               if aLogin {
+                  aQ.connSrc <- <-aQ.connSrc // wait for send to finish
+                  iIdleMax += 15 * time.Second // allow time for ack
+                  continue
+               }
             }
+            return
          } else {
             fmt.Fprintf(os.Stderr, "_readLink %s: %s\n", iName, err.Error())
             break
@@ -326,7 +330,6 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
       if aHeadEnd > aPos {
          continue
       }
-      var aHead *slib.Header
       if aHeadStart == 4 {
          aHead = &slib.Header{Op:""}
          err = json.Unmarshal(aBuf[4:aHeadEnd], aHead)
@@ -354,6 +357,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          aData = aBuf[aHeadEnd:aEnd]
       }
       if aHead.Info == "login ok" {
+         aLogin = true
          aQ.connSrc <- iConn
       } else {
          if aHead.Op == "ack" && aHead.Error == "" {
@@ -383,7 +387,9 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
       }
       aPos, aHeadEnd, aHeadStart = 0, 0, 4
    }
-   <-aQ.connSrc
+   if aLogin {
+      <-aQ.connSrc
+   }
 }
 
 type tTmtpInput struct { Buf []byte; R io.Reader }
