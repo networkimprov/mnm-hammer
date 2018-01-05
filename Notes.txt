@@ -1,27 +1,26 @@
 checksum thread index and service config
 
-prevent empty .tmp file in renameRemove case
+tmtp include alias in from/for
+server discards pings from blocked address
+server decrypt For[].Id with sender's key; encrypt From with recipient's key
 
-synchronize access to thread/* form/* etc
+synchronize access to thread/* form/* adrsbk etc
 
 tempXyz(...) functions to prevent tmp name conflicts
 
 before thread_save, thread_new to request ID
 
-pathescape filename on upload and storeReceived
-unescape in upload index and .attach[n].name
+storeReceivedAttach prevent dup & invalid filename
 
-storeSaved -> storeSent, writeSaved -> storeSaved
-prefix file-internal functions with _
+Handle*Service msgs to client indicate what changed
 
-writeMsgTemp take *tIndexEl
+main: clean up getService().xyz use
 
-func to xfer iData []byte, iR io.Reader and return net errors
-
-msgs to client indicate what changed
-
-certain buttons show confirmation pop-up next to click point
-  send, discard new msg, close search tab
+alias: add, drop, list; store in sep file
+  status pending until ack
+ping: save as pending if sent
+  lookup-alias-by-pre/suffix
+  msg-from: log cc aliases?
 
 forms
   list of fields
@@ -156,10 +155,10 @@ msg editor
   form-table queries?
   message templates menu
 
+certain buttons show confirmation pop-up next to click point
+  send, discard new msg, close search tab
+
 address book
-  array of alias, id; generate from file
-  linked list of alias-string, array-pointer; generate on service load
-    2nd list with backward strings for s$ term
   query s,n returns n matches starting with s
     s$ ending in s
 
@@ -175,6 +174,7 @@ groups
   popup with groups on thread panel
     edit & select links, select opens tab
   group-invite option on compose/reply UI
+  SubHead.Attn []string: aliases of members to be flagged; instead of .Cc
 
 aliases
   popup with aliases on compose/reply UI
@@ -242,7 +242,7 @@ storage
     ohi file
     groups file
     aliases file
-    tabs file
+    index tabs file
     styling directory: css & image files
     temp directory
     outbound msg directory
