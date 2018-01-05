@@ -38,6 +38,8 @@ Form Tables:
 <div>
 <button onclick="gM.SvcAdd()">Add Service</button>
 <button onclick="gM.PingSave()">Ping</button>
+<button onclick="gM.OhiAdd()">Add Ohi</button>
+<button onclick="gM.OhiDrop()">Drop Ohi</button>
 </div>
 
 <div>
@@ -49,6 +51,8 @@ Form Tables:
 
 <table border="1">
 <tr><td>services </td><td class="pre" id="get?s">.</td></tr>
+<tr><td>ohi from </td><td class="pre" id="get?of">.</td></tr>
+<tr><td>ohi to   </td><td class="pre" id="get?ot">.</td></tr>
 <tr><td>pingdraft</td><td class="pre" id="get?ps">.</td></tr>
 <tr><td>pingto   </td><td class="pre" id="get?pt">.</td></tr>
 <tr><td>pingfrom </td><td class="pre" id="get?pf">.</td></tr>
@@ -175,6 +179,12 @@ Form Tables:
     sWs.send(JSON.stringify({op:'service_add', service:{
       name:'take2', addr:'localhost:8888', alias:sNewAlias, loginperiod:0}}))
   };
+  gM.OhiAdd = function() {
+    sWs.send(JSON.stringify({op:'ohi_add', ohi:{alias:sAliasTo}}))
+  };
+  gM.OhiDrop = function() {
+    sWs.send(JSON.stringify({op:'ohi_drop', ohi:{alias:sAliasTo}}))
+  };
   gM.PingSave = function() {
     sWs.send(JSON.stringify({op:'ping_save', ping:{alias:sNewAlias, to:sAliasTo, text:'ereiamjh'}}))
   };
@@ -192,7 +202,7 @@ Form Tables:
                              alias:sNewAlias, cc:[sAliasTo]}}))
   };
   gM.Recv = function() {
-    sWs.send(JSON.stringify({op:'thread_ohi', thread:{}}))
+    sWs.send(JSON.stringify({op:'thread_recvtest', thread:{}}))
   };
   gM.Go = function(i) {
     sWs.send(JSON.stringify({op:'thread_set', thread:{id:i}}))
@@ -269,7 +279,7 @@ Form Tables:
     var aSvc = window.location.pathname.split('/')[1];
     sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
     sWs.onopen = function(iEvent) {
-      fXhr('s'); fXhr('ps'); fXhr('pt'); fXhr('pf');
+      fXhr('s'); fXhr('of'); fXhr('ot'); fXhr('ps'); fXhr('pt'); fXhr('pf');
       fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o');
     };
     sWs.onmessage = function(iEvent) {
@@ -279,6 +289,14 @@ Form Tables:
       switch (aObj.op) {
       case 'service_add':
         fXhr('s');
+        break;
+      case 'disconnect':
+      case 'ohi':
+        fXhr('of');
+        break;
+      case 'ohi_add':
+      case 'ohi_drop':
+        fXhr('ot');
         break;
       case 'ping_save':
       case 'ping_discard':
