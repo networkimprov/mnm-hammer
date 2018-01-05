@@ -40,10 +40,10 @@ func initServices(iFn func(string)) {
          continue
       }
       _makeTree(aSvc)
-      err = resolveTmpFile(cfgFile(aSvc) + ".tmp")
-      if err != nil { quit(err) }
-      err = resolveTmpFile(pingFile(aSvc) + ".tmp")
-      if err != nil { quit(err) }
+      for _, aFile := range [...]string{cfgFile(aSvc), pingFile(aSvc), ohiFile(aSvc)} {
+         err = resolveTmpFile(aFile + ".tmp")
+         if err != nil { quit(err) }
+      }
       var aTmps []string
       aTmps, err = readDirNames(tempDir(aSvc))
       if err != nil { quit(err) }
@@ -103,8 +103,10 @@ func _makeTree(iSvc string) {
       err = os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
-   err = os.Symlink("new_ping-draft", pingFile(iSvc))
-   if err != nil && !os.IsExist(err) { quit(err) }
+   for _, aFile := range [...]string{pingFile(iSvc), ohiFile(iSvc)} {
+      err = os.Symlink("empty", aFile)
+      if err != nil && !os.IsExist(err) { quit(err) }
+   }
 }
 
 func _addService(iService *tCfgService) error {
@@ -151,6 +153,11 @@ func GetQueueService(iSvc string) ([]*SendRecord, error) {
    return nil, nil
 }
 
+func LogoutService(iSvc string) Msg {
+   dropFromOhi(iSvc)
+   return Msg{"op":"disconnect"}
+}
+
 func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
                 aMsg Msg, aFn func(*ClientState)) {
    aMsg = Msg{"op":iHead.Op}
@@ -161,6 +168,11 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       aNewSvc.Node = iHead.NodeId
       err := _updateService(&aNewSvc)
       if err != nil { aMsg["err"] = err.Error() }
+   case "info":
+      aMsg["op"] = "ohi"
+      setFromOhi(iSvc, iHead)
+   case "ohi":
+      updateFromOhi(iSvc, iHead)
    case "ping":
       err := storeReceivedAdrsbk(iSvc, iHead, iR)
       if err != nil {
@@ -219,13 +231,15 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if err != nil {
          aMsg["err"] = err.Error()
       }
+   case "ohi_add", "ohi_drop":
+      aSrec = editOhi(iSvc, iUpdt)
    case "ping_save":
       storeSavedAdrsbk(iSvc, iUpdt)
    case "ping_discard":
       deleteSavedAdrsbk(iSvc, iUpdt.Ping.To)
    case "ping_send":
       aSrec = &SendRecord{id: string(eSrecPing) + makeSaveId(iUpdt.Ping.To)}
-   case "thread_ohi":
+   case "thread_recvtest":
       aTid := iState.getThread()
       if len(aTid) > 0 && aTid[0] == '_' { break }
       aFd, err := os.OpenFile(threadDir(iSvc) + "_22", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)

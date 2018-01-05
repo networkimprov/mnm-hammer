@@ -44,6 +44,7 @@ const kVersionDate = "(unreleased)"
 const kIdleTimeFraction = 10
 const kMsgHeaderMinLen = int64(len(`{"op":1}`))
 const kMsgHeaderMaxLen = int64(1 << 16)
+const kFirstOhiId = "first_ohi"
 
 const (
    eOpTmtpRev = iota
@@ -241,6 +242,7 @@ Closed:
 func runLink(iName string) {
    var err error
    var aConn net.Conn
+   var aJson []byte
 
    for {
       aSvc := slib.GetDataService(iName)
@@ -276,6 +278,12 @@ func runLink(iName string) {
 
       _readLink(iName, aConn, time.Duration(aSvc.LoginPeriod / kIdleTimeFraction) * time.Second)
       aConn.Close()
+
+      aJson, err = json.Marshal(slib.LogoutService(iName))
+      if err != nil { panic(err) }
+      getService(iName).ccs.Range(func(cC *tWsConn) {
+         cC.WriteMessage(gws.TextMessage, aJson)
+      })
    }
 }
 
@@ -356,11 +364,14 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          aEnd := aHeadEnd + aHead.DataLen; if aPos < aEnd { aEnd = aPos }
          aData = aBuf[aHeadEnd:aEnd]
       }
-      if aHead.Info == "login ok" {
-         aLogin = true
-         aQ.connSrc <- iConn
+      if aHead.Op == "ack" && aHead.Id == kFirstOhiId {
+         // no-op
       } else {
-         if aHead.Op == "ack" && aHead.Error == "" {
+         if aHead.Op == "info" && aHead.Info == "login ok" {
+            slib.SendAllOhi(iConn, iName, kFirstOhiId)
+            aLogin = true
+            aQ.connSrc <- iConn
+         } else if aHead.Op == "ack" && aHead.Error == "" {
             select {
             case aQ.ack <- aHead.Id:
             default:
@@ -371,7 +382,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          if aMsg == nil {
             break
          }
-         if aHead.From != "" {
+         if aHead.From != "" && aHead.Id != "" {
             aQ.postAck(aHead.Id)
          }
          aJson, _ := json.Marshal(aMsg)
@@ -454,6 +465,12 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       err = json.NewEncoder(iResp).Encode(aList)
    case "pf": // received pings
       aList := slib.GetReceivedAdrsbk(aSvc)
+      err = json.NewEncoder(iResp).Encode(aList)
+   case "of": // received ohis
+      aList := slib.GetFromOhi(aSvc)
+      err = json.NewEncoder(iResp).Encode(aList)
+   case "ot": // sent ohis
+      aList := slib.GetIdxOhi(aSvc)
       err = json.NewEncoder(iResp).Encode(aList)
    case "t": // thread list
       _, err = iResp.Write([]byte("threads "+aSvc))

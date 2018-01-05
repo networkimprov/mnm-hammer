@@ -37,6 +37,7 @@ func formDir  (iSvc string) string { return kServiceDir + iSvc + "/form/"   }
 func cfgFile  (iSvc string) string { return kServiceDir + iSvc + "/config"  }
 func pingFile (iSvc string) string { return kServiceDir + iSvc + "/ping-draft" }
 func adrsFile (iSvc string) string { return kServiceDir + iSvc + "/adrsbk"  }
+func ohiFile  (iSvc string) string { return kServiceDir + iSvc + "/ohi"     }
 
 func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
 
@@ -48,6 +49,7 @@ var sServices = make(map[string]*tService)
 type tService struct {
    cfg tCfgService
    adrsbk tAdrsbk
+   fromOhi tOhi
 }
 
 type Header struct {
@@ -56,9 +58,11 @@ type Header struct {
    Id, MsgId string
    Uid, NodeId string
    Info string
+   Ohi []string
    From string
    Posted string
    To string
+   Status int8
    DataLen, DataHead int64
    SubHead tHeader2
 }
@@ -124,6 +128,9 @@ type Update struct {
       To string
       Text string
    }
+   Ohi *struct {
+      Alias string
+   }
    Navigate *struct {
       History int
    }
@@ -140,12 +147,13 @@ type SendRecord struct {
    id string
 }
 
-const eSrecThread, eSrecPing byte = 't', 'p'
+const eSrecThread, eSrecPing, eSrecOhi byte = 't', 'p', 'o'
 
 func (o *SendRecord) Id() string { return o.id }
 
 func (o *SendRecord) Write(iW io.Writer, iSvc string) error {
    switch o.id[0] {
+   case eSrecOhi:    return sendEditOhi    (iW, iSvc, o.id[1:], o.id)
    case eSrecPing:   return sendSavedAdrsbk(iW, iSvc, o.id[1:], o.id)
    case eSrecThread: return sendSavedThread(iW, iSvc, o.id[1:], o.id)
    }
@@ -192,6 +200,7 @@ func parseSaveId(i string) tSaveId { return strings.SplitN(i, "_", 2) }
 type tSaveId []string
 func (o tSaveId) tidSet(i string) { o[0] = i }
 func (o tSaveId) alias() string { return o[0] }
+func (o tSaveId)   ohi() string { return o[0] }
 func (o tSaveId)   tid() string { return o[0] }
 func (o tSaveId)   sid() string { return o[1] }
 
