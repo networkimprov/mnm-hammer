@@ -16,9 +16,28 @@ import (
    "encoding/json"
    "os"
    "path"
+   "sort"
    "strconv"
    "strings"
 )
+
+func GetListThread(iSvc string, iState *ClientState) []string {
+   if iState.SvcTabs.PosFor != ePosForDefault {
+      return []string{}
+   }
+   aDir, err := ioutil.ReadDir(threadDir(iSvc))
+   if err != nil { quit(err) }
+   sort.Slice(aDir, func(cA, cB int) bool { return aDir[cA].ModTime().After(aDir[cB].ModTime()) })
+   aList := make([]string, len(aDir))
+   aI := 0
+   for a, _ := range aDir {
+      if !strings.ContainsRune(aDir[a].Name()[1:], '_') {
+         aList[aI] = aDir[a].Name()
+         aI++
+      }
+   }
+   return aList[:aI]
+}
 
 type tIndexEl struct {
    Id string

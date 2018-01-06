@@ -473,7 +473,8 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       aList := slib.GetIdxOhi(aSvc)
       err = json.NewEncoder(iResp).Encode(aList)
    case "t": // thread list
-      _, err = iResp.Write([]byte("threads "+aSvc))
+      aList := slib.GetListThread(aSvc, aState)
+      err = json.NewEncoder(iResp).Encode(aList)
    case "a": // attachment list
       if len(aOp_Id) > 1 {
          http.ServeFile(iResp, iReq, slib.GetPathAttach(aSvc, aState, aOp_Id[1]))
