@@ -38,6 +38,7 @@ func cfgFile  (iSvc string) string { return kServiceDir + iSvc + "/config"  }
 func pingFile (iSvc string) string { return kServiceDir + iSvc + "/ping-draft" }
 func adrsFile (iSvc string) string { return kServiceDir + iSvc + "/adrsbk"  }
 func ohiFile  (iSvc string) string { return kServiceDir + iSvc + "/ohi"     }
+func tabFile  (iSvc string) string { return kServiceDir + iSvc + "/tabs"    }
 
 func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
 
@@ -50,6 +51,7 @@ type tService struct {
    cfg tCfgService
    adrsbk tAdrsbk
    fromOhi tOhi
+   tabs []string
 }
 
 type Header struct {

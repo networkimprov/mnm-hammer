@@ -18,6 +18,9 @@ import (
 
 const kHistoryLen = 4
 
+var sSvcTabsDefault = []string{"All"}
+var sThreadTabsDefault = []string{"Opened","All"}
+
 var sStateDoor sync.Mutex
 var sStates = make(map[string]bool) // key client id
 
@@ -52,7 +55,8 @@ func OpenState(iClientId, iSvc string) *ClientState {
    }
    sStateDoor.Unlock()
    aState := &ClientState{Hpos: -1, Thread: make(map[string]*tThreadState),
-                          filePath: kStateDir + iClientId + "/" + iSvc}
+                          SvcTabs: tTabs{Terms:[]string{}},
+                          svc: iSvc, filePath: kStateDir + iClientId + "/" + iSvc}
    aFd, err := os.Open(aState.filePath)
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
@@ -71,6 +75,7 @@ func OpenState(iClientId, iSvc string) *ClientState {
 
 type ClientState struct {
    sync.RWMutex
+   svc string
    filePath string
    Hpos int // indexes History
    History []string // thread id
@@ -87,12 +92,18 @@ type tThreadState struct {
 
 const ( eTabThread=iota; eTabService )
 
-const ( ePosForDefault=iota; ePosForTerms; ePosForPinned; ePosForEnd )
+const ( ePosForDefault=iota; ePosForPinned; ePosForTerms; ePosForEnd )
 
 type tTabs struct {
    Pos int
    PosFor int8
    Terms []string
+}
+
+type tTabsSummary struct {
+   *tTabs
+   Default *[]string
+   Pinned  *[]string `json:",omitempty"`
 }
 
 type tOpenState map[string]bool // key msg id
@@ -109,11 +120,16 @@ func (o tOpenState) MarshalJSON() ([]byte, error) {
 }
 
 func (o *ClientState) GetSummary() Msg {
+   sServicesDoor.RLock()
+   aSvc := sServices[o.svc]
+   sServicesDoor.RUnlock()
+
    o.RLock(); defer o.RUnlock()
    aS := Msg{"Thread":"none"}
    if o.Hpos >= 0 {
       aS["Thread"] = o.History[o.Hpos]
-      aS["ThreadTabs"] = o.Thread[o.History[o.Hpos]].Tabs
+      aS["ThreadTabs"] = &tTabsSummary{tTabs: &o.Thread[o.History[o.Hpos]].Tabs,
+                                       Default: &sThreadTabsDefault}
       aH := 0
       if o.Hpos == 0 {
          aH = -1
@@ -122,7 +138,7 @@ func (o *ClientState) GetSummary() Msg {
       }
       aS["History"] = aH
    }
-   aS["SvcTabs"] = o.SvcTabs
+   aS["SvcTabs"] = &tTabsSummary{tTabs:&o.SvcTabs, Pinned:&aSvc.tabs, Default:&sSvcTabsDefault}
    return aS
 }
 
@@ -144,7 +160,8 @@ func (o *ClientState) isOpen(iMsgId string) bool {
 func (o *ClientState) addThread(iId, iLastMsgId string) {
    o.Lock(); defer o.Unlock()
    if o.Thread[iId] == nil {
-      o.Thread[iId] = &tThreadState{Open: tOpenState{iLastMsgId:true}}
+      o.Thread[iId] = &tThreadState{Open: tOpenState{iLastMsgId:true},
+                                    Tabs: tTabs{Terms:[]string{}}}
    } else if iId == o.History[o.Hpos] {
       fmt.Fprintf(os.Stderr, "addThread: ignored attempt to readd %s\n", iId)
       return
@@ -274,26 +291,37 @@ func (o *ClientState) setTab(iType int8, iPosFor int8, iPos int) {
    if err != nil { quit(err) }
 }
 
+func (o *ClientState) pinTab(iType int8) {
+   if iType == eTabThread { quit(tError("pinTab: cannot pin thread tab")) }
+   o.Lock(); defer o.Unlock()
+   aTabs := &o.SvcTabs
+   if aTabs.PosFor != ePosForTerms { quit(tError("pinTab: not ePosForTerms")) }
+
+   aOrig := aTabs.Pos
+   aTabs.Pos = addTabService(o.svc, aTabs.Terms[aOrig])
+   aTabs.PosFor = ePosForPinned
+   if len(aTabs.Terms) == 0 { quit(tError("pinTab: no terms to pin")) }
+   aTabs.Terms = aTabs.Terms[:aOrig + copy(aTabs.Terms[aOrig:], aTabs.Terms[aOrig+1:])]
+   err := storeFile(o.filePath, o)
+   if err != nil { quit(err) }
+}
+
 func (o *ClientState) dropTab(iType int8) {
    o.Lock(); defer o.Unlock()
    aTabs := &o.SvcTabs; if iType == eTabThread { aTabs = &o.Thread[o.History[o.Hpos]].Tabs }
-   if aTabs.PosFor != ePosForTerms { quit(tError("dropTab: not ePosForTerms")) }
-   if len(aTabs.Terms) == 0 { quit(tError("dropTab: no terms to drop")) }
+   if aTabs.PosFor == ePosForDefault { quit(tError("dropTab: cannot drop ePosForDefault")) }
 
-   if aTabs.Pos == len(aTabs.Terms)-1 {
-      if aTabs.Pos == 0 {
-         aTabs.PosFor = ePosForDefault
-      } else {
-         aTabs.Pos--
-      }
-   } else {
-      copy(aTabs.Terms[aTabs.Pos:], aTabs.Terms[aTabs.Pos+1:])
-   }
-   if len(aTabs.Terms) == 1 {
-      aTabs.Terms = nil
-   } else {
-      aTabs.Terms = aTabs.Terms[:len(aTabs.Terms)-1]
+   aOrig := aTabs.Pos
+   aFor := aTabs.PosFor
+   aTabs.Pos = 0
+   aTabs.PosFor = ePosForDefault
+   if aFor == ePosForTerms {
+      if len(aTabs.Terms) == 0 { quit(tError("dropTab: no terms to drop")) }
+      aTabs.Terms = aTabs.Terms[:aOrig + copy(aTabs.Terms[aOrig:], aTabs.Terms[aOrig+1:])]
    }
    err := storeFile(o.filePath, o)
    if err != nil { quit(err) }
+   if aFor == ePosForPinned {
+      dropTabService(o.svc, aOrig)
+   }
 }

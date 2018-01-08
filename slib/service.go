@@ -40,7 +40,8 @@ func initServices(iFn func(string)) {
          continue
       }
       _makeTree(aSvc)
-      for _, aFile := range [...]string{cfgFile(aSvc), pingFile(aSvc), ohiFile(aSvc)} {
+      for _, aFile := range [...]string{cfgFile(aSvc), pingFile(aSvc), ohiFile(aSvc),
+                                        tabFile(aSvc)} {
          err = resolveTmpFile(aFile + ".tmp")
          if err != nil { quit(err) }
       }
@@ -62,9 +63,11 @@ func initServices(iFn func(string)) {
             completeThread(aSvc, aTmp)
          }
       }
-      aService := &tService{}
+      aService := &tService{tabs:[]string{}}
       err = readJsonFile(&aService.cfg, cfgFile(aSvc))
       if err != nil { quit(err) }
+      err = readJsonFile(&aService.tabs, tabFile(aSvc))
+      if err != nil && !os.IsNotExist(err) { quit(err) }
       sServices[aSvc] = aService
    }
    if sServices["test"] == nil {
@@ -103,7 +106,7 @@ func _makeTree(iSvc string) {
       err = os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
-   for _, aFile := range [...]string{pingFile(iSvc), ohiFile(iSvc)} {
+   for _, aFile := range [...]string{pingFile(iSvc), ohiFile(iSvc), tabFile(iSvc)} {
       err = os.Symlink("empty", aFile)
       if err != nil && !os.IsExist(err) { quit(err) }
    }
@@ -147,6 +150,25 @@ func _updateService(iService *tCfgService) error {
 
    aSvc.cfg = *iService
    return nil
+}
+
+func addTabService(iSvc string, iTerm string) int {
+   sServicesDoor.RLock()
+   aSvc := sServices[iSvc]
+   sServicesDoor.RUnlock()
+   aSvc.tabs = append(aSvc.tabs, iTerm)
+   err := storeFile(tabFile(iSvc), aSvc.tabs)
+   if err != nil { quit(err) }
+   return len(aSvc.tabs)-1
+}
+
+func dropTabService(iSvc string, iPos int) {
+   sServicesDoor.RLock()
+   aSvc := sServices[iSvc]
+   sServicesDoor.RUnlock()
+   aSvc.tabs = aSvc.tabs[:iPos + copy(aSvc.tabs[iPos:], aSvc.tabs[iPos+1:])]
+   err := storeFile(tabFile(iSvc), aSvc.tabs)
+   if err != nil { quit(err) }
 }
 
 func GetQueueService(iSvc string) ([]*SendRecord, error) {
@@ -297,6 +319,8 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       iState.goThread(iUpdt.Navigate.History)
    case "tab_add":
       iState.addTab(iUpdt.Tab.Type, iUpdt.Tab.Term)
+   case "tab_pin":
+      iState.pinTab(iUpdt.Tab.Type)
    case "tab_drop":
       iState.dropTab(iUpdt.Tab.Type)
    case "tab_select":
