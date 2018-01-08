@@ -56,9 +56,10 @@ Form Tables:
 <tr><td>pingdraft</td><td class="pre" id="get?ps">.</td></tr>
 <tr><td>pingto   </td><td class="pre" id="get?pt">.</td></tr>
 <tr><td>pingfrom </td><td class="pre" id="get?pf">.</td></tr>
+<tr><td>svc tabs </td><td class="pre" id="get?cs">.</td></tr>
 <tr><td>threads  </td><td class="pre" id="get?t">.</td></tr>
 <tr><td>attached </td><td class="pre" id="get?a">.</td></tr>
-<tr><td>tabs     </td><td class="pre" id="get?c">.</td></tr>
+<tr><td>tabs     </td><td class="pre" id="get?ct">.</td></tr>
 <tr><td>msg index</td><td class="pre" id="get?m">.</td></tr>
 <tr><td>last msg </td><td class="pre" id="get?p">.</td></tr>
 <tr><td>open msgs</td><td class="pre" id="get?o">.</td></tr>
@@ -70,6 +71,22 @@ Form Tables:
 <script>
 ;var gM = {};
 (function() {
+  function fXhr(i, iP) {
+    var aXhr = new XMLHttpRequest();
+    aXhr.onload = function() {
+      switch (i) {
+      case 'ps': fDrawPing(JSON.parse(aXhr.responseText)); break;
+      case 't': fDrawThreads(JSON.parse(aXhr.responseText)); break;
+      case 'a': fDrawAttached(JSON.parse(aXhr.responseText)); break;
+      case 'c': fDrawTabs(JSON.parse(aXhr.responseText)); break;
+      case 'm': fDrawMsgIndex(JSON.parse(aXhr.responseText)); break;
+      case 'o': fDrawOpen(aXhr.responseText); break;
+      default:  document.getElementById('get?'+i).innerText = aXhr.responseText;
+      }
+    };
+    aXhr.open('GET', '?'+i+(iP ? '='+iP : ''));
+    aXhr.send();
+  }
   function fDrawPing(iList) {
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
@@ -80,29 +97,40 @@ Form Tables:
     }
     document.getElementById('get?ps').innerHTML = aS;
   }
+  function fDrawThreads(iList) {
+    var aS = '';
+    for (var a=0; a < iList.length; ++a)
+      if (iList[a] !== '_22')
+        aS += '<button onclick="gM.Go(\''+iList[a]+'\')">'+iList[a].slice(-5)+'</button> ';
+    document.getElementById('get?t').innerHTML = aS;
+  }
   function fDrawAttached(iList) {
     var aS = '';
     for (var a=0; a < iList.length; ++a)
       aS += '<a href="?a='+encodeURIComponent(iList[a].File)+'">'+JSON.stringify(iList[a])+'</a> ';
     document.getElementById('get?a').innerHTML = aS;
   }
-  function fDrawThreadTabs(iSt) {
-    if (iSt.Thread === 'none')
-      return;
-    var aS =  '<button onclick="gM.SelectTab(0,0,0)">Opened</button>';
-    aS +=     '<button onclick="gM.SelectTab(0,0,1)">All</button>';
-    if (iSt.ThreadTabs.Terms) {
-      var aList = iSt.ThreadTabs.Terms;
-      for (var a=0; a < aList.length; ++a)
-        aS += '<button onclick="gM.SelectTab(0,1,'+a+')">'+aList[a]+'</button>';
-    }
-    aS +=     '<button onclick="gM.DropTab  (0)" id="tabdrop">X</button>';
-    aS +=     '<button onclick="gM.AddTab   (0,null)">Add</button>';
-    document.getElementById('get?c').innerHTML = aS;
-    document.getElementById('tabdrop').style.display = iSt.ThreadTabs.PosFor ? 'inline' : 'none';
+  function fDrawTabs(iSt) {
+    if (iSt.Thread !== 'none')
+      document.getElementById('get?ct').innerHTML = fMakeTabs(iSt.ThreadTabs, 0);
+    document.getElementById('get?cs').innerHTML = fMakeTabs(iSt.SvcTabs, 1);
+  }
+  function fMakeTabs(iTabs, iType) {
+    var aS = '';
+    var aSet = [iTabs.Default, iTabs.Pinned, iTabs.Terms]
+    for (var aI in aSet)
+      if (aSet[aI])
+        for (var a=0; a < aSet[aI].length; ++a)
+          aS += '<button onclick="gM.SelectTab('+iType+','+aI+','+a+')">'+aSet[aI][a]+'</button>';
+    aS +=       '<button onclick="gM.DropTab  ('+iType+')" id="tabdrop'+iType+'"'+
+                       ' style="display:'+(iTabs.PosFor ? 'inline' : 'none')+'">X</button>';
+    if (iType === 1)
+      aS +=     '<button onclick="gM.PinTab   ('+iType+')" id="tabpin'+iType+'"'+
+                       ' style="display:'+(iTabs.PosFor > 1 ? 'inline' : 'none')+'">T</button>';
+    aS +=       '<button onclick="gM.AddTab   ('+iType+',null)">Add</button>';
+    return aS;
   }
   function fDrawMsgIndex(iList) {
-    sIdx = iList
     if (iList.length && iList[0].Id !== sThread.id) {
       sThread = {id: iList[0].Id, reply: {}};
       sData = 'you dont say';
@@ -145,28 +173,12 @@ Form Tables:
       }
     }
   }
-  function fXhr(i, iP) {
-    var aXhr = new XMLHttpRequest();
-    aXhr.onload = function() {
-      switch (i) {
-      case 'ps': fDrawPing(JSON.parse(aXhr.responseText)); break;
-      case 'a': fDrawAttached(JSON.parse(aXhr.responseText)); break;
-      case 'c': fDrawThreadTabs(JSON.parse(aXhr.responseText)); break;
-      case 'm': fDrawMsgIndex(JSON.parse(aXhr.responseText)); break;
-      case 'o': fDrawOpen(aXhr.responseText); break;
-      default:  document.getElementById('get?'+i).innerText = aXhr.responseText;
-      }
-    };
-    aXhr.open('GET', '?'+i+(iP ? '='+iP : ''));
-    aXhr.send();
-  }
 
   var sWs = null;
   var sHeadMap = null;
   var sLastFfn = null;
   var sThread = {id:null, reply:null};
   var sData='you dont say';
-  var sIdx = null;
 
   if ('{{.Addr}}' === ':80') {
     var sNewAlias = 'Ninetynine', sAliasTo = 'Eightysix';
@@ -264,15 +276,20 @@ Form Tables:
   gM.Discard = function(i) {
     sWs.send(JSON.stringify({op:'thread_discard', thread:{id:i}}))
   };
-  gM.AddTab = function(iId, iTerm) {
-    sWs.send(JSON.stringify({op:'tab_add', tab:{threadid:iId, term:sData+='-'}}))
+  gM.AddTab = function(iType, iTerm) {
+    sWs.send(JSON.stringify({op:'tab_add', tab:{type:iType, term:sData+='-'}}))
   };
-  gM.SelectTab = function(iId, iPosFor, iPos) {
-    document.getElementById('tabdrop').style.display = iPosFor ? 'inline' : 'none';
-    sWs.send(JSON.stringify({op:'tab_select', tab:{threadid:iId, posfor:iPosFor, pos:iPos}}))
+  gM.SelectTab = function(iType, iPosFor, iPos) {
+    document.getElementById('tabdrop'+iType).style.display = iPosFor ? 'inline' : 'none';
+    if (iType === 1)
+      document.getElementById('tabpin'+iType).style.display = iPosFor > 1 ? 'inline' : 'none';
+    sWs.send(JSON.stringify({op:'tab_select', tab:{type:iType, posfor:iPosFor, pos:iPos}}))
   };
-  gM.DropTab = function(iId) {
-    sWs.send(JSON.stringify({op:'tab_drop', tab:{threadid:iId}}))
+  gM.PinTab = function(iType) {
+    sWs.send(JSON.stringify({op:'tab_pin', tab:{type:iType}}))
+  };
+  gM.DropTab = function(iType) {
+    sWs.send(JSON.stringify({op:'tab_drop', tab:{type:iType}}))
   };
 
   window.onload = function() {
@@ -307,20 +324,18 @@ Form Tables:
         fXhr('pf'); fXhr('pt');
         break;
       case 'delivery':
-        fXhr('pt'); fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        fXhr('pt'); fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'ack':
         if (!aObj.msgid) break;
-        fXhr('ps'); fXhr('pt'); fXhr('pf'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.msgid);
-        if (sIdx.length === 1)
-          document.getElementById('get?t').innerHTML +=
-            '<button onclick="gM.Go(\''+aObj.msgid+'\')">'+aObj.msgid.slice(-5)+'</button>';
+        fXhr('ps'); fXhr('pt'); fXhr('pf');
+        fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.msgid);
         break;
       case 'thread_save':
-        fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
+        fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'thread_discard':
-        fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o');
+        fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o');
         document.getElementById('get?p').innerText = '';
         break;
       case 'thread_close':
@@ -331,11 +346,14 @@ Form Tables:
         fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o');
         break;
       case 'tab_select':
-        fXhr('o');
+        fXhr('t'); fXhr('o');
         break;
       case 'tab_add':
       case 'tab_drop':
-        fXhr('c'); fXhr('o');
+        fXhr('c'); fXhr('t'); fXhr('o');
+        break;
+      case 'tab_pin':
+        fXhr('c');
         break;
       }
     };
