@@ -213,8 +213,8 @@ func resolveSentAdrsbk(iSvc string, iFrom, iAlias string, iTid, iMsgId string) {
    }
    aEl := tAdrsbkEl{Type:eAbMsgFrom, Date:dateRFC3339(), Text_Tid:iTid, MsgId:iMsgId,
                     Uid:iFrom, Alias:iAlias}
-   aSvc.aliasIdx[iAlias] = iFrom
    if _respondLog(aSvc.pingToIdx[iAlias], &aEl) {
+      aSvc.aliasIdx[iAlias] = iFrom
       _storeAdrsbk(iSvc, []tAdrsbkEl{aEl}, false)
    }
 }
