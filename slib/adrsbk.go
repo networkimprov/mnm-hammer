@@ -230,6 +230,9 @@ func _storeAdrsbk(iSvc string, iEls []tAdrsbkEl, iSent bool) {
    }
    aTemp := aTempOk + ".tmp"
 
+   for a, _ := range iEls {
+      iEls[a].Response = nil
+   }
    err = writeJsonFile(aTemp, iEls)
    if err != nil { quit(err) }
    err = os.Rename(aTemp, aTempOk)
