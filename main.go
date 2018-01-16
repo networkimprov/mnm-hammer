@@ -466,6 +466,15 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "pf": // received pings
       aList := slib.GetReceivedAdrsbk(aSvc)
       err = json.NewEncoder(iResp).Encode(aList)
+   case "it": // sent invites
+      aList := slib.GetInviteToAdrsbk(aSvc)
+      err = json.NewEncoder(iResp).Encode(aList)
+   case "if": // received invites
+      aList := slib.GetInviteFromAdrsbk(aSvc)
+      err = json.NewEncoder(iResp).Encode(aList)
+   case "gr": // groups
+      aList := slib.GetGroupAdrsbk(aSvc)
+      err = json.NewEncoder(iResp).Encode(aList)
    case "of": // received ohis
       aList := slib.GetFromOhi(aSvc)
       err = json.NewEncoder(iResp).Encode(aList)

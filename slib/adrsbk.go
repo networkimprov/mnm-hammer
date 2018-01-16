@@ -20,11 +20,15 @@ import (
    "strings"
 )
 
+const kUidUnknown = "\x00unknown"
 
 type tAdrsbk struct {
-   pingToIdx   map[string]tAdrsbkLog // key alias
-   pingFromIdx map[string]tAdrsbkLog // key uid
-   aliasIdx    map[string]string     // key alias, value uid //todo replace with btree
+   pingToIdx     map[string]tAdrsbkLog // key alias
+   pingFromIdx   map[string]tAdrsbkLog // key uid
+   aliasIdx      map[string]string     // key alias, value uid //todo replace with btree
+   inviteToIdx   map[string]tAdrsbkLog // key alias + gid
+   inviteFromIdx map[string]tAdrsbkLog // key gid
+   groupIdx      map[string]tGroupEl   // key gid
 }
 
 type tAdrsbkLog []*tAdrsbkEl
@@ -32,15 +36,34 @@ type tAdrsbkLog []*tAdrsbkEl
 type tAdrsbkEl struct {
    Type int8
    Date string
-   Text_Tid string                         // Tid if eAbMsg*
-   Alias string        `json:",omitempty"` // not eAbMsgTo
-   Uid string          `json:",omitempty"` // not eAbPingSaved, eAbPingTo
-   MyAlias string      `json:",omitempty"` // not eAbMsg*
-   MsgId string        `json:",omitempty"` // not eAbPingSaved, eAbPingTo
+   Text_Tid string     `json:",omitempty"` // Tid if eAbMsgTo/From
+   Alias string        `json:",omitempty"`
+   Uid string          `json:",omitempty"`
+   MyAlias string      `json:",omitempty"`
+   MsgId string        `json:",omitempty"`
+   Gid string          `json:",omitempty"`
    Response *tAdrsbkEl `json:",omitempty"` // not stored
 }
 
-const ( eAbPingSaved int8 = iota; eAbPingQueued; eAbPingTo; eAbPingFrom; eAbMsgTo; eAbMsgFrom )
+const (
+   _ int8 = iota
+   eAbPingSaved     // Type, Date, Text, Alias,      MyAlias
+   eAbPingQueued    // Type, Date, Text, Alias,      MyAlias
+   eAbPingTo        // Type, Date, Text, Alias,      MyAlias
+   eAbPingFrom      // Type, Date, Text, Alias, Uid, MyAlias, MsgId
+   eAbMsgTo         // Type, Date,              Uid,          MsgId, Tid
+   eAbMsgFrom       // Type, Date,       Alias, Uid,          MsgId, Tid
+   eAbInviteTo      // Type, Date, Text, Alias,      MyAlias,            Gid
+   eAbInviteFrom    // Type, Date, Text, Alias, Uid, MyAlias, MsgId,     Gid
+   eAbMsgAccept     // Type, Date,                                       Gid
+   eAbMsgJoin       // Type, Date,       Alias, Uid,                     Gid
+)
+
+type tGroupEl struct {
+   Gid string
+   Date string
+   Admin bool
+}
 
 
 func _getAliasIdx(iSvc string) map[string]string {
@@ -55,9 +78,12 @@ func _loadAdrsbk(iSvc string) *tAdrsbk {
       sServicesDoor.Unlock()
       return aSvc
    }
-   aSvc.pingToIdx   = make(map[string]tAdrsbkLog)
-   aSvc.pingFromIdx = make(map[string]tAdrsbkLog)
-   aSvc.aliasIdx    = make(map[string]string)
+   aSvc.pingToIdx     = make(map[string]tAdrsbkLog)
+   aSvc.pingFromIdx   = make(map[string]tAdrsbkLog)
+   aSvc.aliasIdx      = make(map[string]string)
+   aSvc.inviteToIdx   = make(map[string]tAdrsbkLog)
+   aSvc.inviteFromIdx = make(map[string]tAdrsbkLog)
+   aSvc.groupIdx      = make(map[string]tGroupEl)
    sServicesDoor.Unlock()
 
    var aLog []tAdrsbkEl
@@ -65,15 +91,30 @@ func _loadAdrsbk(iSvc string) *tAdrsbk {
    if err != nil && !os.IsNotExist(err) { quit(err) }
    for a, _ := range aLog {
       switch aLog[a].Type {
+      case eAbInviteTo:
+         aKey := aLog[a].Alias + "\x00" + aLog[a].Gid
+         aEl := aLog[a]
+         aUserLog := aSvc.inviteToIdx[aKey]
+         aSvc.inviteToIdx[aKey] = _appendLog(aUserLog, &aEl)
+         if aSvc.groupIdx[aEl.Gid].Gid == "" {
+            aSvc.groupIdx[aEl.Gid] = tGroupEl{Gid:aEl.Gid, Date:aEl.Date, Admin:true}
+            aSvc.aliasIdx[aEl.Gid] = aEl.Gid
+         }
+         fallthrough
       case eAbPingTo:
          aUid := aSvc.aliasIdx[aLog[a].Alias]
          if aUid == "" {
-            aSvc.aliasIdx[aLog[a].Alias] = "unknown"
-         } else if aUid != "unknown" {
+            aSvc.aliasIdx[aLog[a].Alias] = kUidUnknown
+         } else if aUid != kUidUnknown {
             _respondLog(aSvc.pingFromIdx[aUid], &aLog[a])
          }
          aUserLog := aSvc.pingToIdx[aLog[a].Alias]
          aSvc.pingToIdx[aLog[a].Alias] = _appendLog(aUserLog, &aLog[a])
+      case eAbInviteFrom:
+         aEl := aLog[a]
+         aUserLog := aSvc.inviteFromIdx[aLog[a].Gid]
+         aSvc.inviteFromIdx[aLog[a].Gid] = _appendLog(aUserLog, &aEl)
+         fallthrough
       case eAbPingFrom:
          aSvc.aliasIdx[aLog[a].Alias] = aLog[a].Uid
          _respondLog(aSvc.pingToIdx[aLog[a].Alias], &aLog[a])
@@ -84,6 +125,12 @@ func _loadAdrsbk(iSvc string) *tAdrsbk {
       case eAbMsgFrom:
          aSvc.aliasIdx[aLog[a].Alias] = aLog[a].Uid
          _respondLog(aSvc.pingToIdx[aLog[a].Alias], &aLog[a])
+      case eAbMsgAccept:
+         aSvc.groupIdx[aLog[a].Gid] = tGroupEl{Gid:aLog[a].Gid, Date:aLog[a].Date}
+         aSvc.aliasIdx[aLog[a].Gid] = aLog[a].Gid
+         _respondLog(aSvc.inviteFromIdx[aLog[a].Gid], &aLog[a])
+      case eAbMsgJoin:
+         _respondLog(aSvc.inviteToIdx[aLog[a].Alias + "\x00" + aLog[a].Gid], &aLog[a])
       default:
          quit(tError(fmt.Sprintf("unexpected adrsbk type %d", aLog[a].Type)))
       }
@@ -108,15 +155,32 @@ func _respondLog(iLog tAdrsbkLog, iEl *tAdrsbkEl) bool {
    return true
 }
 
+func GetGroupAdrsbk(iSvc string) []tGroupEl {
+   aSvc := _loadAdrsbk(iSvc)
+   aList := make([]tGroupEl, len(aSvc.groupIdx))
+   a := 0
+   for _, aList[a] = range aSvc.groupIdx { a++ }
+   sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Date > aList[cB].Date })
+   return aList
+}
+
 func GetReceivedAdrsbk(iSvc string) tAdrsbkLog {
-   return _listPings(_loadAdrsbk(iSvc).pingFromIdx)
+   return _listLogs(_loadAdrsbk(iSvc).pingFromIdx)
 }
 
 func GetSentAdrsbk(iSvc string) tAdrsbkLog {
-   return _listPings(_loadAdrsbk(iSvc).pingToIdx)
+   return _listLogs(_loadAdrsbk(iSvc).pingToIdx)
 }
 
-func _listPings(iIdx map[string]tAdrsbkLog) tAdrsbkLog {
+func GetInviteFromAdrsbk(iSvc string) tAdrsbkLog {
+   return _listLogs(_loadAdrsbk(iSvc).inviteFromIdx)
+}
+
+func GetInviteToAdrsbk(iSvc string) tAdrsbkLog {
+   return _listLogs(_loadAdrsbk(iSvc).inviteToIdx)
+}
+
+func _listLogs(iIdx map[string]tAdrsbkLog) tAdrsbkLog {
    aLog := tAdrsbkLog{}
    for _, aSet := range iIdx {
       for _, aEl := range aSet {
@@ -132,8 +196,9 @@ func lookupAdrsbk(iSvc string, iAlias []string) []tHeaderFor {
    aFor := make([]tHeaderFor, len(iAlias))
    for a, _ := range iAlias {
       aUid := aSvc.aliasIdx[iAlias[a]]
-      if aUid != "" && aUid != "unknown" {
-         aFor[a] = tHeaderFor{Id:aUid, Type:eForUser}
+      if aUid != "" && aUid != kUidUnknown {
+         aType := eForUser; if aUid == iAlias[a] { aType = eForGroupExcl }
+         aFor[a] = tHeaderFor{Id:aUid, Type:aType}
       }
    }
    return aFor
@@ -151,7 +216,7 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
       }
    }
    aUid := aSvc.aliasIdx[iHead.SubHead.Alias]
-   if aUid != "" && aUid != "unknown" && aUid != iHead.From {
+   if aUid != "" && aUid != kUidUnknown && aUid != iHead.From {
       fmt.Fprintf(os.Stderr, "storeReceivedAdrsbk %s: ping from %s blocked\n", iSvc, iHead.From)
       _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
       return err
@@ -159,8 +224,13 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    aBuf := make([]byte, iHead.DataLen)
    _, err = iR.Read(aBuf)
    if err != nil { return err }
-   aEl := tAdrsbkEl{Type:eAbPingFrom, Date:dateRFC3339(), Text_Tid:string(aBuf),
+   aType := eAbPingFrom; if iHead.Op == "invite" { aType = eAbInviteFrom }
+   aEl := tAdrsbkEl{Type:aType, Date:dateRFC3339(), Gid:iHead.Gid, Text_Tid:string(aBuf),
                     Alias:iHead.SubHead.Alias, Uid:iHead.From, MyAlias:iHead.To, MsgId:iHead.Id}
+   if aEl.Type == eAbInviteFrom {
+      aEl2 := aEl
+      aSvc.inviteFromIdx[iHead.Gid] = _appendLog(aSvc.inviteFromIdx[iHead.Gid], &aEl2)
+   }
    aSvc.aliasIdx[aEl.Alias] = aEl.Uid
    _respondLog(aSvc.pingToIdx[aEl.Alias], &aEl)
    aSvc.pingFromIdx[iHead.From] = _appendLog(aLog, &aEl)
@@ -168,23 +238,31 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    return nil
 }
 
-func storeSentAdrsbk(iSvc string, iAlias string) {
+func storeSentAdrsbk(iSvc string, iKey string) {
    var err error
    var aMap map[string]*tAdrsbkEl
    err = readJsonFile(&aMap, pingFile(iSvc))
    if err != nil { quit(err) }
-   aEl := aMap[iAlias]
+   aEl := aMap[iKey]
    aSvc := _loadAdrsbk(iSvc)
-   aLog := aSvc.pingToIdx[iAlias]
-   aEl.Type = eAbPingTo
+   aLog := aSvc.pingToIdx[aEl.Alias]
+   aEl.Type = eAbPingTo; if aEl.Gid != "" { aEl.Type = eAbInviteTo }
    aEl.Date = dateRFC3339()
-   aUid := aSvc.aliasIdx[iAlias]
+   if aEl.Type == eAbInviteTo {
+      aEl2 := *aEl
+      aSvc.inviteToIdx[iKey] = _appendLog(aSvc.inviteToIdx[iKey], &aEl2)
+      if aSvc.groupIdx[aEl2.Gid].Gid == "" {
+         aSvc.groupIdx[aEl2.Gid] = tGroupEl{Gid:aEl2.Gid, Date:aEl2.Date, Admin:true}
+         aSvc.aliasIdx[aEl2.Gid] = aEl2.Gid
+      }
+   }
+   aUid := aSvc.aliasIdx[aEl.Alias]
    if aUid == "" {
-      aSvc.aliasIdx[iAlias] = "unknown"
-   } else if aUid != "unknown" {
+      aSvc.aliasIdx[aEl.Alias] = kUidUnknown
+   } else if aUid != kUidUnknown {
       _respondLog(aSvc.pingFromIdx[aUid], aEl)
    }
-   aSvc.pingToIdx[iAlias] = _appendLog(aLog, aEl)
+   aSvc.pingToIdx[aEl.Alias] = _appendLog(aLog, aEl)
    _storeAdrsbk(iSvc, []tAdrsbkEl{*aEl}, true)
 }
 
@@ -208,13 +286,31 @@ func resolveSentAdrsbk(iSvc string, iFrom, iAlias string, iTid, iMsgId string) {
    }
    aSvc := _loadAdrsbk(iSvc)
    aUid := aSvc.aliasIdx[iAlias]
-   if aUid != "unknown" && aUid != iFrom {
+   if aUid != kUidUnknown && aUid != iFrom {
       return
    }
    aEl := tAdrsbkEl{Type:eAbMsgFrom, Date:dateRFC3339(), Text_Tid:iTid, MsgId:iMsgId,
                     Uid:iFrom, Alias:iAlias}
    if _respondLog(aSvc.pingToIdx[iAlias], &aEl) {
       aSvc.aliasIdx[iAlias] = iFrom
+      _storeAdrsbk(iSvc, []tAdrsbkEl{aEl}, false)
+   }
+}
+
+func acceptInviteAdrsbk(iSvc string, iGid string) {
+   aSvc := _loadAdrsbk(iSvc)
+   aEl := tAdrsbkEl{Type:eAbMsgAccept, Date:dateRFC3339(), Gid:iGid}
+   if _respondLog(aSvc.inviteFromIdx[iGid], &aEl) {
+      aSvc.groupIdx[iGid] = tGroupEl{Gid:iGid, Date:aEl.Date}
+      aSvc.aliasIdx[iGid] = iGid
+      _storeAdrsbk(iSvc, []tAdrsbkEl{aEl}, false)
+   }
+}
+
+func groupJoinedAdrsbk(iSvc string, iGid, iAlias string) {
+   aSvc := _loadAdrsbk(iSvc)
+   aEl := tAdrsbkEl{Type:eAbMsgJoin, Date:dateRFC3339(), Gid:iGid, Alias:iAlias}
+   if _respondLog(aSvc.inviteToIdx[iAlias + "\x00" + iGid], &aEl) {
       _storeAdrsbk(iSvc, []tAdrsbkEl{aEl}, false)
    }
 }
@@ -246,7 +342,7 @@ func _completeAdrsbk(iSvc string, iTmp string, iEls []tAdrsbkEl) {
    var err error
    aRec := strings.SplitN(iTmp, "_", 3)
    if aRec[2] == "sent" {
-      deleteSavedAdrsbk(iSvc, iEls[0].Alias) // when sent, len(iEls)==1
+      deleteSavedAdrsbk(iSvc, iEls[0].Alias, iEls[0].Gid) // when sent, len(iEls)==1
    }
    aFd, err := os.OpenFile(adrsFile(iSvc), os.O_WRONLY|os.O_CREATE, 0600)
    if err != nil { quit(err) }
@@ -304,6 +400,15 @@ func GetSavedAdrsbk(iSvc string) tAdrsbkLog {
    return aList
 }
 
+func sendJoinGroupAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
+   var err error
+   aId := parseSaveId(iSaveId)
+   aHead, err := json.Marshal(Msg{"Op":6, "Id":iId, "Act":"join", "Gid":aId.ping()})
+   if err != nil { quit(err) }
+   err = sendHeaders(iW, aHead, nil)
+   return err
+}
+
 //todo update .Type on queue for send
 
 func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
@@ -312,12 +417,17 @@ func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
    err = readJsonFile(&aMap, pingFile(iSvc))
    if err != nil { quit(err) }
    aId := parseSaveId(iSaveId)
-   aEl := aMap[aId.alias()]
-   aSubh, err := json.Marshal(Msg{"Alias":aEl.MyAlias})
+   aEl := aMap[aId.ping()]
+   aSubh, err := json.Marshal(Msg{"Alias":aEl.MyAlias}) //todo drop when ping takes from:
    if err != nil { quit(err) }
    aData := []byte(aEl.Text_Tid)
-   aHead, err := json.Marshal(Msg{"Op":8, "Id":iId, "To":aEl.Alias,
-                                  "DataHead":len(aSubh), "DataLen": len(aSubh) + len(aData)})
+   aMsg := Msg{"Op":8, "Id":iId, "To":aEl.Alias, "From":aEl.MyAlias,
+               "DataHead":len(aSubh), "DataLen": len(aSubh) + len(aData)}
+   if aEl.Gid != "" {
+      aMsg["Op"] = 5
+      aMsg["Gid"] = aEl.Gid
+   }
+   aHead, err := json.Marshal(aMsg)
    if err != nil { quit(err) }
    err = sendHeaders(iW, aHead, aSubh)
    if err != nil { return err }
@@ -325,26 +435,32 @@ func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
    return err
 }
 
+func keySavedAdrsbk(iUpdt *Update) string {
+   return iUpdt.Ping.To + "\x00" + iUpdt.Ping.Gid
+}
+
 func storeSavedAdrsbk(iSvc string, iUpdt *Update) {
    var err error
    aMap := make(map[string]*tAdrsbkEl)
    err = readJsonFile(&aMap, pingFile(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
-   aMap[iUpdt.Ping.To] = &tAdrsbkEl{Type:eAbPingSaved, Date:dateRFC3339(), Text_Tid:iUpdt.Ping.Text,
-                                    Alias:iUpdt.Ping.To, MyAlias:iUpdt.Ping.Alias}
+   aKey := iUpdt.Ping.To + "\x00" + iUpdt.Ping.Gid
+   aMap[aKey] = &tAdrsbkEl{Type:eAbPingSaved, Date:dateRFC3339(), Text_Tid:iUpdt.Ping.Text,
+                           Alias:iUpdt.Ping.To, MyAlias:iUpdt.Ping.Alias, Gid:iUpdt.Ping.Gid}
    err = storeFile(pingFile(iSvc), aMap)
    if err != nil { quit(err) }
 }
 
-func deleteSavedAdrsbk(iSvc string, iAlias string) {
+func deleteSavedAdrsbk(iSvc string, iAlias, iGid string) {
    var err error
    var aMap map[string]*tAdrsbkEl
    err = readJsonFile(&aMap, pingFile(iSvc))
    if err != nil { quit(err) }
-   if aMap[iAlias] == nil {
+   aKey := iAlias + "\x00" + iGid
+   if aMap[aKey] == nil {
       return
    }
-   delete(aMap, iAlias)
+   delete(aMap, aKey)
    err = storeFile(pingFile(iSvc), aMap)
    if err != nil { quit(err) }
 }

@@ -64,6 +64,9 @@ type Header struct {
    From string
    Posted string
    To string
+   Gid string
+   Alias string
+   Act string
    Status int8
    DataLen, DataHead int64
    SubHead tHeader2
@@ -111,7 +114,7 @@ func (o *Header) CheckSub() bool {
 
 type tHeaderFor struct { Id string; Type int8 }
 
-const ( _=iota; eForUser; eForGroupAll; eForGroupExcl; eForSelf )
+const ( _ int8 = iota; eForUser; eForGroupAll; eForGroupExcl; eForSelf )
 
 type Update struct {
    Op string
@@ -129,6 +132,10 @@ type Update struct {
       Alias string
       To string
       Text string
+      Gid string
+   }
+   Accept *struct {
+      Gid string
    }
    Ohi *struct {
       Alias string
@@ -149,7 +156,7 @@ type SendRecord struct {
    id string
 }
 
-const eSrecThread, eSrecPing, eSrecOhi byte = 't', 'p', 'o'
+const eSrecThread, eSrecPing, eSrecOhi, eSrecAccept byte = 't', 'p', 'o', 'a'
 
 func (o *SendRecord) Id() string { return o.id }
 
@@ -158,6 +165,7 @@ func (o *SendRecord) Write(iW io.Writer, iSvc string) error {
    switch o.id[0] {
    case eSrecOhi:    aFn = sendEditOhi
    case eSrecPing:   aFn = sendSavedAdrsbk
+   case eSrecAccept: aFn = sendJoinGroupAdrsbk
    case eSrecThread: aFn = sendSavedThread
    default:
       quit(tError(fmt.Sprintf("SendRecord.op %c unknown", o.id[0])))
@@ -203,7 +211,7 @@ func makeSaveId(iTid string) string {
 func parseSaveId(i string) tSaveId { return strings.SplitN(i, "_", 2) }
 type tSaveId []string
 func (o tSaveId) tidSet(i string) { o[0] = i }
-func (o tSaveId) alias() string { return o[0] }
+func (o tSaveId)  ping() string { return o[0] }
 func (o tSaveId)   ohi() string { return o[0] }
 func (o tSaveId)   tid() string { return o[0] }
 func (o tSaveId)   sid() string { return o[1] }

@@ -201,6 +201,16 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: ping error %s\n", iSvc, err.Error())
          return nil, nil
       }
+   case "invite":
+      err := storeReceivedAdrsbk(iSvc, iHead, iR)
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "HandleTmtpService %s: invite error %s\n", iSvc, err.Error())
+         return nil, nil
+      }
+   case "member":
+      if iHead.Act == "join" {
+         groupJoinedAdrsbk(iSvc, iHead.Gid, iHead.Alias)
+      }
    case "delivery":
       err := storeReceivedThread(iSvc, iHead, iR)
       if err != nil {
@@ -225,7 +235,9 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       aId := parseSaveId(iHead.Id[1:])
       switch iHead.Id[0] {
       case eSrecPing:
-         storeSentAdrsbk(iSvc, aId.alias())
+         storeSentAdrsbk(iSvc, aId.ping())
+      case eSrecAccept:
+         acceptInviteAdrsbk(iSvc, aId.ping())
       case eSrecThread:
          iHead.Id = iHead.Id[1:]
          storeSentThread(iSvc, iHead)
@@ -258,9 +270,11 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "ping_save":
       storeSavedAdrsbk(iSvc, iUpdt)
    case "ping_discard":
-      deleteSavedAdrsbk(iSvc, iUpdt.Ping.To)
+      deleteSavedAdrsbk(iSvc, iUpdt.Ping.To, iUpdt.Ping.Gid)
    case "ping_send":
-      aSrec = &SendRecord{id: string(eSrecPing) + makeSaveId(iUpdt.Ping.To)}
+      aSrec = &SendRecord{id: string(eSrecPing) + makeSaveId(keySavedAdrsbk(iUpdt))}
+   case "accept_send":
+      aSrec = &SendRecord{id: string(eSrecAccept) + makeSaveId(iUpdt.Accept.Gid)}
    case "thread_recvtest":
       aTid := iState.getThread()
       if len(aTid) > 0 && aTid[0] == '_' { break }
