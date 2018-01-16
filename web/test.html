@@ -38,6 +38,7 @@ Form Tables:
 <div>
 <button onclick="gM.SvcAdd()">Add Service</button>
 <button onclick="gM.PingSave()">Ping</button>
+<button onclick="gM.PingSave('group{{.Addr}}')">Invite</button>
 <button onclick="gM.OhiAdd()">Add Ohi</button>
 <button onclick="gM.OhiDrop()">Drop Ohi</button>
 </div>
@@ -56,6 +57,9 @@ Form Tables:
 <tr><td>pingdraft</td><td class="pre" id="get?ps">.</td></tr>
 <tr><td>pingto   </td><td class="pre" id="get?pt">.</td></tr>
 <tr><td>pingfrom </td><td class="pre" id="get?pf">.</td></tr>
+<tr><td>inviteto </td><td class="pre" id="get?it">.</td></tr>
+<tr><td>invitefrm</td><td class="pre" id="get?if">.</td></tr>
+<tr><td>groups   </td><td class="pre" id="get?gr">.</td></tr>
 <tr><td>svc tabs </td><td class="pre" id="get?cs">.</td></tr>
 <tr><td>threads  </td><td class="pre" id="get?t">.</td></tr>
 <tr><td>attached </td><td class="pre" id="get?a">.</td></tr>
@@ -76,6 +80,7 @@ Form Tables:
     aXhr.onload = function() {
       switch (i) {
       case 'ps': fDrawPing(JSON.parse(aXhr.responseText)); break;
+      case 'if': fDrawInvite(JSON.parse(aXhr.responseText)); break;
       case 't': fDrawThreads(JSON.parse(aXhr.responseText)); break;
       case 'a': fDrawAttached(JSON.parse(aXhr.responseText)); break;
       case 'c': fDrawTabs(JSON.parse(aXhr.responseText)); break;
@@ -90,12 +95,20 @@ Form Tables:
   function fDrawPing(iList) {
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
-      var aAlias = "'"+iList[a].Alias+"'";
-      aS += '<button onclick="gM.PingDiscard('+aAlias+')">Discard</button>';
-      aS += '<button onclick="gM.PingSend   ('+aAlias+')">Send</button> \n';
+      var aArg = "'"+iList[a].Alias+"','"+(iList[a].Gid||'')+"'";
+      aS += '<button onclick="gM.PingDiscard('+aArg+')">Discard</button>';
+      aS += '<button onclick="gM.PingSend   ('+aArg+')">Send</button> \n';
       aS += JSON.stringify(iList[a]) + '\n';
     }
     document.getElementById('get?ps').innerHTML = aS;
+  }
+  function fDrawInvite(iList) {
+    var aS = '';
+    for (var a=0; a < iList.length; ++a) {
+      aS += '<button onclick="gM.InviteAccept(\''+iList[a].Gid+'\')">Accept</button> \n';
+      aS += JSON.stringify(iList[a]) + '\n';
+    }
+    document.getElementById('get?if').innerHTML = aS;
   }
   function fDrawThreads(iList) {
     var aS = '';
@@ -150,6 +163,7 @@ Form Tables:
         '<button onclick="gM.Blank('+aId+')"      >Blank</button>'+
         '<button onclick="gM.Fill('+aId+')"       >Fill</button>'+
         '<button onclick="gM.Drop('+aId+')"       >Drop</button> '+
+        '<button onclick="gM.Group('+aId+')"      >Group</button>'+
         '<button onclick="gM.Reply('+aId+')"      >Save</button>'+
         '<button onclick="gM.Send('+aId+')"       >Send</button>'+
         '<button onclick="gM.Discard('+aId+')"    >Discard</button>';
@@ -197,14 +211,18 @@ Form Tables:
   gM.OhiDrop = function() {
     sWs.send(JSON.stringify({op:'ohi_drop', ohi:{alias:sAliasTo}}))
   };
-  gM.PingSave = function() {
-    sWs.send(JSON.stringify({op:'ping_save', ping:{alias:sNewAlias, to:sAliasTo, text:'ereiamjh'}}))
+  gM.PingSave = function(i) {
+    sWs.send(JSON.stringify({op:'ping_save', ping:{alias:sNewAlias, to:sAliasTo, text:'ereiamjh',
+                             gid:i}}))
   };
-  gM.PingDiscard = function(i) {
-    sWs.send(JSON.stringify({op:'ping_discard', ping:{to:i}}))
+  gM.PingDiscard = function(iAlias, iGid) {
+    sWs.send(JSON.stringify({op:'ping_discard', ping:{to:iAlias, gid:iGid}}))
   };
-  gM.PingSend = function(i) {
-    sWs.send(JSON.stringify({op:'ping_send', ping:{to:i}}))
+  gM.PingSend = function(iAlias, iGid) {
+    sWs.send(JSON.stringify({op:'ping_send', ping:{to:iAlias, gid:iGid}}))
+  };
+  gM.InviteAccept = function(i) {
+    sWs.send(JSON.stringify({op:'accept_send', accept:{gid:i}}))
   };
   gM.History = function(i) {
     sWs.send(JSON.stringify({op:'history', navigate:{history:i}}))
@@ -224,10 +242,11 @@ Form Tables:
   };
   function fSetReply(i) {
     if (!sThread.reply[i])
-      sThread.reply[i] = { data:'', attach:[], form_fill:{} };
+      sThread.reply[i] = { data:'', attach:[], form_fill:{}, cc:[sAliasTo] };
   }
   function fSend(i) {
-    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, alias:sNewAlias, cc:[sAliasTo],
+    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, alias:sNewAlias,
+                             cc:       i ? sThread.reply[i].cc : [sAliasTo],
                              data:     i ? sThread.reply[i].data : '',
                              attach:   i ? sThread.reply[i].attach : null,
                              formFill: i ? sThread.reply[i].form_fill : null}}))
@@ -244,6 +263,11 @@ Form Tables:
         document.getElementById('mnm_sent').href = '?form='+sLastFfn.Ffn+'_sent';
       }
     }
+    fSend(i);
+  };
+  gM.Group = function(i) {
+    fSetReply(i);
+    sThread.reply[i].cc = ['group{{.Addr}}'];
     fSend(i);
   };
   gM.Attach = function(i) {
@@ -296,7 +320,8 @@ Form Tables:
     var aSvc = window.location.pathname.split('/')[1];
     sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
     sWs.onopen = function(iEvent) {
-      fXhr('s'); fXhr('of'); fXhr('ot'); fXhr('ps'); fXhr('pt'); fXhr('pf');
+      fXhr('s'); fXhr('of'); fXhr('ot');
+      fXhr('ps'); fXhr('pt'); fXhr('pf'); fXhr('if'); fXhr('it'); fXhr('gr');
       fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o');
     };
     sWs.onmessage = function(iEvent) {
@@ -320,15 +345,19 @@ Form Tables:
       case 'ping_send':
         fXhr('ps');
         break;
+      case 'invite':
       case 'ping':
-        fXhr('pf'); fXhr('pt');
+        fXhr('pf'); fXhr('pt'); fXhr('if');
+        break;
+      case 'member':
+        fXhr('it');
         break;
       case 'delivery':
         fXhr('pt'); fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
         break;
       case 'ack':
         if (!aObj.msgid) break;
-        fXhr('ps'); fXhr('pt'); fXhr('pf');
+        fXhr('ps'); fXhr('pt'); fXhr('pf'); fXhr('if'); fXhr('it'); fXhr('gr');
         fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.msgid);
         break;
       case 'thread_save':
