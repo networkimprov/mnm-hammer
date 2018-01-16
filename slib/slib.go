@@ -154,13 +154,15 @@ const eSrecThread, eSrecPing, eSrecOhi byte = 't', 'p', 'o'
 func (o *SendRecord) Id() string { return o.id }
 
 func (o *SendRecord) Write(iW io.Writer, iSvc string) error {
+   var aFn func(io.Writer, string, string, string) error
    switch o.id[0] {
-   case eSrecOhi:    return sendEditOhi    (iW, iSvc, o.id[1:], o.id)
-   case eSrecPing:   return sendSavedAdrsbk(iW, iSvc, o.id[1:], o.id)
-   case eSrecThread: return sendSavedThread(iW, iSvc, o.id[1:], o.id)
+   case eSrecOhi:    aFn = sendEditOhi
+   case eSrecPing:   aFn = sendSavedAdrsbk
+   case eSrecThread: aFn = sendSavedThread
+   default:
+      quit(tError(fmt.Sprintf("SendRecord.op %c unknown", o.id[0])))
    }
-   quit(tError(fmt.Sprintf("SendRecord.op %c unknown", o.id[0])))
-   return nil
+   return aFn(iW, iSvc, o.id[1:], o.id)
 }
 
 type Msg map[string]interface{}
