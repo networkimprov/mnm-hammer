@@ -371,7 +371,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
             slib.SendAllOhi(iConn, iName, kFirstOhiId)
             aLogin = true
             aQ.connSrc <- iConn
-         } else if aHead.Op == "ack" && aHead.Error == "" {
+         } else if aHead.Op == "ack" {
             select {
             case aQ.ack <- aHead.Id:
             default:
