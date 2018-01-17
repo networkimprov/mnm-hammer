@@ -36,11 +36,12 @@ type tAdrsbkLog []*tAdrsbkEl
 type tAdrsbkEl struct {
    Type int8
    Date string
-   Text_Tid string     `json:",omitempty"` // Tid if eAbMsgTo/From
+   Text string         `json:",omitempty"`
    Alias string        `json:",omitempty"`
    Uid string          `json:",omitempty"`
    MyAlias string      `json:",omitempty"`
    MsgId string        `json:",omitempty"`
+   Tid string          `json:",omitempty"`
    Gid string          `json:",omitempty"`
    Response *tAdrsbkEl `json:",omitempty"` // not stored
 }
@@ -225,7 +226,7 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    _, err = iR.Read(aBuf)
    if err != nil { return err }
    aType := eAbPingFrom; if iHead.Op == "invite" { aType = eAbInviteFrom }
-   aEl := tAdrsbkEl{Type:aType, Date:dateRFC3339(), Gid:iHead.Gid, Text_Tid:string(aBuf),
+   aEl := tAdrsbkEl{Type:aType, Date:dateRFC3339(), Gid:iHead.Gid, Text:string(aBuf),
                     Alias:iHead.SubHead.Alias, Uid:iHead.From, MyAlias:iHead.To, MsgId:iHead.Id}
    if aEl.Type == eAbInviteFrom {
       aEl2 := aEl
@@ -270,7 +271,7 @@ func resolveReceivedAdrsbk(iSvc string, iFor []tHeaderFor, iTid, iMsgId string) 
    aSvc := _loadAdrsbk(iSvc)
    var aEls []tAdrsbkEl
    for a, _ := range iFor {
-      aEl := tAdrsbkEl{Type:eAbMsgTo, Date:dateRFC3339(), Text_Tid:iTid, MsgId:iMsgId, Uid:iFor[a].Id}
+      aEl := tAdrsbkEl{Type:eAbMsgTo, Date:dateRFC3339(), Tid:iTid, MsgId:iMsgId, Uid:iFor[a].Id}
       if _respondLog(aSvc.pingFromIdx[iFor[a].Id], &aEl) {
          aEls = append(aEls, aEl)
       }
@@ -289,7 +290,7 @@ func resolveSentAdrsbk(iSvc string, iFrom, iAlias string, iTid, iMsgId string) {
    if aUid != kUidUnknown && aUid != iFrom {
       return
    }
-   aEl := tAdrsbkEl{Type:eAbMsgFrom, Date:dateRFC3339(), Text_Tid:iTid, MsgId:iMsgId,
+   aEl := tAdrsbkEl{Type:eAbMsgFrom, Date:dateRFC3339(), Tid:iTid, MsgId:iMsgId,
                     Uid:iFrom, Alias:iAlias}
    if _respondLog(aSvc.pingToIdx[iAlias], &aEl) {
       aSvc.aliasIdx[iAlias] = iFrom
@@ -420,7 +421,7 @@ func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
    aEl := aMap[aId.ping()]
    aSubh, err := json.Marshal(Msg{"Alias":aEl.MyAlias}) //todo drop when ping takes from:
    if err != nil { quit(err) }
-   aData := []byte(aEl.Text_Tid)
+   aData := []byte(aEl.Text)
    aMsg := Msg{"Op":8, "Id":iId, "To":aEl.Alias, "From":aEl.MyAlias,
                "DataHead":len(aSubh), "DataLen": len(aSubh) + len(aData)}
    if aEl.Gid != "" {
@@ -445,7 +446,7 @@ func storeSavedAdrsbk(iSvc string, iUpdt *Update) {
    err = readJsonFile(&aMap, pingFile(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aKey := iUpdt.Ping.To + "\x00" + iUpdt.Ping.Gid
-   aMap[aKey] = &tAdrsbkEl{Type:eAbPingSaved, Date:dateRFC3339(), Text_Tid:iUpdt.Ping.Text,
+   aMap[aKey] = &tAdrsbkEl{Type:eAbPingSaved, Date:dateRFC3339(), Text:iUpdt.Ping.Text,
                            Alias:iUpdt.Ping.To, MyAlias:iUpdt.Ping.Alias, Gid:iUpdt.Ping.Gid}
    err = storeFile(pingFile(iSvc), aMap)
    if err != nil { quit(err) }
