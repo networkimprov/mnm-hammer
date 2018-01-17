@@ -221,7 +221,7 @@ func _completeStoreReceived(iSvc string, iTmp string, iHead *tHeadSaved, iFd, iT
    aRec := _parseTempOk(iTmp)
    aTempOk := tempDir(iSvc) + iTmp
 
-   resolveSentAdrsbk(iSvc, iHead.From, iHead.SubHead.Alias, aRec.tid(), aRec.mid())
+   resolveSentAdrsbk(iSvc, iHead.Posted, iHead.From, iHead.SubHead.Alias, aRec.tid(), aRec.mid())
    storeReceivedAttach(iSvc, &iHead.SubHead, aRec)
 
    if aRec.tid() == aRec.mid() {
@@ -297,7 +297,7 @@ func storeSentThread(iSvc string, iHead *Header) {
 func _completeStoreSent(iSvc string, iTmp string, iHead *tHeadSaved, iFd, iTd *os.File) {
    aRec := _parseTempOk(iTmp)
 
-   resolveReceivedAdrsbk(iSvc, iHead.SubHead.For, aRec.tid(), aRec.mid())
+   resolveReceivedAdrsbk(iSvc, iHead.Posted, iHead.SubHead.For, aRec.tid(), aRec.mid())
    storeSentAttach(iSvc, &iHead.SubHead, aRec)
 
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
@@ -452,12 +452,13 @@ func _completeDeleteSaved(iSvc string, iTmp string, iFd, iTd *os.File) {
 
 type tHeadSaved struct {
    Len int64
+   Posted string
    From string
    SubHead tHeader2
 }
 
 func _makeHeadSaved(iHead *Header) *tHeadSaved {
-   return &tHeadSaved{From:iHead.From, SubHead:iHead.SubHead}
+   return &tHeadSaved{Posted:iHead.Posted, From:iHead.From, SubHead:iHead.SubHead}
 }
 
 func _parseHeader(iFd *os.File) *tHeadSaved {

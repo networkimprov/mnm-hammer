@@ -209,7 +209,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       }
    case "member":
       if iHead.Act == "join" {
-         groupJoinedAdrsbk(iSvc, iHead.Gid, iHead.Alias)
+         groupJoinedAdrsbk(iSvc, iHead)
       }
    case "delivery":
       err := storeReceivedThread(iSvc, iHead, iR)
@@ -235,9 +235,9 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       aId := parseSaveId(iHead.Id[1:])
       switch iHead.Id[0] {
       case eSrecPing:
-         storeSentAdrsbk(iSvc, aId.ping())
+         storeSentAdrsbk(iSvc, aId.ping(), iHead.Posted)
       case eSrecAccept:
-         acceptInviteAdrsbk(iSvc, aId.ping())
+         acceptInviteAdrsbk(iSvc, aId.ping(), iHead.Posted)
       case eSrecThread:
          iHead.Id = iHead.Id[1:]
          storeSentThread(iSvc, iHead)
