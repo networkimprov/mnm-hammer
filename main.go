@@ -422,27 +422,26 @@ func (o *tTmtpInput) Read(iOut []byte) (int, error) {
 
 func runService(iResp http.ResponseWriter, iReq *http.Request) {
    var err error
-   // url is "/service[?op]"
+   // url is "/service[?op[=id]]"
    aSvc := iReq.URL.Path[1:]; if aSvc == "" { aSvc = "local" }
-   aClientId, _ := iReq.Cookie("clientid")
-
-   if slib.GetDataService(aSvc) == nil {
+   aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
+   if err == nil && slib.GetDataService(aSvc) == nil {
+      err = tError("not found")
+   }
+   if err != nil {
       iResp.WriteHeader(http.StatusNotFound)
-      iResp.Write([]byte("service not found: "+aSvc))
+      fmt.Fprintf(os.Stderr, "runService %s: %s\n", aSvc, err.Error())
       return
    }
 
+   aClientId, _ := iReq.Cookie("clientid")
    var aState *slib.ClientState
    if iReq.URL.RawQuery != "" {
-      //for getService(aSvc).ccs.Get(aClientId.Value) == nil {
-      //   fmt.Printf("nsvc %s op %s id %s\n", aSvc, iReq.URL.RawQuery, aClientId.Value)
-      //   time.Sleep(1 * time.Millisecond)
-      //}
       aState = getService(aSvc).ccs.Get(aClientId.Value).state
    }
-   aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
-   if err != nil { aQuery = "query_error" }
    aOp_Id := strings.SplitN(aQuery, "=", 2)
+   fmt.Printf("svc %s op %s id %s\n", aSvc, aOp_Id[0], aClientId.Value)
+   var aResult interface{}
 
    switch aOp_Id[0] {
    case "": // service template
@@ -451,61 +450,35 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          http.SetCookie(iResp, aClientId)
       }
       err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvc, "Addr":sHttpSrvr.Addr})
-   case "c": // client state
-      aMsg := aState.GetSummary()
-      err = json.NewEncoder(iResp).Encode(aMsg)
-   case "s": // service list
-      aSvcs := slib.GetIdxService()
-      err = json.NewEncoder(iResp).Encode(aSvcs)
-   case "ps": // saved pings
-      aList := slib.GetSavedAdrsbk(aSvc)
-      err = json.NewEncoder(iResp).Encode(aList)
-   case "pt": // sent pings
-      aList := slib.GetSentAdrsbk(aSvc)
-      err = json.NewEncoder(iResp).Encode(aList)
-   case "pf": // received pings
-      aList := slib.GetReceivedAdrsbk(aSvc)
-      err = json.NewEncoder(iResp).Encode(aList)
-   case "it": // sent invites
-      aList := slib.GetInviteToAdrsbk(aSvc)
-      err = json.NewEncoder(iResp).Encode(aList)
-   case "if": // received invites
-      aList := slib.GetInviteFromAdrsbk(aSvc)
-      err = json.NewEncoder(iResp).Encode(aList)
-   case "gr": // groups
-      aList := slib.GetGroupAdrsbk(aSvc)
-      err = json.NewEncoder(iResp).Encode(aList)
-   case "of": // received ohis
-      aList := slib.GetFromOhi(aSvc)
-      err = json.NewEncoder(iResp).Encode(aList)
-   case "ot": // sent ohis
-      aList := slib.GetIdxOhi(aSvc)
-      err = json.NewEncoder(iResp).Encode(aList)
-   case "t": // thread list
-      aList := slib.GetListThread(aSvc, aState)
-      err = json.NewEncoder(iResp).Encode(aList)
-   case "a": // attachment list
-      if len(aOp_Id) > 1 {
-         http.ServeFile(iResp, iReq, slib.GetPathAttach(aSvc, aState, aOp_Id[1]))
-      } else {
-         aIdx := slib.GetIdxAttach(aSvc, aState)
-         err = json.NewEncoder(iResp).Encode(aIdx)
-      }
-   case "m": // msg list
-      aIdx := slib.GetIdxThread(aSvc, aState)
-      err = json.NewEncoder(iResp).Encode(aIdx)
-   case "o": // open msgs
+   case "cs": aResult = aState.GetSummary()
+   case "sl": aResult = slib.GetIdxService()
+   case "ps": aResult = slib.GetSavedAdrsbk(aSvc)
+   case "pt": aResult = slib.GetSentAdrsbk(aSvc)
+   case "pf": aResult = slib.GetReceivedAdrsbk(aSvc)
+   case "it": aResult = slib.GetInviteToAdrsbk(aSvc)
+   case "if": aResult = slib.GetInviteFromAdrsbk(aSvc)
+   case "gl": aResult = slib.GetGroupAdrsbk(aSvc)
+   case "of": aResult = slib.GetFromOhi(aSvc)
+   case "ot": aResult = slib.GetIdxOhi(aSvc)
+   case "tl": aResult = slib.GetListThread(aSvc, aState)
+   case "al": aResult = slib.GetIdxAttach(aSvc, aState)
+   case "ml": aResult = slib.GetIdxThread(aSvc, aState)
+   case "mo":
       err = slib.WriteMessagesThread(iResp, aSvc, aState, "")
-   case "p": // open single msg
+   case "mn":
       if len(aOp_Id) < 2 { break }
       err = slib.WriteMessagesThread(iResp, aSvc, aState, aOp_Id[1])
-   case "form":
+   case "an":
+      http.ServeFile(iResp, iReq, slib.GetPathAttach(aSvc, aState, aOp_Id[1]))
+   case "fn":
       http.ServeFile(iResp, iReq, slib.GetPathFilledForm(aSvc, aOp_Id[1]))
    default:
       iResp.WriteHeader(http.StatusNotFound)
-      iResp.Write([]byte("unknown op " + aOp_Id[0]))
+      err = tError("unknown")
    }
-   fmt.Printf("svc %s op %s id %s\n", aSvc, aOp_Id[0], aClientId.Value)
+   if aResult != nil {
+      err = json.NewEncoder(iResp).Encode(aResult)
+   }
    if err != nil {
       fmt.Fprintf(os.Stderr, "runService %s: op %s error %s\n", aSvc, aOp_Id[0], err.Error())
    }
