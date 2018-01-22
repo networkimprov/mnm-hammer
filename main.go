@@ -654,7 +654,7 @@ func (o *tClientConns) Drop(iClient string) {
 }
 
 type tWsConn struct {
-   sync.Mutex // protect conn.WriteMessage()
+   sync.Mutex // protect conn.WriteMessage/JSON()
    conn *gws.Conn
    state *slib.ClientState
 }
@@ -664,6 +664,14 @@ func (o *tWsConn) WriteMessage(iT int, iB []byte) {
    err := o.conn.WriteMessage(iT, iB)
    if err != nil {
       fmt.Fprintf(os.Stderr, "WriteMessage: %s\n", err.Error())
+   }
+}
+
+func (o *tWsConn) WriteJSON(i interface{}) {
+   o.Lock(); defer o.Unlock()
+   err := o.conn.WriteJSON(i)
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "WriteJSON: %s\n", err.Error())
    }
 }
 
