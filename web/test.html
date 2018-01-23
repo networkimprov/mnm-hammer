@@ -31,27 +31,18 @@ Blank Forms
 <a target="mnm_upload" href="/f/">list</a>
 </div>
 Form Tables:
-<a target="mnm_recv" href="?form=abc_recv">Received</a>
-<a target="mnm_sent" href="?form=xyz_sent" id="mnm_sent">Sent</a>
+<a target="mnm_recv" href="?fn=abc_recv">Received</a>
+<a target="mnm_sent" href="?fn=xyz_sent" id="mnm_sent">Sent</a>
 </p>
 
-<div>
 <button onclick="gM.SvcAdd()">Add Service</button>
 <button onclick="gM.PingSave()">Ping</button>
 <button onclick="gM.PingSave('group{{.Addr}}')">Invite</button>
 <button onclick="gM.OhiAdd()">Add Ohi</button>
 <button onclick="gM.OhiDrop()">Drop Ohi</button>
-</div>
-
-<div>
-<button onclick="gM.History(-1)">Back</button>
-<button onclick="gM.History(1)">Next</button>
-<button onclick="gM.Thread()">New Thread</button>
-<button onclick="gM.Recv()">Receive Msg</button>
-</div>
 
 <table border="1">
-<tr><td>services </td><td class="pre" id="get?s">.</td></tr>
+<tr><td>services </td><td class="pre" id="get?sl">.</td></tr>
 <tr><td>ohi from </td><td class="pre" id="get?of">.</td></tr>
 <tr><td>ohi to   </td><td class="pre" id="get?ot">.</td></tr>
 <tr><td>pingdraft</td><td class="pre" id="get?ps">.</td></tr>
@@ -59,14 +50,22 @@ Form Tables:
 <tr><td>pingfrom </td><td class="pre" id="get?pf">.</td></tr>
 <tr><td>inviteto </td><td class="pre" id="get?it">.</td></tr>
 <tr><td>invitefrm</td><td class="pre" id="get?if">.</td></tr>
-<tr><td>groups   </td><td class="pre" id="get?gr">.</td></tr>
+<tr><td>groups   </td><td class="pre" id="get?gl">.</td></tr>
+</table><br/>
+
+<button onclick="gM.History(-1)">Back</button>
+<button onclick="gM.History(1)">Next</button>
+<button onclick="gM.Thread()">New Thread</button>
+<button onclick="gM.Recv()">Receive Msg</button>
+
+<table border="1">
 <tr><td>svc tabs </td><td class="pre" id="get?cs">.</td></tr>
-<tr><td>threads  </td><td class="pre" id="get?t">.</td></tr>
-<tr><td>attached </td><td class="pre" id="get?a">.</td></tr>
+<tr><td>threads  </td><td class="pre" id="get?tl">.</td></tr>
+<tr><td>attached </td><td class="pre" id="get?al">.</td></tr>
 <tr><td>tabs     </td><td class="pre" id="get?ct">.</td></tr>
-<tr><td>msg index</td><td class="pre" id="get?m">.</td></tr>
-<tr><td>last msg </td><td class="pre" id="get?p">.</td></tr>
-<tr><td>open msgs</td><td class="pre" id="get?o">.</td></tr>
+<tr><td>msg index</td><td class="pre" id="get?ml">.</td></tr>
+<tr><td>last msg </td><td class="pre" id="get?mn">.</td></tr>
+<tr><td>open msgs</td><td class="pre" id="get?mo">.</td></tr>
 </table>
 
 <div id="stat"></div>
@@ -81,11 +80,11 @@ Form Tables:
       switch (i) {
       case 'ps': fDrawPing(JSON.parse(aXhr.responseText)); break;
       case 'if': fDrawInvite(JSON.parse(aXhr.responseText)); break;
-      case 't': fDrawThreads(JSON.parse(aXhr.responseText)); break;
-      case 'a': fDrawAttached(JSON.parse(aXhr.responseText)); break;
-      case 'c': fDrawTabs(JSON.parse(aXhr.responseText)); break;
-      case 'm': fDrawMsgIndex(JSON.parse(aXhr.responseText)); break;
-      case 'o': fDrawOpen(aXhr.responseText); break;
+      case 'tl': fDrawThreads(JSON.parse(aXhr.responseText)); break;
+      case 'al': fDrawAttached(JSON.parse(aXhr.responseText)); break;
+      case 'cs': fDrawTabs(JSON.parse(aXhr.responseText)); break;
+      case 'ml': fDrawMsgIndex(JSON.parse(aXhr.responseText)); break;
+      case 'mo': fDrawOpen(aXhr.responseText); break;
       default:  document.getElementById('get?'+i).innerText = aXhr.responseText;
       }
     };
@@ -105,7 +104,8 @@ Form Tables:
   function fDrawInvite(iList) {
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
-      aS += '<button onclick="gM.InviteAccept(\''+iList[a].Gid+'\')">Accept</button> \n';
+      if (!iList[a].Response)
+        aS += '<button onclick="gM.InviteAccept(\''+iList[a].Gid+'\')">Accept</button> \n';
       aS += JSON.stringify(iList[a]) + '\n';
     }
     document.getElementById('get?if').innerHTML = aS;
@@ -115,13 +115,13 @@ Form Tables:
     for (var a=0; a < iList.length; ++a)
       if (iList[a] !== '_22')
         aS += '<button onclick="gM.Go(\''+iList[a]+'\')">'+iList[a].slice(-5)+'</button> ';
-    document.getElementById('get?t').innerHTML = aS;
+    document.getElementById('get?tl').innerHTML = aS;
   }
   function fDrawAttached(iList) {
     var aS = '';
     for (var a=0; a < iList.length; ++a)
-      aS += '<a href="?a='+encodeURIComponent(iList[a].File)+'">'+JSON.stringify(iList[a])+'</a> ';
-    document.getElementById('get?a').innerHTML = aS;
+      aS += '<a href="?an='+encodeURIComponent(iList[a].File)+'">'+JSON.stringify(iList[a])+'</a> ';
+    document.getElementById('get?al').innerHTML = aS;
   }
   function fDrawTabs(iSt) {
     if (iSt.Thread !== 'none')
@@ -152,7 +152,7 @@ Form Tables:
     for (var a=0; a < iList.length; ++a) {
       var aId = "'"+iList[a].Id+"'";
       aS += '<div>'+
-        '<button onclick="gM.Xhr(\'p\','+aId+')"  >O</button>'+
+        '<button onclick="gM.Xhr(\'mn\','+aId+')" >O</button>'+
         '<button onclick="gM.Close('+aId+')"      >X</button> ';
       if (iList[a].Offset >= 0)
         aS +=
@@ -169,10 +169,10 @@ Form Tables:
         '<button onclick="gM.Discard('+aId+')"    >Discard</button>';
       aS += '\n' + JSON.stringify(iList[a]) + '</div>\n';
     }
-    document.getElementById('get?m').innerHTML = aS;
+    document.getElementById('get?ml').innerHTML = aS;
   }
   function fDrawOpen(iText) {
-    document.getElementById('get?o').innerText = iText;
+    document.getElementById('get?mo').innerText = iText;
     sHeadMap = {};
     for (var a=0; a < iText.length; ) {
       var aHeadLen = parseInt(iText.substr(a,4), 16);
@@ -260,7 +260,7 @@ Form Tables:
       for (var a=0; a < aAtc.length; ++a) {
         if (!aAtc[a].Ffn) continue;
         sLastFfn = aAtc[a];
-        document.getElementById('mnm_sent').href = '?form='+sLastFfn.Ffn+'_sent';
+        document.getElementById('mnm_sent').href = '?fn='+sLastFfn.Ffn+'_sent';
       }
     }
     fSend(i);
@@ -319,71 +319,23 @@ Form Tables:
   window.onload = function() {
     var aSvc = window.location.pathname.split('/')[1];
     sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
-    sWs.onopen = function(iEvent) {
-      fXhr('s'); fXhr('of'); fXhr('ot');
-      fXhr('ps'); fXhr('pt'); fXhr('pf'); fXhr('if'); fXhr('it'); fXhr('gr');
-      fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o');
+    sWs.onopen = function() {
+      sWs.send(JSON.stringify({op:'open'}));
     };
     sWs.onmessage = function(iEvent) {
       var aLog = document.getElementById('msg').innerText;
       document.getElementById('msg').innerText = iEvent.data+' '+aLog;
       var aObj = JSON.parse(iEvent.data);
-      switch (aObj.op) {
-      case 'service_add':
-        fXhr('s');
-        break;
-      case 'disconnect':
-      case 'ohi':
-        fXhr('of');
-        break;
-      case 'ohi_add':
-      case 'ohi_drop':
-        fXhr('ot');
-        break;
-      case 'ping_save':
-      case 'ping_discard':
-      case 'ping_send':
-        fXhr('ps');
-        break;
-      case 'invite':
-      case 'ping':
-        fXhr('pf'); fXhr('pt'); fXhr('if');
-        break;
-      case 'member':
-        fXhr('it');
-        break;
-      case 'delivery':
-        fXhr('pt'); fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
-        break;
-      case 'ack':
-        if (!aObj.msgid) break;
-        fXhr('ps'); fXhr('pt'); fXhr('pf'); fXhr('if'); fXhr('it'); fXhr('gr');
-        fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.msgid);
-        break;
-      case 'thread_save':
-        fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o'); fXhr('p', aObj.id);
-        break;
-      case 'thread_discard':
-        fXhr('c'); fXhr('t'); fXhr('a'); fXhr('m'); fXhr('o');
-        document.getElementById('get?p').innerText = '';
-        break;
-      case 'thread_close':
-        fXhr('o');
-        break;
-      case 'thread_set':
-      case 'history':
-        fXhr('c'); fXhr('a'); fXhr('m'); fXhr('o');
-        break;
-      case 'tab_select':
-        fXhr('t'); fXhr('o');
-        break;
-      case 'tab_add':
-      case 'tab_drop':
-        fXhr('c'); fXhr('t'); fXhr('o');
-        break;
-      case 'tab_pin':
-        fXhr('c');
-        break;
+      if (aObj instanceof Array) {
+        for (var a=0; a < aObj.length; ++a) {
+          if (aObj[a] === 'mo')
+            document.getElementById('get?mn').innerText = '';
+          if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')
+            fXhr(aObj[a], aObj[++a])
+          else
+            fXhr(aObj[a])
+        }
+        return
       }
     };
     sWs.onclose = function(iEvent) { document.getElementById('stat').innerText = 'closed' };
