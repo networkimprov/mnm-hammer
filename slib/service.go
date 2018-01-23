@@ -175,102 +175,135 @@ func GetQueueService(iSvc string) ([]*SendRecord, error) {
    return nil, nil
 }
 
-func LogoutService(iSvc string) Msg {
+func LogoutService(iSvc string) interface{} {
    dropFromOhi(iSvc)
-   return Msg{"op":"disconnect"}
+   return []string{"of"}
 }
 
 func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
-                aMsg Msg, aFn func(*ClientState)) {
-   aMsg = Msg{"op":iHead.Op}
+                       aFn func(*ClientState)interface{}) {
+   var err error
+   var aResult []string
+   fAll := func(c *ClientState) interface{} { return aResult }
+   fErr := func(c *ClientState) interface{} { return tMsgError{iHead.Op, err.Error()} }
+
    switch iHead.Op {
    case "registered":
       aNewSvc := *GetDataService(iSvc)
       aNewSvc.Uid = iHead.Uid
       aNewSvc.Node = iHead.NodeId
-      err := _updateService(&aNewSvc)
-      if err != nil { aMsg["err"] = err.Error() }
+      err = _updateService(&aNewSvc)
+      if err != nil { return fErr }
+      aFn, aResult = fAll, []string{"sl"}
    case "info":
-      aMsg["op"] = "ohi"
       setFromOhi(iSvc, iHead)
+      aFn, aResult = fAll, []string{"of"}
    case "ohi":
       updateFromOhi(iSvc, iHead)
+      aFn, aResult = fAll, []string{"of"}
    case "ping":
-      err := storeReceivedAdrsbk(iSvc, iHead, iR)
+      err = storeReceivedAdrsbk(iSvc, iHead, iR)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: ping error %s\n", iSvc, err.Error())
-         return nil, nil
+         return fErr
       }
+      aFn, aResult = fAll, []string{"pf", "pt"}
    case "invite":
-      err := storeReceivedAdrsbk(iSvc, iHead, iR)
+      err = storeReceivedAdrsbk(iSvc, iHead, iR)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: invite error %s\n", iSvc, err.Error())
-         return nil, nil
+         return fErr
       }
+      aFn, aResult = fAll, []string{"pf", "pt", "if"}
    case "member":
       if iHead.Act == "join" {
          groupJoinedAdrsbk(iSvc, iHead)
+         aFn, aResult = fAll, []string{"it"}
       }
    case "delivery":
-      err := storeReceivedThread(iSvc, iHead, iR)
+      err = storeReceivedThread(iSvc, iHead, iR)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: delivery error %s\n", iSvc, err.Error())
-         return nil, nil
+         return fErr
       }
-      if iHead.SubHead.ThreadId == "" { // temp
-         aFn = func(c *ClientState) { c.addThread(iHead.Id, iHead.Id) }
+      if iHead.SubHead.ThreadId == "" {
+         aFn, aResult = fAll, []string{"pt", "tl"}
       } else {
-         aFn = func(c *ClientState) {
-            if c.getThread() == iHead.SubHead.ThreadId { c.openMsg(iHead.Id, true) }
+         aFn = func(c *ClientState) interface{} {
+            if c.getThread() == iHead.SubHead.ThreadId { c.openMsg(iHead.Id, true); return aResult }
+            return aResult[:1]
          }
+         aResult = []string{"pt", "al", "ml", "mo", "mn", iHead.Id} //todo drop mo
       }
-      aMsg["id"] = iHead.Id
    case "ack":
-      if iHead.Id == "t_22" { break } //todo temp
-      aMsg["msgid"] = iHead.MsgId
       if iHead.Error != "" {
-         aMsg["err"] = iHead.Error
-         break
+         err = tError("ack: " + iHead.Error)
+         return fErr
       }
+      if iHead.Id == "t_22" { break } //todo temp
       aId := parseSaveId(iHead.Id[1:])
       switch iHead.Id[0] {
       case eSrecPing:
          storeSentAdrsbk(iSvc, aId.ping(), iHead.Posted)
+         aFn, aResult = fAll, []string{"ps", "pt", "pf", "it", "gl"}
       case eSrecAccept:
          acceptInviteAdrsbk(iSvc, aId.ping(), iHead.Posted)
+         aFn, aResult = fAll, []string{"if", "gl"}
       case eSrecThread:
          iHead.Id = iHead.Id[1:]
          storeSentThread(iSvc, iHead)
          if aId.tid() == "" {
-            aFn = func(c *ClientState) { c.renameThread(iHead.Id, iHead.MsgId) }
+            aFn = func(c *ClientState) interface{} {
+               c.renameThread(iHead.Id, iHead.MsgId)
+               if c.getThread() == iHead.MsgId { return aResult }
+               return aResult[:2]
+            }
          } else {
-            aFn = func(c *ClientState) { c.renameMsg(aId.tid(), iHead.Id, iHead.MsgId) }
+            aFn = func(c *ClientState) interface{} {
+               c.renameMsg(aId.tid(), iHead.Id, iHead.MsgId)
+               if c.getThread() == aId.tid() { return aResult[1:] }
+               return aResult[1:2]
+            }
          }
+         aResult = []string{"tl", "pf", "al", "ml", "mo", "mn", iHead.MsgId} //todo drop mo
       }
+   default:
+      err = tError("unknown tmtp op")
+      return fErr
    }
-   return aMsg, aFn
+   return aFn
 }
 
 func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
-                aMsg Msg, aSrec *SendRecord, aFn func(*ClientState)) {
-   aMsg = Msg{"op":iUpdt.Op}
+                       aFn func(*ClientState)interface{}, aSrec *SendRecord) {
+   var err error
+   var aResult []string
+   fAll := func(c *ClientState) interface{} { return aResult }
+   fOne := func(c *ClientState) interface{} { if c == iState { return aResult }; return nil }
+   fErr := func(c *ClientState) interface{} { if c == iState {
+                                      return tMsgError{iUpdt.Op, err.Error()} }; return nil }
+
    switch iUpdt.Op {
+   case "open":
+      aFn, aResult = fOne, []string{"sl", "of", "ot", "ps", "pt", "pf", "if", "it", "gl",
+                                    "tl", "cs", "al", "ml", "mo"}
    case "service_add":
-      err := _addService(iUpdt.Service)
-      if err != nil {
-         aMsg["err"] = err.Error()
-      }
+      err = _addService(iUpdt.Service)
+      if err != nil { return fErr, nil }
+      aFn, aResult = fAll, []string{"sl"}
    case "service_update":
-      err := _updateService(iUpdt.Service)
-      if err != nil {
-         aMsg["err"] = err.Error()
-      }
+      err = _updateService(iUpdt.Service)
+      if err != nil { return fErr, nil }
+      aFn, aResult = fAll, []string{"sl"}
    case "ohi_add", "ohi_drop":
       aSrec = editOhi(iSvc, iUpdt)
+      aFn, aResult = fAll, []string{"ot"}
    case "ping_save":
       storeSavedAdrsbk(iSvc, iUpdt)
+      aFn, aResult = fAll, []string{"ps"}
    case "ping_discard":
       deleteSavedAdrsbk(iSvc, iUpdt.Ping.To, iUpdt.Ping.Gid)
+      aFn, aResult = fAll, []string{"ps"}
    case "ping_send":
       aSrec = &SendRecord{id: string(eSrecPing) + makeSaveId(keySavedAdrsbk(iUpdt))}
    case "accept_send":
@@ -299,6 +332,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "thread_set":
       aLastId := loadThread(iSvc, iUpdt.Thread.Id)
       iState.addThread(iUpdt.Thread.Id, aLastId)
+      aFn, aResult = fOne, []string{"cs", "al", "ml", "mo"}
    case "thread_save":
       if iUpdt.Thread.Id == "" {
          aTid := ""; if !iUpdt.Thread.New { aTid = iState.getThread() }
@@ -307,41 +341,69 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       storeSavedThread(iSvc, iUpdt)
       if iUpdt.Thread.New {
          iState.addThread(iUpdt.Thread.Id, iUpdt.Thread.Id)
+         aFn = func(c *ClientState) interface{} {
+            if c == iState { return aResult }
+            return aResult[:1]
+         }
       } else {
          iState.openMsg(iUpdt.Thread.Id, true)
+         aTid := iState.getThread()
+         aFn = func(c *ClientState) interface{} {
+            if c.getThread() == aTid { return aResult[2:] }
+            return nil
+         }
       }
-      aMsg["id"] = iUpdt.Thread.Id
+      aResult = []string{"tl", "cs", "al", "ml", "mo", "mn", iUpdt.Thread.Id} //todo drop mo
    case "thread_discard":
       deleteSavedThread(iSvc, iUpdt)
+      aTid := iState.getThread()
       if iUpdt.Thread.Id[0] == '_' {
-         aTid := iState.getThread()
-         aFn = func(c *ClientState) { c.discardThread(aTid) }
+         aFn = func(c *ClientState) interface{} {
+            defer c.discardThread(aTid)
+            if c.getThread() == aTid { return aResult }
+            return aResult[:1]
+         }
       } else {
-         aFn = func(c *ClientState) { c.openMsg(iUpdt.Thread.Id, false) }
+         aFn = func(c *ClientState) interface{} {
+            c.openMsg(iUpdt.Thread.Id, false)
+            if c.getThread() == aTid { return aResult [2:] }
+            return nil
+         }
       }
+      aResult = []string{"tl", "cs", "al", "ml", "mo"} //todo drop mo
    case "thread_send":
       if iUpdt.Thread.Id == "" { break }
-      err := validateSavedThread(iSvc, iUpdt)
-      if err != nil {
-         aMsg["err"] = err.Error()
-      } else {
-         aSrec = &SendRecord{id: string(eSrecThread) + iUpdt.Thread.Id}
-      }
+      err = validateSavedThread(iSvc, iUpdt)
+      if err != nil { return fErr, nil }
+      aSrec = &SendRecord{id: string(eSrecThread) + iUpdt.Thread.Id}
    case "thread_close":
       iState.openMsg(iUpdt.Thread.Id, false)
+      aFn, aResult = fOne, []string{"mo"} //todo drop
    case "history":
       iState.goThread(iUpdt.Navigate.History)
+      aFn, aResult = fOne, []string{"cs", "al", "ml", "mo"}
    case "tab_add":
       iState.addTab(iUpdt.Tab.Type, iUpdt.Tab.Term)
+      aAlt := "tl"; if iUpdt.Tab.Type == eTabThread { aAlt = "mo" }
+      aFn, aResult = fOne, []string{"cs", aAlt}
    case "tab_pin":
       iState.pinTab(iUpdt.Tab.Type)
+      aFn, aResult = fAll, []string{"cs"}
    case "tab_drop":
       iState.dropTab(iUpdt.Tab.Type)
+      aAlt := "tl"; if iUpdt.Tab.Type == eTabThread { aAlt = "mo" }
+      aFn = fAll; if iUpdt.Tab.Type == eTabThread { aFn = fOne } //todo eTabService && !pinned = fOne
+      aResult = []string{"cs", aAlt}
    case "tab_select":
       iState.setTab(iUpdt.Tab.Type, iUpdt.Tab.PosFor, iUpdt.Tab.Pos)
+      aAlt := "tl"; if iUpdt.Tab.Type == eTabThread { aAlt = "mo" }
+      aFn, aResult = fOne, []string{aAlt}
    default:
-      aMsg["err"] = "unknown op"
+      err = tError("unknown op")
+      return fErr, nil
    }
-   return aMsg, aSrec, aFn
+   return aFn, aSrec
 }
+
+type tMsgError struct { Op, Err string }
 

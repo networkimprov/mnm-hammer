@@ -378,18 +378,17 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
                fmt.Fprintf(os.Stderr, "_readLink %s: ack channel blocked\n", iName)
             }
          }
-         aMsg, aFn := slib.HandleTmtpService(iName, aHead, &tTmtpInput{aData, iConn})
-         if aMsg == nil {
-            break
-         }
+         aFn := slib.HandleTmtpService(iName, aHead, &tTmtpInput{aData, iConn})
          if aHead.From != "" && aHead.Id != "" {
             aQ.postAck(aHead.Id)
          }
-         aJson, _ := json.Marshal(aMsg)
-         getService(iName).ccs.Range(func(cC *tWsConn) {
-            cC.WriteMessage(gws.TextMessage, aJson)
-            if aFn != nil { aFn(cC.state) }
-         })
+         if aFn != nil {
+            getService(iName).ccs.Range(func(cC *tWsConn) {
+               cMsg := aFn(cC.state)
+               if cMsg == nil { return }
+               cC.WriteJSON(cMsg)
+            })
+         }
       }
       if aPos > aHeadEnd + aHead.DataLen {
          aPos = int64(copy(aBuf, aBuf[aHeadEnd + aHead.DataLen : aPos]))
@@ -604,14 +603,15 @@ func runWs(iResp http.ResponseWriter, iReq *http.Request) {
       var aUpdate slib.Update
       err = json.Unmarshal(aJson, &aUpdate)
       if err != nil { panic(err) }
-      aCmsg, aSrec, aFn := slib.HandleUpdtService(aSvc, aState, &aUpdate)
+      aFn, aSrec := slib.HandleUpdtService(aSvc, aState, &aUpdate)
 
-      aJson, err = json.Marshal(aCmsg)
-      if err != nil { panic(err) }
-      aClients.Range(func(cC *tWsConn) {
-         cC.WriteMessage(gws.TextMessage, aJson)
-         if aFn != nil { aFn(cC.state) }
-      })
+      if aFn != nil {
+         aClients.Range(func(cC *tWsConn) {
+            cMsg := aFn(cC.state)
+            if cMsg == nil { return }
+            cC.WriteJSON(cMsg)
+         })
+      }
       if aSrec != nil {
          aQ.postMsg(aSrec)
       }
