@@ -237,7 +237,7 @@ func (o *ClientState) renameThread(iId, iNewId string) {
 func (o *ClientState) renameMsg(iThreadId, iMsgId, iNewId string) {
    o.Lock(); defer o.Unlock()
    aT := o.Thread[iThreadId]
-   if aT == nil {
+   if aT == nil || !aT.Open[iMsgId] {
       return
    }
    aT.Open[iNewId] = aT.Open[iMsgId]
@@ -252,6 +252,7 @@ func (o *ClientState) discardThread(iId string) {
    if aT == nil {
       return
    }
+   aT.Discard = true
    if iId == o.History[len(o.History)-1] {
       aT.Refs--
       if aT.Refs == 0 {
@@ -261,8 +262,6 @@ func (o *ClientState) discardThread(iId string) {
          o.Hpos--
       }
       o.History = o.History[:len(o.History)-1]
-   } else {
-      aT.Discard = true
    }
    err := storeFile(o.filePath, o)
    if err != nil { quit(err) }
