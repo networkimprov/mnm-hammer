@@ -77,7 +77,7 @@ func mainResult() int {
    slib.Init(startService)
    slib.Test()
 
-   sServiceTmpl, err = template.ParseFiles("web/service.html")
+   sServiceTmpl, err = template.New("service.html").Delims("[{","}]").ParseFiles("web/service.html")
    if err != nil {
       fmt.Fprintf(os.Stderr, "template parse error %s\n", err.Error())
       return 1
