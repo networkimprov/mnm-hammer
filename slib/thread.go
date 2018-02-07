@@ -54,7 +54,7 @@ func _makeIndexEl(iHead *Header, iPos int64) tIndexEl {
                    Subject:iHead.SubHead.Subject}
 }
 
-func GetIdxThread(iSvc string, iState *ClientState) []tIndexEl {
+func GetIdxThread(iSvc string, iState *ClientState) interface{} {
    aTid := iState.getThread()
    if aTid == "" {
       return []tIndexEl{}
@@ -62,8 +62,11 @@ func GetIdxThread(iSvc string, iState *ClientState) []tIndexEl {
    aFd, err := os.Open(threadDir(iSvc) + aTid)
    if err != nil { quit(err) }
    defer aFd.Close()
-   var aIdx []tIndexEl
+   var aIdx []struct{ Id, From, Date, Subject string; Size int64 }
    _ = _readIndex(aFd, &aIdx)
+   for a1, a2 := 0, len(aIdx)-1; a1 < a2; a1, a2 = a1+1, a2-1 {
+      aIdx[a1], aIdx[a2] = aIdx[a2], aIdx[a1]
+   }
    return aIdx
 }
 
@@ -490,7 +493,7 @@ func (o tComplete) pos() int64 { // thread offset to index
    return aPos
 }
 
-func _readIndex(iFd *os.File, iIdx *[]tIndexEl) int64 {
+func _readIndex(iFd *os.File, iIdx interface{}) int64 {
    _, err := iFd.Seek(-8, io.SeekEnd)
    if err != nil { quit(err) }
    aBuf := make([]byte, 8)
