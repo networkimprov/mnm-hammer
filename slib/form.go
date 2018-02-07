@@ -406,7 +406,7 @@ func _ffnFileName(iSvc, iFfn string) string {
    if strings.HasPrefix(iFfn, aUri) {
       return iFfn[len(aUri):]
    } else {
-      return strings.Replace(iFfn, "/", "%", -1)
+      return strings.Replace(iFfn, "/", "@", -1)
    }
 }
 
