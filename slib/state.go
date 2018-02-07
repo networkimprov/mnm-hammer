@@ -104,6 +104,7 @@ type tTabsSummary struct {
    *tTabs
    Default *[]string
    Pinned  *[]string `json:",omitempty"`
+   Type int
 }
 
 type tOpenState map[string]bool // key msg id
@@ -129,7 +130,7 @@ func (o *ClientState) GetSummary() Msg {
    if o.Hpos >= 0 {
       aS["Thread"] = o.History[o.Hpos]
       aS["ThreadTabs"] = &tTabsSummary{tTabs: &o.Thread[o.History[o.Hpos]].Tabs,
-                                       Default: &sThreadTabsDefault}
+                                       Default: &sThreadTabsDefault, Type:eTabThread}
       aH := 0
       if o.Hpos == 0 {
          aH = -1
@@ -138,7 +139,8 @@ func (o *ClientState) GetSummary() Msg {
       }
       aS["History"] = aH
    }
-   aS["SvcTabs"] = &tTabsSummary{tTabs:&o.SvcTabs, Pinned:&aSvc.tabs, Default:&sSvcTabsDefault}
+   aS["SvcTabs"] = &tTabsSummary{tTabs:&o.SvcTabs, Pinned:&aSvc.tabs,
+                                 Default:&sSvcTabsDefault, Type:eTabService}
    return aS
 }
 
