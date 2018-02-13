@@ -21,20 +21,37 @@ import (
    "strings"
 )
 
-func GetListThread(iSvc string, iState *ClientState) []string {
+func GetListThread(iSvc string, iState *ClientState) interface{} {
+   var err error
+   if iState.SvcTabs.PosFor == ePosForTerms &&
+      strings.HasPrefix(iState.SvcTabs.Terms[iState.SvcTabs.Pos], "ffn:") {
+      aResult := struct{ Ffn string; Table []Msg }{Ffn: iState.SvcTabs.Terms[iState.SvcTabs.Pos][4:]}
+      err = readJsonFile(&aResult.Table, GetPathFilledForm(iSvc, aResult.Ffn))
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "GetListThread: %s\n", err.Error())
+         return []string{}
+      }
+      return aResult
+   }
    if iState.SvcTabs.PosFor != ePosForDefault {
       return []string{}
    }
    aDir, err := ioutil.ReadDir(threadDir(iSvc))
    if err != nil { quit(err) }
    sort.Slice(aDir, func(cA, cB int) bool { return aDir[cA].ModTime().After(aDir[cB].ModTime()) })
-   aList := make([]string, len(aDir))
+   aFmd, err := ioutil.ReadDir(formDir(iSvc))
+   if err != nil { quit(err) }
+   aList := make([]struct{Id string}, len(aDir)+len(aFmd))
    aI := 0
    for a, _ := range aDir {
-      if !strings.ContainsRune(aDir[a].Name()[1:], '_') {
-         aList[aI] = aDir[a].Name()
+      if aDir[a].Name() != "_22" && !strings.ContainsRune(aDir[a].Name()[1:], '_') {
+         aList[aI].Id = aDir[a].Name()
          aI++
       }
+   }
+   for a, _ := range aFmd {
+      aList[aI].Id = strings.Replace(aFmd[a].Name(), "@", "/", -1)
+      aI++
    }
    return aList[:aI]
 }
