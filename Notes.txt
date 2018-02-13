@@ -1,26 +1,33 @@
-checksum thread index and service config
-
 tmtp include alias in from/for
+tmtp ping add from:alias
 server discards pings from blocked address
 server decrypt For[].Id with sender's key; encrypt From with recipient's key
 
+checksum thread index and service config
+  per-service file of checksums?
 synchronize access to thread/* form/* adrsbk etc
-
 tempXyz(...) functions to prevent tmp name conflicts
-
 before thread_save, thread_new to request ID
-
+storeReceivedThread create thread if not found
 storeReceivedAttach prevent dup & invalid filename
-
-Handle*Service msgs to client indicate what changed
-
+Handle*Service limit aResult to op codes with changes
+  op code "ma" to insert new message
+  op code "mx" to delete message
+ClientState keeps form-table; send "fn" op if changed
 main: clean up getService().xyz use
+make/parseSaveId handle special characters
+_writeMsgTemp return tHeadSaved
+send op to all clients on upload or blank-form
+blank-form date
 
 alias: add, drop, list; store in sep file
   status pending until ack
 ping: save as pending if sent
   lookup-alias-by-pre/suffix
   msg-from: log cc aliases?
+    log group msg froms (not preceeded by ping)
+groups: 
+  storeSent: if group unknown, make file for members in groups/gid?
 
 forms
   list of fields
@@ -60,11 +67,12 @@ msg panel
     links jump to relevant msg?
   tabs for msg subsets, per client: user-opened, search result, reply-to chain, all
     pin tab saves state, broadcasts to clients
-  list of msgs in archaeological order
+  list of msgs in archaeological order; scrolling
     remember which msgs are open, per client
     combine consecutive msgs from single user chronologically, tag each with date-time
     ohi status of sender
     reply-to chain link/button per msg
+    retain msg header bar at top of panel if topmost visible msg is open
   reply editor opens above msgs
   overlay panel with iframe to view pdf/html/video attachments in browser
   thread-summary popup or tab
@@ -81,7 +89,7 @@ msg panel
 thread panel
   archaeological order
   infinite scrolling or back/forward buttons
-  permanent All & Form-table tabs
+  permanent All, Unread, Todo, Form-table tabs
   search tabs are client-specific unless saved
     save-search pins tab, notify other clients
   search relevance slider (# positions varies with result set size?)
@@ -97,12 +105,14 @@ thread panel
 ohi panels
   slide out from services panel
   whos-on normally retracted, can pin display
+    indicate disconnect of browser or client
   who-i-ohi
 
 attachment panel
   slide out from services panel
 
 services (notifications) panel
+  per-item popup shows recent activity in that service
   click item opens tab
   back/forward buttons? switch tab if possible
   panes
@@ -155,6 +165,7 @@ msg editor
   form-table queries?
   message templates menu
 
+UI controls that change data state get hand cursor, others get arrow
 certain buttons show confirmation pop-up next to click point
   send, discard new msg, close search tab
 
