@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html><head>
-<title>mnm - {{.Title}}</title>
+<title>mnm - [{.Title}]</title>
 </head><body>
 
 <style>
@@ -29,17 +29,13 @@ Blank Forms
   <input type="submit" value="drop"></form>
 <a target="mnm_upload" href="/f/trial">download</a>
 <a target="mnm_upload" href="/f/">list</a>
-</div>
-Form Tables:
-<a target="mnm_recv" href="?fn=abc_recv">Received</a>
-<a target="mnm_sent" href="?fn=xyz_sent" id="mnm_sent">Sent</a>
-</p>
+</div></p>
 
-<button onclick="gM.SvcAdd()">Add Service</button>
-<button onclick="gM.PingSave()">Ping</button>
-<button onclick="gM.PingSave('group{{.Addr}}')">Invite</button>
-<button onclick="gM.OhiAdd()">Add Ohi</button>
-<button onclick="gM.OhiDrop()">Drop Ohi</button>
+<button onclick="mnm._SvcAdd()">Add Service</button>
+<button onclick="mnm._PingSave()">Ping</button>
+<button onclick="mnm._PingSave('group[{.Addr}]')">Invite</button>
+<button onclick="mnm._OhiAdd()">Add Ohi</button>
+<button onclick="mnm._OhiDrop()">Drop Ohi</button>
 
 <table border="1">
 <tr><td>services </td><td class="pre" id="get?sl">.</td></tr>
@@ -53,10 +49,10 @@ Form Tables:
 <tr><td>groups   </td><td class="pre" id="get?gl">.</td></tr>
 </table><br/>
 
-<button onclick="gM.History(-1)">Back</button>
-<button onclick="gM.History(1)">Next</button>
-<button onclick="gM.Thread()">New Thread</button>
-<button onclick="gM.Recv()">Receive Msg</button>
+<button onclick="mnm.History(-1)">Back</button>
+<button onclick="mnm.History(1)">Next</button>
+<button onclick="mnm._ThreadNew()">New Thread</button>
+<button onclick="mnm.ThreadRecv()">Receive Msg</button>
 
 <table border="1">
 <tr><td>svc tabs </td><td class="pre" id="get?cs">.</td></tr>
@@ -68,35 +64,36 @@ Form Tables:
 <tr><td>open msgs</td><td class="pre" id="get?mo">.</td></tr>
 </table>
 
-<div id="stat"></div>
 <div id="msg"></div>
 
+<script src="/web/socket.js"></script>
 <script>
-;var gM = {};
+;
 (function() {
-  function fXhr(i, iP) {
-    var aXhr = new XMLHttpRequest();
-    aXhr.onload = function() {
-      switch (i) {
-      case 'ps': fDrawPing(JSON.parse(aXhr.responseText)); break;
-      case 'if': fDrawInvite(JSON.parse(aXhr.responseText)); break;
-      case 'tl': fDrawThreads(JSON.parse(aXhr.responseText)); break;
-      case 'al': fDrawAttached(JSON.parse(aXhr.responseText)); break;
-      case 'cs': fDrawTabs(JSON.parse(aXhr.responseText)); break;
-      case 'ml': fDrawMsgIndex(JSON.parse(aXhr.responseText)); break;
-      case 'mo': fDrawOpen(aXhr.responseText); break;
-      default:  document.getElementById('get?'+i).innerText = aXhr.responseText;
-      }
-    };
-    aXhr.open('GET', '?'+i+(iP ? '='+iP : ''));
-    aXhr.send();
-  }
+  mnm.Log = function(i) {
+    var aLog = document.getElementById('msg').innerText;
+    document.getElementById('msg').innerText = i+' '+aLog;
+  };
+
+  mnm.Render = function(i, iData, iMap) {
+    switch (i) {
+    case 'ps': fDrawPing    (JSON.parse(iData)); break;
+    case 'if': fDrawInvite  (JSON.parse(iData)); break;
+    case 'tl': fDrawThreads (JSON.parse(iData)); break;
+    case 'al': fDrawAttached(JSON.parse(iData)); break;
+    case 'cs': fDrawTabs    (JSON.parse(iData)); break;
+    case 'ml': fDrawMsgIndex(JSON.parse(iData)); break;
+    case 'mo': fDrawOpen    (iData, iMap)      ; break;
+    case '/t': case '/f':                        break;
+    default:  document.getElementById('get?'+i).innerText = iData;
+    }
+  };
   function fDrawPing(iList) {
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
       var aArg = "'"+iList[a].Alias+"','"+(iList[a].Gid||'')+"'";
-      aS += '<button onclick="gM.PingDiscard('+aArg+')">Discard</button>';
-      aS += '<button onclick="gM.PingSend   ('+aArg+')">Send</button> \n';
+      aS += '<button onclick="mnm._PingDiscard('+aArg+')">Discard</button>';
+      aS += '<button onclick="mnm._PingSend   ('+aArg+')">Send</button> \n';
       aS += JSON.stringify(iList[a]) + '\n';
     }
     document.getElementById('get?ps').innerHTML = aS;
@@ -105,16 +102,21 @@ Form Tables:
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
       if (!iList[a].Response)
-        aS += '<button onclick="gM.InviteAccept(\''+iList[a].Gid+'\')">Accept</button> \n';
+        aS += '<button onclick="mnm.InviteAccept(\''+iList[a].Gid+'\')">Accept</button> \n';
       aS += JSON.stringify(iList[a]) + '\n';
     }
     document.getElementById('get?if').innerHTML = aS;
   }
   function fDrawThreads(iList) {
     var aS = '';
-    for (var a=0; a < iList.length; ++a)
-      if (iList[a] !== '_22')
-        aS += '<button onclick="gM.Go(\''+iList[a]+'\')">'+iList[a].slice(-5)+'</button> ';
+    for (var a=0; a < iList.length; ++a) {
+      if (iList[a].Id.indexOf('/') < 0)
+        aS += '<button onclick="mnm.ThreadGo(\''+iList[a].Id+'\')">'+
+               iList[a].Id.slice(-5)+'</button> ';
+      else
+        aS += '<a href="?fn='+encodeURIComponent(iList[a].Id)+'" target="mnm_formtab">'+
+               iList[a].Id+'</a> ';
+    }
     document.getElementById('get?tl').innerHTML = aS;
   }
   function fDrawAttached(iList) {
@@ -125,222 +127,152 @@ Form Tables:
   }
   function fDrawTabs(iSt) {
     if (iSt.Thread !== 'none')
-      document.getElementById('get?ct').innerHTML = fMakeTabs(iSt.ThreadTabs, 0);
-    document.getElementById('get?cs').innerHTML = fMakeTabs(iSt.SvcTabs, 1);
+      document.getElementById('get?ct').innerHTML = fMakeTabs(iSt.ThreadTabs);
+    document.getElementById('get?cs').innerHTML = fMakeTabs(iSt.SvcTabs);
   }
-  function fMakeTabs(iTabs, iType) {
+  function fMakeTabs(iTabs) {
     var aS = '';
     var aSet = [iTabs.Default, iTabs.Pinned, iTabs.Terms]
     for (var aI in aSet)
       if (aSet[aI])
         for (var a=0; a < aSet[aI].length; ++a)
-          aS += '<button onclick="gM.SelectTab('+iType+','+aI+','+a+')">'+aSet[aI][a]+'</button>';
-    aS +=       '<button onclick="gM.DropTab  ('+iType+')" id="tabdrop'+iType+'"'+
+          aS += '<button onclick="mnm._TabSelect('+iTabs.Type+','+aI+','+a+')">'+aSet[aI][a]+'</button>';
+    aS +=       '<button onclick="mnm.TabDrop   ('+iTabs.Type+')" id="tabdrop'+iTabs.Type+'"'+
                        ' style="display:'+(iTabs.PosFor ? 'inline' : 'none')+'">X</button>';
-    if (iType === 1)
-      aS +=     '<button onclick="gM.PinTab   ('+iType+')" id="tabpin'+iType+'"'+
+    if (iTabs.Type === 1)
+      aS +=     '<button onclick="mnm.TabPin    ('+iTabs.Type+')" id="tabpin'+iTabs.Type+'"'+
                        ' style="display:'+(iTabs.PosFor > 1 ? 'inline' : 'none')+'">T</button>';
-    aS +=       '<button onclick="gM.AddTab   ('+iType+',null)">Add</button>';
+    aS +=       '<button onclick="mnm._TabAdd   ('+iTabs.Type+')">Add</button>';
     return aS;
   }
   function fDrawMsgIndex(iList) {
-    if (iList.length && iList[0].Id !== sThread.id) {
-      sThread = {id: iList[0].Id, reply: {}};
+    if (iList.length && iList[iList.length-1].Id !== sThread.id) {
+      sThread = {id: iList[iList.length-1].Id, reply: {}};
+      document.getElementById('get?mn').innerText = '';
       sData = 'you dont say';
     }
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
       var aId = "'"+iList[a].Id+"'";
       aS += '<div>'+
-        '<button onclick="gM.Xhr(\'mn\','+aId+')" >O</button>'+
-        '<button onclick="gM.Close('+aId+')"      >X</button> ';
-      if (iList[a].Offset >= 0)
+        '<button onclick="mnm.ThreadOpen   ('+aId+')">O</button>'+
+        '<button onclick="mnm.ThreadClose  ('+aId+')">X</button> ';
+      if (iList[a].From !== '')
         aS +=
-        '<button onclick="gM.Reply(\'\','+aId+')" >Reply</button>';
+        '<button onclick="mnm._Reply  (\'\','+aId+')">Reply</button>';
       else
         aS +=
-        '<button onclick="gM.Attach('+aId+')"     >Attach</button>'+
-        '<button onclick="gM.Blank('+aId+')"      >Blank</button>'+
-        '<button onclick="gM.Fill('+aId+')"       >Fill</button>'+
-        '<button onclick="gM.Drop('+aId+')"       >Drop</button> '+
-        '<button onclick="gM.Group('+aId+')"      >Group</button>'+
-        '<button onclick="gM.Reply('+aId+')"      >Save</button>'+
-        '<button onclick="gM.Send('+aId+')"       >Send</button>'+
-        '<button onclick="gM.Discard('+aId+')"    >Discard</button>';
+        '<button onclick="mnm._Attach      ('+aId+')">Attach</button>'+
+        '<button onclick="mnm._Blank       ('+aId+')">Blank</button>'+
+        '<button onclick="mnm._Fill        ('+aId+')">Fill</button>'+
+        '<button onclick="mnm._Drop        ('+aId+')">Drop</button> '+
+        '<button onclick="mnm._Group       ('+aId+')">Group</button>'+
+        '<button onclick="mnm._Reply       ('+aId+')">Save</button>'+
+        '<button onclick="mnm.ThreadSend   ('+aId+')">Send</button>'+
+        '<button onclick="mnm.ThreadDiscard('+aId+')">Discard</button>';
       aS += '\n' + JSON.stringify(iList[a]) + '</div>\n';
     }
     document.getElementById('get?ml').innerHTML = aS;
   }
-  function fDrawOpen(iText) {
+  function fDrawOpen(iText, iMap) {
     document.getElementById('get?mo').innerText = iText;
-    sHeadMap = {};
-    for (var a=0; a < iText.length; ) {
-      var aHeadLen = parseInt(iText.substr(a,4), 16);
-      var aHead = JSON.parse(iText.substr(a+4,aHeadLen));
-      sHeadMap[aHead.Id] = aHead;
-      a += 4 + aHeadLen + aHead.Len + 2;
-      if (aHead.From === 'self' && aHead.SubHead.Attach) {
-        var aAtc = aHead.SubHead.Attach;
-        for (var aA=0; aA < aAtc.length; ++aA)
-          if (aAtc[aA].Name.charAt(0) === 'r')
-            a += aAtc[aA].Size;
-      }
-    }
+    sHeadMap = iMap;
   }
 
-  var sWs = null;
   var sHeadMap = null;
   var sLastFfn = null;
   var sThread = {id:null, reply:null};
-  var sData='you dont say';
+  var sData = 'you dont say';
 
-  if ('{{.Addr}}' === ':80') {
+  if ('[{.Addr}]' === ':80') {
     var sNewAlias = 'Ninetynine', sAliasTo = 'Eightysix';
   } else {
     var sNewAlias = 'Eightysix', sAliasTo = 'Ninetynine';
   }
 
-  gM.Xhr = fXhr;
-  gM.SvcAdd = function() {
-    sWs.send(JSON.stringify({op:'service_add', service:{
-      name:'take2', addr:'localhost:8888', alias:sNewAlias, loginperiod:0}}))
+  mnm._SvcAdd = function() {
+    mnm.SvcAdd({name:'take2', addr:'localhost:8888', alias:sNewAlias, loginperiod:0})
   };
-  gM.OhiAdd = function() {
-    sWs.send(JSON.stringify({op:'ohi_add', ohi:{alias:sAliasTo}}))
+  mnm._OhiAdd = function() {
+    mnm.OhiAdd(sAliasTo)
   };
-  gM.OhiDrop = function() {
-    sWs.send(JSON.stringify({op:'ohi_drop', ohi:{alias:sAliasTo}}))
+  mnm._OhiDrop = function() {
+    mnm.OhiDrop(sAliasTo)
   };
-  gM.PingSave = function(i) {
-    sWs.send(JSON.stringify({op:'ping_save', ping:{alias:sNewAlias, to:sAliasTo, text:'ereiamjh',
-                             gid:i}}))
+  mnm._PingSave = function(i) {
+    mnm.PingSave({alias:sNewAlias, to:sAliasTo, text:'ereiamjh', gid:i})
   };
-  gM.PingDiscard = function(iAlias, iGid) {
-    sWs.send(JSON.stringify({op:'ping_discard', ping:{to:iAlias, gid:iGid}}))
+  mnm._PingDiscard = function(iAlias, iGid) {
+    mnm.PingDiscard({to:iAlias, gid:iGid})
   };
-  gM.PingSend = function(iAlias, iGid) {
-    sWs.send(JSON.stringify({op:'ping_send', ping:{to:iAlias, gid:iGid}}))
+  mnm._PingSend = function(iAlias, iGid) {
+    mnm.PingSend({to:iAlias, gid:iGid})
   };
-  gM.InviteAccept = function(i) {
-    sWs.send(JSON.stringify({op:'accept_send', accept:{gid:i}}))
+  mnm._ThreadNew = function() {
+    mnm.ThreadNew({data:'first msg', alias:sNewAlias, cc:[sAliasTo]})
   };
-  gM.History = function(i) {
-    sWs.send(JSON.stringify({op:'history', navigate:{history:i}}))
-  };
-  gM.Thread = function() {
-    sWs.send(JSON.stringify({op:'thread_save', thread:{id:'', data:'start thread', new:true,
-                             alias:sNewAlias, cc:[sAliasTo]}}))
-  };
-  gM.Recv = function() {
-    sWs.send(JSON.stringify({op:'thread_recvtest', thread:{}}))
-  };
-  gM.Go = function(i) {
-    sWs.send(JSON.stringify({op:'thread_set', thread:{id:i}}))
-  };
-  gM.Close = function(i) {
-    sWs.send(JSON.stringify({op:'thread_close', thread:{id:i}}))
-  };
-  function fSetReply(i) {
+  function fReply(i) {
     if (!sThread.reply[i])
       sThread.reply[i] = { data:'', attach:[], form_fill:{}, cc:[sAliasTo] };
+    return sThread.reply[i];
   }
   function fSend(i) {
-    sWs.send(JSON.stringify({op:'thread_save', thread:{id:i, alias:sNewAlias,
-                             cc:       i ? sThread.reply[i].cc : [sAliasTo],
-                             data:     i ? sThread.reply[i].data : '',
-                             attach:   i ? sThread.reply[i].attach : null,
-                             formFill: i ? sThread.reply[i].form_fill : null}}))
-  }
-  gM.Reply = function(i, iOrig) {
+    var aObj = {id:i, alias:sNewAlias, cc:[sAliasTo]};
     if (i) {
-      fSetReply(i);
-      sThread.reply[i].data += '.';
+      aObj.cc       = sThread.reply[i].cc;
+      aObj.data     = sThread.reply[i].data;
+      aObj.attach   = sThread.reply[i].attach;
+      aObj.formFill = sThread.reply[i].form_fill;
+    }
+    mnm.ThreadSave(aObj);
+  }
+  mnm._Reply = function(i, iOrig) {
+    if (i) {
+      fReply(i).data += '.';
     } else {
       var aAtc = sHeadMap[iOrig].SubHead.Attach || [];
-      for (var a=0; a < aAtc.length; ++a) {
-        if (!aAtc[a].Ffn) continue;
-        sLastFfn = aAtc[a];
-        document.getElementById('mnm_sent').href = '?fn='+sLastFfn.Ffn+'_sent';
-      }
+      for (var a=0; a < aAtc.length; ++a)
+        if (aAtc[a].Ffn)
+          sLastFfn = aAtc[a];
     }
     fSend(i);
   };
-  gM.Group = function(i) {
-    fSetReply(i);
-    sThread.reply[i].cc = ['group{{.Addr}}'];
+  mnm._Group = function(i) {
+    fReply(i).cc = ['group[{.Addr}]'];
     fSend(i);
   };
-  gM.Attach = function(i) {
-    fSetReply(i);
-    sThread.reply[i].attach.push({name:'upload/trial'});
+  mnm._Attach = function(i) {
+    fReply(i).attach.push({name:'upload/trial'});
     fSend(i);
   };
-  gM.Blank = function(i) {
-    fSetReply(i);
-    sThread.reply[i].attach.push({name:'form/trial'});
+  mnm._Blank = function(i) {
+    fReply(i).attach.push({name:'form/trial'});
     fSend(i);
   };
-  gM.Fill = function(i) {
+  mnm._Fill = function(i) {
     var aName = sLastFfn.Name.substr(2);
-    fSetReply(i);
-    sThread.reply[i].form_fill[aName] = JSON.stringify({
+    fReply(i).form_fill[aName] = JSON.stringify({
       nr:1, so:'s', or:{ anr:[[1,2],[1,2]], aso:['s','s','s'] }});
-    sThread.reply[i].attach.push({name:'form_fill/'+aName, ffn:sLastFfn.Ffn});
+    fReply(i).attach.push({name:'form_fill/'+aName, ffn:sLastFfn.Ffn});
     fSend(i);
   };
-  gM.Drop = function(i) {
-    fSetReply(i);
-    sThread.reply[i].form_fill = {};
-    sThread.reply[i].attach = [];
+  mnm._Drop = function(i) {
+    fReply(i).form_fill = {};
+    fReply(i).attach = [];
     fSend(i);
   };
-  gM.Send = function(i) {
-    sWs.send(JSON.stringify({op:'thread_send', thread:{id:i}}))
+  mnm._TabAdd = function(iType) {
+    mnm.TabAdd({type:iType, term:sData+='-'})
   };
-  gM.Discard = function(i) {
-    sWs.send(JSON.stringify({op:'thread_discard', thread:{id:i}}))
-  };
-  gM.AddTab = function(iType, iTerm) {
-    sWs.send(JSON.stringify({op:'tab_add', tab:{type:iType, term:sData+='-'}}))
-  };
-  gM.SelectTab = function(iType, iPosFor, iPos) {
+  mnm._TabSelect = function(iType, iPosFor, iPos) {
     document.getElementById('tabdrop'+iType).style.display = iPosFor ? 'inline' : 'none';
     if (iType === 1)
       document.getElementById('tabpin'+iType).style.display = iPosFor > 1 ? 'inline' : 'none';
-    sWs.send(JSON.stringify({op:'tab_select', tab:{type:iType, posfor:iPosFor, pos:iPos}}))
-  };
-  gM.PinTab = function(iType) {
-    sWs.send(JSON.stringify({op:'tab_pin', tab:{type:iType}}))
-  };
-  gM.DropTab = function(iType) {
-    sWs.send(JSON.stringify({op:'tab_drop', tab:{type:iType}}))
+    mnm.TabSelect({type:iType, posfor:iPosFor, pos:iPos});
   };
 
-  window.onload = function() {
-    var aSvc = window.location.pathname.split('/')[1];
-    sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
-    sWs.onopen = function() {
-      sWs.send(JSON.stringify({op:'open'}));
-    };
-    sWs.onmessage = function(iEvent) {
-      var aLog = document.getElementById('msg').innerText;
-      document.getElementById('msg').innerText = iEvent.data+' '+aLog;
-      var aObj = JSON.parse(iEvent.data);
-      if (aObj instanceof Array) {
-        for (var a=0; a < aObj.length; ++a) {
-          if (aObj[a] === 'mo')
-            document.getElementById('get?mn').innerText = '';
-          if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')
-            fXhr(aObj[a], aObj[++a])
-          else
-            fXhr(aObj[a])
-        }
-        return
-      }
-    };
-    sWs.onclose = function(iEvent) { document.getElementById('stat').innerText = 'closed' };
-    sWs.onerror = function(iEvent) { document.getElementById('stat').innerText = iEvent.data };
-  };
+  window.onload = mnm.Connect;
+
 }).call(this);
 </script>
 
