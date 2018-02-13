@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html><head>
+   <title>[{.Title}] - mnm</title>
+
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+   <link  href="/web/uikit-30.min.css" rel="stylesheet"/>
+   <script src="/web/uikit-30.min.js"></script>
+   <script src="/web/uikit-icons-30.min.js"></script>
+
+   <script src="/web/vue-25.js"></script>
+
+   <script src="/web/socket.js"></script>
+   <style>
+      .firefox-minheight-fix {height:0}
+      input[type=text] { font-family: Monaco, monospace; font-size:larger }
+   </style>
+</head><body>
+
+<div id="app" uk-grid class="uk-grid-small">
+
+<div class="uk-width-2-5">
+   <div class="uk-clearfix">
+      Subject, orig Author &amp; Date
+      <div class="uk-float-right">
+         <button @click="mnm.ThreadRecv()">
+            <span uk-icon="cloud-download"></span></button>
+         &nbsp;
+         <span uk-icon="copy" style="cursor:default">{{al.length || ''}}</span>
+         <mnm-attach v-if="al.length"
+                     list="al" :data="al"></mnm-attach>
+         <button :disabled="!cs.History || !cs.History.Prev" onclick="mnm.History(-1)">
+            <span uk-icon="arrow-left"></span></button>
+         <button :disabled="!cs.History || !cs.History.Next" onclick="mnm.History( 1)">
+            <span uk-icon="arrow-right"></span></button>
+      </div>
+   </div>
+   <div uk-grid class="uk-grid-collapse">
+      <mnm-tabs class="uk-width-expand"
+                :set="msgTabset" :state="cs.ThreadTabs"></mnm-tabs>
+      <input class="uk-width-1-6" type="text" placeholder=" &#x2315;"
+             @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)">
+   </div>
+   <div uk-height-viewport="offset-top:true; offset-bottom:true"
+        class="firefox-minheight-fix uk-overflow-auto">
+      <ul class="uk-list uk-list-divider" style="background:#FFF7CF">
+         <li v-for="aMsg in ml" :key="aMsg.Id"
+             style="margin:0">
+            <span @click="msgToggle(aMsg.Id)" class="uk-link-text" style="cursor:pointer">
+               {{ aMsg.Date }} <b>{{ aMsg.From }}</b></span>
+            <div v-show="aMsg.Id in mo">
+               <div v-if="!(aMsg.Id in mo) || !mo[aMsg.Id].msg_data"
+                    class="uk-text-center">
+                  <!-- todo hourglass -->
+                  <span :uk-icon="aMsg.Id in mo ? 'comment' : 'future'"></span></div>
+               {{ aMsg.Id in mo ? mo[aMsg.Id].msg_data : '' }}
+            </div>
+         </li></ul>
+      <br/><div id="log"></div>
+   </div>
+</div>
+
+<div class="uk-width-1-2">
+   <div class="uk-clearfix">
+      <span class="uk-text-large">
+         <span uk-icon="world"></span>
+         [{.Title}]
+      </span>
+      <div class="uk-float-right">
+         <span @mousedown="ohiFrom = !ohiFrom" style="cursor:default">&nbsp;o/</span>
+         <span uk-icon="users" style="cursor:default">&nbsp;</span>
+         <mnm-adrsbk></mnm-adrsbk>
+         &nbsp;
+         <span uk-icon="push" style="cursor:default">&nbsp;</span>
+         <mnm-files title="ATTACHABLE FILES" list="t" :data="t"></mnm-files>
+         <span uk-icon="file-edit" style="cursor:default">&nbsp;</span>
+         <mnm-files title="ATTACHABLE FORMS" list="f" :data="f"></mnm-files>
+         &nbsp;
+      </div>
+   </div>
+   <div uk-grid class="uk-grid-collapse">
+      <ul uk-tab class="uk-width-expand"><li style="display:none"></li>
+         <li v-for="(aTerm, aI) in cs.SvcTabs.Default"
+             :class="{'uk-active': cs.SvcTabs.PosFor === 0 && cs.SvcTabs.Pos === aI}">
+            <a @click.prevent="mnm.TabSelect({type:cs.SvcTabs.Type, posfor:0, pos:aI})" href="#">
+               {{ aTerm }}</a>
+         </li></ul>
+      <input class="uk-width-1-2" type="text" placeholder=" &#x2315;"
+             @keyup.enter="tabSearch($event.target.value, cs.SvcTabs)">
+   </div>
+   <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"
+             :set="svcTabset" :state="cs.SvcTabs"></mnm-tabs>
+   <div class="uk-inline uk-width-1-1"><!-- context for ohi card -->
+      <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto"
+           :class="{'uk-background-muted':ffn}">
+         <template v-if="ffn">
+            <div style="position:sticky; top:0; padding:1em"
+                 class="uk-background-muted">{{ffn}}</div>
+            <table class="uk-table uk-table-small uk-table-hover uk-text-small">
+               <tr>
+                  <th v-for="(a, aKey) in ffnCol"
+                      style="position:sticky; top:0">{{aKey}}</th>
+               </tr>
+               <tr v-for="aRow in tl">
+                  <td v-for="(a, aKey) in ffnCol">
+                     <table v-if="aRow[aKey] instanceof Object"
+                            class="uk-table">
+                        <tr>
+                           <th v-for="(a, aSubKey) in aRow[aKey]"
+                               style="padding:0 0.5em">{{aSubKey}}</th>
+                        </tr><tr>
+                           <td v-for="aSubRow in aRow[aKey]"
+                               style="padding:0 0.5em">{{aSubRow}}</td>
+                        </tr></table>
+                     <template v-else>
+                        {{aRow[aKey]}}</template>
+                  </td>
+               </tr></table>
+         </template>
+         <template v-else>
+            <div v-for="aRow in tl">
+               <a v-if="aRow.Id.indexOf('/') >= 0"
+                  @click.prevent="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)" href="#">{{aRow.Id}}</a>
+               <a v-else
+                  @click.prevent="mnm.ThreadGo(aRow.Id)" href="#">{{aRow.Id}}</a>
+            </div></template>
+         <br/>{{JSON.stringify(mo)}}
+      </div>
+      <div v-if="ohiFrom"
+           class="uk-card uk-card-secondary uk-text-small uk-border-rounded"
+           style="padding:8px; position:absolute; bottom:10px; right:10px">
+         <div v-if="of.length === 0"
+              class="uk-text-warning">no o/</div>
+         <ul v-else
+             class="uk-list uk-text-success" style="margin-bottom:0">
+            <li v-for="aUser in of">
+               {{aUser.Uid}}
+            </li></ul>
+      </div>
+   </div>
+</div>
+
+<div class="uk-width-expand uk-light" style="background:#003333">
+   <div class="uk-text-right" style="margin:0 1em 1em 0">
+      <span uk-icon="plus-circle" style="cursor:default">&nbsp;</span>
+      <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5">
+          <div class="uk-text-right uk-text-small">ADD ACCOUNT</div>
+      </div>
+      <span uk-icon="cog" style="cursor:default">&nbsp;</span>
+      <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5">
+          <div class="uk-text-right uk-text-small">SETTINGS</div>
+      </div>
+   </div>
+   <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto">
+      <ul class="uk-list uk-list-divider">
+         <li v-for="aSvc in sl" :key="aSvc">
+            <template v-if="aSvc === '[{.Title}]'">
+               <span style="visibility:hidden">1</span
+              ><span uk-icon="settings" style="cursor:default">&nbsp;</span>
+               <div uk-dropdown="mode:click; offset:-4; pos:right-top" class="uk-width-1-5">
+                  <div class="uk-text-right uk-text-small">SETTINGS</div>
+               </div>
+               {{aSvc}}
+            </template>
+            <template v-else>
+               <span uk-icon="commenting" style="cursor:default">0{{aSvc.todo}} </span>
+               <div uk-dropdown="mode:click; offset:-4; pos:right-top" class="uk-width-1-5">
+                  <div class="uk-text-right uk-text-small">UPDATES</div>
+               </div>
+               <a :href="'/'+aSvc" :target="'mnm_'+aSvc">{{aSvc}}</a>
+            </template>
+         </li></ul>
+   </div>
+</div>
+
+</div>
+
+<script type="text/x-template" id="mnm-attach">
+   <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3">
+      <span class="uk-text-small">ATTACHED</span>
+      <ul uk-tab>
+         <!-- todo Date -->
+         <li v-for="aKey in ['Size','Name']"
+             :class="{'uk-active': aKey === sort}">
+            <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
+         </li></ul>
+      <ul class="uk-list uk-list-divider">
+         <li v-for="aFile in data" :key="aFile.File">
+            <span uk-icon="mail"></span>
+            2018-01-17T04:16:57Z{{aFile.Date}} &nbsp;
+            <a :href="'?an=' + encodeURIComponent(aFile.File)" target="mnm_atc_[{.Title}]">
+               {{aFile.Name}}</a>
+            <div class="uk-float-right">
+               {{aFile.Size}}
+               <a :href="'?ad=' + encodeURIComponent(aFile.File)">
+                  <span uk-icon="download"></span></a>
+               <span uk-icon="push"></span>
+            </div>
+         </li></ul>
+   </div>
+</script>
+
+<script type="text/x-template" id="mnm-files">
+   <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-3">
+      <div class="uk-text-right uk-text-small">{{title}}</div>
+      <ul uk-tab style="margin-top:0">
+         <li v-for="aKey in ['Date','Name']"
+             :class="{'uk-active': aKey === sort}">
+            <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
+         </li></ul>
+      <ul class="uk-list uk-list-divider uk-overflow-auto" style="max-height:75vh; margin:0">
+         <li v-for="aFile in data" :key="aFile.Name">
+            {{aFile.Date}} &nbsp;
+            <a :href="'/'+list+'/' + encodeURIComponent(aFile.Name)" target="mnm_atc_[{.Title}]">
+               {{aFile.Name}}</a>
+            <div class="uk-float-right">
+               {{aFile.Size}}
+               <a :href="'/'+list.charAt(0)+'d/' + encodeURIComponent(aFile.Name)">
+                  <span uk-icon="download"></span></a>
+            </div>
+         </li></ul>
+   </div>
+</script>
+
+<script type="text/x-template" id="mnm-adrsbk">
+   <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-2-5">
+      <ul uk-tab class="uk-child-width-expand" style="margin-top:0">
+         <li v-for="aName in ['drafts','pings','invites','pinged','invited','ohi to','groups']">
+            <a @click.prevent="" href="#" style="padding:0; cursor:default">{{aName}}</a>
+         </li></ul>
+      <ul class="uk-switcher" style="max-height:50vh; overflow-y:auto">
+         <li>
+            <input v-model="draft.to" type="text" placeholder="To">
+            <input v-model="draft.gid" type="text" placeholder="(Group)">
+            <button @click="mnm.PingSave({alias:draft.alias, to:draft.to,
+                                          text:draft.text, gid:draft.gid})">Save</button>
+            <table class="uk-table uk-table-small">
+               <tr><th>To / (Group)</th><th>Message</th><th></th></tr>
+               <tr v-for="a in sData.ps">
+                  <td>{{a.Alias}}<br>{{a.Gid}}</td>
+                  <td><textarea v-model="a.Text" cols="40" rows="3" maxlength="120"></textarea></td>
+                  <td>
+                     <button @click="mnm.PingDiscard({to:a.Alias, gid:a.Gid})">
+                        <span uk-icon="close"></span></button>
+                     <br>
+                     <button @click="mnm.PingSend({to:a.Alias, gid:a.Gid})">
+                        <span uk-icon="forward"></span></button>
+                  </td>
+               </tr></table></li>
+         <li>
+            <table class="uk-table uk-table-small">
+               <tr><th>Date</th><th>From</th><th>Message</th><th>Response</th></tr>
+               <tr v-for="a in sData.pf">
+                  <td>{{fmtD(a.Date)}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
+                  <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
+               </tr></table></li>
+         <li>
+            <table class="uk-table uk-table-small">
+               <tr><th>Date</th><th>Group</th><th>From</th><th>Msg</th><th>Response</th></tr>
+               <tr v-for="a in sData.if">
+                  <td>{{fmtD(a.Date)}}</td>
+                  <td>{{a.Gid}}
+                     <span v-if="sData.gl.find(function(c){return c.Gid === a.Gid})"
+                           class="uk-badge">in</span></td>
+                  <td>{{a.Alias}}</td><td>{{a.Text}}</td>
+                  <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
+               </tr></table></li>
+         <li>
+            <table class="uk-table uk-table-small">
+               <tr><th>Date</th><th>To</th><th>Message</th><th>Response</th></tr>
+               <tr v-for="a in sData.pt">
+                  <td>{{fmtD(a.Date)}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
+                  <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
+               </tr></table></li>
+         <li>
+            <table class="uk-table uk-table-small">
+               <tr><th>Date</th><th>Group</th><th>To</th><th>Message</th><th>Response</th></tr>
+               <tr v-for="a in sData.it">
+                  <td>{{fmtD(a.Date)}}</td><td>{{a.Gid}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
+                  <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
+               </tr></table></li>
+         <li>
+            <input @keyup.enter="mnm.OhiAdd($event.target.value)" type="text"
+                   placeholder="Add someone">
+            <table class="uk-table uk-table-small">
+               <tr><th>Date</th><th>To</th><th></th></tr>
+               <tr v-for="a in sData.ot">
+                  <td>{{fmtD(a.Date)}}</td><td>{{a.Uid}}</td>
+                  <td><button @click="mnm.OhiDrop(a.Uid)">
+                     <span uk-icon="close"></span></button></td>
+               </tr></table></li>
+         <li>
+            <table class="uk-table uk-table-small">
+               <tr><th>Date</th><th>Group</th></tr>
+               <tr v-for="a in sData.gl">
+                  <td>{{fmtD(a.Date)}}</td>
+                  <td>{{a.Gid}}
+                     <span v-if="a.Admin"
+                           class="uk-badge">A</span></td>
+               </tr></table></li>
+      </ul>
+   </div>
+</script>
+
+<script type="text/x-template" id="mnm-pingresponse">
+   <span v-if="response">
+      <a v-if="response.MsgId"
+         @click.prevent="" class="">msg {{fmtD(response.Date)}}</a> <!--todo msg link-->
+      <template v-else>
+         ping {{fmtD(response.Date)}}</template>
+   </span>
+</script>
+
+<script type="text/x-template" id="mnm-tabs">
+   <ul uk-tab style="margin-top:0; margin-bottom:0;"><li style="display:none"></li>
+      <template v-for="(aTabs, aI) in set">
+         <li v-for="(aTerm, aJ) in aTabs"
+             :class="{'uk-active': aI === state.PosFor && aJ === state.Pos}">
+            <a @click.prevent="mnm.TabSelect({type:state.Type, posfor:aI, pos:aJ})" href="#">
+               {{ aTerm }}
+               <span v-if="aI > 0 && aI === state.PosFor && aJ === state.Pos"
+                     @click.stop="mnm.TabDrop(state.Type)">&times;</span>
+               <span v-else-if="aI > 0"
+                     style="visibility:hidden">&times;</span>
+            </a></li></template></ul>
+</script>
+
+<script>
+;(function() {
+   var sChange = 0;
+   var sTemp = {ml:null, mo:null};
+
+   var sData = {
+       cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}},
+       sl:[], tl:[], al:[], ml:[], mo:{},
+       ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:[],
+       t:[], f:[],
+       sort:{al:'Size', t:'Date', f:'Date'}, //todo move to cs
+       ohiFrom:true, //todo move to cs
+       ffn:''
+   };
+
+   function _listSort(iList, iKey) {
+      var aTmp;
+      sData.sort[iList] = iKey;
+      sData[iList].sort(function(cA, cB) {
+         if (iKey === 'Date')
+            aTmp = cA, cA = cB, cB = aTmp;
+         if (cA[iKey] <= cB[iKey])
+            return -1;
+         return 1;
+      });
+   }
+
+   function _formatDate(iDt) { return iDt.substr(0, 10) }
+
+   var sComputed = { sort: function() { return sData.sort[this.list] } };
+   var sMethods = { listSort: function(i) { return _listSort(this.list, i) } };
+
+   var sApp = new Vue({
+      el: '#app',
+      components: {
+         'mnm-attach': {
+            template: '#mnm-attach',
+            props: ['list', 'data'],
+            computed: sComputed,
+            methods: sMethods
+         },
+         'mnm-files': {
+            template: '#mnm-files',
+            props: ['title', 'list', 'data'],
+            computed: sComputed,
+            methods: sMethods
+         },
+         'mnm-adrsbk': {
+            template: '#mnm-adrsbk',
+            data: function() { return {draft:{alias:'', to:'', gid:'', text:''}} },
+            computed: {
+               mnm: function() { return mnm },
+               sData: function() { return sData }
+            },
+            methods: { fmtD: _formatDate },
+            components: {
+               'mnm-pingresponse': {
+                  template: '#mnm-pingresponse',
+                  props: ['response'],
+                  computed: { mnm: function() { return mnm } },
+                  methods: { fmtD: _formatDate }
+               }
+            }
+         },
+         'mnm-tabs': {
+            template: '#mnm-tabs',
+            props: ['set', 'state'],
+            computed: { mnm: function() { return mnm } }
+         }
+      },
+      data: sData,
+      methods: {
+         tabSearch: function(iText, iState) {
+            if (iText.length === 0)
+               return;
+            if (iState.Pinned)
+               for (var a=0; a < iState.Pinned.length; ++a)
+                  if (iState.Pinned[a] === iText)
+                     return;
+            for (var a=0; a < iState.Terms.length; ++a)
+               if (iState.Terms[a] === iText)
+                  return;
+            mnm.TabAdd({type:iState.Type, term:iText});
+         },
+         msgToggle: function(iId) {
+            if (!(iId in sData.mo)) {
+               mnm.ThreadOpen(iId);
+            } else {
+               mnm.ThreadClose(iId);
+               this.$delete(sData.mo, iId);
+            }
+         }
+      },
+      computed: {
+         mnm:       function() { return mnm },
+         svcTabset: function() { return [[], sData.cs.SvcTabs.Pinned, sData.cs.SvcTabs.Terms] },
+         msgTabset: function() {
+            var aT = sData.cs.ThreadTabs;
+            return aT ? [aT.Default, [], aT.Terms] : [];
+         },
+         ffnCol: function() {
+            if (!sData.ffn) return {};
+            var aSet = {};
+            for (var a=0; a < sData.tl.length; ++a)
+               for (var aKey in sData.tl[a])
+                  aSet[aKey] = true;
+            return aSet;
+         }
+      }
+   });
+
+   mnm.Log = function(i) {
+      var aLog = document.getElementById('log').innerText;
+      document.getElementById('log').innerText = i+' '+aLog;
+   };
+
+   mnm.Render = function(i, iData, iEtc) {
+      if (i.charAt(0) === '/')
+         i = i.substr(1);
+
+      if (sChange && (i === 'ml' || i === 'mo')) {
+         sTemp[i] = iEtc ? iEtc : JSON.parse(iData);
+         if (++sChange === 2)
+            return;
+         sChange = 0;
+         sData.ml = sTemp.ml;
+         sData.mo = sTemp.mo;
+         return;
+      }
+
+      switch (i) {
+      case 'cs': case 'sl': case 'al':
+      case 'ps': case 'pt': case 'pf': case 'it': case 'if': case 'gl': case 'ot': case 'of':
+      case 't': case 'f':
+         sData[i] = JSON.parse(iData);
+         if (i === 'al' || i === 't' || i === 'f')
+            _listSort(i, sData.sort[i]);
+         break;
+      case 'tl':
+         var aData = JSON.parse(iData);
+         if ('Ffn' in aData) {
+            sData.tl = aData.Table;
+            sData.ffn = aData.Ffn;
+         } else {
+            sData.tl = aData;
+            sData.ffn = '';
+         }
+         break;
+      case 'mo':
+         for (var aK in sData.mo)
+            if (!(aK in iEtc))
+               sApp.$delete(sData.mo, aK);
+         for (var aK in iEtc)
+            sApp.$set(sData.mo, aK, iEtc[aK]);
+         break;
+      case 'mn':
+         sApp.$set(sData.mo, iEtc.Id, iEtc);
+         break;
+      }
+   };
+
+   mnm.ThreadChange = function() { sChange = 1 };
+
+   window.onload = mnm.Connect;
+
+}).call(this);
+</script>
+
+</body></html>
+
