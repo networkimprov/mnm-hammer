@@ -439,7 +439,8 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       aState = getService(aSvc).ccs.Get(aClientId.Value).state
    }
    aOp_Id := strings.SplitN(aQuery, "=", 2)
-   fmt.Printf("svc %s op %s id %s\n", aSvc, aOp_Id[0], aClientId.Value)
+   aCid := ""; if aClientId != nil { aCid = aClientId.Value }
+   fmt.Printf("svc %s op %s id %s\n", aSvc, aOp_Id[0], aCid)
    var aResult interface{}
 
    switch aOp_Id[0] {
