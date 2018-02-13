@@ -131,11 +131,12 @@ func (o *ClientState) GetSummary() Msg {
       aS["Thread"] = o.History[o.Hpos]
       aS["ThreadTabs"] = &tTabsSummary{tTabs: &o.Thread[o.History[o.Hpos]].Tabs,
                                        Default: &sThreadTabsDefault, Type:eTabThread}
-      aH := 0
+      aH := struct{ Prev, Next bool }{true, true}
       if o.Hpos == 0 {
-         aH = -1
-      } else if o.Hpos == len(o.History)-1 {
-         aH = 1
+         aH.Prev = false
+      }
+      if o.Hpos == len(o.History)-1 {
+         aH.Next = false
       }
       aS["History"] = aH
    }
