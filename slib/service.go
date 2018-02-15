@@ -286,7 +286,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    switch iUpdt.Op {
    case "open":
       aFn, aResult = fOne, []string{"sl", "of", "ot", "ps", "pt", "pf", "if", "it", "gl",
-                                    "tl", "cs", "al", "ml", "mo", "/t", "/f"}
+                                    "cf", "tl", "cs", "al", "ml", "mo", "/t", "/f"}
    case "service_add":
       err = _addService(iUpdt.Service)
       if err != nil { return fErr, nil }

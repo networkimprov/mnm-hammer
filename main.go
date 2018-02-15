@@ -452,6 +452,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvc, "Addr":sHttpSrvr.Addr})
    case "cs": aResult = aState.GetSummary()
    case "sl": aResult = slib.GetIdxService()
+   case "cf": aResult = slib.GetDataService(aSvc)
    case "ps": aResult = slib.GetSavedAdrsbk(aSvc)
    case "pt": aResult = slib.GetSentAdrsbk(aSvc)
    case "pf": aResult = slib.GetReceivedAdrsbk(aSvc)
