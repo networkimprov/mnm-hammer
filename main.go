@@ -117,7 +117,7 @@ func getService(iSvc string) tService {
    return sServices[iSvc]
 }
 
-func toAllClients(iMsg slib.Msg) {
+func toAllClients(iMsg interface{}) {
    aJson, err := json.Marshal(iMsg)
    if err != nil { panic(err) }
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
@@ -488,7 +488,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
 type tPostSet struct {
    add func(string, string, io.Reader) error
    drop func(string) bool
-   updt func() slib.Msg
+   updt func() []string
    list func() []interface{}
    path func(string) string
 }
@@ -552,7 +552,7 @@ func runPost(iResp http.ResponseWriter, iReq *http.Request) {
          return
       }
       toAllClients(aSet.updt())
-      iResp.Write(packMsg(tMsg{"op:":"ack", "id":aId, "status":aStatus}, nil))
+      iResp.Write([]byte(`"id: `+aId+`, status: `+aStatus+`"`))
    } else if aId == "" {
       aIdx := aSet.list()
       err := json.NewEncoder(iResp).Encode(aIdx)

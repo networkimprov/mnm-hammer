@@ -95,6 +95,6 @@ func DropUpload(iId string) bool {
    return err == nil
 }
 
-func MakeMsgUpload() Msg { return Msg{"op":"upload"} }
+func MakeMsgUpload() []string { return []string{"/t"} }
 
 

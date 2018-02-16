@@ -162,7 +162,7 @@ func DropBlankForm(iFileName string) bool {
    return true
 }
 
-func MakeMsgBlankForm() Msg { return Msg{"op":"blank_form"} }
+func MakeMsgBlankForm() []string { return []string{"/f"} }
 
 func readFfnBlankForm(iFileName string) string {
    aName, aRev := _parseFileName(iFileName)
