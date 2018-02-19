@@ -81,6 +81,21 @@
       sWs.send(JSON.stringify({op:'tab_drop', tab:{type:iType}}))
    };
 
+   mnm.FormOpen = function(iId) {
+      _xhr('/f', iId);
+   };
+
+   mnm.Upload = function(iForm) {
+      if (iForm.method.toLowerCase() !== 'post' || !iForm.action)
+        throw 'mnm.Upload: requires method=POST and valid action'
+      var aXhr = new XMLHttpRequest();
+      aXhr.onload = function() {
+         mnm.Log(aXhr.responseText);
+      };
+      aXhr.open('POST', iForm.action);
+      aXhr.send(new FormData(iForm));
+   };
+
    mnm.Connect = function() {
       var aSvc = window.location.pathname.split('/')[1];
       sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
@@ -109,7 +124,7 @@
       var aXhr = new XMLHttpRequest();
       aXhr.onload = function() {
          if (i !== 'mo' && i !== 'mn') {
-            mnm.Render(i, aXhr.responseText);
+            mnm.Render(i, aXhr.responseText, iP);
             return;
          }
          var aMap = {};
