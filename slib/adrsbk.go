@@ -397,7 +397,12 @@ func GetSavedAdrsbk(iSvc string) tAdrsbkLog {
    aList := make(tAdrsbkLog, len(aMap))
    a := 0
    for _, aList[a] = range aMap { a++ }
-   sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Date > aList[cB].Date })
+   sort.Slice(aList, func(cA, cB int) bool {
+      if aList[cA].Alias == aList[cB].Alias {
+         return aList[cA].Gid < aList[cB].Gid
+      }
+      return aList[cA].Alias < aList[cB].Alias
+   })
    return aList
 }
 
