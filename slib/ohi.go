@@ -96,7 +96,11 @@ func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
 
 func editOhi(iSvc string, iUpdt *Update) *SendRecord {
    var err error
-   aUid := lookupAdrsbk(iSvc, []string{iUpdt.Ohi.Alias})[0].Id
+   aUid := iUpdt.Ohi.Uid
+   if aUid == "" {
+      aUid = lookupAdrsbk(iSvc, []string{iUpdt.Ohi.Alias})[0].Id //todo drop this
+      if aUid == "" { quit(tError("missing Uid")) }
+   }
    aMap := tOhi{}
    err = readJsonFile(&aMap, ohiFile(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }

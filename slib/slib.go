@@ -139,6 +139,7 @@ type Update struct {
    }
    Ohi *struct {
       Alias string
+      Uid string
    }
    Navigate *struct {
       History int

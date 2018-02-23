@@ -20,8 +20,8 @@
    mnm.OhiAdd = function(iAliasTo) {
       sWs.send(JSON.stringify({op:'ohi_add', ohi:{alias:iAliasTo}}))
    };
-   mnm.OhiDrop = function(iAliasTo) {
-      sWs.send(JSON.stringify({op:'ohi_drop', ohi:{alias:iAliasTo}}))
+   mnm.OhiDrop = function(iAliasTo, iUid) {
+      sWs.send(JSON.stringify({op:'ohi_drop', ohi:{alias:iAliasTo, uid:iUid}}))
    };
 
    mnm.PingSave = function(iObj) { // with alias, to, text, gid
