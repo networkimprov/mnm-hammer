@@ -334,26 +334,33 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       iState.addThread(iUpdt.Thread.Id, aLastId)
       aFn, aResult = fOne, []string{"cs", "al", "ml", "mo"}
    case "thread_save":
-      if iUpdt.Thread.Id == "" {
-         aTid := ""; if !iUpdt.Thread.New { aTid = iState.getThread() }
+      const ( _ int8 = iota; eNewThread; eNewReply )
+      if iUpdt.Thread.New > 0 {
+         aTid := ""; if iUpdt.Thread.New == eNewReply { aTid = iState.getThread() }
          iUpdt.Thread.Id = makeSaveId(aTid)
       }
       storeSavedThread(iSvc, iUpdt)
-      if iUpdt.Thread.New {
+      if iUpdt.Thread.New == eNewThread {
          iState.addThread(iUpdt.Thread.Id, iUpdt.Thread.Id)
          aFn = func(c *ClientState) interface{} {
             if c == iState { return aResult }
             return aResult[:1]
          }
-      } else {
+      } else if iUpdt.Thread.New == eNewReply {
          iState.openMsg(iUpdt.Thread.Id, true)
          aTid := iState.getThread()
          aFn = func(c *ClientState) interface{} {
             if c.getThread() == aTid { return aResult[2:] }
             return nil
          }
+      } else { // may update msg from a threadid other than iState.getThread()
+         aFn = func(c *ClientState) interface{} {
+            if c == iState { return []string{"al"} }
+            if c.isOpen(iUpdt.Thread.Id) { return []string{"al", "mn", iUpdt.Thread.Id} }
+            return nil
+         }
       }
-      aResult = []string{"tl", "cs", "al", "ml", "mo", "mn", iUpdt.Thread.Id} //todo drop mo
+      aResult = []string{"tl", "cs", "al", "ml", "mo"}
    case "thread_discard":
       deleteSavedThread(iSvc, iUpdt)
       aTid := iState.getThread()

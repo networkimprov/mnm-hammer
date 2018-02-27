@@ -41,8 +41,16 @@
       sWs.send(JSON.stringify({op:'history', navigate:{history:i}}))
    };
 
-   mnm.ThreadNew = function(iObj) { // with (data), alias, (cc)
-      iObj.id = '', iObj.new = true;
+   mnm.ThreadNew = function(iObj) { // with alias, (cc), (data), (attach), (formFill)
+      iObj.new = 1;
+      sWs.send(JSON.stringify({op:'thread_save', thread:iObj}))
+   };
+   mnm.ThreadReply = function(iObj) { // with alias, (cc), (data), (attach), (formFill)
+      iObj.new = 2;
+      sWs.send(JSON.stringify({op:'thread_save', thread:iObj}))
+   };
+   mnm.ThreadSave = function(iObj) { // with id, alias, (cc), (data), (attach), (formFill)
+      delete iObj.new // just in case
       sWs.send(JSON.stringify({op:'thread_save', thread:iObj}))
    };
    mnm.ThreadRecv = function() {
@@ -56,10 +64,6 @@
    };
    mnm.ThreadClose = function(iId) {
       sWs.send(JSON.stringify({op:'thread_close', thread:{id:iId}}))
-   };
-   mnm.ThreadSave = function(iObj) { // with (id), alias, (cc), (data), (attach), (form_fill)
-      delete iObj.new // just in case
-      sWs.send(JSON.stringify({op:'thread_save', thread:iObj}))
    };
    mnm.ThreadSend = function(iId) {
       sWs.send(JSON.stringify({op:'thread_send', thread:{id:iId}}))

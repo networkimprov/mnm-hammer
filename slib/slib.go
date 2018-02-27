@@ -126,7 +126,7 @@ type Update struct {
       Data string
       Attach []struct{ Name, Ffn string }
       FormFill map[string]string
-      New bool
+      New int8
    }
    Ping *struct {
       Alias string
