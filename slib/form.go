@@ -79,14 +79,18 @@ func GetPathBlankForm(iFileName string) string {
 func AddBlankForm(iFileName, iDupeRev string, iR io.Reader) error {
    var err error
    aName, aRev := _parseFileName(iFileName)
-   if iDupeRev != "" { aRev = iDupeRev }
+   if iDupeRev != "" {
+      if aRev == "" { iFileName = aName + ".original" }
+      aRev = iDupeRev
+   } else {
+      if aRev == "" { aRev = "original" }
+   }
    if strings.ContainsRune(iFileName, '/') || strings.ContainsRune(aRev, '.') ||
       aRev == "tmp" || aRev == "tok" ||
-      aRev == "spec" && iDupeRev != "" {
+      iDupeRev == "original" || iDupeRev == "spec" {
       return tError("invalid form name")
    }
-   aPath := kFormDir + aName
-   if aRev != "" { aPath += "." + aRev }
+   aPath := kFormDir + aName + "." + aRev
    aTemp := aPath + ".tmp"
    aTempOk := aPath + ".tok"
 
@@ -102,14 +106,9 @@ func AddBlankForm(iFileName, iDupeRev string, iR io.Reader) error {
    }
 
    sBlankFormsDoor.Lock(); defer sBlankFormsDoor.Unlock()
-   if aRev != "" {
-      aBf := sBlankForms[aName]
-      if aBf == nil {
-         return tError("cannot add form rev/spec without original")
-      }
-      if aRev != "spec" && !aBf.Spec {
-         return tError("cannot add form rev for original with no spec")
-      }
+   aBf := sBlankForms[aName]
+   if aBf != nil && aRev != aBf.Revs[0].Id && !aBf.Spec && aRev != "spec" {
+      return tError("cannot add form rev for original with no spec")
    }
    _insertBlank(aName, aRev, dateRFC3339())
 
@@ -134,8 +133,7 @@ func AddBlankForm(iFileName, iDupeRev string, iR io.Reader) error {
 
 func DropBlankForm(iFileName string) bool {
    aName, aRev := _parseFileName(iFileName)
-   aPath := kFormDir + aName
-   if aRev != "" { aPath += "." + aRev }
+   aPath := kFormDir + aName + "." + aRev
 
    sBlankFormsDoor.Lock(); defer sBlankFormsDoor.Unlock()
    aBf := sBlankForms[aName]
