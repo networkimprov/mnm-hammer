@@ -25,9 +25,9 @@ Blank Forms
   <input type="submit" value="upload"></form>
 <form method="POST" action="/f/*trial+2nd" style="display:inline!important">
   <input type="submit" value="duplicate"></form>
-<form method="POST" action="/f/-trial" style="display:inline!important">
+<form method="POST" action="/f/-trial.original" style="display:inline!important">
   <input type="submit" value="drop"></form>
-<a target="mnm_upload" href="/f/trial">download</a>
+<a target="mnm_upload" href="/f/trial.original">download</a>
 <a target="mnm_upload" href="/f/">list</a>
 </div></p>
 
@@ -39,6 +39,7 @@ Blank Forms
 
 <table border="1">
 <tr><td>services </td><td class="pre" id="get?sl">.</td></tr>
+<tr><td>config   </td><td class="pre" id="get?cf">.</td></tr>
 <tr><td>ohi from </td><td class="pre" id="get?of">.</td></tr>
 <tr><td>ohi to   </td><td class="pre" id="get?ot">.</td></tr>
 <tr><td>pingdraft</td><td class="pre" id="get?ps">.</td></tr>
@@ -111,18 +112,18 @@ Blank Forms
     var aS = '';
     for (var a=0; a < iList.length; ++a) {
       if (iList[a].Id.indexOf('/') < 0)
-        aS += '<button onclick="mnm.ThreadGo(\''+iList[a].Id+'\')">'+
-               iList[a].Id.slice(-5)+'</button> ';
+        aS += '<button onclick="mnm.ThreadGo(\''+iList[a].Id+'\')">Go</button> ';
       else
-        aS += '<a href="?fn='+encodeURIComponent(iList[a].Id)+'" target="mnm_formtab">'+
-               iList[a].Id+'</a> ';
+        aS += '<a href="?fn='+encodeURIComponent(iList[a].Id)+'" target="mnm_formtab">Open</a> ';
+      aS += JSON.stringify(iList[a]) + '\n';
     }
     document.getElementById('get?tl').innerHTML = aS;
   }
   function fDrawAttached(iList) {
     var aS = '';
     for (var a=0; a < iList.length; ++a)
-      aS += '<a href="?an='+encodeURIComponent(iList[a].File)+'">'+JSON.stringify(iList[a])+'</a> ';
+      aS += '<a href="?an='+encodeURIComponent(iList[a].File)+'" target="mnm_attach">'+
+             JSON.stringify(iList[a])+'</a> ';
     document.getElementById('get?al').innerHTML = aS;
   }
   function fDrawTabs(iSt) {
@@ -159,7 +160,7 @@ Blank Forms
         '<button onclick="mnm.ThreadClose  ('+aId+')">X</button> ';
       if (iList[a].From !== '')
         aS +=
-        '<button onclick="mnm._Reply  (\'\','+aId+')">Reply</button>';
+        '<button onclick="mnm._ThreadReply ('+aId+')">Reply</button>';
       else
         aS +=
         '<button onclick="mnm._Attach      ('+aId+')">Attach</button>'+
@@ -167,7 +168,7 @@ Blank Forms
         '<button onclick="mnm._Fill        ('+aId+')">Fill</button>'+
         '<button onclick="mnm._Drop        ('+aId+')">Drop</button> '+
         '<button onclick="mnm._Group       ('+aId+')">Group</button>'+
-        '<button onclick="mnm._Reply       ('+aId+')">Save</button>'+
+        '<button onclick="mnm._Text        ('+aId+')">Text</button>'+
         '<button onclick="mnm.ThreadSend   ('+aId+')">Send</button>'+
         '<button onclick="mnm.ThreadDiscard('+aId+')">Discard</button>';
       aS += '\n' + JSON.stringify(iList[a]) + '</div>\n';
@@ -211,30 +212,28 @@ Blank Forms
   mnm._ThreadNew = function() {
     mnm.ThreadNew({data:'first msg', alias:sNewAlias, cc:[sAliasTo]})
   };
+  mnm._ThreadReply = function(iOrig) {
+    var aAtc = sHeadMap[iOrig].SubHead.Attach || [];
+    for (var a=0; a < aAtc.length; ++a)
+      if (aAtc[a].Ffn)
+        sLastFfn = aAtc[a];
+    mnm.ThreadReply({data:'orly?', alias:sNewAlias, cc:[sAliasTo]});
+  };
   function fReply(i) {
     if (!sThread.reply[i])
       sThread.reply[i] = { data:'', attach:[], form_fill:{}, cc:[sAliasTo] };
     return sThread.reply[i];
   }
   function fSend(i) {
-    var aObj = {id:i, alias:sNewAlias, cc:[sAliasTo]};
-    if (i) {
-      aObj.cc       = sThread.reply[i].cc;
-      aObj.data     = sThread.reply[i].data;
-      aObj.attach   = sThread.reply[i].attach;
-      aObj.formFill = sThread.reply[i].form_fill;
-    }
-    mnm.ThreadSave(aObj);
+    mnm.ThreadSave({id:i, alias:sNewAlias, cc:[sAliasTo],
+                    cc       : sThread.reply[i].cc,
+                    data     : sThread.reply[i].data,
+                    attach   : sThread.reply[i].attach,
+                    formFill : sThread.reply[i].form_fill,
+    });
   }
-  mnm._Reply = function(i, iOrig) {
-    if (i) {
-      fReply(i).data += '.';
-    } else {
-      var aAtc = sHeadMap[iOrig].SubHead.Attach || [];
-      for (var a=0; a < aAtc.length; ++a)
-        if (aAtc[a].Ffn)
-          sLastFfn = aAtc[a];
-    }
+  mnm._Text = function(i) {
+    fReply(i).data += '.';
     fSend(i);
   };
   mnm._Group = function(i) {
@@ -246,7 +245,7 @@ Blank Forms
     fSend(i);
   };
   mnm._Blank = function(i) {
-    fReply(i).attach.push({name:'form/trial'});
+    fReply(i).attach.push({name:'form/trial.original'});
     fSend(i);
   };
   mnm._Fill = function(i) {
