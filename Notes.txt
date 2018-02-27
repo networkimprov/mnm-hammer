@@ -1,5 +1,6 @@
 tmtp include alias in from/for
 tmtp ping add from:alias
+tmtp register return service name
 server discards pings from blocked address
 server decrypt For[].Id with sender's key; encrypt From with recipient's key
 
@@ -13,11 +14,12 @@ storeReceivedAttach prevent dup & invalid filename
 Handle*Service limit aResult to op codes with changes
   op code "ma" to insert new message
   op code "mx" to delete message
-ClientState keeps form-table; send "fn" op if changed
+ClientState keeps form-table; send "tl" op if changed
+ServiceTabs carry names for pinned terms
+tThreadState keep tOpenState for each .Terms item
 main: clean up getService().xyz use
 make/parseSaveId handle special characters
 _writeMsgTemp return tHeadSaved
-send op to all clients on upload or blank-form
 blank-form date
 
 alias: add, drop, list; store in sep file
@@ -65,6 +67,7 @@ msg panel
   give thread subject/s
   attachment list pop-up pane
     links jump to relevant msg?
+  tags dropdown: add, delete existing
   tabs for msg subsets, per client: user-opened, search result, reply-to chain, all
     pin tab saves state, broadcasts to clients
   list of msgs in archaeological order; scrolling
@@ -78,6 +81,24 @@ msg panel
   thread-summary popup or tab
     list of excerpts and optional notes, with link to msg of excerpt
     to add item, select text in msg, right-click for add-to-summary, write optional note
+
+thread panel
+  archaeological order
+  infinite scrolling or back/forward buttons
+  permanent tabs: All, Unread, Todo, Form-table
+  tags menu "#" near search box
+  search tabs are client-specific unless saved
+    save-search pins tab, notify other clients
+  search relevance slider (# positions varies with result set size?)
+    lower relevance yields more results
+  NewThread button
+  mute button to hide panel updates
+  you-service
+    have origin service's look in msg panel
+    permanent thread tabs: todo/tag, contact
+    transient thread tabs: search-all results
+    thread items include column for svc name
+    group consecutive same-service items with color
   form-table view (alternate panel layout)
     presents table of all data received via a certain form
     include ref column with link to thread+msg data source
@@ -86,22 +107,6 @@ msg panel
     form revision history
     export to csv, json, etc
 
-thread panel
-  archaeological order
-  infinite scrolling or back/forward buttons
-  permanent All, Unread, Todo, Form-table tabs
-  search tabs are client-specific unless saved
-    save-search pins tab, notify other clients
-  search relevance slider (# positions varies with result set size?)
-    lower relevance yields more results
-  NewThread button
-  you-service
-    have origin service's look in msg panel
-    permanent thread tabs: todo/tag, contact
-    transient thread tabs: search-all results
-    thread items include column for svc name
-    group consecutive same-service items with color
-
 ohi panels
   slide out from services panel
   whos-on normally retracted, can pin display
@@ -109,7 +114,9 @@ ohi panels
   who-i-ohi
 
 attachment panel
-  slide out from services panel
+  button per item attaches file to current message
+  checkbox on "browse..." form to attach
+  search box, adds a tab after Date, Name
 
 services (notifications) panel
   per-item popup shows recent activity in that service
@@ -138,36 +145,70 @@ msg viewer
   lookup/rewrite bit.ly etc links
 
 msg editor
+  search & replace
   use markdown format
+    formatting characters shown in color & boldface
     change linebreak to ^ or non-ascii character
     change em & strong to ~
     insert > when dividing >'d paragraph
     img/etc hrefs must be to attachment
+    help pane shows formatting characters; click or ctrl-? to pop-up docs
+    can render tables as charts, or chart input as table?
+    select from menu of common & service-supplied stylesheets
+  preview rendering
+    short pane below or above editor showing current lines, collapsible
+      toggle with ctrl-something
+    pane expands to scrolling pop-up on ctrl-J/F?, repeat/enter/esc to close
+      if pane at start/end of message
+         expand down/up, grow pop-up on scroll to x% of vh
+      highlight current cursor position
+      scroll with IJKLUO/ESDFWR, page-up/down with [shift-]space
   upload attachment
     drag/drop or copy/paste file, file dialog box
     menu of upload dir; sort by date/filename
     attachment hrefs
   attach by reference to previous attachment
-  accept pasted HTML
+  attach icalendar object
+  attach pasted HTML
     display in iframe
-    make attachment
+  to/attach-list expand to multiple columns if nec
   on msg add-CC, copy only last msg
     provide buttons for copy-next, copy-all
+  add msg to thread by ref-to msg link
+    placeholder for recipients who did not receive original
   branch-reply/forward
-    make new thread with copy of replied msg
+    make new thread with copy of (or ref-to for recipients of original) replied msg
     buttons copy-next, copy-all
     ref parent thread & msg
+  reply with tag (continues at link, closed, defer until date, priority, user-defined)
   forms menu & editor
     can fill in form or leave blank
   slides/pages
     slide hrefs
   thread/message hyperlinks
+    may indicate excerpts (list of byte ranges)
+  charts menu; outputs templates
   form-table queries?
   message templates menu
+  cursor nav mode ctrl-H?
+    different highlight & cursor color
+    restore prior selection if cursor hasn't moved
+    repeat/esc exit mode
+    IJKLUO/ESDFWR [shift-]space set cursor position
+    ctrl-anyOfAbove select text
+    formatting characters work as toggles on selection
+    enter preserve selection, exit mode
+    cut/copy/paste/delete work on selection, exit mode
+
+error log
+  show last error, expand to show scrolling list
+  item on settings menu
 
 UI controls that change data state get hand cursor, others get arrow
 certain buttons show confirmation pop-up next to click point
   send, discard new msg, close search tab
+
+msg link: MessageGo() combining ThreadGo(thread_id) + TabAdd(msg:msg_id)
 
 address book
   query s,n returns n matches starting with s
@@ -224,6 +265,17 @@ tag/todo lists
   select msg, add tags & optional deadline-date & comment
   tag view sorted in deadline chronological order, no-deadline items last
 
+calendar
+  endless scrolling list of weeks
+    zoomable to full screen
+  sunday after saturday, adjustable week-start day
+  day (row) height adjustable by zoom (shift mouse wheel)
+  give number of hours free on each day & week
+  record attached icalendar objects
+  attach icalendar objects to msgs
+  send new objects to calendar service
+  pull objects from calendar service
+
 contacts
   (list of form-tables? contact tag instead of separate database?)
   distribution & receipt of contact info doc
@@ -256,6 +308,7 @@ storage
     index tabs file
     styling directory: css & image files
     temp directory
+    icalendar directory: year & json index per file
     outbound msg directory
     attachment directory: link file if checksum matches
     form-table directory
