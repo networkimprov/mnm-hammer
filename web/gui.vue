@@ -10,9 +10,13 @@
    <script src="/web/uikit-icons-30.min.js"></script>
 
    <script src="/web/vue-25.js"></script>
+   <script src="/web/markdown-it-84.js"></script>
 
+   <link  href="/web/service.css" rel="stylesheet"/>
    <script src="/web/socket.js"></script>
    <script>
+      mnm._mdi = markdownit();
+      mnm._lastPreview = '';
       mnm._data = {
          cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}},
          sl:[], t:[], f:[], f_n:'',
@@ -43,6 +47,7 @@
       input[type=text] { font-family: Monaco, monospace; font-size:larger }
    </style>
 </head><body>
+<base target="_blank">
 
 <div id="app" uk-grid class="uk-grid-small">
 
@@ -56,10 +61,10 @@
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
                  style="padding:0"><span uk-icon="pencil"></span></button>
-         <button :disabled="!cs.History || !cs.History.Prev" onclick="mnm.History(-1)"
+         <button :disabled="!cs.History || !cs.History.Prev" onclick="this.blur(); mnm.History(-1)"
                  class="uk-button uk-button-link">
             <span uk-icon="icon:arrow-left; ratio:1.6"></span></button>
-         <button :disabled="!cs.History || !cs.History.Next" onclick="mnm.History( 1)"
+         <button :disabled="!cs.History || !cs.History.Next" onclick="this.blur(); mnm.History( 1)"
                  class="uk-button uk-button-link">
             <span uk-icon="icon:arrow-right; ratio:1.6"></span></button>
       </div>
@@ -79,14 +84,15 @@
                  style="cursor:pointer; display:inline-block; line-height:2em;">
                {{ aMsg.Date }} <b>{{ aMsg.From }}</b></div>
             <template v-if="aMsg.Id in mo">
-               <button v-if="mo[aMsg.Id].Posted === 'draft'"
-                       @click="mnm.ThreadSend(aMsg.Id)"
-                       style="padding:0; display:inline-block; vertical-align:top;">
-                  <span uk-icon="forward"></span></button>
-               <button v-if="mo[aMsg.Id].Posted === 'draft'"
-                       @click="mnm.ThreadDiscard(aMsg.Id)"
-                       style="color:crimson; padding:0; display:inline-block; float:right;">
-                  <span uk-icon="trash"></span></button>
+               <template v-if="mo[aMsg.Id].Posted === 'draft'">
+                  <button @click="mnm.ThreadSend(aMsg.Id)"
+                          style="padding:0; display:inline-block; vertical-align:top;">
+                     <span uk-icon="forward"></span></button>
+                  <span></span>
+                  <button @click="mnm.ThreadDiscard(aMsg.Id)"
+                          style="color:crimson; padding:0; display:inline-block; float:right;">
+                     <span uk-icon="trash"></span></button>
+               </template>
                <button v-else
                        @click="mnm.ThreadReply({alias:cf.Alias, cc:[]})"
                        style="padding:0; display:inline-block; float:right;">
@@ -94,7 +100,7 @@
                <div v-if="!('msg_data' in mo[aMsg.Id])"
                     class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
                <div v-else-if="mo[aMsg.Id].Posted === 'draft'">
-                  <div style="background:orange; position:relative; padding:1px;">
+                  <div style="position:relative; padding:1px;">
                      <input @keyup.enter="ccAdd(aMsg.Id, $event.target)" type="text" placeholder="+To">
                      <div style="height:100%; position:absolute; left:15em; right:2em; top:0;">
                         <mnm-draftmenu :list="(toSave[aMsg.Id] || mo[aMsg.Id].SubHead).Cc"
@@ -107,16 +113,20 @@
                   <div style="float:right; margin-top:-1.7em;">
                      <span uk-icon="push"      :id="'t'+aMsg.Id"></span
                     ><span uk-icon="file-edit" :id="'f'+aMsg.Id"></span>
+                     <span :id="'pv_'+aMsg.Id"></span>
+                     <mnm-preview :src="aMsg.Id in toSave ? toSave[aMsg.Id].Data : mo[aMsg.Id].msg_data"
+                                  :msgid="aMsg.Id.substr(-12)"></mnm-preview>
                   </div>
                   <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
+                                  @keypress.native="keyAction('pv_'+aMsg.Id, $event)"
                                   :src="aMsg.Id in toSave ? toSave[aMsg.Id].Data : mo[aMsg.Id].msg_data"
-                                  style="width:100%"></mnm-textresize>
+                                  placeholder="Ctrl-J to Preview" style="width:100%"></mnm-textresize>
                </div>
                <div v-else-if="!mo[aMsg.Id].msg_data"
                     class="uk-text-center"><span uk-icon="comment"></span></div>
-               <div v-else>
-                  {{ mo[aMsg.Id].msg_data }}
-               </div>
+               <div v-else
+                    class="message" v-html="mnm._mdi.render(mo[aMsg.Id].msg_data, {msgId:aMsg.Id})"
+                    ></div>
             </template>
          </li></ul>
       <br/><div id="log"></div>
@@ -270,6 +280,19 @@
    });
 </script>
 
+<script type="text/x-template" id="mnm-preview">
+   <div uk-dropdown="mode:click; pos:right-top" class="uk-width-2-5">
+      <div style="overflow-y:auto; max-height:75vh"
+           class="message" v-html="mdi.render(src, {msgId:msgid})"></div>
+   </div>
+</script><script>
+   Vue.component('mnm-preview', {
+      template: '#mnm-preview',
+      props: ['src', 'msgid'],
+      computed: { mdi: function() { return mnm._mdi } },
+   });
+</script>
+
 <style>
 .draft-menu {
    min-width: 4em;
@@ -344,7 +367,7 @@
 </style>
 
 <script type="text/x-template" id="mnm-textresize">
-   <textarea @input="resize" :value="src" class="text-resize"></textarea>
+   <textarea @input="resize" @click.stop :value="src" class="text-resize"></textarea>
 </script><script>
    Vue.component('mnm-textresize', {
       template: '#mnm-textresize',
@@ -794,6 +817,10 @@
                this.$delete(mnm._data.mo, iId);
             }
          },
+         keyAction: function(iId, iEvent) {
+            if (iEvent.ctrlKey && iEvent.key === 'j')
+               mnm._lastPreview = iId;
+         },
          to_save: function(iId) {
             if (!(iId in mnm._data.toSave)) {
                var aMo = mnm._data.mo[iId];
@@ -857,6 +884,24 @@
          },
       },
    });
+
+   var sUrlStart = /^[A-Za-z][A-Za-z0-9+.\-]*:/;
+   mnm._mdi.renderer.rules.link_open = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
+      var aHref = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('href')];
+      if (!sUrlStart.test(aHref[1])) {
+         var aParam = aHref[1].replace(/^this_/, iEnv.msgId+'_');
+         aHref[1] = '?an=' + encodeURIComponent(aParam);
+      }
+      return iSelf.renderToken(iTokens, iIdx, iOptions);
+   };
+
+   var sMdiRenderImg = mnm._mdi.renderer.rules.image;
+   mnm._mdi.renderer.rules.image = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
+      var aSrc = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('src')];
+      var aParam = aSrc[1].replace(/^this_/, iEnv.msgId+'_');
+      aSrc[1] = '?an=' + encodeURIComponent(aParam);
+      return sMdiRenderImg(iTokens, iIdx, iOptions, iEnv, iSelf);
+   };
 
    mnm.Log = function(i) {
       var aLog = document.getElementById('log').innerText;
@@ -937,7 +982,20 @@
       }
    };
 
-   mnm.ThreadChange = function() { sChange = 1 };
+   mnm.ThreadChange = function() {
+      sChange = 1;
+      mnm._lastPreview = '';
+   };
+
+   window.addEventListener('keypress', function(iEvent) {
+      if (iEvent.ctrlKey && iEvent.key === 'j') {
+         iEvent.preventDefault();
+         if (mnm._lastPreview) {
+            var aEl = document.getElementById(mnm._lastPreview);
+            if (aEl) aEl.click();
+         }
+      }
+   });
 
    window.onload = mnm.Connect;
 
