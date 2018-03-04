@@ -412,7 +412,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-forms">
-   <div uk-dropdown="mode:click; offset:2" :toggle="toggle" class="uk-width-1-3">
+   <div uk-dropdown="mode:click; offset:2" :toggle="toggle" class="uk-width-1-3"
+        @hidden="revClose" @click="revClose">
       <form :action="'/'+list+'/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); this.reset(); return false;">
@@ -427,44 +428,53 @@
              :class="{'uk-active': aKey === sort}">
             <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
          </li></ul>
-      <ul class="uk-list uk-list-divider uk-overflow-auto" style="max-height:75vh; margin:0">
-         <template v-for="aSet in data">
-         <li v-for="aFile in aSet.Revs" :key="aSet.Name+'.'+aFile.Id">
-            {{aFile.Date}}
-            <button v-if="toggle"
-                    @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)" style="padding:0">
-               <span uk-icon="copy"></span></button>
-            <a @click.prevent="mnm.FormOpen(aSet.Name+'.'+aFile.Id)" href="#">
-               <!--todo one dropdown for whole list-->
-               <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
-            <div uk-dropdown="mode:click; offset:-4; pos:left-top"
-                 :id="'bf_'+aSet.Name+'.'+aFile.Id" @hidden="dupname = ''">
-               <div class="uk-text-right uk-text-small">
-                  {{(aSet.Name+'.'+aFile.Id).toUpperCase()}}</div>
-               <div class="uk-overflow-auto" style="max-height:40vh">
-                  <pre style="overflow:visible">{{mnm._data.f_n}}</pre></div>
-               <form :action="'/'+list+'/*' + encodeURIComponent(aSet.Name+'.'+aFile.Id) +
-                                        '+' + encodeURIComponent(dupname)" method="POST"
-                     onsubmit="mnm.Upload(this); return false;">
-                  <input v-model="dupname" type="text" size="32" placeholder="New Revision">
-                  <button @click="dupRev(aSet.Name,aFile.Id)"
-                          :disabled="!validName([].concat(aSet.Name,dupname.split('.')))"
-                          style="padding:0">
-                     <span uk-icon="copy"></span></button>
-               </form>
+      <div style="position:relative"><!--context for rev card-->
+         <ul class="uk-list uk-list-divider uk-overflow-auto" style="max-height:75vh; margin:0">
+            <template v-for="aSet in data">
+            <li v-for="aFile in aSet.Revs" :key="aSet.Name+'.'+aFile.Id">
+               {{aFile.Date}}
+               <button v-if="toggle"
+                       @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)" style="padding:0">
+                  <span uk-icon="copy"></span></button>
+               <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.target)"
+                  :id="'bf_'+aSet.Name+'.'+aFile.Id" href="#">
+                  <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
+               <form v-if="!toggle"
+                     :action="'/'+list+'/-' + encodeURIComponent(aSet.Name+'.'+aFile.Id)" method="POST"
+                     onsubmit="mnm.Upload(this); return false;" style="float:right">
+                  <button style="padding:0">
+                     <span uk-icon="trash" style="color:crimson"></span></button></form>
+            </li></template></ul>
+         <div v-show="setName"
+              class="uk-card uk-card-default uk-card-small uk-card-body uk-width-1-1"
+              style="position:absolute; right:20em;" :style="{top:revPos}" @click.stop>
+            <div class="uk-text-right uk-text-small">
+               {{(setName+'.'+fileId).toUpperCase()}}</div>
+            <div class="uk-overflow-auto" style="max-height:40vh">
+               <div v-if="!mnm._data.f_n"
+                    class="uk-text-center"><span uk-icon="future"></span></div>
+               <pre v-else
+                    style="overflow:visible">{{mnm._data.f_n}}</pre>
             </div>
-            <form v-if="!toggle"
-                  :action="'/'+list+'/-' + encodeURIComponent(aSet.Name+'.'+aFile.Id)" method="POST"
-                  onsubmit="mnm.Upload(this); return false;" style="float:right">
-               <button style="padding:0">
-                  <span uk-icon="trash" style="color:crimson"></span></button></form>
-         </li></template></ul>
+            <form :action="'/'+list+'/*' + encodeURIComponent(setName+'.'+fileId) +
+                                     '+' + encodeURIComponent(dupname)" method="POST"
+                  onsubmit="mnm.Upload(this); return false;">
+               <input v-model="dupname" type="text" size="32" placeholder="New Revision">
+               <button @click="dupShow = dupname"
+                       :disabled="!validName([].concat(setName,dupname.split('.')))"
+                       style="padding:0">
+                  <span uk-icon="copy"></span></button>
+            </form>
+         </div>
+      </div>
    </div>
 </script><script>
    Vue.component('mnm-forms', {
       template: '#mnm-forms',
       props: ['list', 'data', 'toggle'],
-      data: function() { return {upname:'', dupname:'', dupShow:''} },
+      data: function() {
+         return {upname:'', dupname:'', setName:'', fileId:'', revPos:'', dupShow:''};
+      },
       computed: {
          sort: function() { return mnm._data.sort[this.list] },
          mnm: function() { return mnm },
@@ -497,17 +507,29 @@
                return 0;
             });
          },
-         dupRev: function(iSet, iRev) {
-            this.dupShow = 'bf_'+iSet+'.'+this.dupname;
-            UIkit.dropdown(document.getElementById('bf_'+iSet+'.'+iRev)).hide();
+         revOpen: function(iSet, iRev, iEl) {
+            mnm.FormOpen(iSet+'.'+iRev);
+            mnm._data.f_n = this.dupname = '';
+            this.setName = iSet;
+            this.fileId = iRev;
+            this.revPos = iEl.offsetTop + 'px';
+         },
+         revClose: function() {
+            this.setName = this.fileId = '';
          },
       },
-      updated: function() {
-         var aEl = this.dupShow && document.getElementById(this.dupShow);
-         if (aEl) {
-            UIkit.dropdown(aEl).show();
-            this.dupShow = '';
-         }
+      watch: {
+         data: function() {
+            if (!this.dupShow)
+               return;
+            this.$nextTick(function() {
+               var aEl = document.getElementById('bf_'+this.setName+'.'+this.dupShow);
+               if (aEl) {
+                  this.revOpen(this.setName, this.dupShow, aEl);
+                  this.dupShow = '';
+               }
+            });
+         },
       },
    });
 </script>
@@ -846,11 +868,13 @@
       case 'cs': case 'sl': case 'cf': case 'al':
       case 'ps': case 'pt': case 'pf': case 'it': case 'if': case 'gl': case 'ot': case 'of':
       case 't': case 'f':
-         if (i === 'f' && iEtc)
-            i = 'f_n';
-         mnm._data[i] = JSON.parse(iData);
-         if (i === 'al' || i === 't' || i === 'f')
-            sApp.$refs[i].listSort(mnm._data.sort[i]);
+         if (i === 'f' && iEtc) {
+            mnm._data.f_n = iData;
+         } else {
+            mnm._data[i] = JSON.parse(iData);
+            if (i === 'al' || i === 't' || i === 'f')
+               sApp.$refs[i].listSort(mnm._data.sort[i]);
+         }
          break;
       case 'tl':
          var aData = JSON.parse(iData);
