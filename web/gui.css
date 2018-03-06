@@ -1,0 +1,23 @@
+/* Copyright 2018 Liam Breck
+//
+// This file is part of the "mnm" software. Anyone may redistribute mnm and/or modify
+// it under the terms of the GNU Lesser General Public License version 3, as published
+// by the Free Software Foundation. See www.gnu.org/licenses/
+// Mnm is distributed WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See said License for details.
+*/
+
+.message {
+   overflow-x: auto;
+   overflow-wrap: break-word;
+}
+
+.message pre, .message code {
+   white-space: pre-wrap;
+   word-break: break-all;
+}
+
+.message img {
+   max-width: 100%;
+}
+
