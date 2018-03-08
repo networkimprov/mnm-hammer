@@ -110,7 +110,7 @@
                   </div>
                   <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
                                   :src="aMsg.Id in toSave ? toSave[aMsg.Id].Data : mo[aMsg.Id].msg_data"
-                                  :style="{width:'100%'}"></mnm-text>
+                                  style="width:100%"></mnm-textresize>
                </div>
                <div v-else-if="!mo[aMsg.Id].msg_data"
                     class="uk-text-center"><span uk-icon="comment"></span></div>
@@ -450,12 +450,20 @@
               style="position:absolute; right:20em;" :style="{top:revPos}" @click.stop>
             <div class="uk-text-right uk-text-small">
                {{(setName+'.'+fileId).toUpperCase()}}</div>
-            <div class="uk-overflow-auto" style="max-height:40vh">
-               <div v-if="!mnm._data.f_n"
-                    class="uk-text-center"><span uk-icon="future"></span></div>
-               <pre v-else
-                    style="overflow:visible">{{mnm._data.f_n}}</pre>
-            </div>
+            <div v-if="!mnm._data.f_n"
+                 class="uk-text-center" style="padding:0.5em">
+               <span uk-icon="future"></span></div>
+            <form v-else
+                  :action="'/'+list+'/+' + encodeURIComponent(setName+'.'+fileId)"
+                  method="POST" enctype="multipart/form-data"
+                  onsubmit="mnm.Upload(this); return false;" style="margin-top:-1.5em">
+               <button :disabled="!!parseError" style="padding:0">
+                  <span uk-icon="file-edit"></span></button>
+               <div style="font-size:smaller; text-align:right">&nbsp;{{parseError}}</div>
+               <div class="uk-overflow-auto" style="max-height:40vh">
+                  <mnm-textresize @input.native="mnm._data.f_n=$event.target.value" :src="mnm._data.f_n"
+                                  name="filename" style="width:100%"></mnm-textresize></div>
+            </form>
             <form :action="'/'+list+'/*' + encodeURIComponent(setName+'.'+fileId) +
                                      '+' + encodeURIComponent(dupname)" method="POST"
                   onsubmit="mnm.Upload(this); return false;">
@@ -478,6 +486,11 @@
       computed: {
          sort: function() { return mnm._data.sort[this.list] },
          mnm: function() { return mnm },
+         parseError: function() {
+            try { JSON.parse(mnm._data.f_n) }
+            catch(aErr) { return aErr.message.slice(12,-17) }
+            return '';
+         },
       },
       methods: {
          validName: function(iPair) {
