@@ -470,6 +470,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       if len(aOp_Id) < 2 { break }
       err = slib.WriteMessagesThread(iResp, aSvc, aState, aOp_Id[1])
    case "an":
+      iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
       http.ServeFile(iResp, iReq, slib.GetPathAttach(aSvc, aState, aOp_Id[1]))
    case "fn":
       http.ServeFile(iResp, iReq, slib.GetPathFilledForm(aSvc, aOp_Id[1]))
@@ -558,6 +559,7 @@ func runPost(iResp http.ResponseWriter, iReq *http.Request) {
       err := json.NewEncoder(iResp).Encode(aIdx)
       if err != nil { fmt.Fprintf(os.Stderr, "runPost: %s\n", err.Error()) }
    } else {
+      iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
       http.ServeFile(iResp, iReq, aSet.path(aId))
    }
 }
