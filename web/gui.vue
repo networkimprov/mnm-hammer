@@ -12,6 +12,9 @@
    <script src="/web/vue-25.js"></script>
    <script src="/web/markdown-it-84.js"></script>
 
+   <link  href="/web/vue-formgen-22.css" rel="stylesheet"/>
+   <script src="/web/vue-formgen-22.js"></script>
+
    <link  href="/web/service.css" rel="stylesheet"/>
    <script src="/web/socket.js"></script>
    <script>
@@ -22,7 +25,7 @@
          sl:[], t:[], f:[], f_n:'',
          cf:{}, tl:[], ffn:'',
          ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:[],
-         al:[], ml:[], mo:{},
+         al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
          sort:{al:'Size', t:'Date', f:'Date'}, //todo move to cs
          ohiFrom:true, //todo move to cs
 
@@ -114,8 +117,12 @@
                      <span uk-icon="push"      :id="'t'+aMsg.Id"></span
                     ><span uk-icon="file-edit" :id="'f'+aMsg.Id"></span>
                      <span :id="'pv_'+aMsg.Id"></span>
-                     <mnm-preview :src="aMsg.Id in toSave ? toSave[aMsg.Id].Data : mo[aMsg.Id].msg_data"
-                                  :msgid="aMsg.Id.substr(-12)"></mnm-preview>
+                     <div uk-dropdown="mode:click; pos:right-top" class="uk-width-2-5"
+                          style="overflow:auto; max-height:75vh;
+                                 border-top:1em solid white; border-bottom:1em solid white;">
+                        <mnm-markdown :src="aMsg.Id in toSave ? toSave[aMsg.Id].Data
+                                                              : mo[aMsg.Id].msg_data"
+                                      :msgid="aMsg.Id.substr(-12)"></mnm-markdown></div>
                   </div>
                   <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
                                   @keypress.native="keyAction('pv_'+aMsg.Id, $event)"
@@ -124,9 +131,8 @@
                </div>
                <div v-else-if="!mo[aMsg.Id].msg_data"
                     class="uk-text-center"><span uk-icon="comment"></span></div>
-               <div v-else
-                    class="message" v-html="mnm._mdi.render(mo[aMsg.Id].msg_data, {msgId:aMsg.Id})"
-                    ></div>
+               <mnm-markdown v-else
+                             :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"></mnm-markdown>
             </template>
          </li></ul>
       <br/><div id="log"></div>
@@ -280,19 +286,6 @@
    });
 </script>
 
-<script type="text/x-template" id="mnm-preview">
-   <div uk-dropdown="mode:click; pos:right-top" class="uk-width-2-5">
-      <div style="overflow-y:auto; max-height:75vh"
-           class="message" v-html="mdi.render(src, {msgId:msgid})"></div>
-   </div>
-</script><script>
-   Vue.component('mnm-preview', {
-      template: '#mnm-preview',
-      props: ['src', 'msgid'],
-      computed: { mdi: function() { return mnm._mdi } },
-   });
-</script>
-
 <style>
 .draft-menu {
    min-width: 4em;
@@ -381,6 +374,72 @@
          },
       },
    });
+</script>
+
+<script type="text/x-template" id="mnm-markdown">
+   <div class="message" v-html="mdi.render(src, $data)"></div>
+</script><script>
+   Vue.component('mnm-markdown', {
+      template: '#mnm-markdown',
+      props: ['src', 'msgid'],
+      data: function() {
+         return { msgId:this.msgid, formview:null }; // formview fields not reactive
+      },
+      computed: { mdi: function() { return mnm._mdi } },
+      mounted:       function() { if (this.formview) this.formview.remount() },
+      updated:       function() { if (this.formview) this.formview.remount() },
+      beforeDestroy: function() { if (this.formview) this.formview.destroy() },
+   });
+</script>
+
+<script type="text/x-template" id="mnm-formview">
+   <div>
+      <plugin-vfg :schema="formDef" :model="{}" :options="{}"></plugin-vfg>
+   </div>
+</script><script>
+   Vue.component('mnm-formview', {
+      template: '#mnm-formview',
+      props: ['file'],
+      data: function() { return {} },
+      computed: {
+         formDef: function() {
+            if (!this.file)
+               try { return JSON.parse(mnm._data.f_n) } catch(a) { return {} }
+            try {
+               return this.file in mnm._data.ao ? JSON.parse(mnm._data.ao[this.file]) : {};
+            } catch(a) {
+               return {fields:[ {type:"label",label:"file not found or invalid"} ]};
+            }
+         },
+         mnm: function() { return mnm },
+      },
+      components: { 'plugin-vfg': VueFormGenerator.component },
+   });
+
+   mnm._FormViews = function() {
+      this.comp = {};
+   };
+   mnm._FormViews.prototype.make = function(iKey) {
+      if (iKey in this.comp)
+         return;
+      mnm.AttachOpen(iKey);
+      this.comp[iKey] =
+         [ new (Vue.component('mnm-formview'))({ propsData: { file: iKey } }), null ];
+   };
+   mnm._FormViews.prototype.remount = function() {
+      for (var a in this.comp) {
+         var aEl = document.getElementById(a);
+         if (!aEl) continue;
+         if (this.comp[a][1])
+            aEl.parentNode.replaceChild(this.comp[a][1], aEl);
+         else
+            this.comp[a][1] = this.comp[a][0].$mount(aEl).$el;
+      }
+   };
+   mnm._FormViews.prototype.destroy = function() {
+      for (var a in this.comp)
+         this.comp[a][0].$destroy();
+   };
 </script>
 
 <script type="text/x-template" id="mnm-files">
@@ -479,13 +538,20 @@
             <form v-else
                   :action="'/'+list+'/+' + encodeURIComponent(setName+'.'+fileId)"
                   method="POST" enctype="multipart/form-data"
-                  onsubmit="mnm.Upload(this); return false;" style="margin-top:-1.5em">
+                  onsubmit="mnm.Upload(this); return false;"
+                  style="margin-top:-1.5em" class="pane-clip">
+               <span @click="codeShow = !codeShow" style="cursor:default">{...}</span>
                <button :disabled="!!parseError" style="padding:0">
                   <span uk-icon="file-edit"></span></button>
                <div style="font-size:smaller; text-align:right">&nbsp;{{parseError}}</div>
-               <div class="uk-overflow-auto" style="max-height:40vh">
-                  <mnm-textresize @input.native="mnm._data.f_n=$event.target.value" :src="mnm._data.f_n"
-                                  name="filename" style="width:100%"></mnm-textresize></div>
+               <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
+                  <div class="pane-scroller">
+                     <mnm-formview style="min-height:1px"></mnm-formview></div>
+                  <div class="pane-scroller">
+                     <mnm-textresize @input.native="mnm._data.f_n=$event.target.value"
+                                     :src="mnm._data.f_n"
+                                     name="filename" style="width:100%"></mnm-textresize></div>
+               </div>
             </form>
             <form :action="'/'+list+'/*' + encodeURIComponent(setName+'.'+fileId) +
                                      '+' + encodeURIComponent(dupname)" method="POST"
@@ -504,7 +570,7 @@
       template: '#mnm-forms',
       props: ['list', 'data', 'toggle'],
       data: function() {
-         return {upname:'', dupname:'', setName:'', fileId:'', revPos:'', dupShow:''};
+         return {upname:'', dupname:'', setName:'', fileId:'', revPos:'', codeShow:false, dupShow:''};
       },
       computed: {
          sort: function() { return mnm._data.sort[this.list] },
@@ -549,6 +615,7 @@
             this.setName = iSet;
             this.fileId = iRev;
             this.revPos = iEl.offsetTop + 'px';
+            this.codeShow = false;
          },
          revClose: function() {
             this.setName = this.fileId = '';
@@ -897,8 +964,15 @@
 
    var sMdiRenderImg = mnm._mdi.renderer.rules.image;
    mnm._mdi.renderer.rules.image = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
+      var aAlt = iSelf.renderInlineAsText(iTokens[iIdx].children, iOptions, iEnv);
       var aSrc = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('src')];
       var aParam = aSrc[1].replace(/^this_/, iEnv.msgId+'_');
+      if (aAlt.charAt(0) === '?') {
+         if (!iEnv.formview)
+            iEnv.formview = new mnm._FormViews;
+         iEnv.formview.make(aParam);
+         return '<component'+ iSelf.renderAttrs({attrs:[['id',aParam]]}) +'></component>';
+      }
       aSrc[1] = '?an=' + encodeURIComponent(aParam);
       return sMdiRenderImg(iTokens, iIdx, iOptions, iEnv, iSelf);
    };
@@ -943,6 +1017,9 @@
             mnm._data.tl = aData;
             mnm._data.ffn = '';
          }
+         break;
+      case 'an':
+         sApp.$set(mnm._data.ao, iEtc, iData)
          break;
       case 'mo':
          for (var aK in mnm._data.mo)
