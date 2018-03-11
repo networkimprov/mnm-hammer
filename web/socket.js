@@ -88,6 +88,9 @@
    mnm.FormOpen = function(iId) {
       _xhr('/f', iId);
    };
+   mnm.AttachOpen = function(iId) {
+      _xhr('an', iId);
+   };
 
    mnm.Upload = function(iForm) {
       if (iForm.method.toLowerCase() !== 'post' || !iForm.action)
@@ -124,11 +127,11 @@
       sWs.onerror = function(iEvent) { mnm.Log('ws error: ' + iEvent.data) };
    };
 
-   function _xhr(i, iP) {
+   function _xhr(i, iId) {
       var aXhr = new XMLHttpRequest();
       aXhr.onload = function() {
          if (i !== 'mo' && i !== 'mn') {
-            mnm.Render(i, aXhr.responseText, iP);
+            mnm.Render(i, aXhr.responseText, iId);
             return;
          }
          var aMap = {};
@@ -151,7 +154,8 @@
          }
          mnm.Render(i, aXhr.responseText, aMap);
       };
-      aXhr.open('GET', i.charAt(0) === '/' ? i+'/'+(iP || '') : '?'+i+(iP ? '='+iP : ''));
+      var aN = iId ? encodeURIComponent(iId) : '';
+      aXhr.open('GET', i.charAt(0) === '/' ? i+'/'+aN : '?'+i+(aN && '='+aN));
       aXhr.send();
    }
 
