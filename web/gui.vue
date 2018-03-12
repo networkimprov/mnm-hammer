@@ -22,7 +22,7 @@
       mnm._lastPreview = '';
       mnm._data = {
       // global
-         sl:[], t:[], f:[], f_n:'', // f_n populated by f requests
+         sl:[], t:[], f:[], fo:'', // fo populated by f requests
       // per client
          cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}},
          sort:{al:'Size', t:'Date', f:'Date'}, //todo move to cs
@@ -407,7 +407,7 @@
       computed: {
          formDef: function() {
             if (!this.file)
-               try { return JSON.parse(mnm._data.f_n) } catch(a) { return {} }
+               try { return JSON.parse(mnm._data.fo) } catch(a) { return {} }
             try {
                return this.file in mnm._data.ao ? JSON.parse(mnm._data.ao[this.file]) : {};
             } catch(a) {
@@ -535,7 +535,7 @@
               style="position:absolute; right:20em;" :style="{top:revPos}" @click.stop>
             <div class="uk-text-right uk-text-small">
                {{(setName+'.'+fileId).toUpperCase()}}</div>
-            <div v-if="!mnm._data.f_n"
+            <div v-if="!mnm._data.fo"
                  class="uk-text-center" style="padding:0.5em">
                <span uk-icon="future"></span></div>
             <form v-else
@@ -551,8 +551,8 @@
                   <div class="pane-scroller">
                      <mnm-formview style="min-height:1px"></mnm-formview></div>
                   <div class="pane-scroller">
-                     <mnm-textresize @input.native="mnm._data.f_n=$event.target.value"
-                                     :src="mnm._data.f_n"
+                     <mnm-textresize @input.native="mnm._data.fo=$event.target.value"
+                                     :src="mnm._data.fo"
                                      name="filename" style="width:100%"></mnm-textresize></div>
                </div>
             </form>
@@ -579,7 +579,7 @@
          sort: function() { return mnm._data.sort[this.list] },
          mnm: function() { return mnm },
          parseError: function() {
-            try { JSON.parse(mnm._data.f_n) }
+            try { JSON.parse(mnm._data.fo) }
             catch(aErr) { return aErr.message.slice(12,-17) }
             return '';
          },
@@ -614,7 +614,7 @@
          },
          revOpen: function(iSet, iRev, iEl) {
             mnm.FormOpen(iSet+'.'+iRev);
-            mnm._data.f_n = this.dupname = '';
+            mnm._data.fo = this.dupname = '';
             this.setName = iSet;
             this.fileId = iRev;
             this.revPos = iEl.offsetTop + 'px';
@@ -1004,7 +1004,7 @@
       case 'ps': case 'pt': case 'pf': case 'it': case 'if': case 'gl': case 'ot': case 'of':
       case 't': case 'f':
          if (i === 'f' && iEtc) {
-            mnm._data.f_n = iData;
+            mnm._data.fo = iData;
          } else {
             mnm._data[i] = JSON.parse(iData);
             if (i === 'al' || i === 't' || i === 'f')
