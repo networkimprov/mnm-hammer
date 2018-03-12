@@ -7,6 +7,13 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See said License for details.
 */
 
+.firefox-minheight-fix { height: 0; }
+
+input[type=text] {
+   font-family: Monaco, monospace;
+   font-size: larger;
+}
+
 .message {
    overflow-x: auto;
    overflow-wrap: break-word;

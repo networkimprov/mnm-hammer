@@ -47,11 +47,6 @@
       };
       mnm._formatDate = function(iDt) { return iDt.substr(0, 10) };
    </script>
-
-   <style>
-      .firefox-minheight-fix {height:0}
-      input[type=text] { font-family: Monaco, monospace; font-size:larger }
-   </style>
 </head><body>
 <base target="_blank">
 
