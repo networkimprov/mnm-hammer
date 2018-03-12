@@ -21,15 +21,18 @@
       mnm._mdi = markdownit();
       mnm._lastPreview = '';
       mnm._data = {
+      // global
+         sl:[], t:[], f:[], f_n:'', // f_n populated by f requests
+      // per client
          cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}},
-         sl:[], t:[], f:[], f_n:'',
-         cf:{}, tl:[], ffn:'',
-         ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:[],
-         al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
          sort:{al:'Size', t:'Date', f:'Date'}, //todo move to cs
          ohiFrom:true, //todo move to cs
-
-         toSave:{}, // not set by backend
+      // per service
+         cf:{}, tl:[], ffn:'', // ffn derived from tl
+         ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:[],
+      // per thread
+         al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
+         toSave:{}, // populated locally
       };
       mnm._listSort = function(iList, iKey) {
          var aTmp;
