@@ -13,7 +13,6 @@ import (
    "io"
    "encoding/json"
    "os"
-   "path"
    "strings"
    "syscall"
 )
@@ -68,10 +67,9 @@ func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) int64 {
 
    for a, aFile := range iSubHead.Attach {
       if aFile.Size == 0 {
-         aFi, err := os.Lstat(aPrefix + _pathToTag(aFile.Name))
+         aFi, err := os.Lstat(aPrefix + aFile.Name)
          if err != nil { quit(err) }
          iSubHead.Attach[a].Size = aFi.Size()
-         iSubHead.Attach[a].Name = _pathToTag(aFile.Name)
       }
       aTotal += iSubHead.Attach[a].Size
    }
@@ -166,14 +164,6 @@ func storeReceivedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    _storeFormAttach(iSvc, iSubHead, iRec)
 }
 
-func sentAttach(i []tHeader2Attach) []tHeader2Attach {
-   for a, _ := range i {
-      if _isFormFill(i[a].Name) { continue }
-      i[a].Name = _pathToTag(i[a].Name)
-   }
-   return i
-}
-
 func tempSentAttach(iSvc string, iHead *Header, iSd *os.File) {
    var err error
    aDoSync := false
@@ -241,10 +231,10 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.F
          if err != nil { return err }
          continue
       }
-      if strings.HasPrefix(aFile.Name, "form/") && aFile.Ffn[0] == '#' {
+      if _isForm(aFile.Name) && aFile.Ffn[0] == '#' {
          return tError(aFile.Ffn[1:])
       }
-      _, err = os.Lstat(attachSub(iSvc, aTid) + iId.sid() + "_" + _pathToTag(aFile.Name))
+      _, err = os.Lstat(attachSub(iSvc, aTid) + iId.sid() + "_" + aFile.Name)
       if err != nil {
          if !os.IsNotExist(err) { quit(err) }
          return tError(fmt.Sprintf("%s missing %s", aTid, aFile.Name))
@@ -254,21 +244,24 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.F
 }
 
 func savedAttach(iSvc string, i *Update) []tHeader2Attach {
-   aAtc := make([]tHeader2Attach, len(i.Thread.Attach))
-   for a, aObj := range i.Thread.Attach {
-      aAtc[a].Name = aObj.Name
-      if strings.HasPrefix(aObj.Name, "form_fill/") {
-         aAtc[a].Name = "r:" + aObj.Name[10:]
-         aAtc[a].Size = int64(len(i.Thread.FormFill[aObj.Name[10:]]))
-         aAtc[a].Ffn = aObj.Ffn
-      } else if strings.HasPrefix(aObj.Name, "form/") {
-         aAtc[a].Ffn = readFfnBlankForm(aObj.Name[5:])
+   aAtc := i.Thread.Attach
+   for a, aFile := range aAtc {
+      if strings.HasPrefix(aFile.Name, "form_fill/") {
+         // .Ffn from client
+         aAtc[a].Size = int64(len(i.Thread.FormFill[aFile.Name[10:]]))
+         aAtc[a].Name = "r:" + aFile.Name[10:]
+      } else if strings.HasPrefix(aFile.Name, "form/") {
+         aAtc[a].Ffn = readFfnBlankForm(aFile.Name[5:])
          if aAtc[a].Ffn == "local" {
-            aAtc[a].Ffn = getUriService(iSvc) + aObj.Name[5:]
+            aAtc[a].Ffn = getUriService(iSvc) + aFile.Name[5:]
          }
+         aAtc[a].Name = "f:" + aFile.Name[5:]
+      } else if strings.HasPrefix(aFile.Name, "upload/") {
+         aAtc[a].Name = "u:" + aFile.Name[7:]
       }
    }
-   return aAtc
+   defer func(){ i.Thread.Attach = nil }()
+   return i.Thread.Attach
 }
 
 func writeFormFillAttach(iFd *os.File, iSubHead *tHeader2, iMap map[string]string, iEl *tIndexEl) {
@@ -309,7 +302,7 @@ func updateSavedAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
    if aHasOld {
       for _, aFile := range iSubHeadOld.Attach {
          if _isFormFill(aFile.Name) { continue }
-         err = os.Remove(attachSub(iSvc, aTid) + iRec.sid() + "_" + _pathToTag(aFile.Name))
+         err = os.Remove(attachSub(iSvc, aTid) + iRec.sid() + "_" + aFile.Name)
          if err != nil && !os.IsNotExist(err) { quit(err) }
       }
       if !aHasNew {
@@ -333,8 +326,9 @@ func updateSavedAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
       }
       for _, aFile := range iSubHeadNew.Attach {
          if _isFormFill(aFile.Name) { continue }
-         err = os.Link(kStorageDir + aFile.Name,
-                       attachSub(iSvc, aTid) + iRec.sid() + "_" + _pathToTag(aFile.Name))
+         aDir := "upload/"; if _isForm(aFile.Name) { aDir = "form/" }
+         err = os.Link(kStorageDir + aDir + aFile.Name[2:],
+                       attachSub(iSvc, aTid) + iRec.sid() + "_" + aFile.Name)
          if err != nil {
             if !os.IsNotExist(err) { quit(err) }
             fmt.Fprintf(os.Stderr, "updateSavedAttach %s: %s missing\n", iSvc, aFile.Name) //todo inform user
@@ -358,7 +352,7 @@ func _isFormFill(iName string) bool {
    return strings.HasPrefix(iName, "r:")
 }
 
-func _pathToTag(i string) string {
-   return i[:1] + ":" + path.Base(i)
+func _isForm(iName string) bool {
+   return strings.HasPrefix(iName, "f:")
 }
 

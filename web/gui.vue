@@ -917,8 +917,9 @@
             if (!aAtc)
                aAtc = this.to_save(iId).Attach = [];
             aAtc.unshift({Name:iPath});
+            var aStoredName = iPath.charAt(0) +':'+ iPath.substr(iPath.indexOf('/')+1);
             var aPrev = aAtc.findIndex(function(cEl, cI) {
-               return cI > 0 && cEl.Name === iPath;
+               return cI > 0 && cEl.Name === aStoredName;
             });
             if (aPrev > 0)
                aAtc.splice(aPrev, 1);

@@ -317,9 +317,9 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aHead := Header{DataLen:int64(aData.Len()), SubHead:
                tHeader2{ThreadId:aTid, isSaved:true, For:
                []tHeaderFor{{Id:GetDataService(iSvc).Uid, Type:1}}, Attach:
-               []tHeader2Attach{{Name:"upload/trial"},
+               []tHeader2Attach{{Name:"u:trial"},
                   {Name:"r:abc", Size:80, Ffn:"localhost:8888/5X8SZWGW7MLR+4GNB1LF+P8YGXCZF4BN/abc"},
-                  {Name:"form/trial", Ffn:"form-reg.github.io/cat/trial"} }}}
+                  {Name:"f:trial", Ffn:"form-reg.github.io/cat/trial"} }}}
       aForm := map[string]string{"abc":
          `{"nr":1, "so":"s", "bd":true, "or":{ "anr":[[1,2],[1,2]], "aso":["s","s","s"] }}`}
       _writeMsgTemp(aFd, &aHead, aData, &tIndexEl{})
@@ -327,7 +327,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aFd.Close()
       os.Mkdir(attachSub(iSvc, "_22"), 0700)
       os.Link(kUploadDir + "trial", attachSub(iSvc, "_22") + "22_u:trial")
-      os.Link(kFormDir  + "trial", attachSub(iSvc, "_22") + "22_f:trial")
+      os.Link(kFormDir   + "trial", attachSub(iSvc, "_22") + "22_f:trial")
       aSrec = &SendRecord{id: string(eSrecThread) + "_22"}
    case "thread_set":
       aLastId := loadThread(iSvc, iUpdt.Thread.Id)

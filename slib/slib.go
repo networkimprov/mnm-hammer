@@ -100,7 +100,6 @@ func (o *tHeader2) setWrite(iThreadId string, i *Update, iSvc string) {
 
 func (o *tHeader2) setStore(iThreadId string) {
    o.ThreadId = iThreadId
-   o.Attach = sentAttach(o.Attach)
    o.isSaved = true
 }
 
@@ -124,7 +123,7 @@ type Update struct {
       Cc []string
       Subject string
       Data string
-      Attach []struct{ Name, Ffn string }
+      Attach []tHeader2Attach
       FormFill map[string]string
       New int8
    }
