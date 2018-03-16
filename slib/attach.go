@@ -224,6 +224,9 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.F
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
    for _, aFile := range iSubHead.Attach {
       if _isFormFill(aFile.Name) {
+         if aFile.Ffn == "" {
+            return tError(fmt.Sprintf("%s missing Ffn", aFile.Name))
+         }
          aBuf := make([]byte, aFile.Size)
          _, err = iFd.Read(aBuf)
          if err != nil { quit(err) }
