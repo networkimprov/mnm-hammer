@@ -175,17 +175,16 @@ func readFfnBlankForm(iFileName string) string {
    if !aBf.Spec {
       return "local"
    }
-   var aData map[string]interface{}
-   err := readJsonFile(&aData, kFormDir + aName + ".spec")
+   var aJson struct { Ffn string }
+   err := readJsonFile(&aJson, kFormDir + aName + ".spec")
    if err != nil {
       if os.IsNotExist(err) { quit(err) }
       return "#" + err.Error()
    }
-   aFfn, _ := aData["ffn"].(string)
-   if aFfn == "" {
+   if aJson.Ffn == "" {
       return "local"
    }
-   return aFfn
+   return aJson.Ffn
 }
 
 func _parseFileName(i string) (string, string) {
