@@ -57,6 +57,8 @@ func initServices(iFn func(string)) {
       for _, aTmp := range aTmps {
          if strings.HasPrefix(aTmp, "adrsbk_") {
             // handled above
+         } else if strings.HasPrefix(aTmp, "ffnindex_") {
+            renameRemove(tempDir(aSvc) + aTmp, attachFfn(aSvc, aTmp[9:]))
          } else if strings.HasSuffix(aTmp, ".tmp") {
             defer os.Remove(tempDir(aSvc) + aTmp)
          } else {

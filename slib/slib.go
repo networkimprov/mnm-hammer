@@ -41,6 +41,7 @@ func ohiFile  (iSvc string) string { return kServiceDir + iSvc + "/ohi"     }
 func tabFile  (iSvc string) string { return kServiceDir + iSvc + "/tabs"    }
 
 func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
+func attachFfn(iSvc, iSub string) string { return attachSub(iSvc, iSub) + "ffnindex" }
 
 var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 

@@ -26,6 +26,8 @@ type tAttachEl struct {
    Size int64
 }
 
+type tFfnIndex map[string]string
+
 func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
    aId := iState.getThread()
    if aId == "" {
@@ -37,7 +39,12 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
       return []tAttachEl{}
    }
    aSend := make([]tAttachEl, len(aList))
-   for a, aFn := range aList {
+   a := 0
+   for _, aFn := range aList {
+      if aFn == "ffnindex" {
+         aSend = aSend[:len(aSend)-1]
+         continue
+      }
       aSend[a].File = aFn
       aPair := strings.SplitN(aFn, "_", 2)
       if aId[0] == '_' {
@@ -52,6 +59,7 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
       aFi, err = os.Lstat(attachSub(iSvc, aId) + aFn)
       if err != nil { quit(err) }
       aSend[a].Size = aFi.Size()
+      a++
    }
    return aSend
 }
@@ -149,17 +157,21 @@ func storeReceivedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
       err = syncDir(attachDir(iSvc))
       if err != nil { quit(err) }
    }
-   aDoSync := false
+   aDoSync, aDoFfn := false, false
    for _, aFile := range iSubHead.Attach {
       if _isFormFill(aFile.Name) { continue }
       aDoSync = true
+      aDoFfn = aDoFfn || _isForm(aFile.Name)
       err = renameRemove(tempDir(iSvc) + iRec.mid() + "_" + aFile.Name + ".tmp",
                          attachSub(iSvc, iRec.tid()) + iRec.mid() + "_" + aFile.Name)
       if err != nil { quit(err) }
    }
    if aDoSync {
+      var aFfnIdx tFfnIndex
+      if aDoFfn { aFfnIdx = _loadFfnIndex(iSvc, iRec) }
       err = syncDir(attachSub(iSvc, iRec.tid()))
       if err != nil { quit(err) }
+      if aDoFfn { _updateFfnIndex(iSvc, iRec, aFfnIdx, iSubHead) }
    }
    _storeFormAttach(iSvc, iSubHead, iRec)
 }
@@ -190,19 +202,55 @@ func storeSentAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
       err = syncDir(attachDir(iSvc))
       if err != nil { quit(err) }
    }
-   aDoSync := false
+   aDoSync, aDoFfn := false, false
    for _, aFile := range iSubHead.Attach {
       if _isFormFill(aFile.Name) { continue }
       aDoSync = true
+      aDoFfn = aDoFfn || _isForm(aFile.Name)
       err = renameRemove(attachSub(iSvc, iRec.tid()) + iRec.sid() + "_" + aFile.Name,
                          attachSub(iSvc, iRec.tid()) + iRec.mid() + "_" + aFile.Name)
       if err != nil { quit(err) }
    }
    if aDoSync {
+      var aFfnIdx tFfnIndex
+      if aDoFfn { aFfnIdx = _loadFfnIndex(iSvc, iRec) }
       err = syncDir(attachSub(iSvc, iRec.tid()))
       if err != nil { quit(err) }
+      if aDoFfn { _updateFfnIndex(iSvc, iRec, aFfnIdx, iSubHead) }
    }
    _storeFormAttach(iSvc, iSubHead, iRec)
+}
+
+func _loadFfnIndex(iSvc string, iRec tComplete) tFfnIndex {
+   // expects to be followed by syncDir(attachSub(iSvc, iRec.tid()))
+   var aIdx tFfnIndex
+   aPath := attachFfn(iSvc, iRec.tid())
+   err := readJsonFile(&aIdx, aPath)
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+      err = os.Symlink("placeholder", aPath)
+      if err != nil && !os.IsExist(err) { quit(err) }
+      aIdx = make(tFfnIndex)
+   }
+   return aIdx
+}
+
+func _updateFfnIndex(iSvc string, iRec tComplete, iIdx tFfnIndex, iSubHead *tHeader2) {
+   for _, aFile := range iSubHead.Attach {
+      if !_isForm(aFile.Name) { continue }
+      iIdx[iRec.mid() + "_" + aFile.Name] = aFile.Ffn
+   }
+   var err error
+   aTemp := tempDir(iSvc) + "ffnindex_" + iRec.tid()
+   aPath := attachFfn(iSvc, iRec.tid())
+   err = writeJsonFile(aTemp, iIdx)
+   if err != nil { quit(err) }
+   err = syncDir(tempDir(iSvc))
+   if err != nil { quit(err) }
+   err = os.Remove(aPath)
+   if err != nil { quit(err) }
+   err = os.Rename(aTemp, aPath)
+   if err != nil { quit(err) }
 }
 
 func _storeFormAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
