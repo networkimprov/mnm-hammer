@@ -1047,12 +1047,15 @@
             if (fDiff(aOrig, 'Cc'))     aOrig.Cc     = aEtcSubHead.Cc;
             if (fDiff(aOrig, 'Attach')) aOrig.Attach = aEtcSubHead.Attach;
          }
-         function fDiff(cO, c) { return !(
-            !cO[c]        && !aEtcSubHead[c]        ||
-             cO[c]        &&  aEtcSubHead[c]        &&
-             cO[c].length === aEtcSubHead[c].length &&
-           (!cO[c].length                           ||
-             cO[c][0]     === aEtcSubHead[c][0]     )); //todo need full comparison?
+         function fDiff(cO, c) {
+            if ( cO[c]         === aEtcSubHead[c])         return false;
+            if (!cO[c]         || !aEtcSubHead[c])         return true;
+            if ( cO[c].length  !== aEtcSubHead[c].length)  return true;
+            if ( cO[c].length  === 0)                      return false;
+            if (c === 'Cc'
+               ? cO[c][0]      === aEtcSubHead[c][0]
+               : cO[c][0].Name === aEtcSubHead[c][0].Name) return false; //todo full comparison?
+            return true;
          }
          break;
       }
