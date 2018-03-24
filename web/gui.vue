@@ -108,7 +108,8 @@
                                        :msgid="aMsg.Id" :drop="ccDrop"></mnm-draftmenu>
                         <mnm-draftmenu :list="(toSave[aMsg.Id] || mo[aMsg.Id].SubHead).Attach"
                                        :msgid="aMsg.Id" :drop="atcDrop"
-                                       :getname="atcGetName" :style="{float:'right'}"></mnm-draftmenu>
+                                       :getname="atcGetName" :getkey="atcGetKey"
+                                       :style="{float:'right'}"></mnm-draftmenu>
                      </div>
                   </div>
                   <div style="float:right; margin-top:-1.7em;">
@@ -316,7 +317,7 @@
 <script type="text/x-template" id="mnm-draftmenu">
    <div v-show="list && list.length > 0"
         @click="draftMenu" class="draft-hiddn draft-menu">
-      <span v-for="(aEl, aI) in list" :key="getname ? getname(aEl) : aEl">
+      <span v-for="(aEl, aI) in list" :key="getkey ? getkey(aEl) : aEl">
          {{getname ? getname(aEl) : aEl}}
          <div v-if="aI === 0 && list.length > 1"
               class="menu-v">&#x25BC;</div>
@@ -327,7 +328,7 @@
 </script><script>
    Vue.component('mnm-draftmenu', {
       template: '#mnm-draftmenu',
-      props: ['msgid', 'list', 'drop', 'getname'],
+      props: ['msgid', 'list', 'drop', 'getname', 'getkey'],
       watch: {
          list: function() {
             // show menu if changed by any client
@@ -930,6 +931,7 @@
          ccDrop:  function(iId, iN) { this.to_save(iId).Cc    .splice(iN, 1) },
          atcDrop: function(iId, iN) { this.to_save(iId).Attach.splice(iN, 1) },
          atcGetName: function(iEl) { return iEl.Name },
+         atcGetKey:  function(iEl) { return iEl.Name },
       },
       computed: {
          mnm:       function() { return mnm },
