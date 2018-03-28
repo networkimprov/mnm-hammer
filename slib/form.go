@@ -173,7 +173,7 @@ func readFfnBlankForm(iFileName string) string {
       return ""
    }
    if !aBf.Spec {
-      return "local"
+      return "local/" + aName
    }
    var aJson struct { Ffn string }
    err := readJsonFile(&aJson, kFormDir + aName + ".spec")
@@ -182,7 +182,7 @@ func readFfnBlankForm(iFileName string) string {
       return "#" + err.Error()
    }
    if aJson.Ffn == "" {
-      return "local"
+      return "local/" + aName
    }
    return aJson.Ffn
 }
@@ -218,11 +218,11 @@ func _insertBlank(iName, iRev string, iDate string) {
 }
 
 func GetPathFilledForm(iSvc string, iFfn string) string {
-   return formDir(iSvc) + _ffnFileName(iSvc, iFfn) // suffix appended by client
+   return formDir(iSvc) + _ffnFileName(iFfn) // suffix appended by client
 }
 
 func GetRecordFilledForm(iSvc string, iFfn, iMsgId string) Msg {
-   aFd, err := os.Open(formDir(iSvc) + _ffnFileName(iSvc, iFfn))
+   aFd, err := os.Open(formDir(iSvc) + _ffnFileName(iFfn))
    if err != nil { quit(err) }
    defer aFd.Close()
    aData := []Msg{}
@@ -330,7 +330,7 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    defer aFd.Close()
 
    var aFi os.FileInfo
-   aFi, err = os.Lstat(formDir(iSvc) + _ffnFileName(iSvc, iFile.Ffn) + iSuffix)
+   aFi, err = os.Lstat(formDir(iSvc) + _ffnFileName(iFile.Ffn) + iSuffix)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos := int64(2); if err == nil { aPos = aFi.Size() }
    _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x", aPos, aPos))) // 2 copies for safety
@@ -373,7 +373,7 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
       quit(tError(fmt.Sprintf("position values do not match in %s", aFn)))
       //todo recovery instructions
    }
-   aPath := formDir(iSvc) + _ffnFileName(iSvc, iFile.Ffn) + iSuffix
+   aPath := formDir(iSvc) + _ffnFileName(iFile.Ffn) + iSuffix
    _, err = os.Lstat(aPath)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aDoSync := err != nil
@@ -398,12 +398,7 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
    return aDoSync
 }
 
-func _ffnFileName(iSvc, iFfn string) string {
-   aUri := getUriService(iSvc)
-   if strings.HasPrefix(iFfn, aUri) {
-      return iFfn[len(aUri):]
-   } else {
-      return strings.Replace(iFfn, "/", "@", -1)
-   }
+func _ffnFileName(iFfn string) string {
+   return strings.Replace(iFfn, "/", "@", -1)
 }
 

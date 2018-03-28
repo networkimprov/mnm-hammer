@@ -315,6 +315,14 @@ func savedAttach(iSvc string, i *Update) []tHeader2Attach {
    return i.Thread.Attach
 }
 
+func _lookupFfn(iSvc string, iName string) string {
+   aFfn := readFfnBlankForm(iName)
+   if strings.HasPrefix(aFfn, "local/") {
+      aFfn = getUriService(iSvc) + aFfn[6:]
+   }
+   return aFfn
+}
+
 func writeFormFillAttach(iFd *os.File, iSubHead *tHeader2, iMap map[string]string, iEl *tIndexEl) {
    var err error
    aCw := tCrcWriter{sum:iEl.Checksum}
