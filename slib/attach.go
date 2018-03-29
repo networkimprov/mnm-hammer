@@ -74,7 +74,9 @@ func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) int64 {
    var aTotal int64
 
    for a, aFile := range iSubHead.Attach {
-      if aFile.Size == 0 {
+      if _isFormFill(aFile.Name) {
+         iSubHead.Attach[a].FfKey = ""
+      } else {
          aFi, err := os.Lstat(aPrefix + aFile.Name)
          if err != nil { quit(err) }
          iSubHead.Attach[a].Size = aFi.Size()
@@ -294,21 +296,29 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.F
    return nil
 }
 
-func savedAttach(iSvc string, i *Update) []tHeader2Attach {
+func savedAttach(iSvc string, iTid string, i *Update) []tHeader2Attach {
    aAtc := i.Thread.Attach
    for a, aFile := range aAtc {
       if strings.HasPrefix(aFile.Name, "form_fill/") {
-         // .Ffn from client
-         aAtc[a].Size = int64(len(i.Thread.FormFill[aFile.Name[10:]]))
+         if aFile.FfKey[12:15] == "_f:" { //todo codify
+            aAtc[a].Ffn = _lookupFfn(iSvc, aFile.FfKey[15:])
+         } else {
+            var aIdx tFfnIndex
+            err := readJsonFile(&aIdx, attachFfn(iSvc, iTid))
+            if err != nil && !os.IsNotExist(err) { quit(err) }
+            if err == nil {
+               aAtc[a].Ffn = aIdx[aFile.FfKey]
+            }
+         }
          aAtc[a].Name = "r:" + aFile.Name[10:]
       } else if strings.HasPrefix(aFile.Name, "form/") {
-         aAtc[a].Ffn = readFfnBlankForm(aFile.Name[5:])
-         if aAtc[a].Ffn == "local" {
-            aAtc[a].Ffn = getUriService(iSvc) + aFile.Name[5:]
-         }
+         aAtc[a].Ffn = _lookupFfn(iSvc, aFile.Name[5:])
          aAtc[a].Name = "f:" + aFile.Name[5:]
       } else if strings.HasPrefix(aFile.Name, "upload/") {
          aAtc[a].Name = "u:" + aFile.Name[7:]
+      }
+      if _isFormFill(aAtc[a].Name) {
+         aAtc[a].Size = int64(len(i.Thread.FormFill[aFile.FfKey]))
       }
    }
    defer func(){ i.Thread.Attach = nil }()
@@ -335,15 +345,15 @@ func writeFormFillAttach(iFd *os.File, iSubHead *tHeader2, iMap map[string]strin
          _, err = iFd.Seek(-1, io.SeekCurrent) // overwrite '\n'
          if err != nil { quit(err) }
       }
-      aS := []byte(iMap[aFile.Name[2:]])
-      if int64(len(aS)) != aFile.Size || aFile.Size <= 0 {
-         quit(tError("empty or mis-sized " + aFile.Name))
+      aS := []byte(iMap[aFile.FfKey])
+      if len(aS) == 0 {
+         quit(tError("empty " + aFile.FfKey))
       }
       err = json.Unmarshal(aS, &struct{}{})
       if err != nil { quit(err) }
       _, err = aTee.Write(aS)
       if err != nil { quit(err) }
-      iEl.Size += aFile.Size
+      iEl.Size += int64(len(aS))
       iEl.Checksum = aCw.sum
    }
    if iEl.Size > aSize {

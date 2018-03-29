@@ -320,7 +320,8 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
                tHeader2{ThreadId:aTid, isSaved:true, For:
                []tHeaderFor{{Id:GetDataService(iSvc).Uid, Type:1}}, Attach:
                []tHeader2Attach{{Name:"u:trial"},
-                  {Name:"r:abc", Size:80, Ffn:"localhost:8888/5X8SZWGW7MLR+4GNB1LF+P8YGXCZF4BN/abc"},
+                  {Name:"r:abc", Size:80, FfKey:"abc",
+                   Ffn:"localhost:8888/5X8SZWGW7MLR+4GNB1LF+P8YGXCZF4BN/abc"},
                   {Name:"f:trial.original", Ffn:"form-reg.github.io/cat/trial"} }}}
       aForm := map[string]string{"abc":
          `{"nr":1, "so":"s", "bd":true, "or":{ "anr":[[1,2],[1,2]], "aso":["s","s","s"] }}`}

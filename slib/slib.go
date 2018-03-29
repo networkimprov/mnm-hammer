@@ -87,6 +87,7 @@ type tHeader2Attach struct {
    Name string
    Size int64 `json:",omitempty"`
    Ffn string `json:",omitempty"`
+   FfKey string `json:",omitempty"` // only in draft
 }
 
 func (o *tHeader2) setWrite(iThreadId string, i *Update, iSvc string) {
@@ -95,7 +96,7 @@ func (o *tHeader2) setWrite(iThreadId string, i *Update, iSvc string) {
    o.Cc = i.Thread.Cc
    o.For = lookupAdrsbk(iSvc, o.Cc)
    o.Subject = i.Thread.Subject
-   o.Attach = savedAttach(iSvc, i)
+   o.Attach = savedAttach(iSvc, iThreadId, i)
    o.isSaved = true
 }
 
