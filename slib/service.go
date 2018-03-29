@@ -349,21 +349,22 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if c == iState { return aResult }
             return aResult[:1]
          }
+         aResult = []string{"tl", "cs", "al", "ml", "mo"}
       } else if iUpdt.Thread.New == eNewReply {
          iState.openMsg(iUpdt.Thread.Id, true)
          aTid := iState.getThread()
          aFn = func(c *ClientState) interface{} {
-            if c.getThread() == aTid { return aResult[2:] }
+            if c.getThread() == aTid { return aResult }
             return nil
          }
+         aResult = []string{"al", "ml", "mo"}
       } else { // may update msg from a threadid other than iState.getThread()
          aFn = func(c *ClientState) interface{} {
-            if c == iState { return []string{"al"} }
-            if c.isOpen(iUpdt.Thread.Id) { return []string{"al", "mn", iUpdt.Thread.Id} }
+            if c.isOpen(iUpdt.Thread.Id) { return aResult }
             return nil
          }
+         aResult = []string{"al", "mn", iUpdt.Thread.Id}
       }
-      aResult = []string{"tl", "cs", "al", "ml", "mo"}
    case "thread_discard":
       deleteSavedThread(iSvc, iUpdt)
       aTid := iState.getThread()
