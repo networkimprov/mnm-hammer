@@ -135,22 +135,28 @@
             return;
          }
          var aMap = {};
-         for (var a=0; a < aXhr.responseText.length; ) {
+         for (var a=0; a < aXhr.responseText.length; ++a) {
             var aHeadLen = parseInt(aXhr.responseText.substr(a, 4), 16);
             var aHead = JSON.parse(aXhr.responseText.substr(a+4, aHeadLen));
             aHead.msg_data = aXhr.responseText.substr(a+4+aHeadLen+1, aHead.Len);
+            a += 4 + aHeadLen + 1 + aHead.Len;
+            if (aHead.From === 'self' && aHead.SubHead.Attach) {
+               aHead.form_fill = null;
+               var aFormFill = {};
+               var aAtc = aHead.SubHead.Attach;
+               for (var aA=0; aA < aAtc.length; ++aA) {
+                  if (!/^r:/.test(aAtc[aA].Name))
+                     continue;
+                  aFormFill[aAtc[aA].FfKey] = aXhr.responseText.substr(a, aAtc[aA].Size);
+                  a += aAtc[aA].Size;
+                  aHead.form_fill = aFormFill;
+               }
+            }
             if (i === 'mn') {
                mnm.Render(i, aXhr.responseText, aHead);
                return;
             }
             aMap[aHead.Id] = aHead;
-            a += 4 + aHeadLen + aHead.Len + 2;
-            if (aHead.From === 'self' && aHead.SubHead.Attach) {
-               var aAtc = aHead.SubHead.Attach;
-               for (var aA=0; aA < aAtc.length; ++aA)
-                  if (aAtc[aA].Name.charAt(0) === 'r')
-                     a += aAtc[aA].Size;
-            }
          }
          mnm.Render(i, aXhr.responseText, aMap);
       };
