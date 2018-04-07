@@ -119,9 +119,14 @@
                      <div uk-dropdown="mode:click; pos:right-top" class="uk-width-2-5"
                           style="overflow:auto; max-height:75vh;
                                  border-top:1em solid white; border-bottom:1em solid white;">
-                        <mnm-markdown :src="aMsg.Id in toSave ? toSave[aMsg.Id].Data
+                        <mnm-markdown @formfill="ffAdd(aMsg.Id, arguments[0], arguments[1])"
+                                      @attach="atcAdd(aMsg.Id, arguments[0], arguments[1])"
+                                      @detach="atcDropName(aMsg.Id, arguments[0], arguments[1])"
+                                      :src="aMsg.Id in toSave ? toSave[aMsg.Id].Data
                                                               : mo[aMsg.Id].msg_data"
-                                      :msgid="aMsg.Id.substr(-12)"></mnm-markdown></div>
+                                      :formfill="aMsg.Id in toSave ? toSave[aMsg.Id].FormFill
+                                                                   : mo[aMsg.Id].form_fill"
+                                      :atchasff="atcHasFf" :msgid="aMsg.Id"></mnm-markdown></div>
                   </div>
                   <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
                                   @keypress.native="keyAction('pv_'+aMsg.Id, $event)"
@@ -131,7 +136,8 @@
                <div v-else-if="!mo[aMsg.Id].msg_data"
                     class="uk-text-center"><span uk-icon="comment"></span></div>
                <mnm-markdown v-else
-                             :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"></mnm-markdown>
+                             :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"
+                             :formreply="{alias:cf.Alias, cc:[], data:''}"></mnm-markdown>
             </template>
          </li></ul>
       <br/><div id="log"></div>
@@ -376,54 +382,112 @@
 </script>
 
 <script type="text/x-template" id="mnm-markdown">
-   <div class="message" v-html="mdi.render(src, $data)"></div>
+   <div class="message" v-html="mdi.render(src, env)"></div>
 </script><script>
    Vue.component('mnm-markdown', {
       template: '#mnm-markdown',
-      props: ['src', 'msgid'],
-      data: function() {
-         return { msgId:this.msgid, formview:null }; // formview fields not reactive
+      props: ['src', 'msgid', 'formfill', 'formreply', 'atchasff'],
+      computed: {
+         mdi: function() { return mnm._mdi },
       },
-      computed: { mdi: function() { return mnm._mdi } },
-      mounted:       function() { if (this.formview) this.formview.remount() },
-      updated:       function() { if (this.formview) this.formview.remount() },
-      beforeDestroy: function() { if (this.formview) this.formview.destroy() },
+      watch: {
+         formfill: { deep: true, handler:
+            function(iMap) {
+               for (var a in iMap)
+                  Vue.set(this.env.fillMap, a, iMap[a]);
+            }
+         },
+      },
+      created: function() {
+         this.formDefBad = {fields:[ {type:"label",label:"file not found or invalid"} ]};
+         this.env = { thisVal:this.formreply ? this.msgid : this.msgid.substr(-12),
+                      fillMap:{}, parent:this, formview:null };
+         if (this.formfill)
+            for (var a in this.formfill)
+               Vue.set(this.env.fillMap, a, this.formfill[a]);
+      },
+      mounted:       function() { if (this.env.formview) this.env.formview.remount() },
+      updated:       function() { if (this.env.formview) this.env.formview.remount() },
+      beforeDestroy: function() { if (this.env.formview) this.env.formview.destroy() },
    });
 </script>
 
 <script type="text/x-template" id="mnm-formview">
    <div>
-      <plugin-vfg :schema="formDef" :model="{}" :options="{}"></plugin-vfg>
+      <div class="uk-clearfix">
+         <label v-if="!parent.formreply">
+            <input type="checkbox" @click="fillAttach" :checked="atcHasFf"
+                   :disabled="formDef === parent.formDefBad">
+            attach fill</label>
+         <button @click="startReply" :disabled="!parent.formreply"
+                 style="padding:0; display:inline-block; float:right">
+            <span uk-icon="commenting"></span></button>
+      </div>
+      <plugin-vfg :schema="formDef" :model="formState" :options="{}"></plugin-vfg>
    </div>
 </script><script>
    Vue.component('mnm-formview', {
       template: '#mnm-formview',
-      props: ['file'],
-      data: function() { return {} },
+      props: ['file', 'fillMap', 'parent'],
+      data: function() {
+         return { formState: JSON.parse(this.fillMap[this.file] || '{}') };
+      },
       computed: {
          formDef: function() {
-            if (!this.file)
-               try { return JSON.parse(mnm._data.fo) } catch(a) { return {} }
             try {
                return this.file in mnm._data.ao ? JSON.parse(mnm._data.ao[this.file]) : {};
             } catch(a) {
-               return {fields:[ {type:"label",label:"file not found or invalid"} ]};
+               return this.parent.formDefBad;
             }
          },
-         mnm: function() { return mnm },
+         atcHasFf: function() {
+            return this.parent.atchasff(this.parent.msgid, this.file);
+         },
+         fill: function() {
+            this.formState = JSON.parse(this.fillMap[this.file]);
+            return 0;
+         },
+      },
+      methods: {
+         fillAttach: function(iEvent) {
+            this.parent.$emit(iEvent.target.checked ? 'attach' : 'detach', this.fill_name(), this.file);
+         },
+         startReply: function() {
+            var aReply = JSON.parse(JSON.stringify(this.parent.formreply));
+            aReply.data += '![?]('+ this.file +')';
+            aReply.attach = [ {Name:this.fill_name(), FfKey:this.file, Ffn:''} ];
+            aReply.formFill = {};
+            aReply.formFill[this.file] = '{}';
+            mnm.ThreadReply(aReply);
+         },
+         fill_name: function() {
+            return 'form_fill/'+ this.file.substr(this.file.indexOf('_')+3);
+         },
+      },
+      watch: {
+         formState: { deep: true, handler:
+            function(iVal) {
+               this.parent.$emit('formfill', this.file, JSON.stringify(iVal));
+            }
+         },
       },
       components: { 'plugin-vfg': VueFormGenerator.component },
    });
 
-   mnm._FormViews = function() {
+   mnm._FormViews = function(iEnv) {
+      this.env = iEnv;
       this.comp = {};
    };
    mnm._FormViews.prototype.make = function(iKey) {
-      if (iKey in this.comp)
+      if (iKey in this.comp) {
+         if (this.comp[iKey][0].formDef === this.env.parent.formDefBad)
+            mnm.AttachOpen(iKey);
          return;
+      }
       mnm.AttachOpen(iKey);
-      this.comp[iKey] =
-         [ new (Vue.component('mnm-formview'))({ propsData: { file: iKey } }), null ];
+      this.comp[iKey] = [ new (Vue.component('mnm-formview'))({
+         propsData: { file:iKey, fillMap:this.env.fillMap, parent:this.env.parent },
+      }), null ];
    };
    mnm._FormViews.prototype.remount = function() {
       for (var a in this.comp) {
@@ -544,8 +608,8 @@
                   <span uk-icon="file-edit"></span></button>
                <div style="font-size:smaller; text-align:right">&nbsp;{{parseError}}</div>
                <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
-                  <div class="pane-scroller">
-                     <mnm-formview style="min-height:1px"></mnm-formview></div>
+                  <div class="pane-scroller" style="min-height:1px">
+                     <plugin-vfg :schema="formDef" :model="{}" :options="{}"></plugin-vfg></div>
                   <div class="pane-scroller">
                      <mnm-textresize @input.native="mnm._data.fo=$event.target.value"
                                      :src="mnm._data.fo"
@@ -574,6 +638,10 @@
       computed: {
          sort: function() { return mnm._data.sort[this.list] },
          mnm: function() { return mnm },
+         formDef: function() {
+            try { return JSON.parse(mnm._data.fo) }
+            catch(a) { return {fields:[ {type:"label", label:"code incorrect"} ]} }
+         },
          parseError: function() {
             try { JSON.parse(mnm._data.fo) }
             catch(aErr) { return aErr.message.slice(12,-17) }
@@ -633,6 +701,7 @@
             });
          },
       },
+      components: { 'plugin-vfg': VueFormGenerator.component },
    });
 </script>
 
@@ -890,8 +959,9 @@
          to_save: function(iId) {
             if (!(iId in mnm._data.toSave)) {
                var aMo = mnm._data.mo[iId];
-               sApp.$set(mnm._data.toSave, iId, {Alias:aMo.SubHead.Alias, Cc:aMo.SubHead.Cc,
-                         Attach:aMo.SubHead.Attach, Data:aMo.msg_data, Id:iId});
+               Vue.set(mnm._data.toSave, iId, {Id:iId,
+                       Alias:aMo.SubHead.Alias, Cc:aMo.SubHead.Cc, Attach:aMo.SubHead.Attach,
+                       Data:aMo.msg_data, FormFill:aMo.form_fill});
             }
             if (!mnm._data.toSave[iId].timer)
                mnm._data.toSave[iId].timer = setTimeout(fDing, 2000, mnm._data.toSave[iId]);
@@ -913,17 +983,39 @@
                aCc.splice(aPrev, 1);
             iWidget.value = '';
          },
-         atcAdd: function(iId, iPath) {
+         atcAdd: function(iId, iPath, iFfKey) {
             var aAtc = this.to_save(iId).Attach;
             if (!aAtc)
                aAtc = this.to_save(iId).Attach = [];
-            aAtc.unshift({Name:iPath});
-            var aStoredName = iPath.charAt(0) +':'+ iPath.substr(iPath.indexOf('/')+1);
-            var aPrev = aAtc.findIndex(function(cEl, cI) {
-               return cI > 0 && cEl.Name === aStoredName;
+            if (this.atcDropName(iId, iPath, iFfKey) === 'r:')
+               this.ffAdd(iId, iFfKey);
+            aAtc.unshift({Name:iPath, FfKey:iFfKey});
+         },
+         atcDropName: function(iId, iPath, iFfKey) {
+            var aAtc = this.to_save(iId).Attach;
+            var aPrefix = /^upload/.test(iPath) ? 'u:' : /^form_fill/.test(iPath) ? 'r:' : 'f:';
+            var aStoredName = iPath.replace(/^[^/]*\//, aPrefix);
+            var aPrev = aAtc.findIndex(function(c) {
+               return iFfKey ? c.FfKey === iFfKey : c.Name === aStoredName;
             });
-            if (aPrev > 0)
+            if (aPrev >= 0)
                aAtc.splice(aPrev, 1);
+            return aPrefix;
+         },
+         atcHasFf: function(iId, iFfKey) {
+            var aAtc = (mnm._data.toSave[iId] || mnm._data.mo[iId].SubHead).Attach;
+            return !! (aAtc && aAtc.find(function(c) { return c.FfKey === iFfKey }));
+         },
+         ffAdd: function(iId, iFfKey, iText) {
+            var aFf = this.to_save(iId).FormFill;
+            if (!iText) {
+               if (aFf && iFfKey in aFf)
+                  return;
+               iText = '{}';
+            }
+            if (!aFf)
+               aFf = this.to_save(iId).FormFill = {};
+            Vue.set(aFf, iFfKey, iText);
          },
          textAdd: function(iId, iText) {
             this.to_save(iId).Data = iText;
@@ -931,7 +1023,7 @@
          ccDrop:  function(iId, iN) { this.to_save(iId).Cc    .splice(iN, 1) },
          atcDrop: function(iId, iN) { this.to_save(iId).Attach.splice(iN, 1) },
          atcGetName: function(iEl) { return iEl.Name },
-         atcGetKey:  function(iEl) { return iEl.Name },
+         atcGetKey:  function(iEl) { return iEl.FfKey || iEl.Name },
       },
       computed: {
          mnm:       function() { return mnm },
@@ -957,7 +1049,7 @@
    mnm._mdi.renderer.rules.link_open = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       var aHref = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('href')];
       if (!sUrlStart.test(aHref[1])) {
-         var aParam = aHref[1].replace(/^this_/, iEnv.msgId+'_');
+         var aParam = aHref[1].replace(/^this_/, iEnv.thisVal+'_');
          aHref[1] = '?an=' + encodeURIComponent(aParam);
       }
       return iSelf.renderToken(iTokens, iIdx, iOptions);
@@ -967,10 +1059,10 @@
    mnm._mdi.renderer.rules.image = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       var aAlt = iSelf.renderInlineAsText(iTokens[iIdx].children, iOptions, iEnv);
       var aSrc = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('src')];
-      var aParam = aSrc[1].replace(/^this_/, iEnv.msgId+'_');
+      var aParam = aSrc[1].replace(/^this_/, iEnv.thisVal+'_');
       if (aAlt.charAt(0) === '?') {
          if (!iEnv.formview)
-            iEnv.formview = new mnm._FormViews;
+            iEnv.formview = new mnm._FormViews(iEnv);
          iEnv.formview.make(aParam);
          return '<component'+ iSelf.renderAttrs({attrs:[['id',aParam]]}) +'></component>';
       }
@@ -1036,19 +1128,33 @@
       case 'mn':
          // avoid opening Cc & Attach menus if not changed
          var aEtcSubHead = {Cc: iEtc.SubHead.Cc, Attach: iEtc.SubHead.Attach};
+         var aFfMo, aFfTo;
          var aOrig = mnm._data.mo[iEtc.Id] && mnm._data.mo[iEtc.Id].SubHead;
          if (aOrig) {
             if (!fDiff(aOrig, 'Cc'    )) iEtc.SubHead.Cc     = aOrig.Cc;
             if (!fDiff(aOrig, 'Attach')) iEtc.SubHead.Attach = aOrig.Attach;
+            aFfMo = mnm._data.mo[iEtc.Id].form_fill;
          }
-         sApp.$set(mnm._data.mo, iEtc.Id, iEtc); //todo set ml Date
          var aOrig = mnm._data.toSave[iEtc.Id];
          if (aOrig) {
-            aOrig.Alias = iEtc.SubHead.Alias;
-            aOrig.Data = iEtc.msg_data;
             if (fDiff(aOrig, 'Cc'))     aOrig.Cc     = aEtcSubHead.Cc;
             if (fDiff(aOrig, 'Attach')) aOrig.Attach = aEtcSubHead.Attach;
+            aFfTo = aOrig.FormFill;
+            aOrig.Alias = iEtc.SubHead.Alias;
+            aOrig.Data = iEtc.msg_data;
          }
+         var aOrig = aFfMo || aFfTo;
+         if (aOrig) {
+            if (!iEtc.form_fill)
+               iEtc.form_fill = {};
+            for (var aK in aOrig)
+               if (!(aK in iEtc.form_fill))
+                  aOrig[aK] = '{}';
+            for (var aK in iEtc.form_fill)
+               Vue.set(aOrig, aK, iEtc.form_fill[aK]);
+            iEtc.form_fill = aOrig;
+         }
+         Vue.set(mnm._data.mo, iEtc.Id, iEtc); //todo set ml Date
          function fDiff(cO, c) {
             if ( cO[c]         === aEtcSubHead[c])         return false;
             if (!cO[c]         || !aEtcSubHead[c])         return true;
