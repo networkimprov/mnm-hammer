@@ -14,6 +14,22 @@ input[type=text] {
    font-size: larger;
 }
 
+.dropdown-scroll {
+   padding: 1em;
+   padding-right: 0;
+}
+
+.dropdown-scroll-item {
+   padding-right: 1em;
+}
+
+.dropdown-scroll-list {
+   overflow-y: scroll;
+   max-height: 75vh;
+   padding-right: 1em;
+   margin: 0; /* override uk-list default */
+}
+
 .message {
    overflow-x: auto;
    overflow-wrap: break-word;
