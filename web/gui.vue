@@ -263,14 +263,14 @@
 </div>
 
 <script type="text/x-template" id="mnm-attach">
-   <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3">
+   <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3 dropdown-scroll">
       <ul uk-tab>
          <!-- todo Date -->
          <li v-for="aKey in ['Size','Name']"
              :class="{'uk-active': aKey === sort}">
             <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
          </li></ul>
-      <ul class="uk-list uk-list-divider">
+      <ul class="uk-list uk-list-divider dropdown-scroll-list">
          <li v-for="aFile in data" :key="aFile.File">
             <a @click.prevent="" href="#"><span uk-icon="mail"></span></a>
             2018-01-17T04:16:57Z{{aFile.Date}} &nbsp;
@@ -506,10 +506,11 @@
 </script>
 
 <script type="text/x-template" id="mnm-files">
-   <div uk-dropdown="mode:click; offset:2" :toggle="toggle" class="uk-width-1-3">
+   <div uk-dropdown="mode:click; offset:2" :toggle="toggle" class="uk-width-1-3 dropdown-scroll">
       <form :action="'/'+list+'/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
-            onsubmit="mnm.Upload(this); this.reset(); return false;">
+            onsubmit="mnm.Upload(this); this.reset(); return false;"
+            class="dropdown-scroll-item">
          <div class="uk-float-right uk-text-small">ATTACHABLE FILES</div>
          <input @input="vis = !!(upname = $event.target.value.substr(12))" type="file"
                 name="filename" required>
@@ -526,7 +527,7 @@
              :class="{'uk-active': aKey === sort}">
             <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
          </li></ul>
-      <ul class="uk-list uk-list-divider uk-overflow-auto" style="max-height:75vh; margin:0">
+      <ul class="uk-list uk-list-divider dropdown-scroll-list">
          <li v-for="aFile in data" :key="aFile.Name">
             {{aFile.Date}}
             <button v-if="toggle"
@@ -557,11 +558,12 @@
 </script>
 
 <script type="text/x-template" id="mnm-forms">
-   <div uk-dropdown="mode:click; offset:2" :toggle="toggle" class="uk-width-1-3"
+   <div uk-dropdown="mode:click; offset:2" :toggle="toggle" class="uk-width-1-3 dropdown-scroll"
         @hidden="revClose" @click="revClose">
       <form :action="'/'+list+'/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
-            onsubmit="mnm.Upload(this); this.reset(); return false;">
+            onsubmit="mnm.Upload(this); this.reset(); return false;"
+            class="dropdown-scroll-item">
          <div class="uk-float-right uk-text-small">ATTACHABLE FORMS</div>
          <input type="hidden" name="filename" value='{}'>
          <input v-model="upname" type="text" size="24" placeholder="New Type">
@@ -574,7 +576,7 @@
             <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
          </li></ul>
       <div style="position:relative"><!--context for rev card-->
-         <ul class="uk-list uk-list-divider uk-overflow-auto" style="max-height:75vh; margin:0">
+         <ul class="uk-list uk-list-divider dropdown-scroll-list">
             <template v-for="aSet in data">
             <li v-for="aFile in aSet.Revs" :key="aSet.Name+'.'+aFile.Id">
                {{aFile.Date}}
@@ -723,12 +725,12 @@
 </script>
 
 <script type="text/x-template" id="mnm-adrsbk">
-   <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-2-5">
-      <ul uk-tab class="uk-child-width-expand" style="margin-top:0">
+   <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-2-5 dropdown-scroll">
+      <ul uk-tab style="margin-top:0">
          <li v-for="aName in ['pings','invites','drafts','pinged','invited','groups','ohi to']">
-            <a @click.prevent="" href="#" style="padding:0; cursor:default">{{aName}}</a>
+            <a @click.prevent="" href="#" style="cursor:default">{{aName}}</a>
          </li></ul>
-      <ul class="uk-switcher" style="max-height:50vh; overflow-y:auto">
+      <ul class="uk-switcher dropdown-scroll-list">
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>From</th><th>Message</th><th>Response</th></tr>
