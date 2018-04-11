@@ -948,11 +948,11 @@
          },
          msgToggle: function(iId) {
             if (!(iId in mnm._data.mo)) {
-               this.$set(mnm._data.mo, iId, {});
+               Vue.set(mnm._data.mo, iId, {});
                mnm.ThreadOpen(iId);
             } else {
                mnm.ThreadClose(iId);
-               this.$delete(mnm._data.mo, iId);
+               Vue.delete(mnm._data.mo, iId);
             }
          },
          keyAction: function(iId, iEvent) {
@@ -1147,18 +1147,18 @@
          }
          break;
       case 'an':
-         sApp.$set(mnm._data.ao, iEtc, iData)
+         Vue.set(mnm._data.ao, iEtc, iData)
          break;
       case 'mo':
          for (var aK in mnm._data.mo)
             if (!(aK in iEtc))
-               sApp.$delete(mnm._data.mo, aK);
+               Vue.delete(mnm._data.mo, aK);
          for (var aK in mnm._data.toSave)
             if (!(aK in iEtc))
-               sApp.$delete(mnm._data.toSave, aK);
+               Vue.delete(mnm._data.toSave, aK);
          for (var aK in iEtc)
             if (!(aK in mnm._data.mo))
-               sApp.$set(mnm._data.mo, aK, iEtc[aK]);
+               Vue.set(mnm._data.mo, aK, iEtc[aK]);
          break;
       case 'mn':
          // avoid opening Cc & Attach menus if not changed
