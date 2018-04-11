@@ -602,7 +602,8 @@
                   method="POST" enctype="multipart/form-data"
                   onsubmit="mnm.Upload(this); return false;"
                   style="margin-top:-1.5em" class="pane-clip">
-               <span @click="codeShow = !codeShow" style="cursor:default">{...}</span>
+               <span @click="codeShow = !codeShow"
+                     class="uk-link">{...}</span>
                <button :disabled="!!parseError" style="padding:0">
                   <span uk-icon="file-edit"></span></button>
                <div style="font-size:smaller; text-align:right">&nbsp;{{parseError}}</div>
