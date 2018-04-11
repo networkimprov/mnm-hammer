@@ -104,9 +104,9 @@
                   <div style="position:relative; padding:1px;">
                      <input @keyup.enter="ccAdd(aMsg.Id, $event.target)" type="text" placeholder="+To">
                      <div style="height:100%; position:absolute; left:15em; right:2em; top:0;">
-                        <mnm-draftmenu :list="(toSave[aMsg.Id] || mo[aMsg.Id].SubHead).Cc"
+                        <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Cc"
                                        :msgid="aMsg.Id" :drop="ccDrop"></mnm-draftmenu>
-                        <mnm-draftmenu :list="(toSave[aMsg.Id] || mo[aMsg.Id].SubHead).Attach"
+                        <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Attach"
                                        :msgid="aMsg.Id" :drop="atcDrop"
                                        :getname="atcGetName" :getkey="atcGetKey"
                                        :style="{float:'right'}"></mnm-draftmenu>
@@ -120,17 +120,14 @@
                           style="overflow:auto; max-height:75vh;
                                  border-top:1em solid white; border-bottom:1em solid white;">
                         <mnm-markdown @formfill="ffAdd(aMsg.Id, arguments[0], arguments[1])"
-                                      @attach="atcAdd(aMsg.Id, arguments[0], arguments[1])"
-                                      @detach="atcDropName(aMsg.Id, arguments[0], arguments[1])"
-                                      :src="aMsg.Id in toSave ? toSave[aMsg.Id].Data
-                                                              : mo[aMsg.Id].msg_data"
-                                      :formfill="aMsg.Id in toSave ? toSave[aMsg.Id].FormFill
-                                                                   : mo[aMsg.Id].form_fill"
+                                      @toggle="atcToggleFf(aMsg.Id, arguments[0], arguments[1])"
+                                      :src=     "(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
+                                      :formfill="(toSave[aMsg.Id] || mo[aMsg.Id]).form_fill"
                                       :atchasff="atcHasFf" :msgid="aMsg.Id"></mnm-markdown></div>
                   </div>
                   <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
                                   @keypress.native="keyAction('pv_'+aMsg.Id, $event)"
-                                  :src="aMsg.Id in toSave ? toSave[aMsg.Id].Data : mo[aMsg.Id].msg_data"
+                                  :src="(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
                                   placeholder="Ctrl-J to Preview" style="width:100%"></mnm-textresize>
                </div>
                <div v-else-if="!mo[aMsg.Id].msg_data"
@@ -450,7 +447,7 @@
       },
       methods: {
          fillAttach: function(iEvent) {
-            this.parent.$emit(iEvent.target.checked ? 'attach' : 'detach', this.fill_name(), this.file);
+            this.parent.$emit('toggle', this.file, this.fill_name());
          },
          startReply: function() {
             var aReply = JSON.parse(JSON.stringify(this.parent.formreply));
@@ -962,72 +959,104 @@
             if (iEvent.ctrlKey && iEvent.key === 'j')
                mnm._lastPreview = iId;
          },
-         to_save: function(iId) {
-            if (!(iId in mnm._data.toSave)) {
-               var aMo = mnm._data.mo[iId];
-               Vue.set(mnm._data.toSave, iId, {Id:iId,
-                       Alias:aMo.SubHead.Alias, Cc:aMo.SubHead.Cc, Attach:aMo.SubHead.Attach,
-                       Data:aMo.msg_data, FormFill:aMo.form_fill});
-            }
-            if (!mnm._data.toSave[iId].timer)
-               mnm._data.toSave[iId].timer = setTimeout(fDing, 2000, mnm._data.toSave[iId]);
+         draft_tosave: function(iId, iNoTimer) {
+            if (!(iId in mnm._data.toSave))
+               Vue.set(mnm._data.toSave, iId, {timer:null,
+                       form_fill:mnm._data.mo[iId].form_fill, ffUpdt:false,
+                       msg_data: mnm._data.mo[iId].msg_data,  mdUpdt:false});
+            if (!iNoTimer && !mnm._data.toSave[iId].timer)
+               mnm._data.toSave[iId].timer =
+                  setTimeout(fDing, 2000, this, mnm._data.toSave[iId], mnm._data.mo[iId]);
             return mnm._data.toSave[iId];
-            function fDing(cRec) {
-               cRec.timer = undefined;
-               mnm.ThreadSave(cRec);
+            function fDing(cThis, cToSave, cMo) {
+               cToSave.timer = null;
+               cThis.draft_save(iId, null, null, cToSave, cMo);
             }
+         },
+         draft_save: function(iId, iCc, iAttach, iToSave, iMo) {
+            if (!iToSave) iToSave = this.draft_tosave(iId, true);
+            if (!iMo)     iMo = mnm._data.mo[iId];
+            if (iToSave.timer) {
+               clearTimeout(iToSave.timer);
+               iToSave.timer = null;
+            }
+            mnm.ThreadSave({
+               Id:       iId,
+               Alias:               iMo.SubHead.Alias,
+               Cc:       iCc     || iMo.SubHead.Cc,
+               Attach:   iAttach || iMo.SubHead.Attach,
+               FormFill: iToSave.form_fill,
+               Data:     iToSave.msg_data,
+            });
+            iToSave.mdUpdt = iToSave.ffUpdt = false;
          },
          ccAdd: function(iId, iWidget) {
             if (iWidget.value.length === 0)
                return;
-            var aCc = this.to_save(iId).Cc;
-            if (!aCc)
-               aCc = this.to_save(iId).Cc = [];
+            var aCc = mnm._data.mo[iId].SubHead.Cc;
+            aCc = aCc ? aCc.slice() : [];
             aCc.unshift(iWidget.value);
             var aPrev = aCc.lastIndexOf(iWidget.value);
             if (aPrev !== 0)
                aCc.splice(aPrev, 1);
             iWidget.value = '';
+            this.draft_save(iId, aCc, null);
          },
-         atcAdd: function(iId, iPath, iFfKey) {
-            var aAtc = this.to_save(iId).Attach;
-            if (!aAtc)
-               aAtc = this.to_save(iId).Attach = [];
-            if (this.atcDropName(iId, iPath, iFfKey) === 'r:')
-               this.ffAdd(iId, iFfKey);
-            aAtc.unshift({Name:iPath, FfKey:iFfKey});
-         },
-         atcDropName: function(iId, iPath, iFfKey) {
-            var aAtc = this.to_save(iId).Attach;
+         atcAdd: function(iId, iPath) {
+            var aAtc = mnm._data.mo[iId].SubHead.Attach;
+            aAtc = aAtc ? aAtc.slice() : [];
             var aPrefix = /^upload/.test(iPath) ? 'u:' : /^form_fill/.test(iPath) ? 'r:' : 'f:';
             var aStoredName = iPath.replace(/^[^/]*\//, aPrefix);
-            var aPrev = aAtc.findIndex(function(c) {
-               return iFfKey ? c.FfKey === iFfKey : c.Name === aStoredName;
-            });
+            var aPrev = aAtc.findIndex(function(c) { return c.Name === aStoredName });
             if (aPrev >= 0)
                aAtc.splice(aPrev, 1);
-            return aPrefix;
+            aAtc.unshift({Name:iPath});
+            this.draft_save(iId, null, aAtc);
+         },
+         ccDrop:  function(iId, iN) {
+            var aCc = mnm._data.mo[iId].SubHead.Cc;
+            this.draft_save(iId, aCc.slice(0, iN).concat(aCc.slice(iN+1)), null);
+         },
+         atcDrop: function(iId, iN) {
+            var aAtc = mnm._data.mo[iId].SubHead.Attach;
+            this.draft_save(iId, null, aAtc.slice(0, iN).concat(aAtc.slice(iN+1)));
          },
          atcHasFf: function(iId, iFfKey) {
-            var aAtc = (mnm._data.toSave[iId] || mnm._data.mo[iId].SubHead).Attach;
+            var aAtc = mnm._data.mo[iId].SubHead.Attach;
             return !! (aAtc && aAtc.find(function(c) { return c.FfKey === iFfKey }));
          },
+         atcToggleFf: function(iId, iFfKey, iPath) {
+            var aAtc = mnm._data.mo[iId].SubHead.Attach || [];
+            var aN = aAtc.findIndex(function(c) { return c.FfKey === iFfKey });
+            if (aN < 0)
+               this.ffAdd(iId, iFfKey);
+            this.draft_save(iId, null, aN < 0
+                                       ? [ {Name:iPath, FfKey:iFfKey} ].concat(aAtc)
+                                       : aAtc.slice(0, aN).concat(aAtc.slice(aN+1)));
+         },
          ffAdd: function(iId, iFfKey, iText) {
-            var aFf = this.to_save(iId).FormFill;
+            var aToSave = this.draft_tosave(iId, !iText);
             if (!iText) {
-               if (aFf && iFfKey in aFf)
+               if (aToSave.form_fill && iFfKey in aToSave.form_fill)
                   return;
                iText = '{}';
             }
-            if (!aFf)
-               aFf = this.to_save(iId).FormFill = {};
-            Vue.set(aFf, iFfKey, iText);
+            if (!aToSave.ffUpdt)
+               aToSave.ffUpdt = {};
+            if (!aToSave.form_fill) {
+               aToSave.form_fill = {};
+               if (mnm._data.mo[iId].form_fill)
+                  for (var a in mnm._data.mo[iId].form_fill)
+                     Vue.set(aToSave.form_fill, a, mnm._data.mo[iId].form_fill[a]);
+            }
+            Vue.set(aToSave.form_fill, iFfKey, iText);
+            aToSave.ffUpdt[iFfKey] = true;
          },
          textAdd: function(iId, iText) {
-            this.to_save(iId).Data = iText;
+            var aToSave = this.draft_tosave(iId, false);
+            aToSave.msg_data = iText;
+            aToSave.mdUpdt = true;
          },
-         ccDrop:  function(iId, iN) { this.to_save(iId).Cc    .splice(iN, 1) },
-         atcDrop: function(iId, iN) { this.to_save(iId).Attach.splice(iN, 1) },
          atcGetName: function(iEl) { return iEl.Name },
          atcGetKey:  function(iEl) { return iEl.FfKey || iEl.Name },
       },
@@ -1133,43 +1162,33 @@
          break;
       case 'mn':
          // avoid opening Cc & Attach menus if not changed
-         var aEtcSubHead = {Cc: iEtc.SubHead.Cc, Attach: iEtc.SubHead.Attach};
-         var aFfMo, aFfTo;
          var aOrig = mnm._data.mo[iEtc.Id] && mnm._data.mo[iEtc.Id].SubHead;
          if (aOrig) {
-            if (!fDiff(aOrig, 'Cc'    )) iEtc.SubHead.Cc     = aOrig.Cc;
-            if (!fDiff(aOrig, 'Attach')) iEtc.SubHead.Attach = aOrig.Attach;
-            aFfMo = mnm._data.mo[iEtc.Id].form_fill;
+            if (!fDiff('Cc'    )) iEtc.SubHead.Cc     = aOrig.Cc;
+            if (!fDiff('Attach')) iEtc.SubHead.Attach = aOrig.Attach;
+         }
+         Vue.set(mnm._data.mo, iEtc.Id, iEtc); //todo set ml Date
+         function fDiff(c) {
+            if ( aOrig[c]         === iEtc.SubHead[c])         return false;
+            if (!aOrig[c]         || !iEtc.SubHead[c])         return true;
+            if ( aOrig[c].length  !== iEtc.SubHead[c].length)  return true;
+            if ( aOrig[c].length  === 0)                       return false;
+            if (c === 'Cc'
+               ? aOrig[c][0]      === iEtc.SubHead[c][0]
+               : aOrig[c][0].Name === iEtc.SubHead[c][0].Name) return false; //todo full comparison?
+            return true;
          }
          var aOrig = mnm._data.toSave[iEtc.Id];
          if (aOrig) {
-            if (fDiff(aOrig, 'Cc'))     aOrig.Cc     = aEtcSubHead.Cc;
-            if (fDiff(aOrig, 'Attach')) aOrig.Attach = aEtcSubHead.Attach;
-            aFfTo = aOrig.FormFill;
-            aOrig.Alias = iEtc.SubHead.Alias;
-            aOrig.Data = iEtc.msg_data;
-         }
-         var aOrig = aFfMo || aFfTo;
-         if (aOrig) {
-            if (!iEtc.form_fill)
-               iEtc.form_fill = {};
-            for (var aK in aOrig)
-               if (!(aK in iEtc.form_fill))
-                  aOrig[aK] = '{}';
-            for (var aK in iEtc.form_fill)
-               Vue.set(aOrig, aK, iEtc.form_fill[aK]);
-            iEtc.form_fill = aOrig;
-         }
-         Vue.set(mnm._data.mo, iEtc.Id, iEtc); //todo set ml Date
-         function fDiff(cO, c) {
-            if ( cO[c]         === aEtcSubHead[c])         return false;
-            if (!cO[c]         || !aEtcSubHead[c])         return true;
-            if ( cO[c].length  !== aEtcSubHead[c].length)  return true;
-            if ( cO[c].length  === 0)                      return false;
-            if (c === 'Cc'
-               ? cO[c][0]      === aEtcSubHead[c][0]
-               : cO[c][0].Name === aEtcSubHead[c][0].Name) return false; //todo full comparison?
-            return true;
+            if (!aOrig.mdUpdt)
+               aOrig.msg_data = iEtc.msg_data;
+            if (!aOrig.ffUpdt) {
+               aOrig.form_fill = iEtc.form_fill;
+            } else {
+               for (var aK in (iEtc.form_fill || {}))
+                  if (!aOrig.ffUpdt[aK])
+                     Vue.set(aOrig.form_fill, aK, iEtc.form_fill[aK]);
+            }
          }
          break;
       }
