@@ -97,7 +97,7 @@
                <button v-else
                        @click="mnm.ThreadReply({alias:cf.Alias, cc:[]})"
                        style="padding:0; display:inline-block; float:right;">
-                  <span uk-icon="reply"></span></button>
+                  <span uk-icon="comment"></span></button>
                <div v-if="!('msg_data' in mo[aMsg.Id])"
                     class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
                <div v-else-if="mo[aMsg.Id].Posted === 'draft'">
@@ -250,7 +250,7 @@
                {{aSvc}}
             </template>
             <template v-else>
-               <span uk-icon="commenting" style="cursor:default">0{{aSvc.todo}} </span>
+               <span uk-icon="reply" style="cursor:default">0{{aSvc.todo}} </span>
                <div uk-dropdown="mode:click; offset:-4; pos:left-top" class="uk-width-1-5">
                   <div class="uk-text-right uk-text-small">UPDATES</div>
                </div>
