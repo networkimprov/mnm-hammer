@@ -745,7 +745,11 @@
                   <td>{{fmtD(a.Date)}}</td>
                   <td>{{a.Gid}}
                      <span v-if="data.gl.find(function(c){return c.Gid === a.Gid})"
-                           class="uk-badge">in</span></td>
+                           class="uk-badge">in</span>
+                     <button v-else
+                             @click="mnm.InviteAccept(a.Gid)"
+                             style="padding:0"><span uk-icon="forward"></span></button>
+                  </td>
                   <td>{{a.Alias}}</td><td>{{a.Text}}</td>
                   <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
                </tr></table></li>
