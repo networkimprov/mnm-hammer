@@ -14,6 +14,21 @@ input[type=text] {
    font-size: larger;
 }
 
+.btn-icon    { padding: 0; }
+.btn-iconred { padding: 0; color: crimson; }
+.btn-icontxt { padding: 0 4px; }
+.btn-iconx   { padding: 0 4px; background: none; border: none; }
+
+.btn-floatr {
+   display: inline-block;
+   float: right;
+}
+
+.btn-alignt {
+   display: inline-block;
+   vertical-align: top;
+}
+
 .dropdown-scroll {
    padding: 1em;
    padding-right: 0;
