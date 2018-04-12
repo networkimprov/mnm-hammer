@@ -56,16 +56,19 @@
    <div class="uk-clearfix">
       Subject, orig Author &amp; Date
       <div class="uk-float-right">
-         <button @click="mnm.ThreadRecv()" style="padding:0"><span uk-icon="cloud-download"></span></button>
+         <button @click="mnm.ThreadRecv()"
+                 class="btn-icon"><span uk-icon="cloud-download"></span></button>
          <span uk-icon="copy" style="cursor:default">{{al.length || ''}}</span>
          <mnm-attach list="al" :data="al" ref="al"></mnm-attach>
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
-                 style="padding:0"><span uk-icon="pencil"></span></button>
-         <button :disabled="!cs.History || !cs.History.Prev" onclick="this.blur(); mnm.History(-1)"
+                 class="btn-icon"><span uk-icon="pencil"></span></button>
+         <button onclick="this.blur(); mnm.History(-1)"
+                 :disabled="!cs.History || !cs.History.Prev"
                  class="uk-button uk-button-link">
             <span uk-icon="icon:arrow-left; ratio:1.6"></span></button>
-         <button :disabled="!cs.History || !cs.History.Next" onclick="this.blur(); mnm.History( 1)"
+         <button onclick="this.blur(); mnm.History( 1)"
+                 :disabled="!cs.History || !cs.History.Next"
                  class="uk-button uk-button-link">
             <span uk-icon="icon:arrow-right; ratio:1.6"></span></button>
       </div>
@@ -87,17 +90,14 @@
             <template v-if="aMsg.Id in mo">
                <template v-if="mo[aMsg.Id].Posted === 'draft'">
                   <button @click="mnm.ThreadSend(aMsg.Id)"
-                          style="padding:0; display:inline-block; vertical-align:top;">
-                     <span uk-icon="forward"></span></button>
+                          class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
                   <span></span>
                   <button @click="mnm.ThreadDiscard(aMsg.Id)"
-                          style="color:crimson; padding:0; display:inline-block; float:right;">
-                     <span uk-icon="trash"></span></button>
+                          class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
                </template>
                <button v-else
                        @click="mnm.ThreadReply({alias:cf.Alias, cc:[]})"
-                       style="padding:0; display:inline-block; float:right;">
-                  <span uk-icon="comment"></span></button>
+                       class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
                <div v-if="!('msg_data' in mo[aMsg.Id])"
                     class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
                <div v-else-if="mo[aMsg.Id].Posted === 'draft'">
@@ -271,7 +271,8 @@
          <li v-for="aFile in data" :key="aFile.File">
             <a @click.prevent="" href="#"><span uk-icon="mail"></span></a>
             2018-01-17T04:16:57Z{{aFile.Date}} &nbsp;
-            <button @click="" style="padding:0"><span uk-icon="push"></span></button>
+            <button @click=""
+                    class="btn-icon"><span uk-icon="push"></span></button>
             <a :href="'?ad=' + encodeURIComponent(aFile.File)">
                <span uk-icon="download"></span></a>
             <a :href="'?an=' + encodeURIComponent(aFile.File)" target="mnm_atc_[{.Title}]">
@@ -416,9 +417,9 @@
             <input type="checkbox" @click="fillAttach" :checked="atcHasFf"
                    :disabled="formDef === parent.formDefBad">
             attach fill</label>
-         <button @click="startReply" :disabled="!parent.formreply"
-                 style="padding:0; display:inline-block; float:right">
-            <span uk-icon="commenting"></span></button>
+         <button @click="startReply"
+                 :disabled="!parent.formreply"
+                 class="btn-icon btn-floatr"><span uk-icon="commenting"></span></button>
       </div>
       <plugin-vfg :schema="formDef" :model="formState" :options="{}"></plugin-vfg>
    </div>
@@ -513,10 +514,11 @@
                 name="filename" required>
          <div :style="{visibility: vis ? 'visible' : 'hidden'}" style="margin-top:0.5em">
             <input v-model="upname" type="text" size="32" placeholder="Alt Name">
-            <button @click="vis = false" type="submit" :disabled="!upname" style="padding:0">
-               <span uk-icon="push"></span></button>
+            <button @click="vis = false" type="submit"
+                    :disabled="!upname"
+                    class="btn-icon"><span uk-icon="push"></span></button>
             <button @click="vis = false" type="reset"
-                    style="padding:0 4px; background:none; border:none;">&times;</button>
+                    class="btn-iconx">&times;</button>
          </div>
       </form>
       <ul uk-tab style="margin-top:0">
@@ -528,8 +530,8 @@
          <li v-for="aFile in data" :key="aFile.Name">
             {{aFile.Date}}
             <button v-if="toggle"
-                    @click="$emit('attach', 'upload/'+aFile.Name)" style="padding:0">
-               <span uk-icon="copy"></span></button>
+                    @click="$emit('attach', 'upload/'+aFile.Name)"
+                    class="btn-icon"><span uk-icon="copy"></span></button>
             <a :href="'/'+list.charAt(0)+'d/' + encodeURIComponent(aFile.Name)">
                <span uk-icon="download">&nbsp;</span></a>
             <a :href="'/'+list+'/' + encodeURIComponent(aFile.Name)" target="mnm_atc_[{.Title}]">
@@ -538,9 +540,10 @@
                {{aFile.Size}}
                <form v-if="!toggle"
                      :action="'/'+list+'/-' + encodeURIComponent(aFile.Name)" method="POST"
-                     onsubmit="mnm.Upload(this); return false;" style="display:inline!important">
-                  <button style="padding:0">
-                     <span uk-icon="trash" style="color:crimson"></span></button></form>
+                     onsubmit="mnm.Upload(this); return false;"
+                     style="display:inline!important">
+                  <button class="btn-iconred"><span uk-icon="trash"></span></button>
+               </form>
             </div>
          </li></ul>
    </div>
@@ -564,8 +567,9 @@
          <div class="uk-float-right uk-text-small">ATTACHABLE FORMS</div>
          <input type="hidden" name="filename" value='{}'>
          <input v-model="upname" type="text" size="24" placeholder="New Type">
-         <button @click="upname = ''" :disabled="!validName(upname.split('.'))" style="padding:0">
-            <span uk-icon="pencil"></span></button>
+         <button @click="upname = ''"
+                 :disabled="!validName(upname.split('.'))"
+                 class="btn-icon"><span uk-icon="pencil"></span></button>
       </form>
       <ul uk-tab style="margin-top:0">
          <li v-for="aKey in ['Date','Name']"
@@ -578,16 +582,17 @@
             <li v-for="aFile in aSet.Revs" :key="aSet.Name+'.'+aFile.Id">
                {{aFile.Date}}
                <button v-if="toggle"
-                       @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)" style="padding:0">
-                  <span uk-icon="copy"></span></button>
+                       @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
+                       class="btn-icon"><span uk-icon="copy"></span></button>
                <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.target)"
                   :id="'bf_'+aSet.Name+'.'+aFile.Id" href="#">
                   <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
                <form v-if="!toggle"
                      :action="'/'+list+'/-' + encodeURIComponent(aSet.Name+'.'+aFile.Id)" method="POST"
-                     onsubmit="mnm.Upload(this); return false;" style="float:right">
-                  <button style="padding:0">
-                     <span uk-icon="trash" style="color:crimson"></span></button></form>
+                     onsubmit="mnm.Upload(this); return false;"
+                     style="float:right">
+                  <button class="btn-iconred"><span uk-icon="trash"></span></button>
+               </form>
             </li></template></ul>
          <div v-show="setName"
               class="uk-card uk-card-default uk-card-small uk-card-body uk-width-1-1"
@@ -604,8 +609,8 @@
                   style="margin-top:-1.5em" class="pane-clip">
                <span @click="codeShow = !codeShow"
                      class="uk-link">{...}</span>
-               <button :disabled="!!parseError" style="padding:0">
-                  <span uk-icon="file-edit"></span></button>
+               <button :disabled="!!parseError"
+                       class="btn-icon"><span uk-icon="file-edit"></span></button>
                <div style="font-size:smaller; text-align:right">&nbsp;{{parseError}}</div>
                <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
                   <div class="pane-scroller" style="min-height:1px">
@@ -622,8 +627,7 @@
                <input v-model="dupname" type="text" size="32" placeholder="New Revision">
                <button @click="dupShow = dupname"
                        :disabled="!validName([].concat(setName,dupname.split('.')))"
-                       style="padding:0">
-                  <span uk-icon="copy"></span></button>
+                       class="btn-icon"><span uk-icon="copy"></span></button>
             </form>
          </div>
       </div>
@@ -746,29 +750,31 @@
                            class="uk-badge">in</span>
                      <button v-else
                              @click="mnm.InviteAccept(a.Gid)"
-                             style="padding:0"><span uk-icon="forward"></span></button>
+                             class="btn-icon"><span uk-icon="forward"></span></button>
                   </td>
                   <td>{{a.Alias}}</td><td>{{a.Text}}</td>
                   <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
                </tr></table></li>
          <li>
-            <form onsubmit="return false" style="text-align:center">
+            <form onsubmit="return false"
+                  style="text-align:center">
                <input v-model="draft.to" type="text" placeholder="To">
                <input v-model="draft.gid" type="text" placeholder="(Group)">
-               <button :disabled="!validDraft" @click="startPing()" style="padding:0">
-                  <span uk-icon="pencil"></span></button>
+               <button @click="startPing()"
+                       :disabled="!validDraft"
+                       class="btn-icon"><span uk-icon="pencil"></span></button>
             </form>
             <table class="uk-table uk-table-small">
                <tr><th>To / (Group)</th><th></th><th>Message</th><th></th></tr>
                <tr v-for="a in data.ps" :key="rowId(a)">
                   <td>{{a.Alias}}<br>{{a.Gid && '('+a.Gid+')'}}</td>
                   <td><button @click="mnm.PingSend({to:a.Alias, gid:a.Gid})"
-                              style="padding:0"><span uk-icon="forward"></span></button></td>
+                              class="btn-icon"><span uk-icon="forward"></span></button></td>
                   <td><textarea cols="40" rows="3" maxlength="120"
                                 @input="timer(a, $event.target.value)"
                      >{{toSave[rowId(a)] || a.Text}}</textarea></td>
                   <td><button @click="mnm.PingDiscard({to:a.Alias, gid:a.Gid})"
-                              style="color:crimson; padding:0"><span uk-icon="trash"></span></button></td>
+                              class="btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
@@ -794,18 +800,20 @@
                            class="uk-badge">A</span></td>
                </tr></table></li>
          <li>
-            <form onsubmit="this.reset(); return false;" style="text-align:center">
+            <form onsubmit="this.reset(); return false;"
+                  style="text-align:center">
                <input oninput="this.nextElementSibling.disabled = !this.value"
                       type="text" size="32" name="resets" placeholder="Add someone">
-               <button onclick="mnm.OhiAdd(this.previousElementSibling.value)" disabled
-                       style="padding:0 4px">o/</button>
+               <button onclick="mnm.OhiAdd(this.previousElementSibling.value)"
+                       disabled
+                       class="btn-icontxt">o/</button>
             </form>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>To</th><th></th></tr>
                <tr v-for="a in data.ot">
                   <td>{{fmtD(a.Date)}}</td><td>{{a.Uid /*todo alias*/}}</td>
                   <td><button @click="mnm.OhiDrop(null,a.Uid)"
-                              style="color:crimson; padding:0"><span uk-icon="trash"></span></button></td>
+                              class="btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
       </ul>
    </div>
