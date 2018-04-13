@@ -58,7 +58,7 @@
       <div class="uk-float-right">
          <button @click="mnm.ThreadRecv()"
                  class="btn-icon"><span uk-icon="cloud-download"></span></button>
-         <span uk-icon="copy" style="cursor:default">{{al.length || ''}}</span>
+         <span uk-icon="copy" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
          <mnm-attach list="al" :data="al" ref="al"></mnm-attach>
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
@@ -113,8 +113,8 @@
                      </div>
                   </div>
                   <div style="float:right; margin-top:-1.7em;">
-                     <span uk-icon="push"      :id="'t'+aMsg.Id"></span
-                    ><span uk-icon="file-edit" :id="'f'+aMsg.Id"></span>
+                     <span uk-icon="push"      :id="'t'+aMsg.Id" class="dropdown-icon"></span
+                    ><span uk-icon="file-edit" :id="'f'+aMsg.Id" class="dropdown-icon"></span>
                      <span :id="'pv_'+aMsg.Id"></span>
                      <div uk-dropdown="mode:click; pos:right-top" class="uk-width-2-5"
                           style="overflow:auto; max-height:75vh;
@@ -155,13 +155,13 @@
          [{.Title}]
       </span>
       <div class="uk-float-right">
-         <span @mousedown="ohiFrom = !ohiFrom" style="cursor:default">&nbsp;o/</span>
-         <span uk-icon="users" style="cursor:default">&nbsp;</span>
+         <span @mousedown="ohiFrom = !ohiFrom" class="dropdown-icon">&nbsp;o/</span>
+         <span uk-icon="users" class="dropdown-icon">&nbsp;</span>
          <mnm-adrsbk></mnm-adrsbk>
          &nbsp;
-         <span uk-icon="push" style="cursor:default">&nbsp;</span>
+         <span uk-icon="push" class="dropdown-icon">&nbsp;</span>
          <mnm-files list="t" :data="t" ref="t" pos="bottom-right"></mnm-files>
-         <span uk-icon="file-edit" style="cursor:default">&nbsp;</span>
+         <span uk-icon="file-edit" class="dropdown-icon">&nbsp;</span>
          <mnm-forms list="f" :data="f" ref="f" pos="bottom-right"></mnm-forms>
          &nbsp;
       </div>
@@ -230,9 +230,9 @@
 
 <div class="uk-width-expand uk-light" style="background:#003333">
    <div class="uk-text-right" style="margin:0 1em 1em 0">
-      <span uk-icon="plus-circle" style="cursor:default">&nbsp;</span>
+      <span uk-icon="plus-circle" class="dropdown-icon">&nbsp;</span>
       <mnm-svcadd></mnm-svcadd>
-      <span uk-icon="cog" style="cursor:default">&nbsp;</span>
+      <span uk-icon="cog" class="dropdown-icon">&nbsp;</span>
       <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5">
           <div class="uk-text-right uk-text-small">SETTINGS</div>
       </div>
@@ -242,12 +242,12 @@
          <li v-for="aSvc in sl" :key="aSvc">
             <template v-if="aSvc === '[{.Title}]'">
                <span style="visibility:hidden">1</span
-              ><span uk-icon="settings" style="cursor:default">&nbsp;</span>
+              ><span uk-icon="settings" class="dropdown-icon">&nbsp;</span>
                <mnm-svccfg></mnm-svccfg>
                {{aSvc}}
             </template>
             <template v-else>
-               <span uk-icon="reply" style="cursor:default">0{{aSvc.todo}} </span>
+               <span uk-icon="reply" class="dropdown-icon">0{{aSvc.todo}} </span>
                <div uk-dropdown="mode:click; offset:-4; pos:left-top" class="uk-width-1-5">
                   <div class="uk-text-right uk-text-small">UPDATES</div>
                </div>
