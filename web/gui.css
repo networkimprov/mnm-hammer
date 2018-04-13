@@ -29,6 +29,10 @@ input[type=text] {
    vertical-align: top;
 }
 
+.dropdown-icon {
+   cursor: default;
+}
+
 .dropdown-scroll {
    padding: 1em;
    padding-right: 0;
