@@ -144,6 +144,7 @@ type Update struct {
    }
    Navigate *struct {
       History int
+      ThreadId, MsgId string
    }
    Tab *struct {
       Type int8

@@ -40,6 +40,11 @@
    mnm.History = function(i) {
       sWs.send(JSON.stringify({op:'history', navigate:{history:i}}))
    };
+   mnm.NavigateLink = function(i) {
+      var aPair = i.substr(i.indexOf('#')+1).split('&');
+      sWs.send(JSON.stringify({op:'navigate_link',
+                               navigate:{threadId:aPair[0], msgId:aPair[1] || aPair[0]}}))
+   };
 
    mnm.ThreadNew = function(iObj) { // with alias, (cc), (data), (attach), (formFill)
       iObj.new = 1;

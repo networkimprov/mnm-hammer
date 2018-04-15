@@ -156,12 +156,22 @@ func (o *ClientState) getThread() string {
 func (o *ClientState) isOpen(iMsgId string) bool {
    o.RLock(); defer o.RUnlock()
    aT := o.Thread[o.History[o.Hpos]]
-   return aT.Tabs.PosFor == ePosForDefault &&
-         (aT.Tabs.Pos == 1 || aT.Tabs.Pos == 0 && aT.Open[iMsgId])
+   if aT.Tabs.PosFor == ePosForDefault {
+      return aT.Tabs.Pos == 1 || aT.Tabs.Pos == 0 && aT.Open[iMsgId]
+   } else if aT.Tabs.Terms[aT.Tabs.Pos][0] == '&' {
+      return aT.Tabs.Terms[aT.Tabs.Pos][1:] == iMsgId
+   }
+   return false
 }
 
 func (o *ClientState) addThread(iId, iLastMsgId string) {
    o.Lock(); defer o.Unlock()
+   o._addThread(iId, iLastMsgId)
+   err := storeFile(o.filePath, o)
+   if err != nil { quit(err) }
+}
+
+func (o *ClientState) _addThread(iId, iLastMsgId string) {
    if o.Thread[iId] == nil {
       o.Thread[iId] = &tThreadState{Open: tOpenState{iLastMsgId:true},
                                     Tabs: tTabs{Terms:[]string{}}}
@@ -196,8 +206,6 @@ func (o *ClientState) addThread(iId, iLastMsgId string) {
       o.History[o.Hpos] = iId
       o.History = o.History[:o.Hpos+1]
    }
-   err := storeFile(o.filePath, o)
-   if err != nil { quit(err) }
 }
 
 func (o *ClientState) openMsg(iMsgId string, iBool bool) {
@@ -326,4 +334,21 @@ func (o *ClientState) dropTab(iType int8) {
    if aFor == ePosForPinned {
       dropTabService(o.svc, aOrig)
    }
+}
+
+func (o *ClientState) goLink(iThreadId, iMsgId string) {
+   o.Lock(); defer o.Unlock()
+   if iThreadId != o.History[o.Hpos] {
+      o._addThread(iThreadId, iThreadId)
+   }
+   aTabs := &o.Thread[o.History[o.Hpos]].Tabs
+   aTabs.PosFor = ePosForTerms
+   for aTabs.Pos = 0; aTabs.Pos < len(aTabs.Terms); aTabs.Pos++ {
+      if aTabs.Terms[aTabs.Pos] == "&" + iMsgId { break }
+   }
+   if aTabs.Pos == len(aTabs.Terms) {
+      aTabs.Terms = append(aTabs.Terms, "&" + iMsgId)
+   }
+   err := storeFile(o.filePath, o)
+   if err != nil { quit(err) }
 }

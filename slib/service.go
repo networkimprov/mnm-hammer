@@ -393,6 +393,12 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "history":
       iState.goThread(iUpdt.Navigate.History)
       aFn, aResult = fOne, []string{"cs", "al", "ml", "mo"}
+   case "navigate_link":
+      _, err = os.Lstat(threadDir(iSvc) + iUpdt.Navigate.ThreadId)
+      if err != nil { return fErr, nil }
+      aDiff := iUpdt.Navigate.ThreadId != iState.getThread()
+      iState.goLink(iUpdt.Navigate.ThreadId, iUpdt.Navigate.MsgId)
+      aFn, aResult = fOne, []string{"cs", "mo"}; if aDiff { aResult = []string{"cs", "al", "ml", "mo"} }
    case "tab_add":
       iState.addTab(iUpdt.Tab.Type, iUpdt.Tab.Term)
       aAlt := "tl"; if iUpdt.Tab.Type == eTabThread { aAlt = "mo" }
