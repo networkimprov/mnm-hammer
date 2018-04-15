@@ -19,6 +19,10 @@ input[type=text] {
 .btn-icontxt { padding: 0 4px; }
 .btn-iconx   { padding: 0 4px; background: none; border: none; }
 
+.btn-iconx:active:hover {
+   background: silver;
+}
+
 .btn-floatr {
    display: inline-block;
    float: right;
