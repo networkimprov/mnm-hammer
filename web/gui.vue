@@ -59,7 +59,7 @@
          <button @click="mnm.ThreadRecv()"
                  class="btn-icon"><span uk-icon="cloud-download"></span></button>
          <span uk-icon="copy" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
-         <mnm-attach list="al" :data="al" ref="al"></mnm-attach>
+         <mnm-attach list="al" :data="al" :cs="cs" ref="al"></mnm-attach>
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
                  class="btn-icon"><span uk-icon="pencil"></span></button>
@@ -269,7 +269,11 @@
          </li></ul>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
          <li v-for="aFile in data" :key="aFile.File">
-            <a @click.prevent="" href="#"><span uk-icon="mail"></span></a>
+            <a v-if="aFile.MsgId.charAt(0) !== '_'"
+               onclick="mnm.NavigateLink(this.href); return false"
+               :href="'#'+ cs.Thread +'&'+ aFile.MsgId"><span uk-icon="mail"></span></a>
+            <span v-else
+                  uk-icon="mail" style="visibility:hidden"></span>
             2018-01-17T04:16:57Z{{aFile.Date}} &nbsp;
             <button @click=""
                     class="btn-icon"><span uk-icon="push"></span></button>
@@ -283,7 +287,7 @@
 </script><script>
    Vue.component('mnm-attach', {
       template: '#mnm-attach',
-      props: ['list', 'data'],
+      props: ['list', 'data', 'cs'],
       computed: { sort: function() { return mnm._data.sort[this.list] } },
       methods: { listSort: function(i) { return mnm._listSort(this.list, i) } },
    });
@@ -711,8 +715,9 @@
 
 <script type="text/x-template" id="mnm-pingresponse">
    <span v-if="response">
-      <a v-if="response.MsgId"
-         @click.prevent="" class=""><span uk-icon="mail"></span></a>
+      <a v-if="response.Tid"
+         onclick="mnm.NavigateLink(this.href); return false"
+         :href="'#'+ response.Tid +'&'+ response.MsgId"><span uk-icon="mail"></span></a>
       <template v-else>
          ping</template>
       {{fmtD(response.Date)}}
@@ -1092,7 +1097,9 @@
    var sUrlStart = /^[A-Za-z][A-Za-z0-9+.\-]*:/;
    mnm._mdi.renderer.rules.link_open = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       var aHref = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('href')];
-      if (!sUrlStart.test(aHref[1])) {
+      if (aHref[1].charAt(0) === '#') {
+         iTokens[iIdx].attrs.push(['onclick','mnm.NavigateLink(this.href);return false']);
+      } else if (!sUrlStart.test(aHref[1])) {
          var aParam = aHref[1].replace(/^this_/, iEnv.thisVal+'_');
          aHref[1] = '?an=' + encodeURIComponent(aParam);
       }
