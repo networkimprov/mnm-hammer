@@ -63,11 +63,11 @@
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
                  class="btn-icon"><span uk-icon="pencil"></span></button>
-         <button onclick="this.blur(); mnm.History(-1)"
+         <button onclick="this.blur(); mnm.NavigateHistory(-1)"
                  :disabled="!cs.History || !cs.History.Prev"
                  class="uk-button uk-button-link">
             <span uk-icon="icon:arrow-left; ratio:1.6"></span></button>
-         <button onclick="this.blur(); mnm.History( 1)"
+         <button onclick="this.blur(); mnm.NavigateHistory( 1)"
                  :disabled="!cs.History || !cs.History.Next"
                  class="uk-button uk-button-link">
             <span uk-icon="icon:arrow-right; ratio:1.6"></span></button>
@@ -210,7 +210,7 @@
                <a v-if="aRow.Id.indexOf('/') >= 0"
                   @click.prevent="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)" href="#">{{aRow.Id}}</a>
                <a v-else
-                  @click.prevent="mnm.ThreadGo(aRow.Id)" href="#">{{aRow.Id}}</a>
+                  @click.prevent="mnm.NavigateThread(aRow.Id)" href="#">{{aRow.Id}}</a>
             </div></template>
          <br/>{{JSON.stringify(mo)}}
       </div>

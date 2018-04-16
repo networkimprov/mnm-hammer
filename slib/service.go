@@ -332,10 +332,6 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       os.Link(kUploadDir + "trial",          attachSub(iSvc, "_22") + "22_u:trial")
       os.Link(kFormDir   + "trial.original", attachSub(iSvc, "_22") + "22_f:trial.original")
       aSrec = &SendRecord{id: string(eSrecThread) + "_22"}
-   case "thread_set":
-      aLastId := loadThread(iSvc, iUpdt.Thread.Id)
-      iState.addThread(iUpdt.Thread.Id, aLastId)
-      aFn, aResult = fOne, []string{"cs", "al", "ml", "mo"}
    case "thread_save":
       const ( _ int8 = iota; eNewThread; eNewReply )
       if iUpdt.Thread.New > 0 {
@@ -390,7 +386,11 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "thread_close":
       iState.openMsg(iUpdt.Thread.Id, false)
       aFn, aResult = fOne, []string{"mo"} //todo drop
-   case "history":
+   case "navigate_thread":
+      aLastId := loadThread(iSvc, iUpdt.Navigate.ThreadId)
+      iState.addThread(iUpdt.Navigate.ThreadId, aLastId)
+      aFn, aResult = fOne, []string{"cs", "al", "ml", "mo"}
+   case "navigate_history":
       iState.goThread(iUpdt.Navigate.History)
       aFn, aResult = fOne, []string{"cs", "al", "ml", "mo"}
    case "navigate_link":

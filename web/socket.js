@@ -37,8 +37,11 @@
       sWs.send(JSON.stringify({op:'accept_send', accept:{gid:iGid}}))
    };
 
-   mnm.History = function(i) {
-      sWs.send(JSON.stringify({op:'history', navigate:{history:i}}))
+   mnm.NavigateThread = function(i) {
+      sWs.send(JSON.stringify({op:'navigate_thread', navigate:{threadId:i}}))
+   };
+   mnm.NavigateHistory = function(i) {
+      sWs.send(JSON.stringify({op:'navigate_history', navigate:{history:i}}))
    };
    mnm.NavigateLink = function(i) {
       var aPair = i.substr(i.indexOf('#')+1).split('&');
@@ -60,9 +63,6 @@
    };
    mnm.ThreadRecv = function() {
       sWs.send(JSON.stringify({op:'thread_recvtest', thread:{}}))
-   };
-   mnm.ThreadGo = function(iId) {
-      sWs.send(JSON.stringify({op:'thread_set', thread:{id:iId}}))
    };
    mnm.ThreadOpen = function(iId) {
       _xhr('mn', iId);
