@@ -59,7 +59,7 @@
          <button @click="mnm.ThreadRecv()"
                  class="btn-icon"><span uk-icon="cloud-download"></span></button>
          <span uk-icon="copy" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
-         <mnm-attach list="al" :data="al" :cs="cs" ref="al"></mnm-attach>
+         <mnm-attach :data="al" :cs="cs" ref="al"></mnm-attach>
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
                  class="btn-icon"><span uk-icon="pencil"></span></button>
@@ -145,9 +145,9 @@
    <span v-for="aMsg in ml" :key="aMsg.Id"
          v-if="mo[aMsg.Id] && mo[aMsg.Id].Posted === 'draft'">
       <mnm-files @attach="atcAdd(aMsg.Id, arguments[0])"
-                 list="t" :data="t" :toggle="'#t'+aMsg.Id" pos="right-top"></mnm-files>
+                 :data="t" :toggle="'#t'+aMsg.Id" pos="right-top"></mnm-files>
       <mnm-forms @attach="atcAdd(aMsg.Id, arguments[0])"
-                 list="f" :data="f" :toggle="'#f'+aMsg.Id" pos="right-top"></mnm-forms>
+                 :data="f" :toggle="'#f'+aMsg.Id" pos="right-top"></mnm-forms>
    </span>
    <div class="uk-clearfix">
       <span class="uk-text-large">
@@ -160,9 +160,9 @@
          <mnm-adrsbk></mnm-adrsbk>
          &nbsp;
          <span uk-icon="push" class="dropdown-icon">&nbsp;</span>
-         <mnm-files list="t" :data="t" ref="t" pos="bottom-right"></mnm-files>
+         <mnm-files :data="t" ref="t" pos="bottom-right"></mnm-files>
          <span uk-icon="file-edit" class="dropdown-icon">&nbsp;</span>
-         <mnm-forms list="f" :data="f" ref="f" pos="bottom-right"></mnm-forms>
+         <mnm-forms :data="f" ref="f" pos="bottom-right"></mnm-forms>
          &nbsp;
       </div>
    </div>
@@ -287,9 +287,9 @@
 </script><script>
    Vue.component('mnm-attach', {
       template: '#mnm-attach',
-      props: ['list', 'data', 'cs'],
-      computed: { sort: function() { return mnm._data.sort[this.list] } },
-      methods: { listSort: function(i) { return mnm._listSort(this.list, i) } },
+      props: ['data', 'cs'],
+      computed: { sort: function() { return mnm._data.sort.al } },
+      methods: { listSort: function(i) { return mnm._listSort('al', i) } },
    });
 </script>
 
@@ -509,7 +509,7 @@
 
 <script type="text/x-template" id="mnm-files">
    <div uk-dropdown="mode:click; offset:2" :toggle="toggle" class="uk-width-1-3 dropdown-scroll">
-      <form :action="'/'+list+'/+' + encodeURIComponent(upname)"
+      <form :action="'/t/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); this.reset(); return false;"
             class="dropdown-scroll-item">
@@ -536,14 +536,14 @@
             <button v-if="toggle"
                     @click="$emit('attach', 'upload/'+aFile.Name)"
                     class="btn-icon"><span uk-icon="copy"></span></button>
-            <a :href="'/'+list.charAt(0)+'d/' + encodeURIComponent(aFile.Name)">
+            <a :href="'/t/!' + encodeURIComponent(aFile.Name)">
                <span uk-icon="download">&nbsp;</span></a>
-            <a :href="'/'+list+'/' + encodeURIComponent(aFile.Name)" target="mnm_atc_[{.Title}]">
+            <a :href="'/t/' + encodeURIComponent(aFile.Name)" target="mnm_atc_[{.Title}]">
                {{aFile.Name}}</a>
             <div class="uk-float-right">
                {{aFile.Size}}
                <form v-if="!toggle"
-                     :action="'/'+list+'/-' + encodeURIComponent(aFile.Name)" method="POST"
+                     :action="'/t/-' + encodeURIComponent(aFile.Name)" method="POST"
                      onsubmit="mnm.Upload(this); return false;"
                      style="display:inline!important">
                   <button class="btn-iconred"><span uk-icon="trash"></span></button>
@@ -554,17 +554,17 @@
 </script><script>
    Vue.component('mnm-files', {
       template: '#mnm-files',
-      props: ['list', 'data', 'toggle'],
+      props: ['data', 'toggle'],
       data: function() { return {upname:'', vis:false} },
-      computed: { sort: function() { return mnm._data.sort[this.list] } },
-      methods: { listSort: function(i) { return mnm._listSort(this.list, i) } },
+      computed: { sort: function() { return mnm._data.sort.t } },
+      methods: { listSort: function(i) { return mnm._listSort('t', i) } },
    });
 </script>
 
 <script type="text/x-template" id="mnm-forms">
    <div uk-dropdown="mode:click; offset:2" :toggle="toggle" class="uk-width-1-3 dropdown-scroll"
         @hidden="revClose" @click="revClose">
-      <form :action="'/'+list+'/+' + encodeURIComponent(upname)"
+      <form :action="'/f/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); this.reset(); return false;"
             class="dropdown-scroll-item">
@@ -592,7 +592,7 @@
                   :id="'bf_'+aSet.Name+'.'+aFile.Id" href="#">
                   <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
                <form v-if="!toggle"
-                     :action="'/'+list+'/-' + encodeURIComponent(aSet.Name+'.'+aFile.Id)" method="POST"
+                     :action="'/f/-' + encodeURIComponent(aSet.Name+'.'+aFile.Id)" method="POST"
                      onsubmit="mnm.Upload(this); return false;"
                      style="float:right">
                   <button class="btn-iconred"><span uk-icon="trash"></span></button>
@@ -607,7 +607,7 @@
                  class="uk-text-center" style="padding:0.5em">
                <span uk-icon="future"></span></div>
             <form v-else
-                  :action="'/'+list+'/+' + encodeURIComponent(setName+'.'+fileId)"
+                  :action="'/f/+' + encodeURIComponent(setName+'.'+fileId)"
                   method="POST" enctype="multipart/form-data"
                   onsubmit="mnm.Upload(this); return false;"
                   style="margin-top:-1.5em" class="pane-clip">
@@ -625,8 +625,8 @@
                                      name="filename" style="width:100%"></mnm-textresize></div>
                </div>
             </form>
-            <form :action="'/'+list+'/*' + encodeURIComponent(setName+'.'+fileId) +
-                                     '+' + encodeURIComponent(dupname)" method="POST"
+            <form :action="'/f/*' + encodeURIComponent(setName+'.'+fileId) +
+                              '+' + encodeURIComponent(dupname)" method="POST"
                   onsubmit="mnm.Upload(this); return false;">
                <input v-model="dupname" type="text" size="32" placeholder="New Revision">
                <button @click="dupShow = dupname"
@@ -639,12 +639,12 @@
 </script><script>
    Vue.component('mnm-forms', {
       template: '#mnm-forms',
-      props: ['list', 'data', 'toggle'],
+      props: ['data', 'toggle'],
       data: function() {
          return {upname:'', dupname:'', setName:'', fileId:'', revPos:'', codeShow:false, dupShow:''};
       },
       computed: {
-         sort: function() { return mnm._data.sort[this.list] },
+         sort: function() { return mnm._data.sort.f },
          mnm: function() { return mnm },
          formDef: function() {
             try { return JSON.parse(mnm._data.fo) }
@@ -675,8 +675,8 @@
             return true;
          },
          listSort: function(i) {
-            mnm._data.sort[this.list] = i;
-            mnm._data[this.list].sort(function(cA, cB) {
+            mnm._data.sort.f = i;
+            mnm._data.f.sort(function(cA, cB) {
                if (i === 'Name')
                   return cA.Name < cB.Name ? -1 : 1;
                if (i === 'Date')
