@@ -59,7 +59,7 @@
          <button @click="mnm.ThreadRecv()"
                  class="btn-icon"><span uk-icon="cloud-download"></span></button>
          <span uk-icon="copy" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
-         <mnm-attach :data="al" :cs="cs" ref="al"></mnm-attach>
+         <mnm-attach ref="al"></mnm-attach>
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
                  class="btn-icon"><span uk-icon="pencil"></span></button>
@@ -145,9 +145,9 @@
    <span v-for="aMsg in ml" :key="aMsg.Id"
          v-if="mo[aMsg.Id] && mo[aMsg.Id].Posted === 'draft'">
       <mnm-files @attach="atcAdd(aMsg.Id, arguments[0])"
-                 :data="t" :toggle="'#t'+aMsg.Id" pos="right-top"></mnm-files>
+                 :toggle="'#t'+aMsg.Id" pos="right-top"></mnm-files>
       <mnm-forms @attach="atcAdd(aMsg.Id, arguments[0])"
-                 :data="f" :toggle="'#f'+aMsg.Id" pos="right-top"></mnm-forms>
+                 :toggle="'#f'+aMsg.Id" pos="right-top"></mnm-forms>
    </span>
    <div class="uk-clearfix">
       <span class="uk-text-large">
@@ -160,9 +160,9 @@
          <mnm-adrsbk></mnm-adrsbk>
          &nbsp;
          <span uk-icon="push" class="dropdown-icon">&nbsp;</span>
-         <mnm-files :data="t" ref="t" pos="bottom-right"></mnm-files>
+         <mnm-files ref="t" pos="bottom-right"></mnm-files>
          <span uk-icon="file-edit" class="dropdown-icon">&nbsp;</span>
-         <mnm-forms :data="f" ref="f" pos="bottom-right"></mnm-forms>
+         <mnm-forms ref="f" pos="bottom-right"></mnm-forms>
          &nbsp;
       </div>
    </div>
@@ -264,14 +264,14 @@
       <ul uk-tab>
          <!-- todo Date -->
          <li v-for="aKey in ['Size','Name']"
-             :class="{'uk-active': aKey === sort}">
+             :class="{'uk-active': aKey === mnm._data.sort.al}">
             <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
          </li></ul>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
-         <li v-for="aFile in data" :key="aFile.File">
+         <li v-for="aFile in mnm._data.al" :key="aFile.File">
             <a v-if="aFile.MsgId.charAt(0) !== '_'"
                onclick="mnm.NavigateLink(this.href); return false"
-               :href="'#'+ cs.Thread +'&'+ aFile.MsgId"><span uk-icon="mail"></span></a>
+               :href="'#'+ mnm._data.cs.Thread +'&'+ aFile.MsgId"><span uk-icon="mail"></span></a>
             <span v-else
                   uk-icon="mail" style="visibility:hidden"></span>
             2018-01-17T04:16:57Z{{aFile.Date}} &nbsp;
@@ -287,8 +287,7 @@
 </script><script>
    Vue.component('mnm-attach', {
       template: '#mnm-attach',
-      props: ['data', 'cs'],
-      computed: { sort: function() { return mnm._data.sort.al } },
+      computed: { mnm: function() { return mnm } },
       methods: { listSort: function(i) { return mnm._listSort('al', i) } },
    });
 </script>
@@ -527,11 +526,11 @@
       </form>
       <ul uk-tab style="margin-top:0">
          <li v-for="aKey in ['Date','Name']"
-             :class="{'uk-active': aKey === sort}">
+             :class="{'uk-active': aKey === mnm._data.sort.t}">
             <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
          </li></ul>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
-         <li v-for="aFile in data" :key="aFile.Name">
+         <li v-for="aFile in mnm._data.t" :key="aFile.Name">
             {{aFile.Date}}
             <button v-if="toggle"
                     @click="$emit('attach', 'upload/'+aFile.Name)"
@@ -554,9 +553,9 @@
 </script><script>
    Vue.component('mnm-files', {
       template: '#mnm-files',
-      props: ['data', 'toggle'],
+      props: ['toggle'],
       data: function() { return {upname:'', vis:false} },
-      computed: { sort: function() { return mnm._data.sort.t } },
+      computed: { mnm: function() { return mnm } },
       methods: { listSort: function(i) { return mnm._listSort('t', i) } },
    });
 </script>
@@ -577,12 +576,12 @@
       </form>
       <ul uk-tab style="margin-top:0">
          <li v-for="aKey in ['Date','Name']"
-             :class="{'uk-active': aKey === sort}">
+             :class="{'uk-active': aKey === mnm._data.sort.f}">
             <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
          </li></ul>
       <div style="position:relative"><!--context for rev card-->
          <ul class="uk-list uk-list-divider dropdown-scroll-list">
-            <template v-for="aSet in data">
+            <template v-for="aSet in mnm._data.f">
             <li v-for="aFile in aSet.Revs" :key="aSet.Name+'.'+aFile.Id">
                {{aFile.Date}}
                <button v-if="toggle"
@@ -639,12 +638,11 @@
 </script><script>
    Vue.component('mnm-forms', {
       template: '#mnm-forms',
-      props: ['data', 'toggle'],
+      props: ['toggle'],
       data: function() {
          return {upname:'', dupname:'', setName:'', fileId:'', revPos:'', codeShow:false, dupShow:''};
       },
       computed: {
-         sort: function() { return mnm._data.sort.f },
          mnm: function() { return mnm },
          formDef: function() {
             try { return JSON.parse(mnm._data.fo) }
@@ -664,10 +662,11 @@
                iPair.push('original');
             else if (iPair[1] === '')
                iPair[1] = 'original';
-            for (var aF=0; aF < this.data.length; ++aF) {
-               if (this.data[aF].Name === iPair[0]) {
-                  for (var aR=0; aR < this.data[aF].Revs.length; ++aR)
-                     if (this.data[aF].Revs[aR].Id === iPair[1])
+            var aLst = mnm._data.f;
+            for (var aF=0; aF < aLst.length; ++aF) {
+               if (aLst[aF].Name === iPair[0]) {
+                  for (var aR=0; aR < aLst[aF].Revs.length; ++aR)
+                     if (aLst[aF].Revs[aR].Id === iPair[1])
                         return false;
                   return true;
                }
@@ -726,7 +725,6 @@
    Vue.component('mnm-pingresponse', {
       template: '#mnm-pingresponse',
       props: ['response'],
-      computed: { mnm: function() { return mnm } },
       methods: { fmtD: mnm._formatDate }
    });
 </script>
@@ -741,17 +739,17 @@
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>From</th><th>Message</th><th>Response</th></tr>
-               <tr v-for="a in data.pf">
+               <tr v-for="a in mnm._data.pf">
                   <td>{{fmtD(a.Date)}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
                   <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>Group</th><th>From</th><th>Msg</th><th>Response</th></tr>
-               <tr v-for="a in data.if">
+               <tr v-for="a in mnm._data.if">
                   <td>{{fmtD(a.Date)}}</td>
                   <td>{{a.Gid}}
-                     <span v-if="data.gl.find(function(c){return c.Gid === a.Gid})"
+                     <span v-if="mnm._data.gl.find(function(c){return c.Gid === a.Gid})"
                            class="uk-badge">in</span>
                      <button v-else
                              @click="mnm.InviteAccept(a.Gid)"
@@ -771,7 +769,7 @@
             </form>
             <table class="uk-table uk-table-small">
                <tr><th>To / (Group)</th><th></th><th>Message</th><th></th></tr>
-               <tr v-for="a in data.ps" :key="rowId(a)">
+               <tr v-for="a in mnm._data.ps" :key="rowId(a)">
                   <td>{{a.Alias}}<br>{{a.Gid && '('+a.Gid+')'}}</td>
                   <td><button @click="mnm.PingSend({to:a.Alias, gid:a.Gid})"
                               class="btn-icon"><span uk-icon="forward"></span></button></td>
@@ -784,21 +782,21 @@
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>To</th><th>Message</th><th>Response</th></tr>
-               <tr v-for="a in data.pt">
+               <tr v-for="a in mnm._data.pt">
                   <td>{{fmtD(a.Date)}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
                   <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>Group</th><th>To</th><th>Message</th><th>Response</th></tr>
-               <tr v-for="a in data.it">
+               <tr v-for="a in mnm._data.it">
                   <td>{{fmtD(a.Date)}}</td><td>{{a.Gid}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
                   <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>Group</th></tr>
-               <tr v-for="a in data.gl">
+               <tr v-for="a in mnm._data.gl">
                   <td>{{fmtD(a.Date)}}</td>
                   <td>{{a.Gid}}
                      <span v-if="a.Admin"
@@ -815,7 +813,7 @@
             </form>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>To</th><th></th></tr>
-               <tr v-for="a in data.ot">
+               <tr v-for="a in mnm._data.ot">
                   <td>{{fmtD(a.Date)}}</td><td>{{a.Uid /*todo alias*/}}</td>
                   <td><button @click="mnm.OhiDrop(null,a.Uid)"
                               class="btn-iconred"><span uk-icon="trash"></span></button></td>
@@ -828,7 +826,6 @@
       data: function() { return {draft:{to:'', gid:''}, toSave:{}} },
       computed: {
          mnm: function() { return mnm },
-         data: function() { return mnm._data },
          validDraft: function() {
             if (!this.draft.to)
                return false;
@@ -903,19 +900,16 @@
    <div uk-dropdown="mode:click; offset:-4; pos:left-top" class="uk-width-1-5">
       <div class="uk-text-right uk-text-small">SETTINGS</div>
       <table class="uk-table uk-table-small" style="margin:0">
-         <tr><td>Net Address</td><td class="svccfg">{{cf.Addr }}</td></tr>
-         <tr><td>Title      </td><td class="svccfg">{{cf.Name }}</td></tr>
-         <tr><td>Alias      </td><td class="svccfg">{{cf.Alias}}</td></tr>
-         <tr><td>Uid        </td><td class="svccfg">{{cf.Uid  }}</td></tr>
+         <tr><td>Net Address</td><td class="svccfg">{{mnm._data.cf.Addr }}</td></tr>
+         <tr><td>Title      </td><td class="svccfg">{{mnm._data.cf.Name }}</td></tr>
+         <tr><td>Alias      </td><td class="svccfg">{{mnm._data.cf.Alias}}</td></tr>
+         <tr><td>Uid        </td><td class="svccfg">{{mnm._data.cf.Uid  }}</td></tr>
       </table>
    </div>
 </script><script>
    Vue.component('mnm-svccfg', {
       template: '#mnm-svccfg',
-      data: function() { return {} },
-      computed: { cf: function() { return mnm._data.cf } },
-      methods: {
-      }
+      computed: { mnm: function() { return mnm } },
    });
 </script>
 
