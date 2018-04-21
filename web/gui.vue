@@ -45,7 +45,12 @@
             return 1;
          });
       };
-      mnm._formatDate = function(iDt) { return iDt.substr(0, 10) };
+      mnm._formatDate = function(iDate, iType) {
+         iDate = iDate.substring(iType === 'md' ? 5 : 0, 10);
+         if (iDate.charAt(0) === '0')
+            return '\u2007' + iDate.substr(1);
+         return iDate;
+      };
    </script>
 </head><body>
 <base target="_blank">
