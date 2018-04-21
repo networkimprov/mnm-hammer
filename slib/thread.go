@@ -19,6 +19,7 @@ import (
    "sort"
    "strconv"
    "strings"
+   "time"
 )
 
 func GetListThread(iSvc string, iState *ClientState) interface{} {
@@ -36,22 +37,26 @@ func GetListThread(iSvc string, iState *ClientState) interface{} {
    if iState.SvcTabs.PosFor != ePosForDefault {
       return []string{}
    }
-   aDir, err := ioutil.ReadDir(threadDir(iSvc))
-   if err != nil { quit(err) }
-   sort.Slice(aDir, func(cA, cB int) bool { return aDir[cA].ModTime().After(aDir[cB].ModTime()) })
-   aFmd, err := ioutil.ReadDir(formDir(iSvc))
-   if err != nil { quit(err) }
-   aList := make([]struct{Id string}, len(aDir)+len(aFmd))
+   var aDir []os.FileInfo
+   if iState.SvcTabs.Pos == 3 {
+      aDir, err = ioutil.ReadDir(formDir(iSvc))
+      if err != nil { quit(err) }
+   } else {
+      aDir, err = ioutil.ReadDir(threadDir(iSvc))
+      if err != nil { quit(err) }
+      sort.Slice(aDir, func(cA, cB int) bool { return aDir[cA].ModTime().After(aDir[cB].ModTime()) })
+   }
+   aList := make([]struct{Id string; Date string}, len(aDir))
    aI := 0
    for a, _ := range aDir {
-      if aDir[a].Name() != "_22" && !strings.ContainsRune(aDir[a].Name()[1:], '_') {
+      aList[aI].Date = aDir[a].ModTime().UTC().Format(time.RFC3339)
+      if iState.SvcTabs.Pos == 3 {
+         aList[aI].Id = strings.Replace(aDir[a].Name(), "@", "/", -1)
+         aI++
+      } else if aDir[a].Name() != "_22" && !strings.ContainsRune(aDir[a].Name()[1:], '_') {
          aList[aI].Id = aDir[a].Name()
          aI++
       }
-   }
-   for a, _ := range aFmd {
-      aList[aI].Id = strings.Replace(aFmd[a].Name(), "@", "/", -1)
-      aI++
    }
    return aList[:aI]
 }
