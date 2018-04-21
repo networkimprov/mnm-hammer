@@ -18,8 +18,8 @@ import (
 
 const kHistoryLen = 4
 
-var sSvcTabsDefault = []string{"All"}
-var sThreadTabsDefault = []string{"Opened","All"}
+var sSvcTabsDefault = []string{"All","Unread","Todo","FF"}
+var sThreadTabsDefault = []string{"Open","All"}
 
 var sStateDoor sync.Mutex
 var sStates = make(map[string]bool) // key client id
