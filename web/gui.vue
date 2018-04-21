@@ -211,11 +211,25 @@
                </tr></table>
          </template>
          <template v-else>
-            <div v-for="aRow in tl">
-               <a v-if="aRow.Id.indexOf('/') >= 0"
-                  @click.prevent="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)" href="#">{{aRow.Id}}</a>
-               <a v-else
-                  @click.prevent="mnm.NavigateThread(aRow.Id)" href="#">{{aRow.Id}}</a>
+            <div v-for="aRow in tl"
+                 onclick="this.lastChild.click()"
+                 uk-grid class="uk-grid-small" style="margin:0; padding:0.25em 0; cursor:pointer"
+                 :style="{'background-color': aRow.Id === cs.Thread ? 'wheat' : 'inherit'}">
+               <div class="uk-width-auto" style="padding:0">{{ fmtD(aRow.Date,'md') }}</div>
+               <div v-if="aRow.Id.indexOf('/') < 0"
+                    class="uk-width-1-6">{{'Last Author'}}</div>
+               <div class="uk-width-expand">
+                  {{'Something'}} {{aRow.Id}}
+               </div>
+               <div class="uk-width-auto">{{ fmtD('2018-01-17T04:16:57Z') }}</div>
+               <div v-if="aRow.Id.indexOf('/') < 0"
+                    class="uk-width-1-6">{{'Orig Author'}}</div>
+               <span v-if="aRow.Id.indexOf('/') >= 0"
+                     @click="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)"
+                     style="padding:0"></span>
+               <span v-else
+                     @click="mnm.NavigateThread(aRow.Id)"
+                     style="padding:0"></span>
             </div></template>
          <br/>{{JSON.stringify(mo)}}
       </div>
@@ -947,6 +961,7 @@
       el: '#app',
       data: mnm._data,
       methods: {
+         fmtD: mnm._formatDate,
          tabSearch: function(iText, iState) {
             if (iText.length === 0)
                return;
