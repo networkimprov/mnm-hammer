@@ -12,6 +12,7 @@
 input[type=text] {
    font-family: Monaco, monospace;
    font-size: larger;
+   box-sizing: border-box;
 }
 
 .btn-icon    { padding: 0; }
