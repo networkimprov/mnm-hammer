@@ -105,9 +105,11 @@
                        class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
                <div v-if="!('msg_data' in mo[aMsg.Id])"
                     class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
-               <div v-else-if="mo[aMsg.Id].Posted === 'draft'">
+               <div v-else-if="mo[aMsg.Id].Posted === 'draft'"
+                    @keypress="keyAction('pv_'+aMsg.Id, $event)">
                   <div style="position:relative; padding:1px;">
-                     <input @keyup.enter="ccAdd(aMsg.Id, $event.target)" type="text" placeholder="+To">
+                     <input @keyup.enter="ccAdd(aMsg.Id, $event.target)"
+                            placeholder="+To" type="text">
                      <div style="height:100%; position:absolute; left:15em; right:2em; top:0;">
                         <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Cc"
                                        :msgid="aMsg.Id" :drop="ccDrop"></mnm-draftmenu>
@@ -130,8 +132,10 @@
                                       :formfill="(toSave[aMsg.Id] || mo[aMsg.Id]).form_fill"
                                       :atchasff="atcHasFf" :msgid="aMsg.Id"></mnm-markdown></div>
                   </div>
+                  <input @input="subjAdd(aMsg.Id, $event.target.value)"
+                         :value="(toSave[aMsg.Id] || mo[aMsg.Id].SubHead).Subject"
+                         placeholder="Subject" type="text" style="width:100%">
                   <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
-                                  @keypress.native="keyAction('pv_'+aMsg.Id, $event)"
                                   :src="(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
                                   placeholder="Ctrl-J to Preview" style="width:100%"></mnm-textresize>
                </div>
@@ -990,8 +994,9 @@
          draft_tosave: function(iId, iNoTimer) {
             if (!(iId in mnm._data.toSave))
                Vue.set(mnm._data.toSave, iId, {timer:null,
-                       form_fill:mnm._data.mo[iId].form_fill, ffUpdt:false,
-                       msg_data: mnm._data.mo[iId].msg_data,  mdUpdt:false});
+                       form_fill:mnm._data.mo[iId].form_fill,       ffUpdt:false,
+                       msg_data: mnm._data.mo[iId].msg_data,        mdUpdt:false,
+                       Subject:  mnm._data.mo[iId].SubHead.Subject, suUpdt:false});
             if (!iNoTimer && !mnm._data.toSave[iId].timer)
                mnm._data.toSave[iId].timer =
                   setTimeout(fDing, 2000, this, mnm._data.toSave[iId], mnm._data.mo[iId]);
@@ -1015,8 +1020,9 @@
                Attach:   iAttach || iMo.SubHead.Attach,
                FormFill: iToSave.form_fill,
                Data:     iToSave.msg_data,
+               Subject:  iToSave.Subject,
             });
-            iToSave.mdUpdt = iToSave.ffUpdt = false;
+            iToSave.suUpdt = iToSave.mdUpdt = iToSave.ffUpdt = false;
          },
          ccAdd: function(iId, iWidget) {
             if (iWidget.value.length === 0)
@@ -1084,6 +1090,11 @@
             var aToSave = this.draft_tosave(iId, false);
             aToSave.msg_data = iText;
             aToSave.mdUpdt = true;
+         },
+         subjAdd: function(iId, iText) {
+            var aToSave = this.draft_tosave(iId, false);
+            aToSave.Subject = iText;
+            aToSave.suUpdt = true;
          },
          atcGetName: function(iEl) { return iEl.Name },
          atcGetKey:  function(iEl) { return iEl.FfKey || iEl.Name },
@@ -1210,6 +1221,8 @@
          }
          var aOrig = mnm._data.toSave[iEtc.Id];
          if (aOrig) {
+            if (!aOrig.suUpdt)
+               aOrig.Subject = iEtc.SubHead.Subject;
             if (!aOrig.mdUpdt)
                aOrig.msg_data = iEtc.msg_data;
             if (!aOrig.ffUpdt) {
