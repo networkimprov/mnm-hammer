@@ -197,13 +197,11 @@
       <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto"
            :class="{'uk-background-muted':ffn}">
          <template v-if="ffn">
-            <div style="position:sticky; top:0; padding:1em"
-                 class="uk-background-muted">{{ffn}}</div>
             <table class="uk-table uk-table-small uk-table-hover uk-text-small">
                <tr>
                   <th v-for="(a, aKey) in ffnCol"
                       v-if="aKey !== 'checksum' && aKey !== 'threadid'"
-                      style="position:sticky; top:0">
+                      style="position:sticky; top:0" class="uk-background-muted">
                      {{ aKey === 'msgid' ? 'source' : aKey }}</th>
                </tr>
                <tr v-for="aRow in tl">
@@ -224,8 +222,8 @@
                      <template v-else>
                         {{aRow[aKey]}}</template>
                   </td>
-               </tr></table>
-         </template>
+               </tr>
+            </table></template>
          <template v-else>
             <div v-for="aRow in tl"
                  onclick="this.lastChild.click()"
