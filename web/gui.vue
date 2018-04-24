@@ -59,7 +59,13 @@
 
 <div class="uk-width-2-5">
    <div class="uk-clearfix">
-      Subject, orig Author &amp; Date
+      <span style="padding-left:0.5em; display:inline-block">
+         {{ msgSubjects.length && msgSubjects[0].name || '[Subject Missing]' }}
+         <span v-show="msgSubjects.length > 1"
+               class="dropdown-icon">&nbsp;&#x25BD;&nbsp;</span>
+      </span>
+      <mnm-subject v-if="msgSubjects.length > 1"
+                   :list="msgSubjects"></mnm-subject>
       <div class="uk-float-right">
          <button @click="mnm.ThreadRecv()"
                  class="btn-icon"><span uk-icon="cloud-download"></span></button>
@@ -281,6 +287,22 @@
 </div>
 
 </div>
+
+<script type="text/x-template" id="mnm-subject">
+   <div uk-dropdown="mode:click; offset:2" style="padding:0 0.5em 0.5em">
+      <template v-for="(aSubject, aI) in list"
+                v-if="aI > 0">
+         <a onclick="mnm.NavigateLink(this.href); return false"
+            :href="'#'+ mnm._data.cs.Thread +'&'+ aSubject.msgId">
+            {{ aSubject.name || '[Subject Missing]' }}</a><br>
+      </template></div>
+</script><script>
+   Vue.component('mnm-subject', {
+      template: '#mnm-subject',
+      props: ['list'],
+      computed: { mnm: function() { return mnm } },
+   });
+</script>
 
 <script type="text/x-template" id="mnm-attach">
    <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3 dropdown-scroll">
@@ -1107,6 +1129,19 @@
          msgTabset: function() {
             var aT = mnm._data.cs.ThreadTabs;
             return aT ? [aT.Default, [], aT.Terms] : [];
+         },
+         msgSubjects: function() {
+            var aList = [];
+            for (var a=0; a < mnm._data.ml.length; ++a) {
+               var aM = mnm._data.ml[a];
+               if (aM.From !== '' && (aM.Subject.length > 0
+                   ? aList.length === 0 || aM.Subject !== aList[aList.length-1].name
+                   : a === mnm._data.ml.length-1))
+                  aList[aList.length] = {name:aM.Subject, msgId:aM.Id};
+            }
+            if (a === 1 && aM.From === '')
+               aList[aList.length] = {name:aM.Subject || '[Untitled Draft]', msgId:aM.Id};
+            return aList;
          },
          ffnCol: function() {
             if (!mnm._data.ffn) return {};
