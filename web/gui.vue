@@ -87,8 +87,9 @@
    <div uk-grid class="uk-grid-collapse">
       <mnm-tabs class="uk-width-expand"
                 :set="msgTabset" :state="cs.ThreadTabs"></mnm-tabs>
-      <input class="uk-width-1-6" type="text" placeholder=" &#x2315;"
-             @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)">
+      <input @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)"
+             placeholder=" &#x2315;" type="text"
+             class="uk-width-1-6 search-box">
    </div>
    <div uk-height-viewport="offset-top:true; offset-bottom:true"
         class="firefox-minheight-fix uk-overflow-auto">
@@ -188,8 +189,9 @@
             <a @click.prevent="mnm.TabSelect({type:cs.SvcTabs.Type, posfor:0, pos:aI})" href="#">
                {{ aTerm }}</a>
          </li></ul>
-      <input class="uk-width-1-2" type="text" placeholder=" &#x2315;"
-             @keyup.enter="tabSearch($event.target.value, cs.SvcTabs)">
+      <input @keyup.enter="tabSearch($event.target.value, cs.SvcTabs)"
+             placeholder=" &#x2315;" type="text"
+             class="uk-width-1-2 search-box">
    </div>
    <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"
              :set="svcTabset" :state="cs.SvcTabs"></mnm-tabs>

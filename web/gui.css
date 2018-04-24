@@ -23,8 +23,12 @@ body {
 
 input[type=text] {
    font-family: Monaco, monospace;
-   font-size: larger;
    box-sizing: border-box;
+}
+
+.search-box {
+   font-size: larger;
+   color: #1e87f0;
 }
 
 .btn-icon    { padding: 0; }
