@@ -9,6 +9,18 @@
 
 .firefox-minheight-fix { height: 0; }
 
+body {
+   background-color: #f0f8f5;
+}
+
+.message-list {
+   background-color: #fff7cf;
+}
+
+.service-panel {
+   background-color: #003333;
+}
+
 input[type=text] {
    font-family: Monaco, monospace;
    font-size: larger;

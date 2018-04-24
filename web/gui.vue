@@ -92,7 +92,7 @@
    </div>
    <div uk-height-viewport="offset-top:true; offset-bottom:true"
         class="firefox-minheight-fix uk-overflow-auto">
-      <ul id="msg-panel" class="uk-list uk-list-divider" style="background:#FFF7CF">
+      <ul id="msg-panel" class="uk-list uk-list-divider message-list">
          <li v-for="aMsg in ml" :key="aMsg.Id"
              style="margin:0">
             <div @click="msgToggle(aMsg.Id)" class="uk-link-text"
@@ -257,7 +257,7 @@
    </div>
 </div>
 
-<div class="uk-width-expand uk-light" style="background:#003333">
+<div class="uk-width-expand uk-light service-panel">
    <div class="uk-text-right" style="margin:0 1em 1em 0">
       <span uk-icon="plus-circle" class="dropdown-icon">&nbsp;</span>
       <mnm-svcadd></mnm-svcadd>
