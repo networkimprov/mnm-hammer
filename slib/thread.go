@@ -346,6 +346,9 @@ func validateSavedThread(iSvc string, iUpdt *Update) error {
          return tError("alias unknown: " + aJson.SubHead.Cc[a])
       }
    }
+   if aJson.SubHead.Subject == "" && aId.tid() == "" {
+      return tError("subject missing")
+   }
    _, err = aFd.Seek(aJson.Len, io.SeekCurrent)
    if err != nil { quit(err) }
    err = validateSavedAttach(iSvc, &aJson.SubHead, aId, aFd)
