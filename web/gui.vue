@@ -116,8 +116,8 @@
                     @keypress="keyAction('pv_'+aMsg.Id, $event)">
                   <div style="position:relative; padding:1px;">
                      <input @keyup.enter="ccAdd(aMsg.Id, $event.target)"
-                            placeholder="+To" type="text">
-                     <div style="height:100%; position:absolute; left:15em; right:2em; top:0;">
+                            placeholder="+To" size="25" type="text">
+                     <div style="height:100%; position:absolute; left:13em; right:2em; top:0;">
                         <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Cc"
                                        :msgid="aMsg.Id" :drop="ccDrop"></mnm-draftmenu>
                         <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Attach"
@@ -567,7 +567,7 @@
          <input @input="vis = !!(upname = $event.target.value.substr(12))" type="file"
                 name="filename" required>
          <div :style="{visibility: vis ? 'visible' : 'hidden'}" style="margin-top:0.5em">
-            <input v-model="upname" type="text" size="32" placeholder="Alt Name">
+            <input v-model="upname" type="text" size="40" placeholder="Alt Name">
             <button @click="vis = false" type="submit"
                     :disabled="!upname"
                     class="btn-icon"><span uk-icon="push"></span></button>
@@ -620,7 +620,7 @@
             class="dropdown-scroll-item">
          <div class="uk-float-right uk-text-small">ATTACHABLE FORMS</div>
          <input type="hidden" name="filename" value='{}'>
-         <input v-model="upname" type="text" size="24" placeholder="New Type">
+         <input v-model="upname" type="text" size="40" placeholder="New Type">
          <button @click="upname = ''"
                  :disabled="!validName(upname.split('.'))"
                  class="btn-icon"><span uk-icon="pencil"></span></button>
@@ -678,7 +678,7 @@
             <form :action="'/f/*' + encodeURIComponent(setName+'.'+fileId) +
                               '+' + encodeURIComponent(dupname)" method="POST"
                   onsubmit="mnm.Upload(this); return false;">
-               <input v-model="dupname" type="text" size="32" placeholder="New Revision">
+               <input v-model="dupname" type="text" size="40" placeholder="New Revision">
                <button @click="dupShow = dupname"
                        :disabled="!validName([].concat(setName,dupname.split('.')))"
                        class="btn-icon"><span uk-icon="copy"></span></button>
@@ -812,8 +812,8 @@
          <li>
             <form onsubmit="return false"
                   style="text-align:center">
-               <input v-model="draft.to" type="text" placeholder="To">
-               <input v-model="draft.gid" type="text" placeholder="(Group)">
+               <input v-model="draft.to" placeholder="To" size="25" type="text">
+               <input v-model="draft.gid" placeholder="(Group)" size="25" type="text">
                <button @click="startPing()"
                        :disabled="!validDraft"
                        class="btn-icon"><span uk-icon="pencil"></span></button>
@@ -857,7 +857,7 @@
             <form onsubmit="this.reset(); return false;"
                   style="text-align:center">
                <input oninput="this.nextElementSibling.disabled = !this.value"
-                      type="text" size="32" name="resets" placeholder="Add someone">
+                      placeholder="Add someone" size="40" type="text" name="resets">
                <button onclick="mnm.OhiAdd(this.previousElementSibling.value)"
                        disabled
                        class="btn-icontxt">o/</button>
@@ -914,15 +914,15 @@
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5"
         @hidden="error = ''">
       <div class="uk-text-right uk-text-small">ADD ACCOUNT</div>
-      <input v-model="addr"          @keyup.enter="send()" type="text" size="22"
-             placeholder="Net Address">
-      <input v-model="name"          @keyup.enter="send()" type="text" size="22"
-             placeholder="Title">
-      <input v-model="alias"         @keyup.enter="send()" type="text" size="22"
-             placeholder="Alias">
-      <input v-model.number="period" @keyup.enter="send()" type="text" size="16"
-             placeholder="Login Freq. (op)">
-      &nbsp;seconds<br>
+      <input @keyup.enter="send()" v-model="addr"
+             placeholder="Net Address" size="33" type="text">
+      <input @keyup.enter="send()" v-model="name"
+             placeholder="Title" size="33" type="text">
+      <input @keyup.enter="send()" v-model="alias"
+             placeholder="Alias" size="33" type="text">
+      <input @keyup.enter="send()" v-model.number="period"
+             placeholder="(Login Frequency)" size="24" type="text">
+      &nbsp; seconds<br>
       <span class="uk-text-danger">{{error}}</span> &nbsp;
       <button @click="send()">Register</button>
    </div>
