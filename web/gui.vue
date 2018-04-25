@@ -97,7 +97,7 @@
         class="firefox-minheight-fix uk-overflow-auto">
       <ul id="msg-panel" class="uk-list uk-list-divider message-list">
          <li v-for="aMsg in ml" :key="aMsg.Id"
-             style="margin:0">
+             :class="{'message-edit': aMsg.From === ''}" style="margin:0">
             <div @click="msgToggle(aMsg.Id)" class="uk-link-text"
                  style="cursor:pointer; display:inline-block; line-height:2em;">
                {{ fmtD(aMsg.Date,'md','hm') }} <b>{{ aMsg.From }}</b></div>
