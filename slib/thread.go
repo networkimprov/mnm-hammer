@@ -63,9 +63,9 @@ func GetListThread(iSvc string, iState *ClientState) interface{} {
 
 type tIndexEl struct {
    Id string
-   Offset int64
-   Size int64
+   Offset, Size int64
    From string
+   Alias string
    Date string
    Subject string
    Checksum uint32
@@ -73,7 +73,7 @@ type tIndexEl struct {
 
 func _makeIndexEl(iHead *Header, iPos int64) tIndexEl {
    return tIndexEl{Id:iHead.Id, From:iHead.From, Date:iHead.Posted, Offset:iPos,
-                   Subject:iHead.SubHead.Subject}
+                   Subject:iHead.SubHead.Subject, Alias:iHead.SubHead.Alias}
 }
 
 func GetIdxThread(iSvc string, iState *ClientState) interface{} {
@@ -84,7 +84,7 @@ func GetIdxThread(iSvc string, iState *ClientState) interface{} {
    aFd, err := os.Open(threadDir(iSvc) + aTid)
    if err != nil { quit(err) }
    defer aFd.Close()
-   var aIdx []struct{ Id, From, Date, Subject string; Size int64 }
+   var aIdx []struct{ Id, From, Alias, Date, Subject string }
    _ = _readIndex(aFd, &aIdx)
    for a1, a2 := 0, len(aIdx)-1; a1 < a2; a1, a2 = a1+1, a2-1 {
       aIdx[a1], aIdx[a2] = aIdx[a2], aIdx[a1]
