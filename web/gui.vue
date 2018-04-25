@@ -102,7 +102,7 @@
                  style="cursor:pointer; display:inline-block; line-height:2em;">
                {{ fmtD(aMsg.Date,'md','hm') }} <b>{{ aMsg.From }}</b></div>
             <template v-if="aMsg.Id in mo">
-               <template v-if="mo[aMsg.Id].Posted === 'draft'">
+               <template v-if="aMsg.From === ''">
                   <button @click="mnm.ThreadSend(aMsg.Id)"
                           class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
                   <span></span>
@@ -114,7 +114,7 @@
                        class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
                <div v-if="!('msg_data' in mo[aMsg.Id])"
                     class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
-               <div v-else-if="mo[aMsg.Id].Posted === 'draft'"
+               <div v-else-if="aMsg.From === ''"
                     @keypress="keyAction('pv_'+aMsg.Id, $event)">
                   <div style="position:relative; padding:1px;">
                      <input @keyup.enter="ccAdd(aMsg.Id, $event.target)"
