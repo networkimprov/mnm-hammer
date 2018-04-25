@@ -99,7 +99,7 @@
          <li v-for="aMsg in ml" :key="aMsg.Id"
              :class="{'message-edit': aMsg.From === ''}" style="margin:0">
             <span @click="msgToggle(aMsg.Id)"
-                  class="uk-link-text" style="cursor:pointer; display:inline-block; line-height:2em;">
+                  class="message-title" :class="{'message-title-edit': aMsg.From === ''}">
                {{ fmtD(aMsg.Date,'md','hm') }}
                <b>{{ aMsg.Alias || aMsg.From }}</b>
             </span>

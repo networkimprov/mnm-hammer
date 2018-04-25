@@ -74,6 +74,17 @@ input[type=text] {
    margin: 0; /* override uk-list default */
 }
 
+.message-title {
+   cursor: pointer;
+   display: inline-block;
+   line-height: 2em;
+   min-width: 50%;
+}
+
+.message-title-edit {
+   min-width: 0;
+}
+
 .message {
    overflow-x: auto;
    overflow-wrap: break-word;
