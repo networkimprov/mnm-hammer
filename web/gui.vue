@@ -98,9 +98,11 @@
       <ul id="msg-panel" class="uk-list uk-list-divider message-list">
          <li v-for="aMsg in ml" :key="aMsg.Id"
              :class="{'message-edit': aMsg.From === ''}" style="margin:0">
-            <div @click="msgToggle(aMsg.Id)" class="uk-link-text"
-                 style="cursor:pointer; display:inline-block; line-height:2em;">
-               {{ fmtD(aMsg.Date,'md','hm') }} <b>{{ aMsg.From }}</b></div>
+            <span @click="msgToggle(aMsg.Id)"
+                  class="uk-link-text" style="cursor:pointer; display:inline-block; line-height:2em;">
+               {{ fmtD(aMsg.Date,'md','hm') }}
+               <b>{{ aMsg.Alias || aMsg.From }}</b>
+            </span>
             <template v-if="aMsg.Id in mo">
                <template v-if="aMsg.From === ''">
                   <button @click="mnm.ThreadSend(aMsg.Id)"
