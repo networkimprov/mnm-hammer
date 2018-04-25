@@ -45,11 +45,13 @@
             return 1;
          });
       };
-      mnm._formatDate = function(iDate, iType) {
-         iDate = iDate.substring(iType === 'md' ? 5 : 0, 10);
-         if (iDate.charAt(0) === '0')
-            return '\u2007' + iDate.substr(1);
-         return iDate;
+      mnm._formatDate = function(iDate, iYmd, iHms) {
+         var aD = iDate.substring(iYmd === 'md' ? 5 : 0, 10);
+         if (aD.charAt(0) === '0')
+            aD = '\u2007' + aD.substr(1);
+         if (!iHms)
+            return aD;
+         return aD +' '+ iDate.substring(11, iHms === 'hm' ? 16 : 19);
       };
    </script>
 </head><body>
@@ -98,7 +100,7 @@
              style="margin:0">
             <div @click="msgToggle(aMsg.Id)" class="uk-link-text"
                  style="cursor:pointer; display:inline-block; line-height:2em;">
-               {{ aMsg.Date }} <b>{{ aMsg.From }}</b></div>
+               {{ fmtD(aMsg.Date,'md','hm') }} <b>{{ aMsg.From }}</b></div>
             <template v-if="aMsg.Id in mo">
                <template v-if="mo[aMsg.Id].Posted === 'draft'">
                   <button @click="mnm.ThreadSend(aMsg.Id)"
