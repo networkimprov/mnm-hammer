@@ -148,6 +148,30 @@
                <template v-else>
                   <button @click="mnm.ThreadReply({alias:cf.Alias, cc:getReplyCc(aMsg.Id)})"
                           class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
+                  <div v-if="mo[aMsg.Id].SubHead.For.length !== 1
+                          || mo[aMsg.Id].SubHead.For[0].Id !== cf.Uid">
+                     Cc:
+                     <span v-for="(aTo, aI) in mo[aMsg.Id].SubHead.For"
+                           v-if="aTo.Id !== cf.Uid"
+                           style="margin-right:1em">
+                        {{ mo[aMsg.Id].SubHead.Cc[aI] }}</span>
+                  </div>
+                  <div v-if="aMsg.Subject">
+                     Subject: {{ aMsg.Subject }}</div>
+                  <div v-if="mo[aMsg.Id].SubHead.Attach">
+                     Attached ({{ mo[aMsg.Id].SubHead.Attach.length }}):
+                     <template v-for="aAtc in mo[aMsg.Id].SubHead.Attach">
+                        <template v-if="aAtc.Name.charAt(0) === 'r'">
+                           <span @click="tabSearch('ffn:'+ aAtc.Ffn +
+                                              (aMsg.From === cf.Uid ? '_sent' : '_recv'), cs.SvcTabs)"
+                                 class="uk-link">{{ aAtc.Name.substr(2) }}</span></template>
+                        <template v-else>
+                           <a :href="'?an=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)"
+                              target="mnm_atc_[{.Title}]">{{ aAtc.Name.substr(2) }}</a></template>
+                        &#x25CA;
+                     </template>
+                  </div>
+                  <br>
                   <div v-if="!mo[aMsg.Id].msg_data">
                      <p><span uk-icon="comment"></span></p></div>
                   <mnm-markdown v-else
