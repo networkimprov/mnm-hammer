@@ -148,8 +148,8 @@
                <template v-else>
                   <button @click="mnm.ThreadReply({alias:cf.Alias, cc:getReplyCc(aMsg.Id)})"
                           class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
-                  <div v-if="!mo[aMsg.Id].msg_data"
-                       class="uk-text-center"><span uk-icon="comment"></span></div>
+                  <div v-if="!mo[aMsg.Id].msg_data">
+                     <p><span uk-icon="comment"></span></p></div>
                   <mnm-markdown v-else
                                 :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"
                                 :formreply="{alias:cf.Alias, cc:getReplyCc(aMsg.Id), data:''}"
