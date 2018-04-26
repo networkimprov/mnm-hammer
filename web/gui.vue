@@ -146,13 +146,14 @@
                   </div>
                </template>
                <template v-else>
-                  <button @click="mnm.ThreadReply({alias:cf.Alias, cc:[]})"
+                  <button @click="mnm.ThreadReply({alias:cf.Alias, cc:getReplyCc(aMsg.Id)})"
                           class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
                   <div v-if="!mo[aMsg.Id].msg_data"
                        class="uk-text-center"><span uk-icon="comment"></span></div>
                   <mnm-markdown v-else
                                 :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"
-                                :formreply="{alias:cf.Alias, cc:[], data:''}"></mnm-markdown>
+                                :formreply="{alias:cf.Alias, cc:getReplyCc(aMsg.Id), data:''}"
+                                ></mnm-markdown>
                </template>
             </template>
          </li></ul>
@@ -1021,6 +1022,15 @@
          keyAction: function(iId, iEvent) {
             if (iEvent.ctrlKey && iEvent.key === 'j')
                mnm._lastPreview = iId;
+         },
+         getReplyCc: function(iId) {
+            var aMo = mnm._data.mo[iId];
+            if (aMo.From === mnm._data.cf.Uid)
+               return aMo.SubHead.Cc;
+            var aN = aMo.SubHead.For.findIndex(function(c) {
+               return c.Id === mnm._data.cf.Uid;
+            });
+            return aMo.SubHead.Cc.slice(0, aN).concat(aMo.SubHead.Cc.slice(aN+1), aMo.SubHead.Alias);
          },
          draft_tosave: function(iId, iNoTimer) {
             if (!(iId in mnm._data.toSave))
