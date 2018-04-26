@@ -104,57 +104,56 @@
                <b>{{ aMsg.Alias || aMsg.From }}</b>
             </span>
             <template v-if="aMsg.Id in mo">
-               <template v-if="aMsg.From === ''">
-                  <button @click="mnm.ThreadSend(aMsg.Id)"
-                          class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
-                  <span></span>
-                  <button @click="mnm.ThreadDiscard(aMsg.Id)"
-                          class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
-               </template>
-               <button v-else
-                       @click="mnm.ThreadReply({alias:cf.Alias, cc:[]})"
-                       class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
                <div v-if="!('msg_data' in mo[aMsg.Id])"
                     class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
-               <div v-else-if="aMsg.From === ''"
-                    @keypress="keyAction('pv_'+aMsg.Id, $event)">
-                  <div style="position:relative; padding:1px;">
-                     <input @keyup.enter="ccAdd(aMsg.Id, $event.target)"
-                            placeholder="+To" size="25" type="text">
-                     <div style="height:100%; position:absolute; left:13em; right:2em; top:0;">
-                        <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Cc"
-                                       :msgid="aMsg.Id" :drop="ccDrop"></mnm-draftmenu>
-                        <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Attach"
-                                       :msgid="aMsg.Id" :drop="atcDrop"
-                                       :getname="atcGetName" :getkey="atcGetKey"
-                                       :style="{float:'right'}"></mnm-draftmenu>
+               <template v-else-if="aMsg.From === ''">
+                  <button @click="mnm.ThreadSend(aMsg.Id)"
+                          class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
+                  <button @click="mnm.ThreadDiscard(aMsg.Id)"
+                          class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
+                  <div @keypress="keyAction('pv_'+aMsg.Id, $event)">
+                     <div style="position:relative; padding:1px;">
+                        <input @keyup.enter="ccAdd(aMsg.Id, $event.target)"
+                               placeholder="+To" size="25" type="text">
+                        <div style="height:100%; position:absolute; left:13em; right:2em; top:0;">
+                           <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Cc"
+                                          :msgid="aMsg.Id" :drop="ccDrop"></mnm-draftmenu>
+                           <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Attach"
+                                          :msgid="aMsg.Id" :drop="atcDrop"
+                                          :getname="atcGetName" :getkey="atcGetKey"
+                                          :style="{float:'right'}"></mnm-draftmenu>
+                        </div>
                      </div>
+                     <div style="float:right; margin-top:-1.7em;">
+                        <span uk-icon="push"      :id="'t'+aMsg.Id" class="dropdown-icon"></span
+                       ><span uk-icon="file-edit" :id="'f'+aMsg.Id" class="dropdown-icon"></span>
+                        <span :id="'pv_'+aMsg.Id"></span>
+                        <div uk-dropdown="mode:click; pos:right-top" class="uk-width-2-5"
+                             style="overflow:auto; max-height:75vh;
+                                    border-top:1em solid white; border-bottom:1em solid white;">
+                           <mnm-markdown @formfill="ffAdd(aMsg.Id, arguments[0], arguments[1])"
+                                         @toggle="atcToggleFf(aMsg.Id, arguments[0], arguments[1])"
+                                         :src=     "(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
+                                         :formfill="(toSave[aMsg.Id] || mo[aMsg.Id]).form_fill"
+                                         :atchasff="atcHasFf" :msgid="aMsg.Id"></mnm-markdown></div>
+                     </div>
+                     <input @input="subjAdd(aMsg.Id, $event.target.value)"
+                            :value="(toSave[aMsg.Id] || mo[aMsg.Id].SubHead).Subject"
+                            placeholder="Subject" type="text" style="width:100%">
+                     <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
+                                     :src="(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
+                                     placeholder="Ctrl-J to Preview" style="width:100%"></mnm-textresize>
                   </div>
-                  <div style="float:right; margin-top:-1.7em;">
-                     <span uk-icon="push"      :id="'t'+aMsg.Id" class="dropdown-icon"></span
-                    ><span uk-icon="file-edit" :id="'f'+aMsg.Id" class="dropdown-icon"></span>
-                     <span :id="'pv_'+aMsg.Id"></span>
-                     <div uk-dropdown="mode:click; pos:right-top" class="uk-width-2-5"
-                          style="overflow:auto; max-height:75vh;
-                                 border-top:1em solid white; border-bottom:1em solid white;">
-                        <mnm-markdown @formfill="ffAdd(aMsg.Id, arguments[0], arguments[1])"
-                                      @toggle="atcToggleFf(aMsg.Id, arguments[0], arguments[1])"
-                                      :src=     "(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
-                                      :formfill="(toSave[aMsg.Id] || mo[aMsg.Id]).form_fill"
-                                      :atchasff="atcHasFf" :msgid="aMsg.Id"></mnm-markdown></div>
-                  </div>
-                  <input @input="subjAdd(aMsg.Id, $event.target.value)"
-                         :value="(toSave[aMsg.Id] || mo[aMsg.Id].SubHead).Subject"
-                         placeholder="Subject" type="text" style="width:100%">
-                  <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
-                                  :src="(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
-                                  placeholder="Ctrl-J to Preview" style="width:100%"></mnm-textresize>
-               </div>
-               <div v-else-if="!mo[aMsg.Id].msg_data"
-                    class="uk-text-center"><span uk-icon="comment"></span></div>
-               <mnm-markdown v-else
-                             :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"
-                             :formreply="{alias:cf.Alias, cc:[], data:''}"></mnm-markdown>
+               </template>
+               <template v-else>
+                  <button @click="mnm.ThreadReply({alias:cf.Alias, cc:[]})"
+                          class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
+                  <div v-if="!mo[aMsg.Id].msg_data"
+                       class="uk-text-center"><span uk-icon="comment"></span></div>
+                  <mnm-markdown v-else
+                                :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"
+                                :formreply="{alias:cf.Alias, cc:[], data:''}"></mnm-markdown>
+               </template>
             </template>
          </li></ul>
       <br/><div id="log"></div>
