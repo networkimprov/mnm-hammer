@@ -146,7 +146,7 @@
                   </div>
                </template>
                <template v-else>
-                  <button @click="mnm.ThreadReply({alias:cf.Alias, cc:getReplyCc(aMsg.Id)})"
+                  <button @click="mnm.ThreadReply(getReplyTemplate(aMsg))"
                           class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
                   <div v-if="mo[aMsg.Id].SubHead.For.length !== 1
                           || mo[aMsg.Id].SubHead.For[0].Id !== cf.Uid">
@@ -176,8 +176,7 @@
                      <p><span uk-icon="comment"></span></p></div>
                   <mnm-markdown v-else
                                 :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"
-                                :formreply="{alias:cf.Alias, cc:getReplyCc(aMsg.Id), data:''}"
-                                ></mnm-markdown>
+                                :formreply="getReplyTemplate(aMsg)"></mnm-markdown>
                </template>
             </template>
          </li></ul>
@@ -1047,14 +1046,18 @@
             if (iEvent.ctrlKey && iEvent.key === 'j')
                mnm._lastPreview = iId;
          },
-         getReplyCc: function(iId) {
-            var aMo = mnm._data.mo[iId];
-            if (aMo.From === mnm._data.cf.Uid)
-               return aMo.SubHead.Cc;
-            var aN = aMo.SubHead.For.findIndex(function(c) {
-               return c.Id === mnm._data.cf.Uid;
-            });
-            return aMo.SubHead.Cc.slice(0, aN).concat(aMo.SubHead.Cc.slice(aN+1), aMo.SubHead.Alias);
+         getReplyTemplate: function(iIdxEl) {
+            var aObj = {alias: mnm._data.cf.Alias, cc: null, data: '',
+                        subject: iIdxEl === mnm._data.ml[mnm._data.ml.length-1] ? '' : iIdxEl.Subject};
+            var aMo = mnm._data.mo[iIdxEl.Id];
+            if (aMo.From === mnm._data.cf.Uid) {
+               aObj.cc = aMo.SubHead.Cc;
+            } else {
+               var aN = aMo.SubHead.For.findIndex(function(c){ return c.Id === mnm._data.cf.Uid });
+               aObj.cc = aMo.SubHead.Cc.slice(0, aN).concat(aMo.SubHead.Cc.slice(aN+1),
+                                                            aMo.SubHead.Alias);
+            }
+            return aObj;
          },
          draft_tosave: function(iId, iNoTimer) {
             if (!(iId in mnm._data.toSave))
