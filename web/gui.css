@@ -56,6 +56,7 @@ input[type=text] {
 
 .dropdown-icon {
    cursor: default;
+   position: relative; bottom: -2px;
 }
 
 .dropdown-scroll {

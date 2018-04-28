@@ -62,7 +62,7 @@
 <div class="uk-width-2-5">
    <div class="uk-clearfix">
       <span style="padding-left:0.5em; display:inline-block">
-         {{ msgSubjects.length && msgSubjects[0].name || '[Subject Missing]' }}
+         {{ msgTitle }}
          <span v-show="msgSubjects.length > 1"
                class="dropdown-icon">&nbsp;&#x25BD;&nbsp;</span>
       </span>
@@ -323,11 +323,10 @@
 
 <script type="text/x-template" id="mnm-subject">
    <div uk-dropdown="mode:click; offset:2" style="padding:0 0.5em 0.5em">
-      <template v-for="(aSubject, aI) in list"
-                v-if="aI > 0">
+      <template v-for="aSubject in list">
          <a onclick="mnm.NavigateLink(this.href); return false"
             :href="'#'+ mnm._data.cs.Thread +'&'+ aSubject.msgId">
-            {{ aSubject.name || '[Subject Missing]' }}</a><br>
+            {{ aSubject.name }}</a> <br>
       </template></div>
 </script><script>
    Vue.component('mnm-subject', {
@@ -1176,17 +1175,23 @@
             var aT = mnm._data.cs.ThreadTabs;
             return aT ? [aT.Default, [], aT.Terms] : [];
          },
-         msgSubjects: function() {
-            var aList = [];
+         msgTitle: function() {
             for (var a=0; a < mnm._data.ml.length; ++a) {
                var aM = mnm._data.ml[a];
-               if (aM.From !== '' && (aM.Subject.length > 0
-                   ? aList.length === 0 || aM.Subject !== aList[aList.length-1].name
-                   : a === mnm._data.ml.length-1))
-                  aList[aList.length] = {name:aM.Subject, msgId:aM.Id};
+               if (aM.From !== '')
+                  return aM.Subject || this.msgSubjects[this.msgSubjects.length-1].name;
             }
-            if (a === 1 && aM.From === '')
-               aList[aList.length] = {name:aM.Subject || '[Untitled Draft]', msgId:aM.Id};
+            return a === 1 ? this.msgSubjects[0].name : '';
+         },
+         msgSubjects: function() {
+            var aList = [];
+            for (var a = mnm._data.ml.length-1; a >= 0; --a) {
+               var aM = mnm._data.ml[a];
+               if (aList.length === 0 || (aM.From !== '' && aM.Subject !== '' &&
+                                          !aList.find(function(c){ return c.name === aM.Subject })))
+                  aList.unshift({msgId:aM.Id, name: aM.Subject ||
+                     '\u25b8'+ (aM.From === '' ? 'Untitled Draft' : 'Subject Missing') +'\u25c2'});
+            }
             return aList;
          },
          ffnCol: function() {
