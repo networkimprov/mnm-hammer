@@ -231,6 +231,11 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
       if err != nil { quit(err) }
       _, err = aFd.Seek(aPos, io.SeekStart)
       if err != nil { quit(err) }
+      for a := aEl+1; a < len(aIdx); a++ {
+         if aIdx[a].Offset >= 0 {
+            aIdx[a].Offset += aIdx[aEl].Size
+         }
+      }
    }
    _writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
