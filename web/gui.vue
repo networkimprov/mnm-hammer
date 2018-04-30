@@ -392,8 +392,15 @@
    height: 100%;
    overflow: hidden;
 }
-.menu-x { float: right; margin-left:  0.5em ; font-family: initial; }
-.menu-v { float: right; margin-left: -0.75em; }
+.menu-x {
+   float: right; margin-left:  0.50em;
+   font-family: initial;
+}
+.menu-v {
+   float: right; margin-left: -0.75em;
+   font-size: 80%;
+   position: relative; bottom: -4px;
+}
 .draft-hiddn .menu-x { visibility: hidden; }
 .draft-shown .menu-v { display: none; }
 </style>
@@ -404,7 +411,7 @@
       <span v-for="(aEl, aI) in list" :key="getkey ? getkey(aEl) : aEl">
          {{getname ? getname(aEl) : aEl}}
          <div v-if="aI === 0 && list.length > 1"
-              class="menu-v">&#x25BC;</div>
+              class="menu-v">&#x25BD;</div>
          <div @click="drop(msgid, aI)" class="menu-x">&times;</div>
          <br>
       </span>
