@@ -494,14 +494,15 @@
    <div>
       <div class="uk-clearfix">
          <label v-if="!parent.formreply">
-            <input type="checkbox" @click="fillAttach" :checked="atcHasFf"
+            <input type="checkbox" @click="onFillAttach" :checked="atcHasFf"
                    :disabled="formDef === parent.formDefBad">
             attach fill</label>
          <button @click="startReply"
                  :disabled="!parent.formreply"
                  class="btn-icon btn-floatr"><span uk-icon="commenting"></span></button>
       </div>
-      <plugin-vfg :schema="formDef" :model="formState" :options="{}"></plugin-vfg>
+      <plugin-vfg @model-updated="onInput"
+                  :schema="formDef" :model="formState" :options="{}"></plugin-vfg>
    </div>
 </script><script>
    Vue.component('mnm-formview', {
@@ -521,13 +522,12 @@
          atcHasFf: function() {
             return this.parent.atchasff(this.parent.msgid, this.file);
          },
-         fill: function() {
-            this.formState = JSON.parse(this.fillMap[this.file]);
-            return 0;
-         },
       },
       methods: {
-         fillAttach: function(iEvent) {
+         onInput: function() {
+            this.parent.$emit('formfill', this.file, JSON.stringify(this.formState));
+         },
+         onFillAttach: function(iEvent) {
             this.parent.$emit('toggle', this.file, this.fill_name());
          },
          startReply: function() {
@@ -543,9 +543,9 @@
          },
       },
       watch: {
-         formState: { deep: true, handler:
-            function(iVal) {
-               this.parent.$emit('formfill', this.file, JSON.stringify(iVal));
+         fillMap: { deep: true, handler:
+            function() {
+               this.formState = JSON.parse(this.fillMap[this.file]);
             }
          },
       },
@@ -1144,12 +1144,8 @@
             }
             if (!aToSave.ffUpdt)
                aToSave.ffUpdt = {};
-            if (!aToSave.form_fill) {
+            if (!aToSave.form_fill)
                aToSave.form_fill = {};
-               if (mnm._data.mo[iId].form_fill)
-                  for (var a in mnm._data.mo[iId].form_fill)
-                     Vue.set(aToSave.form_fill, a, mnm._data.mo[iId].form_fill[a]);
-            }
             Vue.set(aToSave.form_fill, iFfKey, iText);
             aToSave.ffUpdt[iFfKey] = true;
          },
@@ -1313,8 +1309,8 @@
                aOrig.msg_data = iEtc.msg_data;
             if (!aOrig.ffUpdt) {
                aOrig.form_fill = iEtc.form_fill;
-            } else {
-               for (var aK in (iEtc.form_fill || {}))
+            } else if (iEtc.form_fill) {
+               for (var aK in iEtc.form_fill)
                   if (!aOrig.ffUpdt[aK])
                      Vue.set(aOrig.form_fill, aK, iEtc.form_fill[aK]);
             }
