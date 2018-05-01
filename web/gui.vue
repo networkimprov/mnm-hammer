@@ -1237,7 +1237,7 @@
 
    mnm.Log = function(i) {
       var aLog = document.getElementById('log').innerText;
-      document.getElementById('log').innerText = i+' '+aLog;
+      document.getElementById('log').innerText = (i.substr(-1) === '\n' ? i : i+'\n')+aLog;
    };
 
    mnm.Render = function(i, iData, iEtc) {
