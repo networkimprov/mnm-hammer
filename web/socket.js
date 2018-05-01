@@ -8,86 +8,87 @@
 
 ;var mnm = {};
 (function() {
-   var sWs = null;
+   var sWs = {};
+   var sXhrPending = 0;
 
    // caller implements these
    mnm.Log = mnm.Render = mnm.ThreadChange = function(){};
 
    mnm.SvcAdd = function(iObj) { // with name, addr, alias, loginperiod
-      sWs.send(JSON.stringify({op:'service_add', service:iObj}))
+      _wsSend(JSON.stringify({op:'service_add', service:iObj}))
    };
 
    mnm.OhiAdd = function(iAliasTo) {
-      sWs.send(JSON.stringify({op:'ohi_add', ohi:{alias:iAliasTo}}))
+      _wsSend(JSON.stringify({op:'ohi_add', ohi:{alias:iAliasTo}}))
    };
    mnm.OhiDrop = function(iAliasTo, iUid) {
-      sWs.send(JSON.stringify({op:'ohi_drop', ohi:{alias:iAliasTo, uid:iUid}}))
+      _wsSend(JSON.stringify({op:'ohi_drop', ohi:{alias:iAliasTo, uid:iUid}}))
    };
 
    mnm.PingSave = function(iObj) { // with alias, to, text, gid
-      sWs.send(JSON.stringify({op:'ping_save', ping:iObj}))
+      _wsSend(JSON.stringify({op:'ping_save', ping:iObj}))
    };
    mnm.PingDiscard = function(iObj) { // with to, gid
-      sWs.send(JSON.stringify({op:'ping_discard', ping:iObj}))
+      _wsSend(JSON.stringify({op:'ping_discard', ping:iObj}))
    };
    mnm.PingSend = function(iObj) { // with to, gid
-      sWs.send(JSON.stringify({op:'ping_send', ping:iObj}))
+      _wsSend(JSON.stringify({op:'ping_send', ping:iObj}))
    };
    mnm.InviteAccept = function(iGid) {
-      sWs.send(JSON.stringify({op:'accept_send', accept:{gid:iGid}}))
+      _wsSend(JSON.stringify({op:'accept_send', accept:{gid:iGid}}))
    };
 
    mnm.NavigateThread = function(i) {
-      sWs.send(JSON.stringify({op:'navigate_thread', navigate:{threadId:i}}))
+      _wsSend(JSON.stringify({op:'navigate_thread', navigate:{threadId:i}}))
    };
    mnm.NavigateHistory = function(i) {
-      sWs.send(JSON.stringify({op:'navigate_history', navigate:{history:i}}))
+      _wsSend(JSON.stringify({op:'navigate_history', navigate:{history:i}}))
    };
    mnm.NavigateLink = function(i) {
       var aPair = i.substr(i.indexOf('#')+1).split('&');
-      sWs.send(JSON.stringify({op:'navigate_link',
-                               navigate:{threadId:aPair[0], msgId:aPair[1] || aPair[0]}}))
+      _wsSend(JSON.stringify({op:'navigate_link', navigate:
+                                 {threadId:aPair[0], msgId:aPair[1] || aPair[0]}}))
    };
 
    mnm.ThreadNew = function(iObj) { // with alias, (cc), (data), (attach), (formFill)
       iObj.new = 1;
-      sWs.send(JSON.stringify({op:'thread_save', thread:iObj}))
+      _wsSend(JSON.stringify({op:'thread_save', thread:iObj}))
    };
    mnm.ThreadReply = function(iObj) { // with alias, (cc), (data), (attach), (formFill)
       iObj.new = 2;
-      sWs.send(JSON.stringify({op:'thread_save', thread:iObj}))
+      _wsSend(JSON.stringify({op:'thread_save', thread:iObj}))
    };
    mnm.ThreadSave = function(iObj) { // with id, alias, (cc), (data), (attach), (formFill)
       delete iObj.new // just in case
-      sWs.send(JSON.stringify({op:'thread_save', thread:iObj}))
+      _wsSend(JSON.stringify({op:'thread_save', thread:iObj}))
    };
    mnm.ThreadRecv = function() {
-      sWs.send(JSON.stringify({op:'thread_recvtest', thread:{}}))
+      _wsSend(JSON.stringify({op:'thread_recvtest', thread:{}}))
    };
    mnm.ThreadOpen = function(iId) {
       _xhr('mn', iId);
    };
    mnm.ThreadClose = function(iId) {
-      sWs.send(JSON.stringify({op:'thread_close', thread:{id:iId}}))
+      _wsSend(JSON.stringify({op:'thread_close', thread:{id:iId}}))
    };
    mnm.ThreadSend = function(iId) {
-      sWs.send(JSON.stringify({op:'thread_send', thread:{id:iId}}))
+      _wsSend(JSON.stringify({op:'thread_send', thread:{id:iId}}))
    };
    mnm.ThreadDiscard = function(iId) {
-      sWs.send(JSON.stringify({op:'thread_discard', thread:{id:iId}}))
+      _wsSend(JSON.stringify({op:'thread_discard', thread:{id:iId}}))
    };
 
    mnm.TabAdd = function(iObj) { // with type, term
-      sWs.send(JSON.stringify({op:'tab_add', tab:iObj}))
+      _wsSend(JSON.stringify({op:'tab_add', tab:iObj}))
    };
    mnm.TabSelect = function(iObj) { // with type, posfor, pos
-      sWs.send(JSON.stringify({op:'tab_select', tab:iObj}))
+      _wsSend(JSON.stringify({op:'tab_select', tab:iObj}))
    };
    mnm.TabPin = function(iType) {
-      sWs.send(JSON.stringify({op:'tab_pin', tab:{type:iType}}))
+      _wsSend(JSON.stringify({op:'tab_pin', tab:{type:iType}}))
    };
    mnm.TabDrop = function(iType) {
-      sWs.send(JSON.stringify({op:'tab_drop', tab:{type:iType}}))
+      _wsSend(JSON.stringify({op:'tab_drop', tab:{type:iType}}))
    };
 
    mnm.FormOpen = function(iId) {
@@ -133,8 +134,10 @@
    };
 
    function _xhr(i, iId) {
+      ++sXhrPending;
       var aXhr = new XMLHttpRequest();
       aXhr.onload = function() {
+         --sXhrPending;
          if (i !== 'mo' && i !== 'mn') {
             mnm.Render(i, aXhr.responseText, iId);
             return;
@@ -168,6 +171,17 @@
       var aN = iId ? encodeURIComponent(iId) : '';
       aXhr.open('GET', i.charAt(0) === '/' ? i+'/'+aN : '?'+i+(aN && '='+aN));
       aXhr.send();
+   }
+
+   function _wsSend(i) {
+      if (sWs.readyState !== 1) {
+         mnm.Log('op failed on closed socket');
+      } else if (sXhrPending > 0) {
+         setTimeout(_wsSend, 5, i);
+         mnm.Log('op deferred for pending xhr');
+      } else {
+         sWs.send(i);
+      }
    }
 
 }).call(this);
