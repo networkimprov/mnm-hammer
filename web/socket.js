@@ -121,9 +121,9 @@
          if (!(aObj instanceof Array))
             return;
          for (var a=0; a < aObj.length; ++a) {
-            if (aObj[a] === 'ml')
+            if (aObj[a] === '_t')
                mnm.ThreadChange();
-            if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')
+            else if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')
                _xhr(aObj[a], aObj[++a]);
             else
                _xhr(aObj[a]);

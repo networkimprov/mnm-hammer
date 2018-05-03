@@ -1245,7 +1245,7 @@
          i = i.substr(1);
 
       if (sChange && (i === 'ml' || i === 'mo')) {
-         sTemp[i] = iEtc ? iEtc : JSON.parse(iData);
+         sTemp[i] = iEtc || JSON.parse(iData);
          if (++sChange === 2)
             return;
          sChange = 0;
@@ -1255,7 +1255,7 @@
       }
 
       switch (i) {
-      case 'cs': case 'sl': case 'cf': case 'al':
+      case 'cs': case 'sl': case 'cf': case 'al': case 'ml':
       case 'ps': case 'pt': case 'pf': case 'it': case 'if': case 'gl': case 'ot': case 'of':
       case 't': case 'f':
          if (i === 'f' && iEtc) {

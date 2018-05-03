@@ -235,7 +235,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
             if c.getThread() == iHead.SubHead.ThreadId { c.openMsg(iHead.Id, true); return aResult }
             return aResult[:1]
          }
-         aResult = []string{"pt", "al", "ml", "mo", "mn", iHead.Id} //todo drop mo
+         aResult = []string{"pt", "al", "ml", "mn", iHead.Id}
       }
    case "ack":
       if iHead.Error != "" {
@@ -267,7 +267,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
                return aResult[1:2]
             }
          }
-         aResult = []string{"tl", "pf", "al", "ml", "mo", "mn", iHead.MsgId} //todo drop mo
+         aResult = []string{"tl", "pf", "al", "ml", "mn", iHead.MsgId}
       }
    default:
       err = tError("unknown tmtp op")
@@ -288,7 +288,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    switch iUpdt.Op {
    case "open":
       aFn, aResult = fOne, []string{"sl", "of", "ot", "ps", "pt", "pf", "if", "it", "gl",
-                                    "cf", "tl", "cs", "al", "ml", "mo", "/t", "/f"}
+                                    "cf", "tl", "cs", "al", "_t", "ml", "mo", "/t", "/f"}
    case "service_add":
       err = _addService(iUpdt.Service)
       if err != nil { return fErr, nil }
@@ -345,7 +345,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if c == iState { return aResult }
             return aResult[:1]
          }
-         aResult = []string{"tl", "cs", "al", "ml", "mo"}
+         aResult = []string{"tl", "cs", "al", "_t", "ml", "mo"}
       } else if iUpdt.Thread.New == eNewReply {
          iState.openMsg(iUpdt.Thread.Id, true)
          aTid := iState.getThread()
@@ -353,7 +353,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if c.getThread() == aTid { return aResult }
             return nil
          }
-         aResult = []string{"al", "ml", "mo"}
+         aResult = []string{"al", "ml", "mn", iUpdt.Thread.Id}
       } else { // may update msg from a threadid other than iState.getThread()
          aFn = func(c *ClientState) interface{} {
             if c.isOpen(iUpdt.Thread.Id) { return aResult }
@@ -370,14 +370,15 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if c.getThread() == aTid { return aResult }
             return aResult[:1]
          }
+         aResult = []string{"tl", "cs", "al", "_t", "ml", "mo"}
       } else {
          aFn = func(c *ClientState) interface{} {
             c.openMsg(iUpdt.Thread.Id, false)
-            if c.getThread() == aTid { return aResult [2:] }
+            if c.getThread() == aTid { return aResult }
             return nil
          }
+         aResult = []string{"al", "ml"}
       }
-      aResult = []string{"tl", "cs", "al", "ml", "mo"} //todo drop mo
    case "thread_send":
       if iUpdt.Thread.Id == "" { break }
       err = validateSavedThread(iSvc, iUpdt)
@@ -385,20 +386,21 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aSrec = &SendRecord{id: string(eSrecThread) + iUpdt.Thread.Id}
    case "thread_close":
       iState.openMsg(iUpdt.Thread.Id, false)
-      aFn, aResult = fOne, []string{"mo"} //todo drop
+      // no result
    case "navigate_thread":
       aLastId := loadThread(iSvc, iUpdt.Navigate.ThreadId)
       iState.addThread(iUpdt.Navigate.ThreadId, aLastId)
-      aFn, aResult = fOne, []string{"cs", "al", "ml", "mo"}
+      aFn, aResult = fOne, []string{"cs", "al", "_t", "ml", "mo"}
    case "navigate_history":
       iState.goThread(iUpdt.Navigate.History)
-      aFn, aResult = fOne, []string{"cs", "al", "ml", "mo"}
+      aFn, aResult = fOne, []string{"cs", "al", "_t", "ml", "mo"}
    case "navigate_link":
       _, err = os.Lstat(threadDir(iSvc) + iUpdt.Navigate.ThreadId)
       if err != nil { return fErr, nil }
       aDiff := iUpdt.Navigate.ThreadId != iState.getThread()
       iState.goLink(iUpdt.Navigate.ThreadId, iUpdt.Navigate.MsgId)
-      aFn, aResult = fOne, []string{"cs", "mo"}; if aDiff { aResult = []string{"cs", "al", "ml", "mo"} }
+      aFn = fOne
+      aResult = []string{"cs", "mo"}; if aDiff { aResult = []string{"cs", "al", "_t", "ml", "mo"} }
    case "tab_add":
       iState.addTab(iUpdt.Tab.Type, iUpdt.Tab.Term)
       aAlt := "tl"; if iUpdt.Tab.Type == eTabThread { aAlt = "mo" }
