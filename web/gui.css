@@ -86,6 +86,10 @@ input[type=text] {
    min-width: 0;
 }
 
+.message-title-seen b {
+   font-weight: normal;
+}
+
 .message {
    overflow-x: auto;
    overflow-wrap: break-word;
