@@ -69,7 +69,10 @@ type tIndexEl struct {
    Date string
    Subject string
    Checksum uint32
+   Seen string // mutable
 }
+
+const eSeenClear, eSeenLocal string = "!", "."
 
 func _makeIndexEl(iHead *Header, iPos int64) tIndexEl {
    return tIndexEl{Id:iHead.Id, From:iHead.From, Date:iHead.Posted, Offset:iPos,
@@ -84,7 +87,7 @@ func GetIdxThread(iSvc string, iState *ClientState) interface{} {
    aFd, err := os.Open(threadDir(iSvc) + aTid)
    if err != nil { quit(err) }
    defer aFd.Close()
-   var aIdx []struct{ Id, From, Alias, Date, Subject string }
+   var aIdx []struct{ Id, From, Alias, Date, Subject, Seen string }
    _ = _readIndex(aFd, &aIdx)
    for a1, a2 := 0, len(aIdx)-1; a1 < a2; a1, a2 = a1+1, a2-1 {
       aIdx[a1], aIdx[a2] = aIdx[a2], aIdx[a1]
@@ -94,9 +97,6 @@ func GetIdxThread(iSvc string, iState *ClientState) interface{} {
 
 func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId string) error {
    if iState.getThread() == "" { return nil }
-   if iId != "" {
-      iState.openMsg(iId, true)
-   }
    aFd, err := os.Open(threadDir(iSvc) + iState.getThread())
    if err != nil { quit(err) }
    defer aFd.Close()
@@ -156,7 +156,12 @@ func loadThread(iSvc string, iId string) string {
    defer aFd.Close()
    var aIdx []tIndexEl
    _ = _readIndex(aFd, &aIdx)
-   return aIdx[len(aIdx)-1].Id
+   for a := len(aIdx)-1; a >= 0; a-- {
+      if aIdx[a].Seen != "" {
+         return aIdx[a].Id
+      }
+   }
+   return aIdx[0].Id
 }
 
 func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
@@ -213,6 +218,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
       }
    }
    aIdx[aEl] = _makeIndexEl(iHead, aPos)
+   aIdx[aEl].Seen = eSeenClear
    aTempOk += fmt.Sprint(aPos)
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
@@ -265,6 +271,51 @@ func _completeStoreReceived(iSvc string, iTmp string, iHead *tHeadSaved, iFd, iT
       err = iFd.Sync()
       if err != nil { quit(err) }
    }
+   err = os.Remove(aTempOk)
+   if err != nil { quit(err) }
+}
+
+func seenReceivedThread(iSvc string, iUpdt *Update) {
+   aOrig := threadDir(iSvc) + iUpdt.Thread.ThreadId
+   aTempOk := tempDir(iSvc) + iUpdt.Thread.ThreadId + "__nr__"
+   aTemp := aTempOk + ".tmp"
+   var err error
+
+   var aIdx []tIndexEl
+   var aTd, aFd *os.File
+   aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
+   if err != nil { quit(err) }
+   defer aFd.Close()
+   aPos := _readIndex(aFd, &aIdx)
+   a := -1
+   for a, _ = range aIdx {
+      if aIdx[a].Id == iUpdt.Thread.Id { break }
+   }
+   if aIdx[a].Seen != "" {
+      return
+   }
+   aIdx[a].Seen = dateRFC3339()
+   aTempOk += fmt.Sprint(aPos)
+
+   aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
+   if err != nil { quit(err) }
+   defer aTd.Close()
+   _writeIndex(aTd, aIdx)
+   err = os.Rename(aTemp, aTempOk)
+   if err != nil { quit(err) }
+   err = syncDir(tempDir(iSvc))
+   if err != nil { quit(err) }
+   _completeSeenReceived(iSvc, path.Base(aTempOk), aFd, aTd)
+}
+
+func _completeSeenReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
+   var err error
+   aTempOk := tempDir(iSvc) + iTmp
+
+   _, err = io.Copy(iFd, iTd) // iFd has correct pos from _readIndex
+   if err != nil { quit(err) }
+   err = iFd.Sync()
+   if err != nil { quit(err) }
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
 }
@@ -577,6 +628,11 @@ func _writeMsgTemp(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) err
    }
    _, err = iTd.Write([]byte{'\n'})
    if err != nil { quit(err) }
+   if iEl.Seen == eSeenClear {
+      iEl.Seen = ""
+   } else {
+      iEl.Seen = eSeenLocal
+   }
    iEl.Checksum = aCw.sum // excludes final '\n'
    iEl.Size, err = iTd.Seek(0, io.SeekCurrent)
    if err != nil { quit(err) }
@@ -610,6 +666,8 @@ func completeThread(iSvc string, iTempOk string) {
    switch aRec.op() {
    case "sr":
       _completeStoreReceived(iSvc, iTempOk, fGetHead(), aFd, aTd)
+   case "nr":
+      _completeSeenReceived(iSvc, iTempOk, aFd, aTd)
    case "ss":
       _completeStoreSent(iSvc, iTempOk, fGetHead(), aFd, aTd)
    case "ws":

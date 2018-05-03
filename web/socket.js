@@ -66,7 +66,7 @@
       _wsSend(JSON.stringify({op:'thread_recvtest', thread:{}}))
    };
    mnm.ThreadOpen = function(iId) {
-      _xhr('mn', iId);
+      _xhr('mn', iId, true);
    };
    mnm.ThreadClose = function(iId) {
       _wsSend(JSON.stringify({op:'thread_close', thread:{id:iId}}))
@@ -133,7 +133,7 @@
       sWs.onerror = function(iEvent) { mnm.Log('ws error: ' + iEvent.data) };
    };
 
-   function _xhr(i, iId) {
+   function _xhr(i, iId, iOpen) {
       ++sXhrPending;
       var aXhr = new XMLHttpRequest();
       aXhr.onload = function() {
@@ -162,6 +162,9 @@
             }
             if (i === 'mn') {
                mnm.Render(i, aXhr.responseText, aHead);
+               if (iOpen)
+                  _wsSend(JSON.stringify({op:'thread_open', thread:
+                                          {id:aHead.Id, threadid:aHead.SubHead.ThreadId || aHead.Id}}));
                return;
             }
             aMap[aHead.Id] = aHead;

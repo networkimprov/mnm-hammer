@@ -128,6 +128,7 @@ type Update struct {
       Attach []tHeader2Attach
       FormFill map[string]string
       New int8
+      ThreadId string //todo move to new struct
    }
    Ping *struct {
       Alias string

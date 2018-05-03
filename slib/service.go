@@ -232,10 +232,10 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          aFn, aResult = fAll, []string{"pt", "tl"}
       } else {
          aFn = func(c *ClientState) interface{} {
-            if c.getThread() == iHead.SubHead.ThreadId { c.openMsg(iHead.Id, true); return aResult }
+            if c.getThread() == iHead.SubHead.ThreadId { return aResult }
             return aResult[:1]
          }
-         aResult = []string{"pt", "al", "ml", "mn", iHead.Id}
+         aResult = []string{"pt", "al", "ml"}
       }
    case "ack":
       if iHead.Error != "" {
@@ -384,6 +384,18 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       err = validateSavedThread(iSvc, iUpdt)
       if err != nil { return fErr, nil }
       aSrec = &SendRecord{id: string(eSrecThread) + iUpdt.Thread.Id}
+   case "thread_open":
+      if iUpdt.Thread.ThreadId != iState.getThread() {
+         err = tError("thread id out of sync")
+         return fErr, nil
+      }
+      iState.openMsg(iUpdt.Thread.Id, true)
+      seenReceivedThread(iSvc, iUpdt)
+      aFn = func(c *ClientState) interface{} {
+         if c.getThread() == iUpdt.Thread.ThreadId { return aResult }
+         return nil
+      }
+      aResult = []string{"ml"}
    case "thread_close":
       iState.openMsg(iUpdt.Thread.Id, false)
       // no result
