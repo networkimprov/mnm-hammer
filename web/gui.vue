@@ -70,11 +70,13 @@
                    :list="msgSubjects"></mnm-subject>
       <div class="uk-float-right">
          <button @click="mnm.ThreadRecv()"
+                 title="Send test message to self"
                  class="btn-icon"><span uk-icon="cloud-download"></span></button>
          <span uk-icon="copy" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
          <mnm-attach ref="al"></mnm-attach>
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
+                 title="New thread draft"
                  class="btn-icon"><span uk-icon="pencil"></span></button>
          <button onclick="this.blur(); mnm.NavigateHistory(-1)"
                  :disabled="!cs.History || !cs.History.Prev"
@@ -109,8 +111,10 @@
                     class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
                <template v-else-if="aMsg.From === ''">
                   <button @click="mnm.ThreadSend(aMsg.Id)"
+                          title="Send draft"
                           class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
                   <button @click="mnm.ThreadDiscard(aMsg.Id)"
+                          title="Discard draft"
                           class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
                   <div @keypress="keyAction('pv_'+aMsg.Id, $event)">
                      <div style="position:relative; padding:1px;">
@@ -148,6 +152,7 @@
                </template>
                <template v-else>
                   <button @click="mnm.ThreadReply(getReplyTemplate(aMsg))"
+                          title="New reply draft"
                           class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
                   <div v-if="mo[aMsg.Id].SubHead.For.length !== 1
                           || mo[aMsg.Id].SubHead.For[0].Id !== cf.Uid">
@@ -354,6 +359,7 @@
                   uk-icon="mail" style="visibility:hidden"></span>
             2018-01-17T04:16:57Z{{aFile.Date}} &nbsp;
             <button @click=""
+                    title="Add to attachable files"
                     class="btn-icon"><span uk-icon="push"></span></button>
             <a :href="'?ad=' + encodeURIComponent(aFile.File)">
                <span uk-icon="download"></span></a>
@@ -507,6 +513,7 @@
             attach fill</label>
          <button @click="startReply"
                  :disabled="!parent.formreply"
+                 title="New reply draft with form below"
                  class="btn-icon btn-floatr"><span uk-icon="commenting"></span></button>
       </div>
       <plugin-vfg @model-updated="onInput"
@@ -604,6 +611,7 @@
             <input v-model="upname" type="text" size="40" placeholder="Alt Name">
             <button @click="vis = false" type="submit"
                     :disabled="!upname"
+                    title="Copy to attachable files"
                     class="btn-icon"><span uk-icon="push"></span></button>
             <button @click="vis = false" type="reset"
                     class="btn-iconx">&times;</button>
@@ -619,6 +627,7 @@
             {{aFile.Date}}
             <button v-if="toggle"
                     @click="$emit('attach', 'upload/'+aFile.Name)"
+                    title="Attach file"
                     class="btn-icon"><span uk-icon="copy"></span></button>
             <a :href="'/t/!' + encodeURIComponent(aFile.Name)">
                <span uk-icon="download">&nbsp;</span></a>
@@ -630,7 +639,8 @@
                      :action="'/t/-' + encodeURIComponent(aFile.Name)" method="POST"
                      onsubmit="mnm.Upload(this); return false;"
                      style="display:inline!important">
-                  <button class="btn-iconred"><span uk-icon="trash"></span></button>
+                  <button title="Erase file"
+                          class="btn-iconred"><span uk-icon="trash"></span></button>
                </form>
             </div>
          </li></ul>
@@ -657,6 +667,7 @@
          <input v-model="upname" type="text" size="40" placeholder="New Type">
          <button @click="upname = ''"
                  :disabled="!validName(upname.split('.'))"
+                 title="New form"
                  class="btn-icon"><span uk-icon="pencil"></span></button>
       </form>
       <ul uk-tab style="margin-top:0">
@@ -671,6 +682,7 @@
                {{aFile.Date}}
                <button v-if="toggle"
                        @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
+                       title="Attach form"
                        class="btn-icon"><span uk-icon="copy"></span></button>
                <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.target)"
                   :id="'bf_'+aSet.Name+'.'+aFile.Id" href="#">
@@ -679,7 +691,8 @@
                      :action="'/f/-' + encodeURIComponent(aSet.Name+'.'+aFile.Id)" method="POST"
                      onsubmit="mnm.Upload(this); return false;"
                      style="float:right">
-                  <button class="btn-iconred"><span uk-icon="trash"></span></button>
+                  <button title="Erase form"
+                          class="btn-iconred"><span uk-icon="trash"></span></button>
                </form>
             </li></template></ul>
          <div v-show="setName"
@@ -698,6 +711,7 @@
                <span @click="codeShow = !codeShow"
                      class="uk-link">{...}</span>
                <button :disabled="!!parseError"
+                       title="Save form"
                        class="btn-icon"><span uk-icon="file-edit"></span></button>
                <div style="font-size:smaller; text-align:right">&nbsp;{{parseError}}</div>
                <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
@@ -715,6 +729,7 @@
                <input v-model="dupname" type="text" size="40" placeholder="New Revision">
                <button @click="dupShow = dupname"
                        :disabled="!validName([].concat(setName,dupname.split('.')))"
+                       title="Duplicate form"
                        class="btn-icon"><span uk-icon="copy"></span></button>
             </form>
          </div>
@@ -838,6 +853,7 @@
                            class="uk-badge">in</span>
                      <button v-else
                              @click="mnm.InviteAccept(a.Gid)"
+                             title="Accept group invite"
                              class="btn-icon"><span uk-icon="forward"></span></button>
                   </td>
                   <td>{{a.Alias}}</td><td>{{a.Text}}</td>
@@ -850,6 +866,7 @@
                <input v-model="draft.gid" placeholder="(Group)" size="25" type="text">
                <button @click="startPing()"
                        :disabled="!validDraft"
+                       title="New ping draft"
                        class="btn-icon"><span uk-icon="pencil"></span></button>
             </form>
             <table class="uk-table uk-table-small">
@@ -857,11 +874,13 @@
                <tr v-for="a in mnm._data.ps" :key="rowId(a)">
                   <td>{{a.Alias}}<br>{{a.Gid && '('+a.Gid+')'}}</td>
                   <td><button @click="mnm.PingSend({to:a.Alias, gid:a.Gid})"
+                              title="Send ping draft"
                               class="btn-icon"><span uk-icon="forward"></span></button></td>
                   <td><textarea cols="40" rows="3" maxlength="120"
                                 @input="timer(a, $event.target.value)"
                      >{{toSave[rowId(a)] || a.Text}}</textarea></td>
                   <td><button @click="mnm.PingDiscard({to:a.Alias, gid:a.Gid})"
+                              title="Discard ping draft"
                               class="btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
          <li>
@@ -894,6 +913,7 @@
                       placeholder="Add someone" size="40" type="text" name="resets">
                <button onclick="mnm.OhiAdd(this.previousElementSibling.value)"
                        disabled
+                       title="Notify contact when you're online"
                        class="btn-icontxt">o/</button>
             </form>
             <table class="uk-table uk-table-small">
@@ -901,6 +921,7 @@
                <tr v-for="a in mnm._data.ot">
                   <td>{{fmtD(a.Date)}}</td><td>{{a.Uid /*todo alias*/}}</td>
                   <td><button @click="mnm.OhiDrop(null,a.Uid)"
+                              title="Stop notifying contact"
                               class="btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
       </ul>
