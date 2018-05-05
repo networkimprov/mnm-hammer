@@ -18,11 +18,13 @@ import (
    "sort"
    "strconv"
    "strings"
+   "sync"
 )
 
 const kUidUnknown = "\x00unknown"
 
 type tAdrsbk struct {
+   sync.RWMutex
    pingToIdx     map[string]tAdrsbkLog // key alias
    pingFromIdx   map[string]tAdrsbkLog // key uid
    aliasIdx      map[string]string     // key alias, value uid //todo replace with btree
@@ -73,10 +75,11 @@ func _getAliasIdx(iSvc string) map[string]string {
 }
 
 func _loadAdrsbk(iSvc string) *tAdrsbk {
-   sServicesDoor.Lock()
+   sServicesDoor.RLock()
    aSvc := &sServices[iSvc].adrsbk
+   sServicesDoor.RUnlock()
+   aSvc.Lock(); defer aSvc.Unlock()
    if aSvc.aliasIdx != nil {
-      sServicesDoor.Unlock()
       return aSvc
    }
    aSvc.pingToIdx     = make(map[string]tAdrsbkLog)
@@ -85,7 +88,6 @@ func _loadAdrsbk(iSvc string) *tAdrsbk {
    aSvc.inviteToIdx   = make(map[string]tAdrsbkLog)
    aSvc.inviteFromIdx = make(map[string]tAdrsbkLog)
    aSvc.groupIdx      = make(map[string]tGroupEl)
-   sServicesDoor.Unlock()
 
    var aLog []tAdrsbkEl
    err := readJsonFile(&aLog, adrsFile(iSvc))
@@ -158,42 +160,51 @@ func _respondLog(iLog tAdrsbkLog, iEl *tAdrsbkEl) bool {
 
 func GetGroupAdrsbk(iSvc string) []tGroupEl {
    aSvc := _loadAdrsbk(iSvc)
+   aSvc.RLock()
    aList := make([]tGroupEl, len(aSvc.groupIdx))
    a := 0
    for _, aList[a] = range aSvc.groupIdx { a++ }
+   aSvc.RUnlock()
    sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Date > aList[cB].Date })
    return aList
 }
 
 func GetReceivedAdrsbk(iSvc string) tAdrsbkLog {
-   return _listLogs(_loadAdrsbk(iSvc).pingFromIdx)
+   aSvc := _loadAdrsbk(iSvc)
+   return _listLogs(aSvc, aSvc.pingFromIdx)
 }
 
 func GetSentAdrsbk(iSvc string) tAdrsbkLog {
-   return _listLogs(_loadAdrsbk(iSvc).pingToIdx)
+   aSvc := _loadAdrsbk(iSvc)
+   return _listLogs(aSvc, aSvc.pingToIdx)
 }
 
 func GetInviteFromAdrsbk(iSvc string) tAdrsbkLog {
-   return _listLogs(_loadAdrsbk(iSvc).inviteFromIdx)
+   aSvc := _loadAdrsbk(iSvc)
+   return _listLogs(aSvc, aSvc.inviteFromIdx)
 }
 
 func GetInviteToAdrsbk(iSvc string) tAdrsbkLog {
-   return _listLogs(_loadAdrsbk(iSvc).inviteToIdx)
+   aSvc := _loadAdrsbk(iSvc)
+   return _listLogs(aSvc, aSvc.inviteToIdx)
 }
 
-func _listLogs(iIdx map[string]tAdrsbkLog) tAdrsbkLog {
+func _listLogs(iSvc *tAdrsbk, iIdx map[string]tAdrsbkLog) tAdrsbkLog {
+   iSvc.RLock()
    aLog := tAdrsbkLog{}
    for _, aSet := range iIdx {
       for _, aEl := range aSet {
          aLog = append(aLog, aEl)
       }
    }
+   iSvc.RUnlock()
    sort.Slice(aLog, func(cA, cB int) bool { return aLog[cA].Date > aLog[cB].Date })
    return aLog
 }
 
 func lookupAdrsbk(iSvc string, iAlias []string) []tHeaderFor {
    aSvc :=  _loadAdrsbk(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
    aFor := make([]tHeaderFor, len(iAlias))
    for a, _ := range iAlias {
       aUid := aSvc.aliasIdx[iAlias[a]]
@@ -208,6 +219,7 @@ func lookupAdrsbk(iSvc string, iAlias []string) []tHeaderFor {
 func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    var err error
    aSvc := _loadAdrsbk(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    aLog := aSvc.pingFromIdx[iHead.From]
    for a, _ := range aLog {
       if aLog[a].MsgId == iHead.Id {
@@ -246,6 +258,7 @@ func storeSentAdrsbk(iSvc string, iKey string, iDate string) {
    if err != nil { quit(err) }
    aEl := aMap[iKey]
    aSvc := _loadAdrsbk(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    aLog := aSvc.pingToIdx[aEl.Alias]
    aEl.Type = eAbPingTo; if aEl.Gid != "" { aEl.Type = eAbInviteTo }
    aEl.Date = iDate
@@ -269,6 +282,7 @@ func storeSentAdrsbk(iSvc string, iKey string, iDate string) {
 
 func resolveReceivedAdrsbk(iSvc string, iDate string, iFor []tHeaderFor, iTid, iMsgId string) {
    aSvc := _loadAdrsbk(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    var aEls []tAdrsbkEl
    for a, _ := range iFor {
       aEl := tAdrsbkEl{Type:eAbMsgTo, Date:iDate, Tid:iTid, MsgId:iMsgId, Uid:iFor[a].Id}
@@ -286,6 +300,7 @@ func resolveSentAdrsbk(iSvc string, iDate string, iFrom, iAlias string, iTid, iM
       return
    }
    aSvc := _loadAdrsbk(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    aUid := aSvc.aliasIdx[iAlias]
    if aUid != kUidUnknown && aUid != iFrom {
       return
@@ -300,6 +315,7 @@ func resolveSentAdrsbk(iSvc string, iDate string, iFrom, iAlias string, iTid, iM
 
 func acceptInviteAdrsbk(iSvc string, iGid string, iDate string) {
    aSvc := _loadAdrsbk(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    aEl := tAdrsbkEl{Type:eAbMsgAccept, Date:iDate, Gid:iGid}
    if _respondLog(aSvc.inviteFromIdx[iGid], &aEl) {
       aSvc.groupIdx[iGid] = tGroupEl{Gid:iGid, Date:aEl.Date}
@@ -310,6 +326,7 @@ func acceptInviteAdrsbk(iSvc string, iGid string, iDate string) {
 
 func groupJoinedAdrsbk(iSvc string, iHead *Header) {
    aSvc := _loadAdrsbk(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    aEl := tAdrsbkEl{Type:eAbMsgJoin, Date:iHead.Posted, Gid:iHead.Gid, Alias:iHead.Alias}
    if _respondLog(aSvc.inviteToIdx[aEl.Alias + "\x00" + aEl.Gid], &aEl) {
       _storeAdrsbk(iSvc, []tAdrsbkEl{aEl}, false)
