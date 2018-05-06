@@ -14,8 +14,11 @@ import (
    "io"
    "os"
    "strings"
+   "sync"
 )
 
+var sServicesDoor sync.RWMutex
+var sServices = make(map[string]*tService)
 var sServiceStartFn func(string)
 
 type tCfgService struct {
@@ -87,18 +90,21 @@ func GetIdxService() []string {
    return aS
 }
 
-func GetDataService(iSvc string) *tCfgService {
+func GetService(iSvc string) *tService {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   aSvc := sServices[iSvc]
-   if aSvc == nil {
-      return nil
-   }
-   return &aSvc.cfg
+   return sServices[iSvc]
+}
+
+func GetDataService(iSvc string) *tCfgService {
+   aSvc := GetService(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   aCfg := aSvc.cfg
+   return &aCfg
 }
 
 func getUriService(iSvc string) string {
-   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   aSvc := sServices[iSvc]
+   aSvc := GetService(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
    return aSvc.cfg.Addr +"/"+ aSvc.cfg.Uid +"/"
 }
 
@@ -142,11 +148,11 @@ func _addService(iService *tCfgService) error {
 
 func _updateService(iService *tCfgService) error {
    var err error
-   sServicesDoor.Lock(); defer sServicesDoor.Unlock()
-   aSvc := sServices[iService.Name]
+   aSvc := GetService(iService.Name)
    if aSvc == nil {
       return tError(iService.Name + " not found")
    }
+   aSvc.Lock(); defer aSvc.Unlock()
    err = storeFile(cfgFile(iService.Name), iService)
    if err != nil { quit(err) }
 
@@ -155,9 +161,8 @@ func _updateService(iService *tCfgService) error {
 }
 
 func addTabService(iSvc string, iTerm string) int {
-   sServicesDoor.RLock()
-   aSvc := sServices[iSvc]
-   sServicesDoor.RUnlock()
+   aSvc := GetService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    aSvc.tabs = append(aSvc.tabs, iTerm)
    err := storeFile(tabFile(iSvc), aSvc.tabs)
    if err != nil { quit(err) }
@@ -165,9 +170,8 @@ func addTabService(iSvc string, iTerm string) int {
 }
 
 func dropTabService(iSvc string, iPos int) {
-   sServicesDoor.RLock()
-   aSvc := sServices[iSvc]
-   sServicesDoor.RUnlock()
+   aSvc := GetService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    aSvc.tabs = aSvc.tabs[:iPos + copy(aSvc.tabs[iPos:], aSvc.tabs[iPos+1:])]
    err := storeFile(tabFile(iSvc), aSvc.tabs)
    if err != nil { quit(err) }
@@ -191,10 +195,10 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
 
    switch iHead.Op {
    case "registered":
-      aNewSvc := *GetDataService(iSvc)
+      aNewSvc := GetDataService(iSvc)
       aNewSvc.Uid = iHead.Uid
       aNewSvc.Node = iHead.NodeId
-      err = _updateService(&aNewSvc)
+      err = _updateService(aNewSvc)
       if err != nil { return fErr }
       aFn, aResult = fAll, []string{"sl"}
    case "info":

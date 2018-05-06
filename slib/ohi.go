@@ -34,17 +34,17 @@ func _listOhi(iMap tOhi) []tOhiEl {
 }
 
 func GetFromOhi(iSvc string) []tOhiEl {
-   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   aMap := sServices[iSvc].fromOhi
-   if aMap == nil {
+   aSvc := GetService(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   if aSvc.fromOhi == nil {
       return []tOhiEl{}
    }
-   return _listOhi(aMap)
+   return _listOhi(aSvc.fromOhi)
 }
 
 func setFromOhi(iSvc string, iHead *Header) {
-   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   aSvc := sServices[iSvc]
+   aSvc := GetService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    aSvc.fromOhi = tOhi{}
    aDate := dateRFC3339()
    for _, aUid := range iHead.Ohi {
@@ -53,8 +53,8 @@ func setFromOhi(iSvc string, iHead *Header) {
 }
 
 func updateFromOhi(iSvc string, iHead *Header) {
-   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   aSvc := sServices[iSvc]
+   aSvc := GetService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    if iHead.Status == 1 {
       aSvc.fromOhi[iHead.From] = dateRFC3339()
    } else {
@@ -63,8 +63,9 @@ func updateFromOhi(iSvc string, iHead *Header) {
 }
 
 func dropFromOhi(iSvc string) {
-   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   sServices[iSvc].fromOhi = nil
+   aSvc := GetService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   aSvc.fromOhi = nil
 }
 
 func GetIdxOhi(iSvc string) []tOhiEl {

@@ -424,7 +424,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    // url is "/service[?op[=id]]"
    aSvc := iReq.URL.Path[1:]; if aSvc == "" { aSvc = "local" }
    aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
-   if err == nil && slib.GetDataService(aSvc) == nil {
+   if err == nil && slib.GetService(aSvc) == nil {
       err = tError("not found")
    }
    if err != nil {
@@ -571,7 +571,7 @@ var sWsInit = gws.Upgrader {
 
 func runWs(iResp http.ResponseWriter, iReq *http.Request) {
    aSvc := iReq.URL.Path[3:]; if aSvc == "" { aSvc = "local" }
-   if slib.GetDataService(aSvc) == nil {
+   if slib.GetService(aSvc) == nil {
       iResp.WriteHeader(http.StatusNotFound)
       iResp.Write([]byte("service not found: "+aSvc))
       return

@@ -45,12 +45,10 @@ func attachFfn(iSvc, iSub string) string { return attachSub(iSvc, iSub) + "ffnin
 
 var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
-var sServicesDoor sync.RWMutex
-var sServices = make(map[string]*tService)
-
 type tService struct {
-   cfg tCfgService
    adrsbk tAdrsbk
+   sync.RWMutex // protects the following
+   cfg tCfgService
    fromOhi tOhi
    tabs []string
 }

@@ -69,15 +69,8 @@ type tGroupEl struct {
 }
 
 
-func _getAliasIdx(iSvc string) map[string]string {
-   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   return sServices[iSvc].adrsbk.aliasIdx
-}
-
 func _loadAdrsbk(iSvc string) *tAdrsbk {
-   sServicesDoor.RLock()
-   aSvc := &sServices[iSvc].adrsbk
-   sServicesDoor.RUnlock()
+   aSvc := &GetService(iSvc).adrsbk
    aSvc.Lock(); defer aSvc.Unlock()
    if aSvc.aliasIdx != nil {
       return aSvc

@@ -121,9 +121,11 @@ func (o tOpenState) MarshalJSON() ([]byte, error) {
 }
 
 func (o *ClientState) GetSummary() Msg {
-   sServicesDoor.RLock()
-   aSvc := sServices[o.svc]
-   sServicesDoor.RUnlock()
+   aSvc := GetService(o.svc)
+   aSvc.RLock()
+   aPinned := make([]string, len(aSvc.tabs))
+   copy(aPinned, aSvc.tabs)
+   aSvc.RUnlock()
 
    o.RLock(); defer o.RUnlock()
    aS := Msg{"Thread":"none"}
@@ -140,7 +142,7 @@ func (o *ClientState) GetSummary() Msg {
       }
       aS["History"] = aH
    }
-   aS["SvcTabs"] = &tTabsSummary{tTabs:&o.SvcTabs, Pinned:&aSvc.tabs,
+   aS["SvcTabs"] = &tTabsSummary{tTabs:&o.SvcTabs, Pinned:&aPinned,
                                  Default:&sSvcTabsDefault, Type:eTabService}
    return aS
 }
