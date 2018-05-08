@@ -515,6 +515,9 @@ func deleteSavedThread(iSvc string, iUpdt *Update) {
       for a, _ = range aIdx {
          if aIdx[a].Id == iUpdt.Thread.Id { break }
       }
+      if aIdx[a].Id != iUpdt.Thread.Id {
+         return
+      }
       aIdx = aIdx[:a + copy(aIdx[a:], aIdx[a+1:])]
    }
    aTempOk += fmt.Sprint(aPos)
