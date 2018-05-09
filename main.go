@@ -478,11 +478,13 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       iResp.WriteHeader(http.StatusNotFound)
       err = tError("unknown")
    }
-   if aResult != nil {
-      err = json.NewEncoder(iResp).Encode(aResult)
-   }
    if err != nil {
       fmt.Fprintf(os.Stderr, "runService %s: op %s error %s\n", aSvc, aOp_Id[0], err.Error())
+      aResult = "error: " + err.Error()
+   }
+   if aResult != nil {
+      err = json.NewEncoder(iResp).Encode(aResult)
+      if err != nil { fmt.Fprintf(os.Stderr, "runService %s: %s\n", aSvc, err.Error()) }
    }
 }
 

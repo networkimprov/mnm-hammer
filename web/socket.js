@@ -138,6 +138,14 @@
       var aXhr = new XMLHttpRequest();
       aXhr.onload = function() {
          --sXhrPending;
+         if (aXhr.responseText.length === 0) {
+            mnm.Log(i +' empty');
+            return;
+         }
+         if (/^"error:/.test(aXhr.responseText)) {
+            mnm.Log(i +' '+ aXhr.responseText.slice(1, -2));
+            return;
+         }
          if (i !== 'mo' && i !== 'mn') {
             mnm.Render(i, aXhr.responseText, iId);
             return;
