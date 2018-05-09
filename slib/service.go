@@ -344,7 +344,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       }
       storeSavedThread(iSvc, iUpdt)
       if iUpdt.Thread.New == eNewThread {
-         iState.addThread(iUpdt.Thread.Id, iUpdt.Thread.Id)
+         iState.addThread(iUpdt.Thread.Id)
          aFn = func(c *ClientState) interface{} {
             if c == iState { return aResult }
             return aResult[:1]
@@ -404,8 +404,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       iState.openMsg(iUpdt.Thread.Id, false)
       // no result
    case "navigate_thread":
-      aLastId := loadThread(iSvc, iUpdt.Navigate.ThreadId)
-      iState.addThread(iUpdt.Navigate.ThreadId, aLastId)
+      iState.addThread(iUpdt.Navigate.ThreadId)
       aFn, aResult = fOne, []string{"cs", "al", "_t", "ml", "mo"}
    case "navigate_history":
       iState.goThread(iUpdt.Navigate.History)

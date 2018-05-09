@@ -166,16 +166,17 @@ func (o *ClientState) isOpen(iMsgId string) bool {
    return false
 }
 
-func (o *ClientState) addThread(iId, iLastMsgId string) {
+func (o *ClientState) addThread(iId string) {
    o.Lock(); defer o.Unlock()
-   o._addThread(iId, iLastMsgId)
+   o._addThread(iId)
    err := storeFile(o.filePath, o)
    if err != nil { quit(err) }
 }
 
-func (o *ClientState) _addThread(iId, iLastMsgId string) {
+func (o *ClientState) _addThread(iId string) {
    if o.Thread[iId] == nil {
-      o.Thread[iId] = &tThreadState{Open: tOpenState{iLastMsgId:true},
+      aMsgId := iId; if iId[0] != '_' { aMsgId = loadThread(o.svc, iId) }
+      o.Thread[iId] = &tThreadState{Open: tOpenState{aMsgId:true},
                                     Tabs: tTabs{Terms:[]string{}}}
    } else if iId == o.History[o.Hpos] {
       fmt.Fprintf(os.Stderr, "addThread: ignored attempt to readd %s\n", iId)
@@ -341,7 +342,7 @@ func (o *ClientState) dropTab(iType int8) {
 func (o *ClientState) goLink(iThreadId, iMsgId string) {
    o.Lock(); defer o.Unlock()
    if iThreadId != o.History[o.Hpos] {
-      o._addThread(iThreadId, iThreadId)
+      o._addThread(iThreadId)
    }
    aTabs := &o.Thread[o.History[o.Hpos]].Tabs
    aTabs.PosFor = ePosForTerms
