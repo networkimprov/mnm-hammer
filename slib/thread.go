@@ -19,6 +19,7 @@ import (
    "sort"
    "strconv"
    "strings"
+   "sync"
    "time"
 )
 
@@ -81,9 +82,12 @@ func _makeIndexEl(iHead *Header, iPos int64) tIndexEl {
 
 func GetIdxThread(iSvc string, iState *ClientState) interface{} {
    aTid := iState.getThread()
-   if aTid == "" {
-      return []tIndexEl{}
-   }
+   if aTid == "" { return []tIndexEl{} }
+
+   aDoor := _getDoor(iSvc, aTid)
+   aDoor.RLock(); defer aDoor.RUnlock()
+   if aDoor.renamed { return nil }
+
    aFd, err := os.Open(threadDir(iSvc) + aTid)
    if err != nil { quit(err) }
    defer aFd.Close()
@@ -96,8 +100,14 @@ func GetIdxThread(iSvc string, iState *ClientState) interface{} {
 }
 
 func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId string) error {
-   if iState.getThread() == "" { return nil }
-   aFd, err := os.Open(threadDir(iSvc) + iState.getThread())
+   aTid := iState.getThread()
+   if aTid == "" { return nil }
+
+   aDoor := _getDoor(iSvc, aTid)
+   aDoor.RLock(); defer aDoor.RUnlock()
+   if aDoor.renamed { return tError("thread name changed") }
+
+   aFd, err := os.Open(threadDir(iSvc) + aTid)
    if err != nil { quit(err) }
    defer aFd.Close()
    var aIdx []tIndexEl
@@ -151,6 +161,10 @@ func sendSavedThread(iW io.Writer, iSvc string, iSaveId, iId string) error {
 
 //todo return open-msg map
 func loadThread(iSvc string, iId string) string {
+   aDoor := _getDoor(iSvc, iId)
+   aDoor.RLock(); defer aDoor.RUnlock()
+   if aDoor.renamed { return "" }
+
    aFd, err := os.Open(threadDir(iSvc) + iId)
    if err != nil { quit(err) }
    defer aFd.Close()
@@ -192,6 +206,8 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
    var aCopyLen int64
    aEl := 0
    if aThreadId != iHead.Id {
+      aDoor := _getDoor(iSvc, aThreadId)
+      aDoor.Lock(); defer aDoor.Unlock()
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil {
          fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s not found\n", iSvc, aThreadId)
@@ -281,6 +297,10 @@ func seenReceivedThread(iSvc string, iUpdt *Update) {
    aTemp := aTempOk + ".tmp"
    var err error
 
+   aDoor := _getDoor(iSvc, iUpdt.Thread.ThreadId)
+   aDoor.Lock(); defer aDoor.Unlock()
+   if aDoor.renamed { return }
+
    var aIdx []tIndexEl
    var aTd, aFd *os.File
    aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
@@ -330,6 +350,14 @@ func storeSentThread(iSvc string, iHead *Header) {
    aOrig := threadDir(iSvc) + aId.tid()
    aTempOk := tempDir(iSvc) + aId.tid() + "_" + iHead.MsgId + "_ss_" + aId.sid() + "_"
    aTemp := aTempOk + ".tmp"
+
+   aTid := iHead.Id; if aId.tid() != iHead.MsgId { aTid = aId.tid() }
+   aDoor := _getDoor(iSvc, aTid)
+   aDoor.Lock(); defer aDoor.Unlock()
+   if aDoor.renamed { quit(tError("unexpected rename")) }
+   if aId.tid() == iHead.MsgId {
+      aDoor.renamed = true
+   }
 
    aSd, err := os.Open(aSave)
    if err != nil {
@@ -419,6 +447,11 @@ func storeSavedThread(iSvc string, iUpdt *Update) {
    aData := bytes.NewBufferString(iUpdt.Thread.Data)
    var err error
 
+   aTid := aId.tid(); if aTid == "" { aTid = "_" + aId.sid() }
+   aDoor := _getDoor(iSvc, aTid)
+   aDoor.Lock(); defer aDoor.Unlock()
+   if aDoor.renamed { quit(tError("unexpected rename")) }
+
    var aIdx []tIndexEl
    var aTd, aFd *os.File
    var aPos int64
@@ -502,6 +535,11 @@ func deleteSavedThread(iSvc string, iUpdt *Update) {
    aTempOk := tempDir(iSvc) + aId.tid() + "__ds_" + aId.sid() + "_"
    aTemp := aTempOk + ".tmp"
    var err error
+
+   aTid := aId.tid(); if aTid == "" { aTid = "_" + aId.sid() }
+   aDoor := _getDoor(iSvc, aTid)
+   aDoor.Lock(); defer aDoor.Unlock()
+   if aDoor.renamed { quit(tError("unexpected rename")) }
 
    var aIdx []tIndexEl
    var aTd, aFd *os.File
@@ -640,6 +678,22 @@ func _writeMsgTemp(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) err
    iEl.Size, err = iTd.Seek(0, io.SeekCurrent)
    if err != nil { quit(err) }
    return nil
+}
+
+type tThreadDoor struct {
+   sync.RWMutex
+   renamed bool //todo provide new thread id here?
+}
+
+func _getDoor(iSvc string, iTid string) *tThreadDoor {
+   aSvc := GetService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   aDoor := aSvc.threadDoors[iTid]
+   if aDoor == nil {
+      aDoor = &tThreadDoor{}
+      aSvc.threadDoors[iTid] = aDoor
+   }
+   return aDoor
 }
 
 func completeThread(iSvc string, iTempOk string) {

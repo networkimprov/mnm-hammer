@@ -176,8 +176,8 @@ func (o *ClientState) addThread(iId string) {
 func (o *ClientState) _addThread(iId string) {
    if o.Thread[iId] == nil {
       aMsgId := iId; if iId[0] != '_' { aMsgId = loadThread(o.svc, iId) }
-      o.Thread[iId] = &tThreadState{Open: tOpenState{aMsgId:true},
-                                    Tabs: tTabs{Terms:[]string{}}}
+      aOpen := tOpenState{}; if aMsgId != "" { aOpen[aMsgId] = true }
+      o.Thread[iId] = &tThreadState{Open: aOpen, Tabs: tTabs{Terms:[]string{}}}
    } else if iId == o.History[o.Hpos] {
       fmt.Fprintf(os.Stderr, "addThread: ignored attempt to readd %s\n", iId)
       return

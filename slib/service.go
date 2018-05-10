@@ -68,7 +68,7 @@ func initServices(iFn func(string)) {
             completeThread(aSvc, aTmp)
          }
       }
-      aService := &tService{tabs:[]string{}}
+      aService := _newService(nil)
       err = readJsonFile(&aService.cfg, cfgFile(aSvc))
       if err != nil { quit(err) }
       err = readJsonFile(&aService.tabs, tabFile(aSvc))
@@ -108,6 +108,12 @@ func getUriService(iSvc string) string {
    return aSvc.cfg.Addr +"/"+ aSvc.cfg.Uid +"/"
 }
 
+func _newService(iCfg *tCfgService) *tService {
+   aSvc := &tService{tabs: []string{}, threadDoors: make(map[string]*tThreadDoor)}
+   if iCfg != nil { aSvc.cfg = *iCfg }
+   return aSvc
+}
+
 func _makeTree(iSvc string) {
    var err error
    for _, aDir := range [...]string{tempDir(iSvc), threadDir(iSvc), attachDir(iSvc), formDir(iSvc)} {
@@ -139,7 +145,7 @@ func _addService(iService *tCfgService) error {
    err = os.Rename(svcDir(aTemp), svcDir(iService.Name))
    if err != nil { quit(err) }
 
-   sServices[iService.Name] = &tService{cfg: *iService}
+   sServices[iService.Name] = _newService(iService)
    if sServiceStartFn != nil {
       sServiceStartFn(iService.Name)
    }

@@ -51,6 +51,7 @@ type tService struct {
    cfg tCfgService
    fromOhi tOhi
    tabs []string
+   threadDoors map[string]*tThreadDoor
 }
 
 type Header struct {
