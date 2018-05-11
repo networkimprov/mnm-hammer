@@ -100,11 +100,17 @@ type tTabs struct {
    Terms []string
 }
 
+func (o *tTabs) copy() *tTabs {
+   aTerms := make([]string, len(o.Terms))
+   copy(aTerms, o.Terms)
+   return &tTabs{Pos:o.Pos, PosFor:o.PosFor, Terms:aTerms}
+}
+
 type tTabsSummary struct {
-   *tTabs
-   Default *[]string
+   tTabs
+   Default []string
    Pinned  *[]string `json:",omitempty"`
-   Type int
+   Type int8
 }
 
 type tOpenState map[string]bool // key msg id
@@ -131,8 +137,8 @@ func (o *ClientState) GetSummary() Msg {
    aS := Msg{"Thread":"none"}
    if o.Hpos >= 0 {
       aS["Thread"] = o.History[o.Hpos]
-      aS["ThreadTabs"] = &tTabsSummary{tTabs: &o.Thread[o.History[o.Hpos]].Tabs,
-                                       Default: &sThreadTabsDefault, Type:eTabThread}
+      aS["ThreadTabs"] = &tTabsSummary{ Type: eTabThread, Default: sThreadTabsDefault,
+                                        tTabs: *o.Thread[o.History[o.Hpos]].Tabs.copy() }
       aH := struct{ Prev, Next bool }{true, true}
       if o.Hpos == 0 {
          aH.Prev = false
@@ -142,8 +148,8 @@ func (o *ClientState) GetSummary() Msg {
       }
       aS["History"] = aH
    }
-   aS["SvcTabs"] = &tTabsSummary{tTabs:&o.SvcTabs, Pinned:&aPinned,
-                                 Default:&sSvcTabsDefault, Type:eTabService}
+   aS["SvcTabs"] = &tTabsSummary{ Type: eTabService, Default: sSvcTabsDefault,
+                                  tTabs: *o.SvcTabs.copy(), Pinned: &aPinned }
    return aS
 }
 
