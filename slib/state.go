@@ -90,27 +90,18 @@ type tThreadState struct {
    Refs int
 }
 
-const ( eTabThread=iota; eTabService )
-
-const ( ePosForDefault=iota; ePosForPinned; ePosForTerms; ePosForEnd )
-
 type tTabs struct {
    Pos int
    PosFor int8
    Terms []string
 }
 
+const ( ePosForDefault=iota; ePosForPinned; ePosForTerms; ePosForEnd )
+
 func (o *tTabs) copy() *tTabs {
    aTerms := make([]string, len(o.Terms))
    copy(aTerms, o.Terms)
    return &tTabs{Pos:o.Pos, PosFor:o.PosFor, Terms:aTerms}
-}
-
-type tTabsSummary struct {
-   tTabs
-   Default []string
-   Pinned  *[]string `json:",omitempty"`
-   Type int8
 }
 
 type tOpenState map[string]bool // key msg id
@@ -126,7 +117,23 @@ func (o tOpenState) MarshalJSON() ([]byte, error) {
    return append(aBuf, '}'), nil
 }
 
-func (o *ClientState) GetSummary() Msg {
+type tSummary struct {
+   Thread string
+   ThreadTabs *tSummaryTabs `json:",omitempty"`
+   History struct{ Prev, Next bool }
+   SvcTabs tSummaryTabs
+}
+
+type tSummaryTabs struct {
+   tTabs
+   Default []string
+   Pinned  *[]string `json:",omitempty"`
+   Type int8
+}
+
+const ( eTabThread=iota; eTabService )
+
+func (o *ClientState) GetSummary() interface{} {
    aSvc := GetService(o.svc)
    aSvc.RLock()
    aPinned := make([]string, len(aSvc.tabs))
@@ -134,22 +141,16 @@ func (o *ClientState) GetSummary() Msg {
    aSvc.RUnlock()
 
    o.RLock(); defer o.RUnlock()
-   aS := Msg{"Thread":"none"}
+   aS := &tSummary{ Thread: "none",
+                    SvcTabs: tSummaryTabs{ Type: eTabService, Default: sSvcTabsDefault,
+                                           tTabs: *o.SvcTabs.copy(), Pinned: &aPinned }}
    if o.Hpos >= 0 {
-      aS["Thread"] = o.History[o.Hpos]
-      aS["ThreadTabs"] = &tTabsSummary{ Type: eTabThread, Default: sThreadTabsDefault,
-                                        tTabs: *o.Thread[o.History[o.Hpos]].Tabs.copy() }
-      aH := struct{ Prev, Next bool }{true, true}
-      if o.Hpos == 0 {
-         aH.Prev = false
-      }
-      if o.Hpos == len(o.History)-1 {
-         aH.Next = false
-      }
-      aS["History"] = aH
+      aS.Thread = o.History[o.Hpos]
+      aS.ThreadTabs = &tSummaryTabs{ Type: eTabThread, Default: sThreadTabsDefault,
+                                     tTabs: *o.Thread[o.History[o.Hpos]].Tabs.copy() }
+      aS.History.Prev = o.Hpos > 0
+      aS.History.Next = o.Hpos < len(o.History)-1
    }
-   aS["SvcTabs"] = &tTabsSummary{ Type: eTabService, Default: sSvcTabsDefault,
-                                  tTabs: *o.SvcTabs.copy(), Pinned: &aPinned }
    return aS
 }
 
