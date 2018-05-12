@@ -31,6 +31,7 @@ type tAdrsbk struct {
    inviteToIdx   map[string]tAdrsbkLog // key alias + gid
    inviteFromIdx map[string]tAdrsbkLog // key gid
    groupIdx      map[string]tGroupEl   // key gid
+   savedDoor     sync.RWMutex
 }
 
 type tAdrsbkLog []*tAdrsbkEl
@@ -398,8 +399,11 @@ func completeAdrsbk(iSvc string, iTmp string) {
 }
 
 func GetSavedAdrsbk(iSvc string) tAdrsbkLog {
+   aDoor := &GetService(iSvc).adrsbk.savedDoor
    var aMap map[string]*tAdrsbkEl
+   aDoor.RLock()
    err := readJsonFile(&aMap, pingFile(iSvc))
+   aDoor.RUnlock()
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
       return tAdrsbkLog{}
@@ -428,9 +432,12 @@ func sendJoinGroupAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
 //todo update .Type on queue for send
 
 func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
+   aDoor := &GetService(iSvc).adrsbk.savedDoor
    var err error
    var aMap map[string]*tAdrsbkEl
+   aDoor.RLock()
    err = readJsonFile(&aMap, pingFile(iSvc))
+   aDoor.RUnlock()
    if err != nil { quit(err) }
    aId := parseSaveId(iSaveId)
    aEl := aMap[aId.ping()]
@@ -456,6 +463,8 @@ func keySavedAdrsbk(iUpdt *Update) string {
 }
 
 func storeSavedAdrsbk(iSvc string, iUpdt *Update) {
+   aDoor := &GetService(iSvc).adrsbk.savedDoor
+   aDoor.Lock(); defer aDoor.Unlock()
    var err error
    aMap := make(map[string]*tAdrsbkEl)
    err = readJsonFile(&aMap, pingFile(iSvc))
@@ -468,6 +477,8 @@ func storeSavedAdrsbk(iSvc string, iUpdt *Update) {
 }
 
 func deleteSavedAdrsbk(iSvc string, iAlias, iGid string) {
+   aDoor := &GetService(iSvc).adrsbk.savedDoor
+   aDoor.Lock(); defer aDoor.Unlock()
    var err error
    var aMap map[string]*tAdrsbkEl
    err = readJsonFile(&aMap, pingFile(iSvc))
