@@ -57,7 +57,10 @@
 </head><body>
 <base target="_blank">
 
-<div id="app" uk-grid class="uk-grid-small">
+<div id="app"></div>
+
+<script type="text/x-template" id="mnm-main">
+<div uk-grid class="uk-grid-small">
 
 <div class="uk-width-2-5">
    <div class="uk-clearfix">
@@ -92,7 +95,7 @@
       <mnm-tabs class="uk-width-expand"
                 :set="msgTabset" :state="cs.ThreadTabs"></mnm-tabs>
       <input @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)"
-             placeholder=" &#x2315;" type="text"
+             :placeholder="' \u2315'" type="text"
              class="uk-width-1-6 search-box">
    </div>
    <div uk-height-viewport="offset-top:true; offset-bottom:true"
@@ -223,7 +226,7 @@
                {{ aTerm }}</a>
          </li></ul>
       <input @keyup.enter="tabSearch($event.target.value, cs.SvcTabs)"
-             placeholder=" &#x2315;" type="text"
+             :placeholder="' \u2315'" type="text"
              class="uk-width-1-2 search-box">
    </div>
    <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"
@@ -326,6 +329,7 @@
 </div>
 
 </div>
+</script>
 
 <script type="text/x-template" id="mnm-subject">
    <div uk-dropdown="mode:click; offset:2" style="padding:0 0.5em 0.5em">
@@ -1045,7 +1049,7 @@
    var sTemp = {ml:null, mo:null};
 
    var sApp = new Vue({
-      el: '#app',
+      template: '#mnm-main',
       data: mnm._data,
       methods: {
          fmtD: mnm._formatDate,
@@ -1363,6 +1367,7 @@
       }
    });
 
+   sApp.$mount('#app');
    window.onload = mnm.Connect;
 
 }).call(this);
