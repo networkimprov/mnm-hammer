@@ -166,6 +166,14 @@ func _updateService(iService *tCfgService) error {
    return nil
 }
 
+func getTabsService(iSvc string) []string {
+   aSvc := GetService(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   aList := make([]string, len(aSvc.tabs))
+   copy(aList, aSvc.tabs)
+   return aList
+}
+
 func addTabService(iSvc string, iTerm string) int {
    aSvc := GetService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()

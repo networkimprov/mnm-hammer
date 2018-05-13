@@ -134,11 +134,7 @@ type tSummaryTabs struct {
 const ( eTabThread=iota; eTabService )
 
 func (o *ClientState) GetSummary() interface{} {
-   aSvc := GetService(o.svc)
-   aSvc.RLock()
-   aPinned := make([]string, len(aSvc.tabs))
-   copy(aPinned, aSvc.tabs)
-   aSvc.RUnlock()
+   aPinned := getTabsService(o.svc)
 
    o.RLock(); defer o.RUnlock()
    aS := &tSummary{ Thread: "none",
