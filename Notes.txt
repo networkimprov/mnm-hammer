@@ -1,3 +1,6 @@
+replace json lib with faster third-party one
+pPackage name convention in main & codestyle
+
 tmtp include alias in from/for
 tmtp ping add from:alias
 tmtp register return service name
@@ -8,19 +11,29 @@ checksum thread index and service config
   per-service file of checksums?
 synchronize access to thread/* form/* adrsbk etc
 tempXyz(...) functions to prevent tmp name conflicts
-before thread_save, thread_new to request ID
 storeReceivedThread create thread if not found
+  lock() and read index after input written to tmp file
 storeReceivedAttach prevent dup & invalid filename
+thread_send set sendPending state
 Handle*Service limit aResult to op codes with changes
   op code "ma" to insert new message
   op code "mx" to delete message
+loadThread return set of msgids
+use local timezone in client results
 ClientState keeps form-table; send "tl" op if changed
-ServiceTabs carry names for pinned terms
+  keeps msg panel scroll position
+tService.tabs carry names for pinned terms
 tThreadState keep tOpenState for each .Terms item
 main: clean up getService().xyz use
 make/parseSaveId handle special characters
 _writeMsgTemp return tHeadSaved
-blank-form date
+blankform update msg to all clients, include ID
+attachidx date
+attach size set on save
+rename *Save* to Draft
+gui
+  rename mnm._data.t/f
+  hrefs meaningful, or change element to button/span
 
 alias: add, drop, list; store in sep file
   status pending until ack
@@ -43,6 +56,7 @@ forms
   online registries define unique FFNs and required/optional/deprecated fields
     name: domain.name/[path/]form_def
     offer recommended form_blank?
+  make *_sent elements attachable
   functions
     blank: per-msg defaults?
       prevent reuse of generated FFN after form dropped?
@@ -86,7 +100,8 @@ thread panel
   archaeological order
   infinite scrolling or back/forward buttons
   permanent tabs: All, Unread, Todo, Form-table
-  tags menu "#" near search box
+  sort by first/latest ctrl
+  tags menu "#" near search box; items open new search tab
   search tabs are client-specific unless saved
     save-search pins tab, notify other clients
   search relevance slider (# positions varies with result set size?)
@@ -211,6 +226,8 @@ certain buttons show confirmation pop-up next to click point
 msg link: MessageGo() combining ThreadGo(thread_id) + TabAdd(msg:msg_id)
 
 address book
+  reply button on pings & invites
+  join/leave button on invites
   query s,n returns n matches starting with s
     s$ ending in s
 
