@@ -84,7 +84,7 @@ func GetIdxThread(iSvc string, iState *ClientState) interface{} {
    aTid := iState.getThread()
    if aTid == "" { return []tIndexEl{} }
 
-   aDoor := _getDoor(iSvc, aTid)
+   aDoor := _getThreadDoor(iSvc, aTid)
    aDoor.RLock(); defer aDoor.RUnlock()
    if aDoor.renamed { return nil }
 
@@ -103,7 +103,7 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    aTid := iState.getThread()
    if aTid == "" { return nil }
 
-   aDoor := _getDoor(iSvc, aTid)
+   aDoor := _getThreadDoor(iSvc, aTid)
    aDoor.RLock(); defer aDoor.RUnlock()
    if aDoor.renamed { return tError("thread name changed") }
 
@@ -161,7 +161,7 @@ func sendSavedThread(iW io.Writer, iSvc string, iSaveId, iId string) error {
 
 //todo return open-msg map
 func loadThread(iSvc string, iId string) string {
-   aDoor := _getDoor(iSvc, iId)
+   aDoor := _getThreadDoor(iSvc, iId)
    aDoor.RLock(); defer aDoor.RUnlock()
    if aDoor.renamed { return "" }
 
@@ -206,7 +206,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
    var aCopyLen int64
    aEl := 0
    if aThreadId != iHead.Id {
-      aDoor := _getDoor(iSvc, aThreadId)
+      aDoor := _getThreadDoor(iSvc, aThreadId)
       aDoor.Lock(); defer aDoor.Unlock()
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil {
@@ -297,7 +297,7 @@ func seenReceivedThread(iSvc string, iUpdt *Update) {
    aTemp := aTempOk + ".tmp"
    var err error
 
-   aDoor := _getDoor(iSvc, iUpdt.Thread.ThreadId)
+   aDoor := _getThreadDoor(iSvc, iUpdt.Thread.ThreadId)
    aDoor.Lock(); defer aDoor.Unlock()
    if aDoor.renamed { return }
 
@@ -352,7 +352,7 @@ func storeSentThread(iSvc string, iHead *Header) {
    aTemp := aTempOk + ".tmp"
 
    aTid := iHead.Id; if aId.tid() != iHead.MsgId { aTid = aId.tid() }
-   aDoor := _getDoor(iSvc, aTid)
+   aDoor := _getThreadDoor(iSvc, aTid)
    aDoor.Lock(); defer aDoor.Unlock()
    if aDoor.renamed { quit(tError("unexpected rename")) }
    if aId.tid() == iHead.MsgId {
@@ -448,7 +448,7 @@ func storeSavedThread(iSvc string, iUpdt *Update) {
    var err error
 
    aTid := aId.tid(); if aTid == "" { aTid = "_" + aId.sid() }
-   aDoor := _getDoor(iSvc, aTid)
+   aDoor := _getThreadDoor(iSvc, aTid)
    aDoor.Lock(); defer aDoor.Unlock()
    if aDoor.renamed { quit(tError("unexpected rename")) }
 
@@ -537,7 +537,7 @@ func deleteSavedThread(iSvc string, iUpdt *Update) {
    var err error
 
    aTid := aId.tid(); if aTid == "" { aTid = "_" + aId.sid() }
-   aDoor := _getDoor(iSvc, aTid)
+   aDoor := _getThreadDoor(iSvc, aTid)
    aDoor.Lock(); defer aDoor.Unlock()
    if aDoor.renamed { quit(tError("unexpected rename")) }
 
@@ -685,15 +685,8 @@ type tThreadDoor struct {
    renamed bool //todo provide new thread id here?
 }
 
-func _getDoor(iSvc string, iTid string) *tThreadDoor {
-   aSvc := GetService(iSvc)
-   aSvc.Lock(); defer aSvc.Unlock()
-   aDoor := aSvc.threadDoors[iTid]
-   if aDoor == nil {
-      aDoor = &tThreadDoor{}
-      aSvc.threadDoors[iTid] = aDoor
-   }
-   return aDoor
+func _getThreadDoor(iSvc string, iTid string) *tThreadDoor {
+   return getDoorService(iSvc, iTid, func()tDoor{ return &tThreadDoor{} }).(*tThreadDoor)
 }
 
 func completeThread(iSvc string, iTempOk string) {

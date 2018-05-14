@@ -51,7 +51,12 @@ type tService struct {
    cfg tCfgService
    fromOhi tOhi
    tabs []string
-   threadDoors map[string]*tThreadDoor
+   doors map[string]tDoor // shared by *Thread & *FilledForm
+}
+
+type tDoor interface {
+   Lock(); Unlock()
+   RLock(); RUnlock()
 }
 
 type Header struct {

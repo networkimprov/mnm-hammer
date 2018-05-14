@@ -108,8 +108,19 @@ func getUriService(iSvc string) string {
    return aSvc.cfg.Addr +"/"+ aSvc.cfg.Uid +"/"
 }
 
+func getDoorService(iSvc string, iId string, iMake func()tDoor) tDoor {
+   aSvc := GetService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   aDoor := aSvc.doors[iId]
+   if aDoor == nil {
+      aDoor = iMake()
+      aSvc.doors[iId] = aDoor
+   }
+   return aDoor
+}
+
 func _newService(iCfg *tCfgService) *tService {
-   aSvc := &tService{tabs: []string{}, threadDoors: make(map[string]*tThreadDoor)}
+   aSvc := &tService{tabs: []string{}, doors: make(map[string]tDoor)}
    if iCfg != nil { aSvc.cfg = *iCfg }
    return aSvc
 }
