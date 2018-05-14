@@ -228,10 +228,6 @@ func WriteTableFilledForm(iW io.Writer, iSvc string, iFfn string) error {
    return err
 }
 
-func GetPathFilledForm(iSvc string, iFfn string) string {
-   return formDir(iSvc) + _ffnFileName(iFfn) // suffix appended by client
-}
-
 func GetRecordFilledForm(iSvc string, iFfn, iMsgId string) Msg {
    var err error
    aDoor := _getFormDoor(iSvc, iFfn)

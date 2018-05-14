@@ -16,51 +16,10 @@ import (
    "encoding/json"
    "os"
    "path"
-   "sort"
    "strconv"
    "strings"
    "sync"
-   "time"
 )
-
-func GetListThread(iSvc string, iState *ClientState) interface{} {
-   var err error
-   if iState.SvcTabs.PosFor == ePosForTerms &&
-      strings.HasPrefix(iState.SvcTabs.Terms[iState.SvcTabs.Pos], "ffn:") {
-      aResult := struct{ Ffn string; Table []Msg }{Ffn: iState.SvcTabs.Terms[iState.SvcTabs.Pos][4:]}
-      err = readJsonFile(&aResult.Table, GetPathFilledForm(iSvc, aResult.Ffn))
-      if err != nil {
-         fmt.Fprintf(os.Stderr, "GetListThread: %s\n", err.Error())
-         return []string{}
-      }
-      return aResult
-   }
-   if iState.SvcTabs.PosFor != ePosForDefault {
-      return []string{}
-   }
-   var aDir []os.FileInfo
-   if iState.SvcTabs.Pos == 3 {
-      aDir, err = ioutil.ReadDir(formDir(iSvc))
-      if err != nil { quit(err) }
-   } else {
-      aDir, err = ioutil.ReadDir(threadDir(iSvc))
-      if err != nil { quit(err) }
-      sort.Slice(aDir, func(cA, cB int) bool { return aDir[cA].ModTime().After(aDir[cB].ModTime()) })
-   }
-   aList := make([]struct{Id string; Date string}, len(aDir))
-   aI := 0
-   for a, _ := range aDir {
-      aList[aI].Date = aDir[a].ModTime().UTC().Format(time.RFC3339)
-      if iState.SvcTabs.Pos == 3 {
-         aList[aI].Id = strings.Replace(aDir[a].Name(), "@", "/", -1)
-         aI++
-      } else if aDir[a].Name() != "_22" && !strings.ContainsRune(aDir[a].Name()[1:], '_') {
-         aList[aI].Id = aDir[a].Name()
-         aI++
-      }
-   }
-   return aList[:aI]
-}
 
 type tIndexEl struct {
    Id string
