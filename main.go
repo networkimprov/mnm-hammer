@@ -461,9 +461,10 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "gl": aResult = slib.GetGroupAdrsbk(aSvc)
    case "of": aResult = slib.GetFromOhi(aSvc)
    case "ot": aResult = slib.GetIdxOhi(aSvc)
-   case "tl": aResult = slib.GetListThread(aSvc, aState)
    case "al": aResult = slib.GetIdxAttach(aSvc, aState)
    case "ml": aResult = slib.GetIdxThread(aSvc, aState)
+   case "tl":
+      err = slib.WriteResultSearch(iResp, aSvc, aState)
    case "mo":
       err = slib.WriteMessagesThread(iResp, aSvc, aState, "")
    case "mn":
@@ -473,7 +474,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
       http.ServeFile(iResp, iReq, slib.GetPathAttach(aSvc, aState, aOp_Id[1]))
    case "fn":
-      http.ServeFile(iResp, iReq, slib.GetPathFilledForm(aSvc, aOp_Id[1]))
+      err = slib.WriteTableFilledForm(iResp, aSvc, aOp_Id[1])
    default:
       iResp.WriteHeader(http.StatusNotFound)
       err = tError("unknown")
