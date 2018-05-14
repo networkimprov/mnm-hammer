@@ -217,11 +217,25 @@ func _insertBlank(iName, iRev string, iDate string) {
    }
 }
 
+func WriteTableFilledForm(iW io.Writer, iSvc string, iFfn string) error {
+   var err error
+   aDoor := _getFormDoor(iSvc, iFfn)
+   aDoor.RLock(); defer aDoor.RUnlock()
+   aFd, err := os.Open(formDir(iSvc) + _ffnFileName(iFfn))
+   if err != nil { return err }
+   defer aFd.Close()
+   _, err = io.Copy(iW, aFd)
+   return err
+}
+
 func GetPathFilledForm(iSvc string, iFfn string) string {
    return formDir(iSvc) + _ffnFileName(iFfn) // suffix appended by client
 }
 
 func GetRecordFilledForm(iSvc string, iFfn, iMsgId string) Msg {
+   var err error
+   aDoor := _getFormDoor(iSvc, iFfn)
+   aDoor.RLock(); defer aDoor.RUnlock()
    aFd, err := os.Open(formDir(iSvc) + _ffnFileName(iFfn))
    if err != nil { quit(err) }
    defer aFd.Close()
@@ -358,9 +372,12 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
 
 func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach) bool {
    var err error
+   aDoor := _getFormDoor(iSvc, iFile.Ffn + iSuffix)
+   aDoor.Lock(); defer aDoor.Unlock()
    aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name + ".tmp"
    aTd, err := os.Open(aFn)
    if err != nil { quit(err) }
+   defer aTd.Close()
    aBuf := make([]byte, 32)
    _, err = aTd.Read(aBuf)
    if err != nil { quit(err) }
@@ -379,6 +396,7 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
    aDoSync := err != nil
    aFd, err := os.OpenFile(aPath, os.O_WRONLY|os.O_CREATE, 0600)
    if err != nil { quit(err) }
+   defer aFd.Close()
    if aPos[0] == 2 {
       _, err = aFd.Write([]byte{'[','\n'})
    } else {
@@ -393,9 +411,11 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
    if err != nil { quit(err) }
    err = aFd.Sync()
    if err != nil { quit(err) }
-   aFd.Close()
-   aTd.Close()
    return aDoSync
+}
+
+func _getFormDoor(iSvc string, iFfn string) *sync.RWMutex {
+   return getDoorService(iSvc, iFfn, func()tDoor{ return &sync.RWMutex{} }).(*sync.RWMutex)
 }
 
 func _ffnFileName(iFfn string) string {
