@@ -50,6 +50,7 @@ type tService struct {
    sync.RWMutex // protects the following
    cfg tCfgService
    fromOhi tOhi
+   // ohiFile(svc), not cached
    tabs []string
    doors map[string]tDoor // shared by *Thread & *FilledForm
 }

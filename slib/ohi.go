@@ -70,7 +70,10 @@ func dropFromOhi(iSvc string) {
 
 func GetIdxOhi(iSvc string) []tOhiEl {
    var aMap tOhi
+   aSvc := GetService(iSvc)
+   aSvc.RLock()
    err := readJsonFile(&aMap, ohiFile(iSvc))
+   aSvc.RUnlock()
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
       return []tOhiEl{}
@@ -81,7 +84,10 @@ func GetIdxOhi(iSvc string) []tOhiEl {
 func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
    var err error
    aMap := tOhi{}
+   aSvc := GetService(iSvc)
+   aSvc.RLock()
    err = readJsonFile(&aMap, ohiFile(iSvc))
+   aSvc.RUnlock()
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aFor := make(tForOhi, len(aMap))
    a := 0
@@ -102,6 +108,8 @@ func editOhi(iSvc string, iUpdt *Update) *SendRecord {
       aUid = lookupAdrsbk(iSvc, []string{iUpdt.Ohi.Alias})[0].Id //todo drop this
       if aUid == "" { quit(tError("missing Uid")) }
    }
+   aSvc := GetService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
    aMap := tOhi{}
    err = readJsonFile(&aMap, ohiFile(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
