@@ -380,50 +380,16 @@
    });
 </script>
 
-<style>
-.draft-menu {
-   min-width: 4em;
-   float: left;
-   box-sizing: border-box;
-   padding: 0 0.5em;
-   margin-right: 1em;
-   cursor: default;
-   background: lightgray;
-   font-family: Monaco, monospace;
-   color: black;
-}
-.draft-shown {
-   padding: 1px calc(0.5em + 1px);
-   min-height: 100%;
-   box-shadow: 0 5px 12px rgba(0,0,0,.15);
-   filter: brightness(105%);
-}
-.draft-hiddn {
-   border: 1px solid dimgray;
-   height: 100%;
-   overflow: hidden;
-}
-.menu-x {
-   float: right; margin-left:  0.50em;
-   font-family: initial;
-}
-.menu-v {
-   float: right; margin-left: -0.75em;
-   font-size: 80%;
-   position: relative; bottom: -4px;
-}
-.draft-hiddn .menu-x { visibility: hidden; }
-.draft-shown .menu-v { display: none; }
-</style>
-
 <script type="text/x-template" id="mnm-draftmenu">
    <div v-show="list && list.length > 0"
-        @click="draftMenu" class="draft-hiddn draft-menu">
+        @click="draftMenu"
+        class="draftmenu-hiddn draftmenu">
       <span v-for="(aEl, aI) in list" :key="getkey ? getkey(aEl) : aEl">
          {{getname ? getname(aEl) : aEl}}
          <div v-if="aI === 0 && list.length > 1"
-              class="menu-v">&#x25BD;</div>
-         <div @click="drop(msgid, aI)" class="menu-x">&times;</div>
+              class="draftmenu-v">&#x25BD;</div>
+         <div @click="drop(msgid, aI)"
+              class="draftmenu-x">&times;</div>
          <br>
       </span>
    </div>
@@ -439,11 +405,11 @@
       },
       methods: {
          draftMenu: function(iE) {
-            if (this.$el.className === 'draft-hiddn draft-menu') {
-               this.$el.className = 'draft-shown draft-menu';
+            if (this.$el.className === 'draftmenu-hiddn draftmenu') {
+               this.$el.className = 'draftmenu-shown draftmenu';
                var aMenu = this.$el;
                document.addEventListener('click',
-                  function() { aMenu.className = 'draft-hiddn draft-menu' }, {once:true});
+                  function() { aMenu.className = 'draftmenu-hiddn draftmenu' }, {once:true});
             }
             if (iE)
                iE.stopPropagation();
