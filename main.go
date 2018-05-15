@@ -420,27 +420,30 @@ func (o *tTmtpInput) Read(iOut []byte) (int, error) {
 }
 
 func runService(iResp http.ResponseWriter, iReq *http.Request) {
+   // expects "/service[?op[=id]]"
    var err error
-   // url is "/service[?op[=id]]"
-   aSvc := iReq.URL.Path[1:]; if aSvc == "" { aSvc = "local" }
-   aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
-   if err == nil && slib.GetService(aSvc) == nil {
-      err = tError("not found")
-   }
-   if err != nil {
-      iResp.WriteHeader(http.StatusNotFound)
-      fmt.Fprintf(os.Stderr, "runService %s: %s\n", aSvc, err.Error())
-      return
-   }
-
    aClientId, _ := iReq.Cookie("clientid")
-   var aState *slib.ClientState
-   if iReq.URL.RawQuery != "" {
-      aState = getService(aSvc).ccs.Get(aClientId.Value).state
-   }
-   aOp_Id := strings.SplitN(aQuery, "=", 2)
    aCid := ""; if aClientId != nil { aCid = aClientId.Value }
-   fmt.Printf("svc %s op %s id %s\n", aSvc, aOp_Id[0], aCid)
+   var aState *slib.ClientState
+   aSvc := iReq.URL.Path[1:]; if aSvc == "" { aSvc = "local" }
+   aOp_Id := []string{"er", ""}
+   aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
+   if err == nil {
+      if slib.GetService(aSvc) == nil {
+         err = tError("service not found")
+      } else if aQuery != "" {
+         aCc := getService(aSvc).ccs.Get(aCid)
+         if aCc == nil {
+            err = tError("no client connected to service")
+         } else {
+            aState = aCc.state
+         }
+      }
+      if err == nil {
+         copy(aOp_Id, strings.SplitN(aQuery, "=", 2))
+      }
+   }
+   fmt.Printf("runService %s: op %s id %s\n", aSvc, aOp_Id[0], aCid)
    var aResult interface{}
 
    switch aOp_Id[0] {
@@ -477,10 +480,10 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       err = slib.WriteTableFilledForm(iResp, aSvc, aOp_Id[1])
    default:
       iResp.WriteHeader(http.StatusNotFound)
-      err = tError("unknown")
+      if err == nil { err = tError("unknown op") }
    }
    if err != nil {
-      fmt.Fprintf(os.Stderr, "runService %s: op %s error %s\n", aSvc, aOp_Id[0], err.Error())
+      fmt.Fprintf(os.Stderr, "runService %s: op %s %s\n", aSvc, aOp_Id[0], err.Error())
       aResult = "error: " + err.Error()
    }
    if aResult != nil {
