@@ -246,12 +246,17 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
 }
 
 func storeSentAdrsbk(iSvc string, iKey string, iDate string) {
-   var err error
+   aSvc := _loadAdrsbk(iSvc)
    var aMap map[string]*tAdrsbkEl
-   err = readJsonFile(&aMap, pingFile(iSvc))
+   aSvc.savedDoor.RLock()
+   err := readJsonFile(&aMap, pingFile(iSvc))
+   aSvc.savedDoor.RUnlock()
    if err != nil { quit(err) }
    aEl := aMap[iKey]
-   aSvc := _loadAdrsbk(iSvc)
+   if aEl == nil {
+      fmt.Fprintf(os.Stderr, "storeSentAdrsbk %s: saved ping was cleared %s\n", iSvc, iKey)
+      return
+   }
    aSvc.Lock(); defer aSvc.Unlock()
    aLog := aSvc.pingToIdx[aEl.Alias]
    aEl.Type = eAbPingTo; if aEl.Gid != "" { aEl.Type = eAbInviteTo }
