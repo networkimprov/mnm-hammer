@@ -185,20 +185,24 @@ func runQueue(o *tQueue) {
       case o.wakeup <- true:
          aConn = <-o.connSrc
       }
-      err := aSrec.Write(aConn, o.service)
+      err := slib.SendService(aConn, o.service, aSrec)
       o.connSrc <- aConn
       if err != nil { //todo retry transient error
-         fmt.Fprintf(os.Stderr, "runQueue %s: send error %s\n", o.service, err.Error())
-         time.Sleep(5 * time.Millisecond)
+         if err.Error() == "already sent" {
+            aSrec = <-o.out
+         } else {
+            fmt.Fprintf(os.Stderr, "runQueue %s: send error %s\n", o.service, err.Error())
+            time.Sleep(5 * time.Millisecond)
+         }
          continue
       }
       aTmr := time.NewTimer(15 * time.Second)
    WaitForAck:
       select {
       case aMsgId := <-o.ack:
-         if aMsgId != aSrec.Id() {
+         if aMsgId != aSrec.Id {
             fmt.Fprintf(os.Stderr, "runqueue %s: got ack for %s, expected %s\n",
-                        o.service, aMsgId, aSrec.Id())
+                        o.service, aMsgId, aSrec.Id)
             goto WaitForAck
          }
          aTmr.Stop()

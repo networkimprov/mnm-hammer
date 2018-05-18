@@ -123,7 +123,7 @@ func editOhi(iSvc string, iUpdt *Update) *SendRecord {
    }
    err = storeFile(ohiFile(iSvc), aMap)
    if err != nil { quit(err) }
-   return &SendRecord{id: string(eSrecOhi) + aOp + makeSaveId(aUid)}
+   return &SendRecord{Id: string(eSrecOhi) + aOp + makeSaveId(aUid)}
 }
 
 func sendEditOhi(iW io.Writer, iSvc string, iSaveId, iId string) error {

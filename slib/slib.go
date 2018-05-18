@@ -39,6 +39,7 @@ func pingFile (iSvc string) string { return kServiceDir + iSvc + "/ping-draft" }
 func adrsFile (iSvc string) string { return kServiceDir + iSvc + "/adrsbk"  }
 func ohiFile  (iSvc string) string { return kServiceDir + iSvc + "/ohi"     }
 func tabFile  (iSvc string) string { return kServiceDir + iSvc + "/tabs"    }
+func sendqFile(iSvc string) string { return kServiceDir + iSvc + "/sendq"   }
 
 func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
 func attachFfn(iSvc, iSub string) string { return attachSub(iSvc, iSub) + "ffnindex" }
@@ -49,10 +50,11 @@ type tService struct {
    adrsbk tAdrsbk
    sync.RWMutex // protects the following
    cfg tCfgService
+   sendQ []tQueueEl
    fromOhi tOhi
-   // ohiFile(svc), not cached
    tabs []string
    doors map[string]tDoor // shared by *Thread & *FilledForm
+   // ohiFile(svc), not cached
 }
 
 type tDoor interface {
@@ -162,24 +164,26 @@ type Update struct {
 }
 
 type SendRecord struct {
-   id string
+   Id string // Id[0] is one of eSrec*
 }
 
 const eSrecThread, eSrecPing, eSrecOhi, eSrecAccept byte = 't', 'p', 'o', 'a'
 
-func (o *SendRecord) Id() string { return o.id }
-
-func (o *SendRecord) Write(iW io.Writer, iSvc string) error {
+func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error { //todo move to service.go
    var aFn func(io.Writer, string, string, string) error
-   switch o.id[0] {
+   switch iSrec.Id[0] {
    case eSrecOhi:    aFn = sendEditOhi
    case eSrecPing:   aFn = sendSavedAdrsbk
    case eSrecAccept: aFn = sendJoinGroupAdrsbk
    case eSrecThread: aFn = sendSavedThread
    default:
-      quit(tError(fmt.Sprintf("SendRecord.op %c unknown", o.id[0])))
+      quit(tError("unknown op " + iSrec.Id[:1]))
    }
-   return aFn(iW, iSvc, o.id[1:], o.id)
+   err := aFn(iW, iSvc, iSrec.Id[1:], iSrec.Id)
+   if err != nil && err.Error() == "already sent" {
+      _queueDrop(iSvc, iSrec.Id)
+   }
+   return err
 }
 
 type Msg map[string]interface{}
@@ -221,6 +225,7 @@ func parseSaveId(i string) tSaveId { return strings.SplitN(i, "_", 2) }
 type tSaveId []string
 func (o tSaveId) tidSet(i string) { o[0] = i }
 func (o tSaveId)  ping() string { return o[0] }
+func (o tSaveId)   gid() string { return o[0] }
 func (o tSaveId)   ohi() string { return o[0] }
 func (o tSaveId)   tid() string { return o[0] }
 func (o tSaveId)   sid() string { return o[1] }

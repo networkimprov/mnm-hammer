@@ -96,7 +96,13 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
 
 func sendSavedThread(iW io.Writer, iSvc string, iSaveId, iId string) error {
    aFd, err := os.Open(threadDir(iSvc) + iSaveId)
-   if err != nil { quit(err) }
+   if err != nil {
+      if os.IsNotExist(err) {
+         fmt.Fprintf(os.Stderr, "sendSavedThread %s: saved file was cleared %s\n", iSvc, iSaveId)
+         return tError("already sent")
+      }
+      quit(err)
+   }
    defer aFd.Close()
 
    aJson := _parseHeader(aFd)

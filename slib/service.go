@@ -13,6 +13,7 @@ import (
    "fmt"
    "io"
    "os"
+   "sort"
    "strings"
    "sync"
 )
@@ -31,6 +32,11 @@ type tCfgService struct {
    Node string
 }
 
+type tQueueEl struct {
+  Srec SendRecord
+  Date string
+}
+
 func initServices(iFn func(string)) {
    var err error
    aSvcs, err := readDirNames(kServiceDir)
@@ -44,7 +50,7 @@ func initServices(iFn func(string)) {
       }
       _makeTree(aSvc)
       for _, aFile := range [...]string{cfgFile(aSvc), pingFile(aSvc), ohiFile(aSvc),
-                                        tabFile(aSvc)} {
+                                        tabFile(aSvc), sendqFile(aSvc)} {
          err = resolveTmpFile(aFile + ".tmp")
          if err != nil { quit(err) }
       }
@@ -71,6 +77,8 @@ func initServices(iFn func(string)) {
       aService := _newService(nil)
       err = readJsonFile(&aService.cfg, cfgFile(aSvc))
       if err != nil { quit(err) }
+      err = readJsonFile(&aService.sendQ, sendqFile(aSvc))
+      if err != nil && !os.IsNotExist(err) { quit(err) }
       err = readJsonFile(&aService.tabs, tabFile(aSvc))
       if err != nil && !os.IsNotExist(err) { quit(err) }
       sServices[aSvc] = aService
@@ -131,7 +139,7 @@ func _makeTree(iSvc string) {
       err = os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
-   for _, aFile := range [...]string{pingFile(iSvc), ohiFile(iSvc), tabFile(iSvc)} {
+   for _, aFile := range [...]string{pingFile(iSvc), ohiFile(iSvc), tabFile(iSvc), sendqFile(iSvc)} {
       err = os.Symlink("empty", aFile)
       if err != nil && !os.IsExist(err) { quit(err) }
    }
@@ -203,7 +211,57 @@ func dropTabService(iSvc string, iPos int) {
 }
 
 func GetQueueService(iSvc string) ([]*SendRecord, error) {
-   return nil, nil
+   aSvc := GetService(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   aSort := make([]*tQueueEl, len(aSvc.sendQ))
+   for a, _ := range aSvc.sendQ {
+      aSort[a] = &aSvc.sendQ[a]
+   }
+   sort.Slice(aSort, func(cA, cB int) bool { return aSort[cA].Date < aSort[cB].Date })
+   aQ := make([]*SendRecord, len(aSort))
+   for a, _ := range aSort {
+      aQ[a] = &aSort[a].Srec
+   }
+   return aQ, nil
+}
+
+func queueHasService(iSvc string, iType byte, iId string) bool {
+   aSvc := GetService(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   aId := string(iType) + iId
+   aEl := sort.Search(len(aSvc.sendQ), func(c int) bool { return aSvc.sendQ[c].Srec.Id >= aId })
+   return aEl < len(aSvc.sendQ) && aSvc.sendQ[aEl].Srec.Id == aId
+}
+
+func _queueAdd(iSvc string, iType byte, iId string) *SendRecord {
+   aSvc := GetService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   aId := string(iType) + iId
+   aEl := sort.Search(len(aSvc.sendQ), func(c int) bool { return aSvc.sendQ[c].Srec.Id >= aId })
+   if aEl < len(aSvc.sendQ) && aSvc.sendQ[aEl].Srec.Id == aId {
+      return nil
+   }
+   aSvc.sendQ = append(aSvc.sendQ, tQueueEl{})
+   if aEl < len(aSvc.sendQ) {
+      copy(aSvc.sendQ[aEl+1:], aSvc.sendQ[aEl:])
+   }
+   aSvc.sendQ[aEl].Srec = SendRecord{aId}
+   aSvc.sendQ[aEl].Date = dateRFC3339()
+   err := storeFile(sendqFile(iSvc), aSvc.sendQ)
+   if err != nil { quit(err) }
+   return &aSvc.sendQ[aEl].Srec
+}
+
+func _queueDrop(iSvc string, iId string) {
+   aSvc := GetService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   aEl := sort.Search(len(aSvc.sendQ), func(c int) bool { return aSvc.sendQ[c].Srec.Id >= iId })
+   if aEl == len(aSvc.sendQ) || aSvc.sendQ[aEl].Srec.Id != iId {
+      return
+   }
+   aSvc.sendQ = aSvc.sendQ[:aEl + copy(aSvc.sendQ[aEl:], aSvc.sendQ[aEl+1:])]
+   err := storeFile(sendqFile(iSvc), aSvc.sendQ)
+   if err != nil { quit(err) }
 }
 
 func LogoutService(iSvc string) interface{} {
@@ -272,16 +330,17 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          return fErr
       }
       if iHead.Id == "t_22" { break } //todo temp
-      aId := parseSaveId(iHead.Id[1:])
-      switch iHead.Id[0] {
+      aQid := iHead.Id
+      iHead.Id = iHead.Id[1:]
+      aId := parseSaveId(iHead.Id)
+      switch aQid[0] {
       case eSrecPing:
          storeSentAdrsbk(iSvc, aId.ping(), iHead.Posted)
          aFn, aResult = fAll, []string{"ps", "pt", "pf", "it", "gl"}
       case eSrecAccept:
-         acceptInviteAdrsbk(iSvc, aId.ping(), iHead.Posted)
+         acceptInviteAdrsbk(iSvc, aId.gid(), iHead.Posted)
          aFn, aResult = fAll, []string{"if", "gl"}
       case eSrecThread:
-         iHead.Id = iHead.Id[1:]
          storeSentThread(iSvc, iHead)
          if aId.tid() == "" {
             aFn = func(c *ClientState) interface{} {
@@ -297,7 +356,10 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
             }
          }
          aResult = []string{"tl", "pf", "al", "ml", "mn", iHead.MsgId}
+      default:
+         quit(tError("bad SendRecord " + aQid))
       }
+      _queueDrop(iSvc, aQid)
    default:
       err = tError("unknown tmtp op")
       return fErr
@@ -336,9 +398,9 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       deleteSavedAdrsbk(iSvc, iUpdt.Ping.To, iUpdt.Ping.Gid)
       aFn, aResult = fAll, []string{"ps"}
    case "ping_send":
-      aSrec = &SendRecord{id: string(eSrecPing) + makeSaveId(keySavedAdrsbk(iUpdt))}
+      aSrec = _queueAdd(iSvc, eSrecPing, makeSaveId(keySavedAdrsbk(iUpdt)))
    case "accept_send":
-      aSrec = &SendRecord{id: string(eSrecAccept) + makeSaveId(iUpdt.Accept.Gid)}
+      aSrec = _queueAdd(iSvc, eSrecAccept, makeSaveId(iUpdt.Accept.Gid))
    case "thread_recvtest":
       aTid := iState.getThread()
       if len(aTid) > 0 && aTid[0] == '_' { break }
@@ -360,7 +422,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       os.Mkdir(attachSub(iSvc, "_22"), 0700)
       os.Link(kUploadDir + "trial",          attachSub(iSvc, "_22") + "22_u:trial")
       os.Link(kFormDir   + "trial.original", attachSub(iSvc, "_22") + "22_f:trial.original")
-      aSrec = &SendRecord{id: string(eSrecThread) + "_22"}
+      aSrec = _queueAdd(iSvc, eSrecThread, "_22")
    case "thread_save":
       const ( _ int8 = iota; eNewThread; eNewReply )
       if iUpdt.Thread.New > 0 {
@@ -412,7 +474,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if iUpdt.Thread.Id == "" { break }
       err = validateSavedThread(iSvc, iUpdt)
       if err != nil { return fErr, nil }
-      aSrec = &SendRecord{id: string(eSrecThread) + iUpdt.Thread.Id}
+      aSrec = _queueAdd(iSvc, eSrecThread, iUpdt.Thread.Id)
    case "thread_open":
       if iUpdt.Thread.ThreadId != iState.getThread() {
          err = tError("thread id out of sync")

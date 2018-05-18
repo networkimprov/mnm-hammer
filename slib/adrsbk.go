@@ -52,7 +52,7 @@ type tAdrsbkEl struct {
 const (
    _ int8 = iota
    eAbPingSaved     // Type, Date, Text, Alias,      MyAlias
-   eAbPingQueued    // Type, Date, Text, Alias,      MyAlias
+   eAbNone //todo remove
    eAbPingTo        // Type, Date, Text, Alias,      MyAlias
    eAbPingFrom      // Type, Date, Text, Alias, Uid, MyAlias, MsgId
    eAbMsgTo         // Type, Date,              Uid,          MsgId, Tid
@@ -426,15 +426,21 @@ func GetSavedAdrsbk(iSvc string) tAdrsbkLog {
 }
 
 func sendJoinGroupAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
-   var err error
    aId := parseSaveId(iSaveId)
-   aHead, err := json.Marshal(Msg{"Op":6, "Id":iId, "Act":"join", "Gid":aId.ping()})
+   aSvc := _loadAdrsbk(iSvc)
+   aSvc.RLock()
+   _, ok := aSvc.groupIdx[aId.gid()]
+   aSvc.RUnlock()
+   if ok {
+      fmt.Fprintf(os.Stderr, "sendJoinGroupAdrsbk %s: already joined group %s\n", iSvc, aId.gid())
+      return tError("already sent")
+   }
+   var err error
+   aHead, err := json.Marshal(Msg{"Op":6, "Id":iId, "Act":"join", "Gid":aId.gid()})
    if err != nil { quit(err) }
    err = sendHeaders(iW, aHead, nil)
    return err
 }
-
-//todo update .Type on queue for send
 
 func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
    aDoor := &GetService(iSvc).adrsbk.savedDoor
@@ -446,6 +452,10 @@ func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
    if err != nil { quit(err) }
    aId := parseSaveId(iSaveId)
    aEl := aMap[aId.ping()]
+   if aEl == nil {
+      fmt.Fprintf(os.Stderr, "sendSavedAdrsbk %s: ping draft was cleared %s\n", iSvc, iSaveId)
+      return tError("already sent")
+   }
    aSubh, err := json.Marshal(Msg{"Alias":aEl.MyAlias}) //todo drop when ping takes from:
    if err != nil { quit(err) }
    aData := []byte(aEl.Text)
