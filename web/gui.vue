@@ -102,17 +102,21 @@
         class="firefox-minheight-fix uk-overflow-auto">
       <ul id="msg-panel" class="uk-list uk-list-divider message-list">
          <li v-for="aMsg in ml" :key="aMsg.Id"
-             :class="{'message-edit': aMsg.From === ''}" style="margin:0">
+             :class="{'message-edit': aMsg.From === '' && !aMsg.Queued}" style="margin:0">
             <span @click="msgToggle(aMsg.Id)"
-                  class="message-title" :class="{'message-title-edit': aMsg.From === '',
-                                                 'message-title-seen': aMsg.Seen !== ''}">
+                  class="message-title"
+                  :class="{'message-title-edit': aMsg.From === '' && !aMsg.Queued,
+                           'message-title-seen': aMsg.Seen !== ''}">
                {{ fmtD(aMsg.Date,'md','hm') }}
                <b>{{ aMsg.Alias || aMsg.From }}</b>
             </span>
+            <div v-if="aMsg.Queued"
+                 title="Awaiting link to server"
+                 style="float:right; font-weight:bold"><span uk-icon="bolt"></span></div>
             <template v-if="aMsg.Id in mo">
                <div v-if="!('msg_data' in mo[aMsg.Id])"
                     class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
-               <template v-else-if="aMsg.From === ''">
+               <template v-else-if="aMsg.From === '' && !aMsg.Queued">
                   <button @click="mnm.ThreadSend(aMsg.Id)"
                           title="Send draft"
                           class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
@@ -154,7 +158,8 @@
                   </div>
                </template>
                <template v-else>
-                  <button @click="mnm.ThreadReply(getReplyTemplate(aMsg))"
+                  <button v-if="!aMsg.Queued"
+                          @click="mnm.ThreadReply(getReplyTemplate(aMsg))"
                           title="New reply draft"
                           class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
                   <div v-if="mo[aMsg.Id].SubHead.For.length !== 1
@@ -185,7 +190,7 @@
                      <p><span uk-icon="comment"></span></p></div>
                   <mnm-markdown v-else
                                 :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"
-                                :formreply="getReplyTemplate(aMsg)"></mnm-markdown>
+                                :formreply="aMsg.Queued ? 'Q' : getReplyTemplate(aMsg)"></mnm-markdown>
                </template>
             </template>
          </li></ul>
@@ -482,7 +487,7 @@
                    :disabled="formDef === parent.formDefBad">
             attach fill</label>
          <button @click="startReply"
-                 :disabled="!parent.formreply"
+                 :disabled="!parent.formreply || parent.formreply === 'Q'"
                  title="New reply draft with form below"
                  class="btn-icon btn-floatr"><span uk-icon="commenting"></span></button>
       </div>
@@ -821,8 +826,11 @@
                   <td>{{a.Gid}}
                      <span v-if="mnm._data.gl.find(function(c){return c.Gid === a.Gid})"
                            class="uk-badge">in</span>
+                     <span v-else-if="a.Queued"
+                           title="Awaiting link to server"
+                           uk-icon="bolt"></span>
                      <button v-else
-                             @click="mnm.InviteAccept(a.Gid)"
+                             @click="mnm.InviteAccept(a.Qid)"
                              title="Accept group invite"
                              class="btn-icon"><span uk-icon="forward"></span></button>
                   </td>
@@ -843,13 +851,19 @@
                <tr><th>To / (Group)</th><th></th><th>Message</th><th></th></tr>
                <tr v-for="a in mnm._data.ps" :key="rowId(a)">
                   <td>{{a.Alias}}<br>{{a.Gid && '('+a.Gid+')'}}</td>
-                  <td><button @click="mnm.PingSend({to:a.Alias, gid:a.Gid})"
+                  <td><span v-if="a.Queued"
+                            title="Awaiting link to server"
+                            uk-icon="bolt"></span>
+                      <button v-else
+                              @click="mnm.PingSend(a.Qid)"
                               title="Send ping draft"
                               class="btn-icon"><span uk-icon="forward"></span></button></td>
-                  <td><textarea cols="40" rows="3" maxlength="120"
-                                @input="timer(a, $event.target.value)"
-                     >{{toSave[rowId(a)] || a.Text}}</textarea></td>
-                  <td><button @click="mnm.PingDiscard({to:a.Alias, gid:a.Gid})"
+                  <td><textarea @input="timer(a, $event.target.value)"
+                                :disabled="a.Queued"
+                                cols="40" rows="3" maxlength="120"
+                                >{{toSave[rowId(a)] || a.Text}}</textarea></td>
+                  <td><button v-if="!a.Queued"
+                              @click="mnm.PingDiscard({to:a.Alias, gid:a.Gid})"
                               title="Discard ping draft"
                               class="btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
