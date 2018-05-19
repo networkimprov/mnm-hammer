@@ -163,32 +163,32 @@ func GetGroupAdrsbk(iSvc string) []tGroupEl {
    return aList
 }
 
-func GetReceivedAdrsbk(iSvc string) tAdrsbkLog {
+func GetReceivedAdrsbk(iSvc string) []tAdrsbkEl {
    aSvc := _loadAdrsbk(iSvc)
    return _listLogs(aSvc, aSvc.pingFromIdx)
 }
 
-func GetSentAdrsbk(iSvc string) tAdrsbkLog {
+func GetSentAdrsbk(iSvc string) []tAdrsbkEl {
    aSvc := _loadAdrsbk(iSvc)
    return _listLogs(aSvc, aSvc.pingToIdx)
 }
 
-func GetInviteFromAdrsbk(iSvc string) tAdrsbkLog {
+func GetInviteFromAdrsbk(iSvc string) []tAdrsbkEl {
    aSvc := _loadAdrsbk(iSvc)
    return _listLogs(aSvc, aSvc.inviteFromIdx)
 }
 
-func GetInviteToAdrsbk(iSvc string) tAdrsbkLog {
+func GetInviteToAdrsbk(iSvc string) []tAdrsbkEl {
    aSvc := _loadAdrsbk(iSvc)
    return _listLogs(aSvc, aSvc.inviteToIdx)
 }
 
-func _listLogs(iSvc *tAdrsbk, iIdx map[string]tAdrsbkLog) tAdrsbkLog {
+func _listLogs(iSvc *tAdrsbk, iIdx map[string]tAdrsbkLog) []tAdrsbkEl {
    iSvc.RLock()
-   aLog := tAdrsbkLog{}
+   aLog := make([]tAdrsbkEl, 0, len(iIdx))
    for _, aSet := range iIdx {
       for _, aEl := range aSet {
-         aLog = append(aLog, aEl)
+         aLog = append(aLog, *aEl)
       }
    }
    iSvc.RUnlock()
