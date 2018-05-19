@@ -268,7 +268,7 @@ func validateFilledForm(iSvc string, iBuf []byte, iFfn string) error {
 
    var aResult []byte
    _validateObject(&aResult, "", aForm, aJson.Spec)
-   if aResult != nil { return tError(aResult) }
+   if aResult != nil { return tError("form-fill " + string(aResult)) }
    return nil
 }
 
