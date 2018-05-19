@@ -241,7 +241,7 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    aEl := tAdrsbkEl{Type:aType, Date:iHead.Posted, Gid:iHead.Gid, Text:string(aBuf),
                     Alias:iHead.SubHead.Alias, Uid:iHead.From, MyAlias:iHead.To, MsgId:iHead.Id}
    if aEl.Type == eAbInviteFrom {
-      aEl.Qid = makeSaveId(iHead.Gid)
+      aEl.Qid = makeLocalId(iHead.Gid)
       aEl2 := aEl
       aSvc.inviteFromIdx[iHead.Gid] = _appendLog(aSvc.inviteFromIdx[iHead.Gid], &aEl2)
    }
@@ -436,7 +436,7 @@ func GetSavedAdrsbk(iSvc string) tAdrsbkLog {
 }
 
 func sendJoinGroupAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
-   aId := parseSaveId(iSaveId)
+   aId := parseLocalId(iSaveId)
    aSvc := _loadAdrsbk(iSvc)
    aSvc.RLock()
    _, ok := aSvc.groupIdx[aId.gid()]
@@ -460,7 +460,7 @@ func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
    err = readJsonFile(&aMap, pingFile(iSvc))
    aDoor.RUnlock()
    if err != nil { quit(err) }
-   aId := parseSaveId(iSaveId)
+   aId := parseLocalId(iSaveId)
    aEl := aMap[aId.ping()]
    if aEl == nil {
       fmt.Fprintf(os.Stderr, "sendSavedAdrsbk %s: ping draft was cleared %s\n", iSvc, iSaveId)
@@ -493,7 +493,7 @@ func storeSavedAdrsbk(iSvc string, iUpdt *Update) {
    aKey := iUpdt.Ping.To + "\x00" + iUpdt.Ping.Gid
    aMap[aKey] = &tAdrsbkEl{Type:eAbPingSaved, Date:dateRFC3339(), Text:iUpdt.Ping.Text,
                            Alias:iUpdt.Ping.To, MyAlias:iUpdt.Ping.Alias, Gid:iUpdt.Ping.Gid,
-                           Qid:makeSaveId(aKey)}
+                           Qid:makeLocalId(aKey)}
    err = storeFile(pingFile(iSvc), aMap)
    if err != nil { quit(err) }
 }

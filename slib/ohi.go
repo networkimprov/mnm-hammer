@@ -123,12 +123,12 @@ func editOhi(iSvc string, iUpdt *Update) *SendRecord {
    }
    err = storeFile(ohiFile(iSvc), aMap)
    if err != nil { quit(err) }
-   return &SendRecord{Id: string(eSrecOhi) + aOp + makeSaveId(aUid)}
+   return &SendRecord{Id: string(eSrecOhi) + aOp + makeLocalId(aUid)}
 }
 
 func sendEditOhi(iW io.Writer, iSvc string, iSaveId, iId string) error {
    var err error
-   aId := parseSaveId(iSaveId)
+   aId := parseLocalId(iSaveId)
    aFor := tForOhi{{Id:aId.ohi()[1:]}}
    aType := "add"; if aId.ohi()[0] == '-' { aType = "drop" }
    aHead, err := json.Marshal(Msg{"Op":4, "Id":iId, "For":aFor, "Type":aType})

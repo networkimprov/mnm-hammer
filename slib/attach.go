@@ -68,9 +68,9 @@ func GetPathAttach(iSvc string, iState *ClientState, iFile string) string {
    return attachSub(iSvc, iState.getThread()) + iFile
 }
 
-func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) int64 {
-   aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
-   aPrefix := attachSub(iSvc, aTid) + iId.sid() + "_"
+func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tLocalId) int64 {
+   aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.lms() }
+   aPrefix := attachSub(iSvc, aTid) + iId.lms() + "_"
    var aTotal int64
 
    for a, aFile := range iSubHead.Attach {
@@ -86,10 +86,10 @@ func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId) int64 {
    return aTotal
 }
 
-func sendSavedAttach(iW io.Writer, iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.File) error {
+func sendSavedAttach(iW io.Writer, iSvc string, iSubHead *tHeader2, iId tLocalId, iFd *os.File) error {
    var err error
-   aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
-   aPrefix := attachSub(iSvc, aTid) + iId.sid() + "_"
+   aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.lms() }
+   aPrefix := attachSub(iSvc, aTid) + iId.lms() + "_"
    for _, aFile := range iSubHead.Attach {
       var aXd, aFd *os.File = iFd, nil
       var aFi os.FileInfo
@@ -269,9 +269,9 @@ func _storeFormAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    }
 }
 
-func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.File) error {
+func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tLocalId, iFd *os.File) error {
    var err error
-   aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.sid() }
+   aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.lms() }
    for _, aFile := range iSubHead.Attach {
       if _isFormFill(aFile.Name) {
          if aFile.Ffn == "" {
@@ -287,7 +287,7 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tSaveId, iFd *os.F
       if _isForm(aFile.Name) && aFile.Ffn[0] == '#' {
          return tError(aFile.Ffn[1:])
       }
-      _, err = os.Lstat(attachSub(iSvc, aTid) + iId.sid() + "_" + aFile.Name)
+      _, err = os.Lstat(attachSub(iSvc, aTid) + iId.lms() + "_" + aFile.Name)
       if err != nil {
          if !os.IsNotExist(err) { quit(err) }
          return tError(fmt.Sprintf("%s missing %s", aTid, aFile.Name))

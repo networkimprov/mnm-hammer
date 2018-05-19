@@ -218,18 +218,20 @@ func sendHeaders(iW io.Writer, iHead, iSub []byte) error {
    return err
 }
 
-func makeSaveId(iTid string) string {
+func makeLocalId(iTid string) string {
    return fmt.Sprintf("%s_%012x", iTid, time.Now().UTC().UnixNano() / 1e6) // milliseconds
 }
 
-func parseSaveId(i string) tSaveId { return strings.SplitN(i, "_", 2) }
-type tSaveId []string
-func (o tSaveId) tidSet(i string) { o[0] = i }
-func (o tSaveId)  ping() string { return o[0] }
-func (o tSaveId)   gid() string { return o[0] }
-func (o tSaveId)   ohi() string { return o[0] }
-func (o tSaveId)   tid() string { return o[0] }
-func (o tSaveId)   sid() string { return o[1] }
+func parseLocalId(i string) tLocalId { return strings.SplitN(i, "_", 2) }
+
+type tLocalId []string
+
+func (o tLocalId) tidSet(i string) { o[0] = i }
+func (o tLocalId)  ping() string { return o[0] }
+func (o tLocalId)   gid() string { return o[0] }
+func (o tLocalId)   ohi() string { return o[0] }
+func (o tLocalId)   tid() string { return o[0] }
+func (o tLocalId)   lms() string { return o[1] }
 
 type tCrcWriter struct { sum uint32 }
 

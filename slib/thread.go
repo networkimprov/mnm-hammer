@@ -116,7 +116,7 @@ func sendSavedThread(iW io.Writer, iSvc string, iSaveId, iId string) error {
    aJson := _parseHeader(aFd)
    if len(aJson.SubHead.For) == 0 { quit(tError("missing to field")) }
 
-   aId := parseSaveId(iSaveId)
+   aId := parseLocalId(iSaveId)
    aAttachLen := sizeSavedAttach(iSvc, &aJson.SubHead, aId) // revs subhead
    aBuf1, err := json.Marshal(aJson.SubHead)
    if err != nil { quit(err) }
@@ -315,13 +315,13 @@ func _completeSeenReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
 
 func storeSentThread(iSvc string, iHead *Header) {
    var err error
-   aId := parseSaveId(iHead.Id)
+   aId := parseLocalId(iHead.Id)
    if aId.tid() == "" {
       aId.tidSet(iHead.MsgId)
    }
    aSave := threadDir(iSvc) + iHead.Id
    aOrig := threadDir(iSvc) + aId.tid()
-   aTempOk := tempDir(iSvc) + aId.tid() + "_" + iHead.MsgId + "_ss_" + aId.sid() + "_"
+   aTempOk := tempDir(iSvc) + aId.tid() + "_" + iHead.MsgId + "_ss_" + aId.lms() + "_"
    aTemp := aTempOk + ".tmp"
 
    aTid := iHead.Id; if aId.tid() != iHead.MsgId { aTid = aId.tid() }
@@ -390,8 +390,8 @@ func _completeStoreSent(iSvc string, iTmp string, iHead *tHeadSaved, iFd, iTd *o
 }
 
 func validateSavedThread(iSvc string, iUpdt *Update) error {
-   aId := parseSaveId(iUpdt.Thread.Id)
-   aFd, err := os.Open(threadDir(iSvc) + aId.tid() + "_" + aId.sid())
+   aId := parseLocalId(iUpdt.Thread.Id)
+   aFd, err := os.Open(threadDir(iSvc) + aId.tid() + "_" + aId.lms())
    if err != nil { quit(err) }
    defer aFd.Close()
    aJson := _parseHeader(aFd)
@@ -413,14 +413,14 @@ func validateSavedThread(iSvc string, iUpdt *Update) error {
 }
 
 func storeSavedThread(iSvc string, iUpdt *Update) {
-   aId := parseSaveId(iUpdt.Thread.Id)
+   aId := parseLocalId(iUpdt.Thread.Id)
    aOrig := threadDir(iSvc) + aId.tid()
-   aTempOk := tempDir(iSvc) + aId.tid() + "__ws_" + aId.sid() + "_"
+   aTempOk := tempDir(iSvc) + aId.tid() + "__ws_" + aId.lms() + "_"
    aTemp := aTempOk + ".tmp"
    aData := bytes.NewBufferString(iUpdt.Thread.Data)
    var err error
 
-   aTid := aId.tid(); if aTid == "" { aTid = "_" + aId.sid() }
+   aTid := aId.tid(); if aTid == "" { aTid = "_" + aId.lms() }
    aDoor := _getThreadDoor(iSvc, aTid)
    aDoor.Lock(); defer aDoor.Unlock()
    if aDoor.renamed { quit(tError("unexpected rename")) }
@@ -503,13 +503,13 @@ func _completeStoreSaved(iSvc string, iTmp string, iHead *tHeadSaved, iFd, iTd *
 }
 
 func deleteSavedThread(iSvc string, iUpdt *Update) {
-   aId := parseSaveId(iUpdt.Thread.Id)
+   aId := parseLocalId(iUpdt.Thread.Id)
    aOrig := threadDir(iSvc) + aId.tid()
-   aTempOk := tempDir(iSvc) + aId.tid() + "__ds_" + aId.sid() + "_"
+   aTempOk := tempDir(iSvc) + aId.tid() + "__ds_" + aId.lms() + "_"
    aTemp := aTempOk + ".tmp"
    var err error
 
-   aTid := aId.tid(); if aTid == "" { aTid = "_" + aId.sid() }
+   aTid := aId.tid(); if aTid == "" { aTid = "_" + aId.lms() }
    aDoor := _getThreadDoor(iSvc, aTid)
    aDoor.Lock(); defer aDoor.Unlock()
    if aDoor.renamed { quit(tError("unexpected rename")) }

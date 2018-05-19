@@ -332,7 +332,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       if iHead.Id == "t_22" { break } //todo temp
       aQid := iHead.Id
       iHead.Id = iHead.Id[1:]
-      aId := parseSaveId(iHead.Id)
+      aId := parseLocalId(iHead.Id)
       switch aQid[0] {
       case eSrecPing:
          storeSentAdrsbk(iSvc, aId.ping(), iHead.Posted)
@@ -429,7 +429,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       const ( _ int8 = iota; eNewThread; eNewReply )
       if iUpdt.Thread.New > 0 {
          aTid := ""; if iUpdt.Thread.New == eNewReply { aTid = iState.getThread() }
-         iUpdt.Thread.Id = makeSaveId(aTid)
+         iUpdt.Thread.Id = makeLocalId(aTid)
       }
       storeSavedThread(iSvc, iUpdt)
       if iUpdt.Thread.New == eNewThread {
