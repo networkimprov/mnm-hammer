@@ -47,18 +47,20 @@ type tAdrsbkEl struct {
    Tid string          `json:",omitempty"`
    Gid string          `json:",omitempty"`
    Response *tAdrsbkEl `json:",omitempty"` // not stored
+   Qid string          `json:",omitempty"`
+   Queued bool         `json:",omitempty"` // not stored
 }
 
 const (
    _ int8 = iota
-   eAbPingSaved     // Type, Date, Text, Alias,      MyAlias
+   eAbPingSaved     // Type, Date, Text, Alias,      MyAlias,                 Qid
    eAbNone //todo remove
    eAbPingTo        // Type, Date, Text, Alias,      MyAlias
    eAbPingFrom      // Type, Date, Text, Alias, Uid, MyAlias, MsgId
    eAbMsgTo         // Type, Date,              Uid,          MsgId, Tid
    eAbMsgFrom       // Type, Date,       Alias, Uid,          MsgId, Tid
    eAbInviteTo      // Type, Date, Text, Alias,      MyAlias,            Gid
-   eAbInviteFrom    // Type, Date, Text, Alias, Uid, MyAlias, MsgId,     Gid
+   eAbInviteFrom    // Type, Date, Text, Alias, Uid, MyAlias, MsgId,     Gid, Qid
    eAbMsgAccept     // Type, Date,                                       Gid
    eAbMsgJoin       // Type, Date,       Alias, Uid,                     Gid
 )
@@ -175,7 +177,11 @@ func GetSentAdrsbk(iSvc string) []tAdrsbkEl {
 
 func GetInviteFromAdrsbk(iSvc string) []tAdrsbkEl {
    aSvc := _loadAdrsbk(iSvc)
-   return _listLogs(aSvc, aSvc.inviteFromIdx)
+   aLog := _listLogs(aSvc, aSvc.inviteFromIdx)
+   for a, _ := range aLog {
+      aLog[a].Queued = queueHasService(iSvc, eSrecAccept, aLog[a].Qid)
+   }
+   return aLog
 }
 
 func GetInviteToAdrsbk(iSvc string) []tAdrsbkEl {
@@ -235,6 +241,7 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    aEl := tAdrsbkEl{Type:aType, Date:iHead.Posted, Gid:iHead.Gid, Text:string(aBuf),
                     Alias:iHead.SubHead.Alias, Uid:iHead.From, MyAlias:iHead.To, MsgId:iHead.Id}
    if aEl.Type == eAbInviteFrom {
+      aEl.Qid = makeSaveId(iHead.Gid)
       aEl2 := aEl
       aSvc.inviteFromIdx[iHead.Gid] = _appendLog(aSvc.inviteFromIdx[iHead.Gid], &aEl2)
    }
@@ -415,7 +422,10 @@ func GetSavedAdrsbk(iSvc string) tAdrsbkLog {
    }
    aList := make(tAdrsbkLog, len(aMap))
    a := 0
-   for _, aList[a] = range aMap { a++ }
+   for _, aList[a] = range aMap {
+      aList[a].Queued = queueHasService(iSvc, eSrecPing, aList[a].Qid)
+      a++
+   }
    sort.Slice(aList, func(cA, cB int) bool {
       if aList[cA].Alias == aList[cB].Alias {
          return aList[cA].Gid < aList[cB].Gid
@@ -473,10 +483,6 @@ func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
    return err
 }
 
-func keySavedAdrsbk(iUpdt *Update) string {
-   return iUpdt.Ping.To + "\x00" + iUpdt.Ping.Gid
-}
-
 func storeSavedAdrsbk(iSvc string, iUpdt *Update) {
    aDoor := &GetService(iSvc).adrsbk.savedDoor
    aDoor.Lock(); defer aDoor.Unlock()
@@ -486,7 +492,8 @@ func storeSavedAdrsbk(iSvc string, iUpdt *Update) {
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aKey := iUpdt.Ping.To + "\x00" + iUpdt.Ping.Gid
    aMap[aKey] = &tAdrsbkEl{Type:eAbPingSaved, Date:dateRFC3339(), Text:iUpdt.Ping.Text,
-                           Alias:iUpdt.Ping.To, MyAlias:iUpdt.Ping.Alias, Gid:iUpdt.Ping.Gid}
+                           Alias:iUpdt.Ping.To, MyAlias:iUpdt.Ping.Alias, Gid:iUpdt.Ping.Gid,
+                           Qid:makeSaveId(aKey)}
    err = storeFile(pingFile(iSvc), aMap)
    if err != nil { quit(err) }
 }

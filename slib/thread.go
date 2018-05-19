@@ -43,15 +43,23 @@ func GetIdxThread(iSvc string, iState *ClientState) interface{} {
    aTid := iState.getThread()
    if aTid == "" { return []tIndexEl{} }
 
-   aDoor := _getThreadDoor(iSvc, aTid)
-   aDoor.RLock(); defer aDoor.RUnlock()
-   if aDoor.renamed { return nil }
+   var aIdx []struct{ Id, From, Alias, Date, Subject, Seen string
+                      Queued bool }
+   func() {
+      cDoor := _getThreadDoor(iSvc, aTid)
+      cDoor.RLock(); defer cDoor.RUnlock()
+      if cDoor.renamed { return }
 
-   aFd, err := os.Open(threadDir(iSvc) + aTid)
-   if err != nil { quit(err) }
-   defer aFd.Close()
-   var aIdx []struct{ Id, From, Alias, Date, Subject, Seen string }
-   _ = _readIndex(aFd, &aIdx)
+      cFd, err := os.Open(threadDir(iSvc) + aTid)
+      if err != nil { quit(err) }
+      defer cFd.Close()
+      _ = _readIndex(cFd, &aIdx)
+   }()
+   for a, _ := range aIdx {
+      if aIdx[a].From == "" {
+         aIdx[a].Queued = queueHasService(iSvc, eSrecThread, aIdx[a].Id)
+      }
+   }
    for a1, a2 := 0, len(aIdx)-1; a1 < a2; a1, a2 = a1+1, a2-1 {
       aIdx[a1], aIdx[a2] = aIdx[a2], aIdx[a1]
    }

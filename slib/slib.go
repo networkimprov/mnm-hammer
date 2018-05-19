@@ -142,9 +142,10 @@ type Update struct {
       To string
       Text string
       Gid string
+      Qid string
    }
    Accept *struct {
-      Gid string
+      Qid string
    }
    Ohi *struct {
       Alias string

@@ -398,9 +398,11 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       deleteSavedAdrsbk(iSvc, iUpdt.Ping.To, iUpdt.Ping.Gid)
       aFn, aResult = fAll, []string{"ps"}
    case "ping_send":
-      aSrec = _queueAdd(iSvc, eSrecPing, makeSaveId(keySavedAdrsbk(iUpdt)))
+      aSrec = _queueAdd(iSvc, eSrecPing, iUpdt.Ping.Qid)
+      aFn, aResult = fAll, []string{"ps"}
    case "accept_send":
-      aSrec = _queueAdd(iSvc, eSrecAccept, makeSaveId(iUpdt.Accept.Gid))
+      aSrec = _queueAdd(iSvc, eSrecAccept, iUpdt.Accept.Qid)
+      aFn, aResult = fAll, []string{"if"}
    case "thread_recvtest":
       aTid := iState.getThread()
       if len(aTid) > 0 && aTid[0] == '_' { break }
@@ -474,6 +476,12 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if iUpdt.Thread.Id == "" { break }
       err = validateSavedThread(iSvc, iUpdt)
       if err != nil { return fErr, nil }
+      aTid := iState.getThread()
+      aFn = func(c *ClientState) interface{} {
+         if c.getThread() == aTid { return aResult }
+         return nil
+      }
+      aResult = []string{"ml"}
       aSrec = _queueAdd(iSvc, eSrecThread, iUpdt.Thread.Id)
    case "thread_open":
       if iUpdt.Thread.ThreadId != iState.getThread() {

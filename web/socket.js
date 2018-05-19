@@ -31,11 +31,11 @@
    mnm.PingDiscard = function(iObj) { // with to, gid
       _wsSend(JSON.stringify({op:'ping_discard', ping:iObj}))
    };
-   mnm.PingSend = function(iObj) { // with to, gid
-      _wsSend(JSON.stringify({op:'ping_send', ping:iObj}))
+   mnm.PingSend = function(i) {
+      _wsSend(JSON.stringify({op:'ping_send', ping:{qid:i}}))
    };
-   mnm.InviteAccept = function(iGid) {
-      _wsSend(JSON.stringify({op:'accept_send', accept:{gid:iGid}}))
+   mnm.InviteAccept = function(i) {
+      _wsSend(JSON.stringify({op:'accept_send', accept:{qid:i}}))
    };
 
    mnm.NavigateThread = function(i) {
