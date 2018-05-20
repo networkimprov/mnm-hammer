@@ -170,23 +170,6 @@ type SendRecord struct {
 
 const eSrecThread, eSrecPing, eSrecOhi, eSrecAccept byte = 't', 'p', 'o', 'a'
 
-func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error { //todo move to service.go
-   var aFn func(io.Writer, string, string, string) error
-   switch iSrec.Id[0] {
-   case eSrecOhi:    aFn = sendEditOhi
-   case eSrecPing:   aFn = sendDraftAdrsbk
-   case eSrecAccept: aFn = sendJoinGroupAdrsbk
-   case eSrecThread: aFn = sendDraftThread
-   default:
-      quit(tError("unknown op " + iSrec.Id[:1]))
-   }
-   err := aFn(iW, iSvc, iSrec.Id[1:], iSrec.Id)
-   if err != nil && err.Error() == "already sent" {
-      _queueDrop(iSvc, iSrec.Id)
-   }
-   return err
-}
-
 type Msg map[string]interface{}
 
 

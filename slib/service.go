@@ -264,6 +264,23 @@ func _queueDrop(iSvc string, iId string) {
    if err != nil { quit(err) }
 }
 
+func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
+   var aFn func(io.Writer, string, string, string) error
+   switch iSrec.Id[0] {
+   case eSrecOhi:    aFn = sendEditOhi
+   case eSrecPing:   aFn = sendDraftAdrsbk
+   case eSrecAccept: aFn = sendJoinGroupAdrsbk
+   case eSrecThread: aFn = sendDraftThread
+   default:
+      quit(tError("unknown op " + iSrec.Id[:1]))
+   }
+   err := aFn(iW, iSvc, iSrec.Id[1:], iSrec.Id)
+   if err != nil && err.Error() == "already sent" {
+      _queueDrop(iSvc, iSrec.Id)
+   }
+   return err
+}
+
 func LogoutService(iSvc string) interface{} {
    dropFromOhi(iSvc)
    return []string{"of"}
