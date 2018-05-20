@@ -31,7 +31,7 @@ type tAdrsbk struct {
    inviteToIdx   map[string]tAdrsbkLog // key alias + gid
    inviteFromIdx map[string]tAdrsbkLog // key gid
    groupIdx      map[string]tGroupEl   // key gid
-   savedDoor     sync.RWMutex
+   draftDoor     sync.RWMutex
 }
 
 type tAdrsbkLog []*tAdrsbkEl
@@ -53,7 +53,7 @@ type tAdrsbkEl struct {
 
 const (
    _ int8 = iota
-   eAbPingSaved     // Type, Date, Text, Alias,      MyAlias,                 Qid
+   eAbPingDraft     // Type, Date, Text, Alias,      MyAlias,                 Qid
    eAbNone //todo remove
    eAbPingTo        // Type, Date, Text, Alias,      MyAlias
    eAbPingFrom      // Type, Date, Text, Alias, Uid, MyAlias, MsgId
@@ -255,13 +255,13 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
 func storeSentAdrsbk(iSvc string, iKey string, iDate string) {
    aSvc := _loadAdrsbk(iSvc)
    var aMap map[string]*tAdrsbkEl
-   aSvc.savedDoor.RLock()
+   aSvc.draftDoor.RLock()
    err := readJsonFile(&aMap, pingFile(iSvc))
-   aSvc.savedDoor.RUnlock()
+   aSvc.draftDoor.RUnlock()
    if err != nil { quit(err) }
    aEl := aMap[iKey]
    if aEl == nil {
-      fmt.Fprintf(os.Stderr, "storeSentAdrsbk %s: saved ping was cleared %s\n", iSvc, iKey)
+      fmt.Fprintf(os.Stderr, "storeSentAdrsbk %s: draft ping was cleared %s\n", iSvc, iKey)
       return
    }
    aSvc.Lock(); defer aSvc.Unlock()
@@ -366,7 +366,7 @@ func _completeAdrsbk(iSvc string, iTmp string, iEls []tAdrsbkEl) {
    var err error
    aRec := strings.SplitN(iTmp, "_", 3)
    if aRec[2] == "sent" {
-      deleteSavedAdrsbk(iSvc, iEls[0].Alias, iEls[0].Gid) // when sent, len(iEls)==1
+      deleteDraftAdrsbk(iSvc, iEls[0].Alias, iEls[0].Gid) // when sent, len(iEls)==1
    }
    aFd, err := os.OpenFile(adrsFile(iSvc), os.O_WRONLY|os.O_CREATE, 0600)
    if err != nil { quit(err) }
@@ -410,8 +410,8 @@ func completeAdrsbk(iSvc string, iTmp string) {
    _completeAdrsbk(iSvc, iTmp, aEls)
 }
 
-func GetSavedAdrsbk(iSvc string) tAdrsbkLog {
-   aDoor := &GetService(iSvc).adrsbk.savedDoor
+func GetDraftAdrsbk(iSvc string) tAdrsbkLog {
+   aDoor := &GetService(iSvc).adrsbk.draftDoor
    var aMap map[string]*tAdrsbkEl
    aDoor.RLock()
    err := readJsonFile(&aMap, pingFile(iSvc))
@@ -435,8 +435,8 @@ func GetSavedAdrsbk(iSvc string) tAdrsbkLog {
    return aList
 }
 
-func sendJoinGroupAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
-   aId := parseLocalId(iSaveId)
+func sendJoinGroupAdrsbk(iW io.Writer, iSvc string, iQid, iId string) error {
+   aId := parseLocalId(iQid)
    aSvc := _loadAdrsbk(iSvc)
    aSvc.RLock()
    _, ok := aSvc.groupIdx[aId.gid()]
@@ -452,18 +452,18 @@ func sendJoinGroupAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
    return err
 }
 
-func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
-   aDoor := &GetService(iSvc).adrsbk.savedDoor
+func sendDraftAdrsbk(iW io.Writer, iSvc string, iQid, iId string) error {
+   aDoor := &GetService(iSvc).adrsbk.draftDoor
    var err error
    var aMap map[string]*tAdrsbkEl
    aDoor.RLock()
    err = readJsonFile(&aMap, pingFile(iSvc))
    aDoor.RUnlock()
    if err != nil { quit(err) }
-   aId := parseLocalId(iSaveId)
+   aId := parseLocalId(iQid)
    aEl := aMap[aId.ping()]
    if aEl == nil {
-      fmt.Fprintf(os.Stderr, "sendSavedAdrsbk %s: ping draft was cleared %s\n", iSvc, iSaveId)
+      fmt.Fprintf(os.Stderr, "sendDraftAdrsbk %s: ping draft was cleared %s\n", iSvc, iQid)
       return tError("already sent")
    }
    aSubh, err := json.Marshal(Msg{"Alias":aEl.MyAlias}) //todo drop when ping takes from:
@@ -483,23 +483,23 @@ func sendSavedAdrsbk(iW io.Writer, iSvc string, iSaveId, iId string) error {
    return err
 }
 
-func storeSavedAdrsbk(iSvc string, iUpdt *Update) {
-   aDoor := &GetService(iSvc).adrsbk.savedDoor
+func storeDraftAdrsbk(iSvc string, iUpdt *Update) {
+   aDoor := &GetService(iSvc).adrsbk.draftDoor
    aDoor.Lock(); defer aDoor.Unlock()
    var err error
    aMap := make(map[string]*tAdrsbkEl)
    err = readJsonFile(&aMap, pingFile(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aKey := iUpdt.Ping.To + "\x00" + iUpdt.Ping.Gid
-   aMap[aKey] = &tAdrsbkEl{Type:eAbPingSaved, Date:dateRFC3339(), Text:iUpdt.Ping.Text,
+   aMap[aKey] = &tAdrsbkEl{Type:eAbPingDraft, Date:dateRFC3339(), Text:iUpdt.Ping.Text,
                            Alias:iUpdt.Ping.To, MyAlias:iUpdt.Ping.Alias, Gid:iUpdt.Ping.Gid,
                            Qid:makeLocalId(aKey)}
    err = storeFile(pingFile(iSvc), aMap)
    if err != nil { quit(err) }
 }
 
-func deleteSavedAdrsbk(iSvc string, iAlias, iGid string) {
-   aDoor := &GetService(iSvc).adrsbk.savedDoor
+func deleteDraftAdrsbk(iSvc string, iAlias, iGid string) {
+   aDoor := &GetService(iSvc).adrsbk.draftDoor
    aDoor.Lock(); defer aDoor.Unlock()
    var err error
    var aMap map[string]*tAdrsbkEl

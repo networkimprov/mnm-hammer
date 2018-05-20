@@ -174,7 +174,7 @@ func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error { //todo mo
    var aFn func(io.Writer, string, string, string) error
    switch iSrec.Id[0] {
    case eSrecOhi:    aFn = sendEditOhi
-   case eSrecPing:   aFn = sendSavedAdrsbk
+   case eSrecPing:   aFn = sendDraftAdrsbk
    case eSrecAccept: aFn = sendJoinGroupAdrsbk
    case eSrecThread: aFn = sendDraftThread
    default:

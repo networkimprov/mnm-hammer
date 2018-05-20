@@ -392,10 +392,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aSrec = editOhi(iSvc, iUpdt)
       aFn, aResult = fAll, []string{"ot"}
    case "ping_save":
-      storeSavedAdrsbk(iSvc, iUpdt)
+      storeDraftAdrsbk(iSvc, iUpdt)
       aFn, aResult = fAll, []string{"ps"}
    case "ping_discard":
-      deleteSavedAdrsbk(iSvc, iUpdt.Ping.To, iUpdt.Ping.Gid)
+      deleteDraftAdrsbk(iSvc, iUpdt.Ping.To, iUpdt.Ping.Gid)
       aFn, aResult = fAll, []string{"ps"}
    case "ping_send":
       aSrec = _queueAdd(iSvc, eSrecPing, iUpdt.Ping.Qid)

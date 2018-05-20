@@ -126,9 +126,9 @@ func editOhi(iSvc string, iUpdt *Update) *SendRecord {
    return &SendRecord{Id: string(eSrecOhi) + aOp + makeLocalId(aUid)}
 }
 
-func sendEditOhi(iW io.Writer, iSvc string, iSaveId, iId string) error {
+func sendEditOhi(iW io.Writer, iSvc string, iQid, iId string) error {
    var err error
-   aId := parseLocalId(iSaveId)
+   aId := parseLocalId(iQid)
    aFor := tForOhi{{Id:aId.ohi()[1:]}}
    aType := "add"; if aId.ohi()[0] == '-' { aType = "drop" }
    aHead, err := json.Marshal(Msg{"Op":4, "Id":iId, "For":aFor, "Type":aType})

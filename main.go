@@ -460,7 +460,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "cs": aResult = aState.GetSummary()
    case "sl": aResult = slib.GetIdxService()
    case "cf": aResult = slib.GetDataService(aSvc)
-   case "ps": aResult = slib.GetSavedAdrsbk(aSvc)
+   case "ps": aResult = slib.GetDraftAdrsbk(aSvc)
    case "pt": aResult = slib.GetSentAdrsbk(aSvc)
    case "pf": aResult = slib.GetReceivedAdrsbk(aSvc)
    case "it": aResult = slib.GetInviteToAdrsbk(aSvc)
