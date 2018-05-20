@@ -87,7 +87,7 @@ type tHeader2 struct {
    Subject string
    Attach []tHeader2Attach `json:",omitempty"`
    For []tHeaderFor `json:",omitempty"` // copied to outgoing Header.For
-   isSaved bool
+   noAttachSize bool
 }
 
 type tHeader2Attach struct {
@@ -97,19 +97,19 @@ type tHeader2Attach struct {
    FfKey string `json:",omitempty"` // only in draft
 }
 
-func (o *tHeader2) setWrite(iThreadId string, i *Update, iSvc string) {
+func (o *tHeader2) setupDraft(iThreadId string, i *Update, iSvc string) {
    o.ThreadId = iThreadId
    o.Alias = i.Thread.Alias
    o.Cc = i.Thread.Cc
    o.For = lookupAdrsbk(iSvc, o.Cc)
    o.Subject = i.Thread.Subject
-   o.Attach = savedAttach(iSvc, iThreadId, i)
-   o.isSaved = true
+   o.Attach = setupDraftAttach(iSvc, iThreadId, i)
+   o.noAttachSize = true
 }
 
-func (o *tHeader2) setStore(iThreadId string) {
+func (o *tHeader2) setupSent(iThreadId string) {
    o.ThreadId = iThreadId
-   o.isSaved = true
+   o.noAttachSize = true
 }
 
 func (o *Header) Check() bool {
@@ -176,7 +176,7 @@ func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error { //todo mo
    case eSrecOhi:    aFn = sendEditOhi
    case eSrecPing:   aFn = sendSavedAdrsbk
    case eSrecAccept: aFn = sendJoinGroupAdrsbk
-   case eSrecThread: aFn = sendSavedThread
+   case eSrecThread: aFn = sendDraftThread
    default:
       quit(tError("unknown op " + iSrec.Id[:1]))
    }

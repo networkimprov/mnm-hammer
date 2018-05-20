@@ -68,7 +68,7 @@ func GetPathAttach(iSvc string, iState *ClientState, iFile string) string {
    return attachSub(iSvc, iState.getThread()) + iFile
 }
 
-func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tLocalId) int64 {
+func sizeDraftAttach(iSvc string, iSubHead *tHeader2, iId tLocalId) int64 {
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.lms() }
    aPrefix := attachSub(iSvc, aTid) + iId.lms() + "_"
    var aTotal int64
@@ -86,7 +86,7 @@ func sizeSavedAttach(iSvc string, iSubHead *tHeader2, iId tLocalId) int64 {
    return aTotal
 }
 
-func sendSavedAttach(iW io.Writer, iSvc string, iSubHead *tHeader2, iId tLocalId, iFd *os.File) error {
+func sendDraftAttach(iW io.Writer, iSvc string, iSubHead *tHeader2, iId tLocalId, iFd *os.File) error {
    var err error
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.lms() }
    aPrefix := attachSub(iSvc, aTid) + iId.lms() + "_"
@@ -199,7 +199,7 @@ func storeSentAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    }
    var err error
    if iRec.tid() == iRec.mid() {
-      err = os.Rename(attachSub(iSvc, "_" + iRec.sid()), attachSub(iSvc, iRec.tid()))
+      err = os.Rename(attachSub(iSvc, "_" + iRec.lms()), attachSub(iSvc, iRec.tid()))
       if err != nil && !os.IsNotExist(err) { quit(err) }
       err = syncDir(attachDir(iSvc))
       if err != nil { quit(err) }
@@ -209,7 +209,7 @@ func storeSentAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
       if _isFormFill(aFile.Name) { continue }
       aDoSync = true
       aDoFfn = aDoFfn || _isForm(aFile.Name)
-      err = renameRemove(attachSub(iSvc, iRec.tid()) + iRec.sid() + "_" + aFile.Name,
+      err = renameRemove(attachSub(iSvc, iRec.tid()) + iRec.lms() + "_" + aFile.Name,
                          attachSub(iSvc, iRec.tid()) + iRec.mid() + "_" + aFile.Name)
       if err != nil { quit(err) }
    }
@@ -256,7 +256,7 @@ func _updateFfnIndex(iSvc string, iRec tComplete, iIdx tFfnIndex, iSubHead *tHea
 }
 
 func _storeFormAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
-   aSuffix := kSuffixRecv; if iRec.sid() != "" { aSuffix = kSuffixSent }
+   aSuffix := kSuffixRecv; if iRec.lms() != "" { aSuffix = kSuffixSent }
    aDoSync := false
    for _, aFile := range iSubHead.Attach {
       if !_isFormFill(aFile.Name) { continue }
@@ -269,7 +269,7 @@ func _storeFormAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    }
 }
 
-func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tLocalId, iFd *os.File) error {
+func validateDraftAttach(iSvc string, iSubHead *tHeader2, iId tLocalId, iFd *os.File) error {
    var err error
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.lms() }
    for _, aFile := range iSubHead.Attach {
@@ -296,7 +296,7 @@ func validateSavedAttach(iSvc string, iSubHead *tHeader2, iId tLocalId, iFd *os.
    return nil
 }
 
-func savedAttach(iSvc string, iTid string, i *Update) []tHeader2Attach {
+func setupDraftAttach(iSvc string, iTid string, i *Update) []tHeader2Attach {
    aAtc := i.Thread.Attach
    for a, aFile := range aAtc {
       if strings.HasPrefix(aFile.Name, "form_fill/") {
@@ -362,16 +362,16 @@ func writeFormFillAttach(iFd *os.File, iSubHead *tHeader2, iMap map[string]strin
    }
 }
 
-func updateSavedAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tComplete) {
+func updateDraftAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tComplete) {
    var err error
    aHasOld := iSubHeadOld != nil && len(iSubHeadOld.Attach) > 0
    aHasNew := iSubHeadNew != nil && len(iSubHeadNew.Attach) > 0
-   aTid := iRec.tid(); if aTid == "" { aTid = "_" + iRec.sid() }
+   aTid := iRec.tid(); if aTid == "" { aTid = "_" + iRec.lms() }
 
    if aHasOld {
       for _, aFile := range iSubHeadOld.Attach {
          if _isFormFill(aFile.Name) { continue }
-         err = os.Remove(attachSub(iSvc, aTid) + iRec.sid() + "_" + aFile.Name)
+         err = os.Remove(attachSub(iSvc, aTid) + iRec.lms() + "_" + aFile.Name)
          if err != nil && !os.IsNotExist(err) { quit(err) }
       }
       if !aHasNew {
@@ -397,10 +397,10 @@ func updateSavedAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
          if _isFormFill(aFile.Name) { continue }
          aDir := "upload/"; if _isForm(aFile.Name) { aDir = "form/" }
          err = os.Link(kStorageDir + aDir + aFile.Name[2:],
-                       attachSub(iSvc, aTid) + iRec.sid() + "_" + aFile.Name)
+                       attachSub(iSvc, aTid) + iRec.lms() + "_" + aFile.Name)
          if err != nil {
             if !os.IsNotExist(err) { quit(err) }
-            fmt.Fprintf(os.Stderr, "updateSavedAttach %s: %s missing\n", iSvc, aFile.Name) //todo inform user
+            fmt.Fprintf(os.Stderr, "updateDraftAttach %s: %s missing\n", iSvc, aFile.Name) //todo inform user
          }
       }
    }
@@ -411,7 +411,7 @@ func updateSavedAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
 }
 
 func totalAttach(iSubHead *tHeader2) int64 {
-   if iSubHead.isSaved { return 0 }
+   if iSubHead.noAttachSize { return 0 }
    var aLen int64
    for _, aFile := range iSubHead.Attach { aLen += aFile.Size }
    return aLen

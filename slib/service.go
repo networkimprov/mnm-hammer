@@ -410,7 +410,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if err != nil { quit(err) }
       aData := bytes.NewBufferString("ohi there\n![?](this_f:trial.original)")
       aHead := Header{DataLen:int64(aData.Len()), SubHead:
-               tHeader2{ThreadId:aTid, isSaved:true, For:
+               tHeader2{ThreadId:aTid, noAttachSize:true, For:
                []tHeaderFor{{Id:GetDataService(iSvc).Uid, Type:1}}, Attach:
                []tHeader2Attach{{Name:"u:trial"},
                   {Name:"r:abc", Size:80, FfKey:"abc",
@@ -431,7 +431,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          aTid := ""; if iUpdt.Thread.New == eNewReply { aTid = iState.getThread() }
          iUpdt.Thread.Id = makeLocalId(aTid)
       }
-      storeSavedThread(iSvc, iUpdt)
+      storeDraftThread(iSvc, iUpdt)
       if iUpdt.Thread.New == eNewThread {
          iState.addThread(iUpdt.Thread.Id)
          aFn = func(c *ClientState) interface{} {
@@ -455,7 +455,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          aResult = []string{"al", "mn", iUpdt.Thread.Id}
       }
    case "thread_discard":
-      deleteSavedThread(iSvc, iUpdt)
+      deleteDraftThread(iSvc, iUpdt)
       aTid := iState.getThread()
       if iUpdt.Thread.Id[0] == '_' {
          aFn = func(c *ClientState) interface{} {
@@ -474,7 +474,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       }
    case "thread_send":
       if iUpdt.Thread.Id == "" { break }
-      err = validateSavedThread(iSvc, iUpdt)
+      err = validateDraftThread(iSvc, iUpdt)
       if err != nil { return fErr, nil }
       aTid := iState.getThread()
       aFn = func(c *ClientState) interface{} {
