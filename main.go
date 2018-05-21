@@ -23,14 +23,14 @@ package main
 
 import (
    "fmt"
-   gws "github.com/gorilla/websocket-1.2.0"
+   pWs "github.com/gorilla/websocket-1.2.0"
    "net/http"
    "io"
    "encoding/json"
    "mime/multipart"
    "net"
    "os"
-   "mnm-hammer/slib"
+   pSl "mnm-hammer/slib"
    "strconv"
    "strings"
    "sync"
@@ -74,8 +74,8 @@ func mainResult() int {
       sHttpSrvr.Addr = os.Args[1]
    }
 
-   slib.Init(startService)
-   slib.Test()
+   pSl.Init(startService)
+   pSl.Test()
 
    sServiceTmpl, err = template.New("service.html").Delims("[{","}]").ParseFiles("web/service.html")
    if err != nil {
@@ -83,7 +83,7 @@ func mainResult() int {
       return 1
    }
 
-   for _, aName := range slib.GetIdxService() {
+   for _, aName := range pSl.GetIdxService() {
       startService(aName)
    }
 
@@ -123,7 +123,7 @@ func toAllClients(iMsg interface{}) {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
    for _, aV := range sServices {
       aV.ccs.Range(func(cC *tWsConn) {
-         cC.WriteMessage(gws.TextMessage, aJson)
+         cC.WriteMessage(pWs.TextMessage, aJson)
       })
    }
 }
@@ -133,15 +133,15 @@ type tQueue struct {
    once func() // input to .Do()
    service string // service name
    connSrc chan net.Conn // synchronize writes to server
-   in chan *slib.SendRecord // message queue input
-   out chan *slib.SendRecord // message queue output
-   buf []*slib.SendRecord // message queue
+   in chan *pSl.SendRecord // message queue input
+   out chan *pSl.SendRecord // message queue output
+   buf []*pSl.SendRecord // message queue
    ack chan string // ack queue
    wakeup chan bool // reconnect a periodic service
 }
 
 func newQueue(iSvc string) *tQueue {
-   aRecs, err := slib.GetQueueService(iSvc)
+   aRecs, err := pSl.GetQueueService(iSvc)
    if err != nil {
       fmt.Fprintf(os.Stderr, "newqueue %s failure: %s\n", iSvc, err.Error())
       return nil
@@ -151,8 +151,8 @@ func newQueue(iSvc string) *tQueue {
       once: func(){ go runElasticChan(aQ); go runQueue(aQ) },
       service: iSvc,
       connSrc: make(chan net.Conn, 1),
-      in: make(chan *slib.SendRecord),
-      out: make(chan *slib.SendRecord),
+      in: make(chan *pSl.SendRecord),
+      out: make(chan *pSl.SendRecord),
       buf: aRecs,
       ack: make(chan string, 2), //todo larger buffer?
       wakeup: make(chan bool),
@@ -163,13 +163,13 @@ func newQueue(iSvc string) *tQueue {
    return aQ
 }
 
-func (o *tQueue) postMsg(iRec *slib.SendRecord) {
+func (o *tQueue) postMsg(iRec *pSl.SendRecord) {
    o.Do(o.once)
    o.in <- iRec
 }
 
 func (o *tQueue) postAck(iId string) {
-   aMsg := slib.Msg{"Op":eOpAck, "Id":iId, "Type":"ok"}
+   aMsg := pSl.Msg{"Op":eOpAck, "Id":iId, "Type":"ok"}
    aConn := <-o.connSrc
    _, err := aConn.Write(packMsg(tMsg(aMsg), nil))
    if err != nil { panic(err) }
@@ -185,7 +185,7 @@ func runQueue(o *tQueue) {
       case o.wakeup <- true:
          aConn = <-o.connSrc
       }
-      err := slib.SendService(aConn, o.service, aSrec)
+      err := pSl.SendService(aConn, o.service, aSrec)
       o.connSrc <- aConn
       if err != nil { //todo retry transient error
          if err.Error() == "already sent" {
@@ -214,7 +214,7 @@ func runQueue(o *tQueue) {
 }
 
 func runElasticChan(o *tQueue) {
-   var aS *slib.SendRecord
+   var aS *pSl.SendRecord
    var ok bool
    for {
       // buf needs a value to let select multiplex consumer & producer
@@ -249,7 +249,7 @@ func runLink(iName string) {
    var aJson []byte
 
    for {
-      aSvc := slib.GetDataService(iName)
+      aSvc := pSl.GetDataService(iName)
 
       if aSvc.LoginPeriod > 0 && aSvc.Uid != "" {
          // add +/- 0-20% to aSvc.LoginPeriod
@@ -264,7 +264,7 @@ func runLink(iName string) {
       }
 
       for {
-         aSvc = slib.GetDataService(iName)
+         aSvc = pSl.GetDataService(iName)
          aConn, err = net.DialTimeout("tcp", aSvc.Addr, 3 * time.Second)
          if err == nil { break }
          fmt.Fprintf(os.Stderr, "runLink %s: %s\n", iName, err.Error())
@@ -283,10 +283,10 @@ func runLink(iName string) {
       _readLink(iName, aConn, time.Duration(aSvc.LoginPeriod / kIdleTimeFraction) * time.Second)
       aConn.Close()
 
-      aJson, err = json.Marshal(slib.LogoutService(iName))
+      aJson, err = json.Marshal(pSl.LogoutService(iName))
       if err != nil { panic(err) }
       getService(iName).ccs.Range(func(cC *tWsConn) {
-         cC.WriteMessage(gws.TextMessage, aJson)
+         cC.WriteMessage(pWs.TextMessage, aJson)
       })
    }
 }
@@ -295,7 +295,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
    aQ := getService(iName).queue
    aBuf := make([]byte, kMsgHeaderMaxLen+4) //todo start smaller, realloc as needed
    aLogin := false
-   var aHead *slib.Header
+   var aHead *pSl.Header
    var aPos, aHeadEnd, aHeadStart int64 = 0, 0, 4
 
    for {
@@ -343,7 +343,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          continue
       }
       if aHeadStart == 4 {
-         aHead = &slib.Header{Op:""}
+         aHead = &pSl.Header{Op:""}
          err = json.Unmarshal(aBuf[4:aHeadEnd], aHead)
          if err != nil || !aHead.Check() {
             fmt.Fprintf(os.Stderr, "_readLink %s: invalid header\n", iName)
@@ -372,7 +372,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          // no-op
       } else {
          if aHead.Op == "info" && aHead.Info == "login ok" {
-            slib.SendAllOhi(iConn, iName, kFirstOhiId)
+            pSl.SendAllOhi(iConn, iName, kFirstOhiId)
             aLogin = true
             aQ.connSrc <- iConn
          } else if aHead.Op == "ack" {
@@ -382,7 +382,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
                fmt.Fprintf(os.Stderr, "_readLink %s: ack channel blocked\n", iName)
             }
          }
-         aFn := slib.HandleTmtpService(iName, aHead, &tTmtpInput{aData, iConn})
+         aFn := pSl.HandleTmtpService(iName, aHead, &tTmtpInput{aData, iConn})
          if aHead.From != "" && aHead.Id != "" {
             aQ.postAck(aHead.Id)
          }
@@ -428,12 +428,12 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    var err error
    aClientId, _ := iReq.Cookie("clientid")
    aCid := ""; if aClientId != nil { aCid = aClientId.Value }
-   var aState *slib.ClientState
+   var aState *pSl.ClientState
    aSvc := iReq.URL.Path[1:]; if aSvc == "" { aSvc = "local" }
    aOp_Id := []string{"er", ""}
    aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
    if err == nil {
-      if slib.GetService(aSvc) == nil {
+      if pSl.GetService(aSvc) == nil {
          err = tError("service not found")
       } else if aQuery != "" {
          aCc := getService(aSvc).ccs.Get(aCid)
@@ -458,30 +458,30 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       }
       err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvc, "Addr":sHttpSrvr.Addr})
    case "cs": aResult = aState.GetSummary()
-   case "sl": aResult = slib.GetIdxService()
-   case "cf": aResult = slib.GetDataService(aSvc)
-   case "ps": aResult = slib.GetDraftAdrsbk(aSvc)
-   case "pt": aResult = slib.GetSentAdrsbk(aSvc)
-   case "pf": aResult = slib.GetReceivedAdrsbk(aSvc)
-   case "it": aResult = slib.GetInviteToAdrsbk(aSvc)
-   case "if": aResult = slib.GetInviteFromAdrsbk(aSvc)
-   case "gl": aResult = slib.GetGroupAdrsbk(aSvc)
-   case "of": aResult = slib.GetFromOhi(aSvc)
-   case "ot": aResult = slib.GetIdxOhi(aSvc)
-   case "al": aResult = slib.GetIdxAttach(aSvc, aState)
-   case "ml": aResult = slib.GetIdxThread(aSvc, aState)
+   case "sl": aResult = pSl.GetIdxService()
+   case "cf": aResult = pSl.GetDataService(aSvc)
+   case "ps": aResult = pSl.GetDraftAdrsbk(aSvc)
+   case "pt": aResult = pSl.GetSentAdrsbk(aSvc)
+   case "pf": aResult = pSl.GetReceivedAdrsbk(aSvc)
+   case "it": aResult = pSl.GetInviteToAdrsbk(aSvc)
+   case "if": aResult = pSl.GetInviteFromAdrsbk(aSvc)
+   case "gl": aResult = pSl.GetGroupAdrsbk(aSvc)
+   case "of": aResult = pSl.GetFromOhi(aSvc)
+   case "ot": aResult = pSl.GetIdxOhi(aSvc)
+   case "al": aResult = pSl.GetIdxAttach(aSvc, aState)
+   case "ml": aResult = pSl.GetIdxThread(aSvc, aState)
    case "tl":
-      err = slib.WriteResultSearch(iResp, aSvc, aState)
+      err = pSl.WriteResultSearch(iResp, aSvc, aState)
    case "mo":
-      err = slib.WriteMessagesThread(iResp, aSvc, aState, "")
+      err = pSl.WriteMessagesThread(iResp, aSvc, aState, "")
    case "mn":
       if len(aOp_Id) < 2 { break }
-      err = slib.WriteMessagesThread(iResp, aSvc, aState, aOp_Id[1])
+      err = pSl.WriteMessagesThread(iResp, aSvc, aState, aOp_Id[1])
    case "an":
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
-      http.ServeFile(iResp, iReq, slib.GetPathAttach(aSvc, aState, aOp_Id[1]))
+      http.ServeFile(iResp, iReq, pSl.GetPathAttach(aSvc, aState, aOp_Id[1]))
    case "fn":
-      err = slib.WriteTableFilledForm(iResp, aSvc, aOp_Id[1])
+      err = pSl.WriteTableFilledForm(iResp, aSvc, aOp_Id[1])
    default:
       iResp.WriteHeader(http.StatusNotFound)
       if err == nil { err = tError("unknown op") }
@@ -505,19 +505,19 @@ type tPostSet struct {
 }
 
 var sUpload = tPostSet{
-   add: slib.AddUpload,
-   drop: slib.DropUpload,
-   updt: slib.MakeMsgUpload,
-   list: slib.GetIdxUpload,
-   path: slib.GetPathUpload,
+   add: pSl.AddUpload,
+   drop: pSl.DropUpload,
+   updt: pSl.MakeMsgUpload,
+   list: pSl.GetIdxUpload,
+   path: pSl.GetPathUpload,
 }
 
 var sForm = tPostSet{
-   add: slib.AddBlankForm,
-   drop: slib.DropBlankForm,
-   updt: slib.MakeMsgBlankForm,
-   list: slib.GetIdxBlankForm,
-   path: slib.GetPathBlankForm,
+   add: pSl.AddBlankForm,
+   drop: pSl.DropBlankForm,
+   updt: pSl.MakeMsgBlankForm,
+   list: pSl.GetIdxBlankForm,
+   path: pSl.GetPathBlankForm,
 }
 
 func runPost(iResp http.ResponseWriter, iReq *http.Request) {
@@ -574,29 +574,29 @@ func runPost(iResp http.ResponseWriter, iReq *http.Request) {
    }
 }
 
-var sWsInit = gws.Upgrader {
+var sWsInit = pWs.Upgrader {
   ReadBufferSize:  1024,
   WriteBufferSize: 1024,
 }
 
 func runWs(iResp http.ResponseWriter, iReq *http.Request) {
    aSvc := iReq.URL.Path[3:]; if aSvc == "" { aSvc = "local" }
-   if slib.GetService(aSvc) == nil {
+   if pSl.GetService(aSvc) == nil {
       iResp.WriteHeader(http.StatusNotFound)
       iResp.Write([]byte("service not found: "+aSvc))
       return
    }
 
-   var aState *slib.ClientState
+   var aState *pSl.ClientState
    aClientId, _ := iReq.Cookie("clientid")
    aClients := getService(aSvc).ccs
    aCc := aClients.Get(aClientId.Value)
    if aCc != nil {
-      aCc.WriteMessage(gws.TextMessage, []byte("new connection from same client"))
+      aCc.WriteMessage(pWs.TextMessage, []byte("new connection from same client"))
       aCc.conn.Close()
       aState = aCc.state
    } else {
-      aState = slib.OpenState(aClientId.Value, aSvc)
+      aState = pSl.OpenState(aClientId.Value, aSvc)
    }
    aSock, err := sWsInit.Upgrade(iResp, iReq, nil)
    if err != nil { panic(err) }
@@ -614,10 +614,10 @@ func runWs(iResp http.ResponseWriter, iReq *http.Request) {
       }
       fmt.Printf("runws %s: msg %s\n", aSvc, string(aJson))
 
-      var aUpdate slib.Update
+      var aUpdate pSl.Update
       err = json.Unmarshal(aJson, &aUpdate)
       if err != nil { panic(err) }
-      aFn, aSrec := slib.HandleUpdtService(aSvc, aState, &aUpdate)
+      aFn, aSrec := pSl.HandleUpdtService(aSvc, aState, &aUpdate)
 
       if aFn != nil {
          aClients.Range(func(cC *tWsConn) {
@@ -669,8 +669,8 @@ func (o *tClientConns) Drop(iClient string) {
 
 type tWsConn struct {
    sync.Mutex // protect conn.WriteMessage/JSON()
-   conn *gws.Conn
-   state *slib.ClientState
+   conn *pWs.Conn
+   state *pSl.ClientState
 }
 
 func (o *tWsConn) WriteMessage(iT int, iB []byte) {
