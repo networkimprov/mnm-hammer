@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html><head>
    <title>[{.Title}] - mnm</title>
+   <link rel="icon" href="/web/favicon.png"/>
 
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1">
