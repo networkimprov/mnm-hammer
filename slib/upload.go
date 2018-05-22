@@ -16,6 +16,9 @@ import (
    "time"
 )
 
+type tGlobalUpload struct{} // implements GlobalSet
+var Upload tGlobalUpload
+
 func initUpload() {
    aFiles, err := readDirNames(kUploadTmp)
    if err != nil { quit(err) }
@@ -27,7 +30,7 @@ func initUpload() {
 
 type tUploadEl struct { Name string; Size int64; Date string }
 
-func GetIdxUpload() []interface{} {
+func (tGlobalUpload) GetIdx() interface{} {
    var err error
    aDir, err := readDirNames(kUploadDir)
    if err != nil { quit(err) }
@@ -55,11 +58,11 @@ func GetIdxUpload() []interface{} {
    return aList
 }
 
-func GetPathUpload(iId string) string {
+func (tGlobalUpload) GetPath(iId string) string {
    return kUploadDir + iId
 }
 
-func AddUpload(iId, iDupe string, iR io.Reader) error {
+func (tGlobalUpload) Add(iId, iDupe string, iR io.Reader) error {
    if iId == "" || strings.ContainsRune(iId, '/') {
       return tError("missing or invalid filename")
    }
@@ -88,13 +91,10 @@ func AddUpload(iId, iDupe string, iR io.Reader) error {
    return nil
 }
 
-func DropUpload(iId string) bool {
+func (tGlobalUpload) Drop(iId string) bool {
    if iId == "" { quit(tError("missing filename")) }
    err := os.Remove(kUploadDir + iId)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    return err == nil
 }
-
-func MakeMsgUpload() []string { return []string{"/t"} }
-
 

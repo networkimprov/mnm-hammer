@@ -22,6 +22,8 @@ import (
    "time"
 )
 
+type tGlobalBlankForm struct{} // implements GlobalSet
+var BlankForm tGlobalBlankForm
 
 var sBlankFormsDoor sync.RWMutex
 var sBlankForms = make(map[string]*tBlankForm)
@@ -58,7 +60,7 @@ func initForms() {
    }
 }
 
-func GetIdxBlankForm() []interface{} {
+func (tGlobalBlankForm) GetIdx() interface{} {
    sBlankFormsDoor.RLock(); defer sBlankFormsDoor.RUnlock()
    aList := make([]interface{}, len(sBlankForms))
    a := 0
@@ -72,11 +74,11 @@ func GetIdxBlankForm() []interface{} {
    return aList
 }
 
-func GetPathBlankForm(iFileName string) string {
+func (tGlobalBlankForm) GetPath(iFileName string) string {
    return kFormDir + iFileName
 }
 
-func AddBlankForm(iFileName, iDupeRev string, iR io.Reader) error {
+func (tGlobalBlankForm) Add(iFileName, iDupeRev string, iR io.Reader) error {
    var err error
    aName, aRev := _parseFileName(iFileName)
    if iDupeRev != "" {
@@ -131,7 +133,7 @@ func AddBlankForm(iFileName, iDupeRev string, iR io.Reader) error {
    return nil
 }
 
-func DropBlankForm(iFileName string) bool {
+func (tGlobalBlankForm) Drop(iFileName string) bool {
    aName, aRev := _parseFileName(iFileName)
    aPath := kFormDir + aName + "." + aRev
 
@@ -159,8 +161,6 @@ func DropBlankForm(iFileName string) bool {
    if err != nil { quit(err) }
    return true
 }
-
-func MakeMsgBlankForm() []string { return []string{"/f"} }
 
 func readFfnBlankForm(iFileName string) string {
    aName, aRev := _parseFileName(iFileName)

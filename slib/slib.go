@@ -46,6 +46,13 @@ func attachFfn(iSvc, iSub string) string { return attachSub(iSvc, iSub) + "ffnin
 
 var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
+type GlobalSet interface {
+   Add(string, string, io.Reader) error
+   Drop(string) bool
+   GetIdx() interface{}
+   GetPath(string) string
+}
+
 type tService struct {
    adrsbk tAdrsbk
    sync.RWMutex // protects the following

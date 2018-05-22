@@ -496,32 +496,12 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    }
 }
 
-type tPostSet struct {
-   add func(string, string, io.Reader) error
-   drop func(string) bool
-   updt func() []string
-   list func() []interface{}
-   path func(string) string
-}
-
-var sUpload = tPostSet{
-   add: pSl.AddUpload,
-   drop: pSl.DropUpload,
-   updt: pSl.MakeMsgUpload,
-   list: pSl.GetIdxUpload,
-   path: pSl.GetPathUpload,
-}
-
-var sForm = tPostSet{
-   add: pSl.AddBlankForm,
-   drop: pSl.DropBlankForm,
-   updt: pSl.MakeMsgBlankForm,
-   list: pSl.GetIdxBlankForm,
-   path: pSl.GetPathBlankForm,
-}
-
 func runPost(iResp http.ResponseWriter, iReq *http.Request) {
-   aSet := sUpload; if iReq.URL.Path[1] == 'f' { aSet = sForm }
+   var aSet pSl.GlobalSet
+   switch iReq.URL.Path[1] {
+   case 'f': aSet = pSl.BlankForm
+   case 't': aSet = pSl.Upload
+   }
    aId := iReq.URL.Path[3:]
    if iReq.Method == "POST" {
       fErr := func(cSt int, cMsg string) { iResp.WriteHeader(cSt); iResp.Write([]byte(cMsg)) }
@@ -537,7 +517,7 @@ func runPost(iResp http.ResponseWriter, iReq *http.Request) {
             return
          }
          defer aPart.Close()
-         err = aSet.add(aId[1:], "", aPart)
+         err = aSet.Add(aId[1:], "", aPart)
          if err != nil {
             fErr(http.StatusInternalServerError, "upload error: " + err.Error())
             return
@@ -548,29 +528,29 @@ func runPost(iResp http.ResponseWriter, iReq *http.Request) {
          if len(aPrev_New) < 2 || aPrev_New[1] == "" {
             err = tError("missing + param")
          } else {
-            err = aSet.add(aPrev_New[0], aPrev_New[1], nil)
+            err = aSet.Add(aPrev_New[0], aPrev_New[1], nil)
          }
          if err != nil {
             fErr(http.StatusNotAcceptable, "duplicate error: " + err.Error())
             return
          }
       } else if aId[0] == '-' {
-         if !aSet.drop(aId[1:]) {
+         if !aSet.Drop(aId[1:]) {
             aStatus = "not found"
          }
       } else {
          fErr(http.StatusNotAcceptable, "missing +/- operator")
          return
       }
-      toAllClients(aSet.updt())
+      toAllClients([]string{iReq.URL.Path[:2]})
       iResp.Write([]byte(`"id: `+aId+`, status: `+aStatus+`"`))
    } else if aId == "" {
-      aIdx := aSet.list()
+      aIdx := aSet.GetIdx()
       err := json.NewEncoder(iResp).Encode(aIdx)
       if err != nil { fmt.Fprintf(os.Stderr, "runPost: %s\n", err.Error()) }
    } else {
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
-      http.ServeFile(iResp, iReq, aSet.path(aId))
+      http.ServeFile(iResp, iReq, aSet.GetPath(aId))
    }
 }
 
