@@ -10,6 +10,7 @@ package slib
 
 import (
    "io"
+   "io/ioutil"
    "os"
    "sort"
    "strings"
@@ -28,32 +29,26 @@ func initUpload() {
    }
 }
 
-type tUploadEl struct { Name string; Size int64; Date string }
+type tUploadEl struct {
+   Name string
+   Size int64
+   Date string
+}
 
 func (tGlobalUpload) GetIdx() interface{} {
-   var err error
-   aDir, err := readDirNames(kUploadDir)
+   aDir, err := ioutil.ReadDir(kUploadDir)
    if err != nil { quit(err) }
-   aList := make([]interface{}, len(aDir)-1) // omit temp/
-   var a int
-   for _, aFn := range aDir {
-      if aFn == "temp" { continue }
-      var aEl tUploadEl
-      var aFi os.FileInfo
-      aFi, err = os.Lstat(kUploadDir + aFn)
-      if err != nil && !os.IsNotExist(err) { quit(err) }
-      if err == nil {
-         aEl.Size = aFi.Size()
-         aEl.Date = aFi.ModTime().UTC().Format(time.RFC3339)
-      } else {
-         aEl.Date = " dropped" // sorts to top
-      }
-      aEl.Name = aFn
-      aList[a] = &aEl
+   aList := make([]tUploadEl, len(aDir)-1) // omit temp/
+   a := 0
+   for _, aFi := range aDir {
+      if aFi.Name() == "temp" { continue }
+      aList[a].Size = aFi.Size()
+      aList[a].Name = aFi.Name()
+      aList[a].Date = aFi.ModTime().UTC().Format(time.RFC3339)
       a++
    }
    sort.Slice(aList, func(cA, cB int) bool {
-      return aList[cA].(*tUploadEl).Date > aList[cB].(*tUploadEl).Date
+      return aList[cA].Date > aList[cB].Date
    })
    return aList
 }
