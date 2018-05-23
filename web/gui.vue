@@ -23,7 +23,7 @@
       mnm._lastPreview = '';
       mnm._data = {
       // global
-         sl:[], t:[], f:[], fo:'', // fo populated by f requests
+         v:[], t:[], f:[], fo:'', // fo populated by f requests
       // per client
          cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}},
          sort:{al:'Size', t:'Date', f:'Date'}, //todo move to cs
@@ -317,7 +317,7 @@
       </div></div>
    <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto">
       <ul class="uk-list uk-list-divider">
-         <li v-for="aSvc in sl" :key="aSvc">
+         <li v-for="aSvc in v" :key="aSvc">
             <template v-if="aSvc === '[{.Title}]'">
                <span style="visibility:hidden">1</span
               ><span uk-icon="settings" class="dropdown-icon">&nbsp;</span>
@@ -953,36 +953,29 @@
 
 <script type="text/x-template" id="mnm-svcadd">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5"
-        @hidden="error = ''">
+        @hidden="addr = name = alias = loginperiod = null">
       <div class="uk-text-right uk-text-small">ADD ACCOUNT</div>
-      <input @keyup.enter="send()" v-model="addr"
+      <input v-model="addr"
              placeholder="Net Address" size="33" type="text">
-      <input @keyup.enter="send()" v-model="name"
+      <input v-model="name"
              placeholder="Title" size="33" type="text">
-      <input @keyup.enter="send()" v-model="alias"
+      <input v-model="alias"
              placeholder="Alias" size="33" type="text">
-      <input @keyup.enter="send()" v-model.number="period"
+      <input v-model.number="loginperiod"
              placeholder="(Login Frequency)" size="24" type="text">
       &nbsp; seconds<br>
-      <span class="uk-text-danger">{{error}}</span> &nbsp;
-      <button @click="send()">Register</button>
+      <form :action="'/v/+' + encodeURIComponent(name)"
+            method="POST" enctype="multipart/form-data"
+            onsubmit="mnm.Upload(this); return false;"
+            class="uk-text-right">
+         <input type="hidden" name="filename" :value="JSON.stringify($data)">
+         <button :disabled="!(addr && name && alias)">Register</button>
+      </form>
    </div>
 </script><script>
    Vue.component('mnm-svcadd', {
       template: '#mnm-svcadd',
-      data: function() { return {addr:'', name:'', alias:'', period:null, error:''} },
-      methods: {
-         send: function() {
-            if (!this.addr || !this.name || !this.alias) {
-               this.error = 'missing input';
-               return;
-            }
-            mnm.SvcAdd({addr:this.addr, name:this.name,
-                        alias:this.alias, loginperiod:this.period});
-            this.addr = this.name = this.alias = this.error = '';
-            this.period = null;
-         }
-      }
+      data: function() { return {addr:null, name:null, alias:null, loginperiod:null} },
    });
 </script>
 
@@ -1263,9 +1256,9 @@
       }
 
       switch (i) {
-      case 'cs': case 'sl': case 'cf': case 'al': case 'ml':
+      case 'cs': case 'cf': case 'al': case 'ml':
       case 'ps': case 'pt': case 'pf': case 'it': case 'if': case 'gl': case 'ot': case 'of':
-      case 't': case 'f':
+      case 't' : case 'f' : case 'v':
          if (i === 'f' && iEtc) {
             mnm._data.fo = iData;
          } else {
