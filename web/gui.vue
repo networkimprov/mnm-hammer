@@ -306,14 +306,15 @@
 </div>
 
 <div class="uk-width-expand uk-light service-panel">
-   <div class="uk-text-right" style="margin:0 1em 1em 0">
-      <span uk-icon="plus-circle" class="dropdown-icon">&nbsp;</span>
-      <mnm-svcadd></mnm-svcadd>
-      <span uk-icon="cog" class="dropdown-icon">&nbsp;</span>
-      <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5">
-          <div class="uk-text-right uk-text-small">SETTINGS</div>
-      </div>
-   </div>
+   <div class="uk-clearfix"> &nbsp;
+      <div style="float:right; margin:0 1em 1em 0">
+         <span uk-icon="plus-circle" class="dropdown-icon">&nbsp;</span>
+         <mnm-svcadd></mnm-svcadd>
+         <span uk-icon="cog" class="dropdown-icon">&nbsp;</span>
+         <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5">
+            <div class="uk-text-right uk-text-small">SETTINGS</div>
+         </div>
+      </div></div>
    <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto">
       <ul class="uk-list uk-list-divider">
          <li v-for="aSvc in sl" :key="aSvc">
