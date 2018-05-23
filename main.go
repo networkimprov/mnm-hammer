@@ -83,8 +83,8 @@ func mainResult() int {
       return 1
    }
 
-   for _, aName := range pSl.Service.GetIdx().([]string) {
-      startService(aName)
+   for _, aSvcId := range pSl.Service.GetIdx().([]string) {
+      startService(aSvcId)
    }
 
    http.HandleFunc("/"  , runService)
@@ -104,18 +104,18 @@ type tService struct {
    ccs *tClientConns
 }
 
-func startService(iSvc string) {
+func startService(iSvcId string) {
    sServicesDoor.Lock(); defer sServicesDoor.Unlock()
-   if sServices[iSvc].queue != nil {
-      panic(fmt.Sprintf("startService %s: already started", iSvc))
+   if sServices[iSvcId].queue != nil {
+      panic(fmt.Sprintf("startService %s: already started", iSvcId))
    }
-   sServices[iSvc] = tService{queue: newQueue(iSvc), ccs: newClientConns()}
-   go runLink(iSvc)
+   sServices[iSvcId] = tService{queue: newQueue(iSvcId), ccs: newClientConns()}
+   go runLink(iSvcId)
 }
 
-func getService(iSvc string) tService {
+func getService(iSvcId string) tService {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   return sServices[iSvc]
+   return sServices[iSvcId]
 }
 
 func toAllClients(iMsg interface{}) {
@@ -141,16 +141,16 @@ type tQueue struct {
    wakeup chan bool // reconnect a periodic service
 }
 
-func newQueue(iSvc string) *tQueue {
-   aRecs, err := pSl.GetQueueService(iSvc)
+func newQueue(iSvcId string) *tQueue {
+   aRecs, err := pSl.GetQueueService(iSvcId)
    if err != nil {
-      fmt.Fprintf(os.Stderr, "newqueue %s failure: %s\n", iSvc, err.Error())
+      fmt.Fprintf(os.Stderr, "newqueue %s failure: %s\n", iSvcId, err.Error())
       return nil
    }
    var aQ *tQueue
    aQ = &tQueue{
       once: func(){ go runElasticChan(aQ); go runQueue(aQ) },
-      service: iSvc,
+      service: iSvcId,
       connSrc: make(chan net.Conn, 1),
       in: make(chan *pSl.SendRecord),
       out: make(chan *pSl.SendRecord),
@@ -244,56 +244,56 @@ Closed:
    close(o.out)
 }
 
-func runLink(iName string) {
+func runLink(iSvcId string) {
    var err error
    var aConn net.Conn
    var aJson []byte
 
    for {
-      aSvc := pSl.GetDataService(iName)
+      aCfg := pSl.GetDataService(iSvcId)
 
-      if aSvc.LoginPeriod > 0 && aSvc.Uid != "" {
-         // add +/- 0-20% to aSvc.LoginPeriod
-         aPercent := aSvc.LoginPeriod / 5
+      if aCfg.LoginPeriod > 0 && aCfg.Uid != "" {
+         // add +/- 0-20% to aCfg.LoginPeriod
+         aPercent := aCfg.LoginPeriod / 5
          aRand := time.Now().Nanosecond() % (aPercent * 2 + 1) - aPercent
-         aTmr := time.NewTimer(time.Duration(aSvc.LoginPeriod + aRand) * time.Second)
+         aTmr := time.NewTimer(time.Duration(aCfg.LoginPeriod + aRand) * time.Second)
          select {
          case <-aTmr.C:
-         case <-getService(iName).queue.wakeup:
+         case <-getService(iSvcId).queue.wakeup:
             aTmr.Stop()
          }
       }
 
       for {
-         aSvc = pSl.GetDataService(iName)
-         aConn, err = net.DialTimeout("tcp", aSvc.Addr, 3 * time.Second)
+         aCfg = pSl.GetDataService(iSvcId)
+         aConn, err = net.DialTimeout("tcp", aCfg.Addr, 3 * time.Second)
          if err == nil { break }
-         fmt.Fprintf(os.Stderr, "runLink %s: %s\n", iName, err.Error())
+         fmt.Fprintf(os.Stderr, "runLink %s: %s\n", iSvcId, err.Error())
          time.Sleep(time.Duration(5000 + time.Now().Nanosecond() % 1000 * 5) * time.Millisecond)
       }
 
       aMsg := tMsg{"Op":eOpTmtpRev, "Id":"1"}
       aConn.Write(packMsg(aMsg, nil))
-      if aSvc.Uid == "" {
-         aMsg = tMsg{"Op":eOpRegister, "NewAlias":aSvc.Alias, "NewNode":"x"}
+      if aCfg.Uid == "" {
+         aMsg = tMsg{"Op":eOpRegister, "NewAlias":aCfg.Alias, "NewNode":"x"}
       } else {
-         aMsg = tMsg{"Op":eOpLogin, "Uid":aSvc.Uid, "Node":aSvc.Node}
+         aMsg = tMsg{"Op":eOpLogin, "Uid":aCfg.Uid, "Node":aCfg.Node}
       }
       aConn.Write(packMsg(aMsg, nil))
 
-      _readLink(iName, aConn, time.Duration(aSvc.LoginPeriod / kIdleTimeFraction) * time.Second)
+      _readLink(iSvcId, aConn, time.Duration(aCfg.LoginPeriod / kIdleTimeFraction) * time.Second)
       aConn.Close()
 
-      aJson, err = json.Marshal(pSl.LogoutService(iName))
+      aJson, err = json.Marshal(pSl.LogoutService(iSvcId))
       if err != nil { panic(err) }
-      getService(iName).ccs.Range(func(cC *tWsConn) {
+      getService(iSvcId).ccs.Range(func(cC *tWsConn) {
          cC.WriteMessage(pWs.TextMessage, aJson)
       })
    }
 }
 
-func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
-   aQ := getService(iName).queue
+func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
+   aQ := getService(iSvcId).queue
    aBuf := make([]byte, kMsgHeaderMaxLen+4) //todo start smaller, realloc as needed
    aLogin := false
    var aHead *pSl.Header
@@ -307,13 +307,13 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
       if err != nil {
          //todo if recoverable continue
          if err == io.EOF {
-            fmt.Fprintf(os.Stderr, "_readLink %s: server close\n", iName)
+            fmt.Fprintf(os.Stderr, "_readLink %s: server close\n", iSvcId)
             break
          } else if err.(net.Error).Timeout() {
             select {
             case <-aQ.connSrc:
                // if runQueue is awaiting ack, we will miss it and retry
-               fmt.Printf("_readLink %s: idle timeout\n", iName)
+               fmt.Printf("_readLink %s: idle timeout\n", iSvcId)
             default:
                if aLogin {
                   aQ.connSrc <- <-aQ.connSrc // wait for send to finish
@@ -323,7 +323,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
             }
             return
          } else {
-            fmt.Fprintf(os.Stderr, "_readLink %s: %s\n", iName, err.Error())
+            fmt.Fprintf(os.Stderr, "_readLink %s: %s\n", iSvcId, err.Error())
             break
          }
       }
@@ -336,7 +336,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          aUi,_ := strconv.ParseUint(string(aBuf[:4]), 16, 0)
          aHeadEnd = int64(aUi)+4
          if aHeadEnd-4 < kMsgHeaderMinLen {
-            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header length\n", iName)
+            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header length\n", iSvcId)
             break
          }
       }
@@ -347,7 +347,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          aHead = &pSl.Header{Op:""}
          err = json.Unmarshal(aBuf[4:aHeadEnd], aHead)
          if err != nil || !aHead.Check() {
-            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header\n", iName)
+            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header\n", iSvcId)
             break
          }
          aHeadStart = aHeadEnd
@@ -360,7 +360,7 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
       if aHeadEnd > aHeadStart {
          err = json.Unmarshal(aBuf[aHeadStart:aHeadEnd], &aHead.SubHead)
          if err != nil || !aHead.CheckSub() {
-            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header\n", iName)
+            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header\n", iSvcId)
             break
          }
       }
@@ -373,22 +373,22 @@ func _readLink(iName string, iConn net.Conn, iIdleMax time.Duration) {
          // no-op
       } else {
          if aHead.Op == "info" && aHead.Info == "login ok" {
-            pSl.SendAllOhi(iConn, iName, kFirstOhiId)
+            pSl.SendAllOhi(iConn, iSvcId, kFirstOhiId)
             aLogin = true
             aQ.connSrc <- iConn
          } else if aHead.Op == "ack" {
             select {
             case aQ.ack <- aHead.Id:
             default:
-               fmt.Fprintf(os.Stderr, "_readLink %s: ack channel blocked\n", iName)
+               fmt.Fprintf(os.Stderr, "_readLink %s: ack channel blocked\n", iSvcId)
             }
          }
-         aFn := pSl.HandleTmtpService(iName, aHead, &tTmtpInput{aData, iConn})
+         aFn := pSl.HandleTmtpService(iSvcId, aHead, &tTmtpInput{aData, iConn})
          if aHead.From != "" && aHead.Id != "" {
             aQ.postAck(aHead.Id)
          }
          if aFn != nil {
-            getService(iName).ccs.Range(func(cC *tWsConn) {
+            getService(iSvcId).ccs.Range(func(cC *tWsConn) {
                cMsg := aFn(cC.state)
                if cMsg == nil { return }
                cC.WriteJSON(cMsg)
@@ -430,14 +430,14 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    aClientId, _ := iReq.Cookie("clientid")
    aCid := ""; if aClientId != nil { aCid = aClientId.Value }
    var aState *pSl.ClientState
-   aSvc := iReq.URL.Path[1:]; if aSvc == "" { aSvc = "local" }
+   aSvcId := iReq.URL.Path[1:]; if aSvcId == "" { aSvcId = "local" }
    aOp_Id := []string{"er", ""}
    aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
    if err == nil {
-      if pSl.GetService(aSvc) == nil {
+      if pSl.GetService(aSvcId) == nil {
          err = tError("service not found")
       } else if aQuery != "" {
-         aCc := getService(aSvc).ccs.Get(aCid)
+         aCc := getService(aSvcId).ccs.Get(aCid)
          if aCc == nil {
             err = tError("no client connected to service")
          } else {
@@ -448,7 +448,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          copy(aOp_Id, strings.SplitN(aQuery, "=", 2))
       }
    }
-   fmt.Printf("runService %s: op %s id %s\n", aSvc, aOp_Id[0], aCid)
+   fmt.Printf("runService %s: op %s id %s\n", aSvcId, aOp_Id[0], aCid)
    var aResult interface{}
 
    switch aOp_Id[0] {
@@ -457,42 +457,42 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          aClientId = &http.Cookie{Name: "clientid", Value: fmt.Sprint(time.Now().UTC().UnixNano())}
          http.SetCookie(iResp, aClientId)
       }
-      err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvc, "Addr":sHttpSrvr.Addr})
+      err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvcId, "Addr":sHttpSrvr.Addr})
    case "cs": aResult = aState.GetSummary()
-   case "cf": aResult = pSl.GetDataService(aSvc)
-   case "ps": aResult = pSl.GetDraftAdrsbk(aSvc)
-   case "pt": aResult = pSl.GetSentAdrsbk(aSvc)
-   case "pf": aResult = pSl.GetReceivedAdrsbk(aSvc)
-   case "it": aResult = pSl.GetInviteToAdrsbk(aSvc)
-   case "if": aResult = pSl.GetInviteFromAdrsbk(aSvc)
-   case "gl": aResult = pSl.GetGroupAdrsbk(aSvc)
-   case "of": aResult = pSl.GetFromOhi(aSvc)
-   case "ot": aResult = pSl.GetIdxOhi(aSvc)
-   case "al": aResult = pSl.GetIdxAttach(aSvc, aState)
-   case "ml": aResult = pSl.GetIdxThread(aSvc, aState)
+   case "cf": aResult = pSl.GetDataService(aSvcId)
+   case "ps": aResult = pSl.GetDraftAdrsbk(aSvcId)
+   case "pt": aResult = pSl.GetSentAdrsbk(aSvcId)
+   case "pf": aResult = pSl.GetReceivedAdrsbk(aSvcId)
+   case "it": aResult = pSl.GetInviteToAdrsbk(aSvcId)
+   case "if": aResult = pSl.GetInviteFromAdrsbk(aSvcId)
+   case "gl": aResult = pSl.GetGroupAdrsbk(aSvcId)
+   case "of": aResult = pSl.GetFromOhi(aSvcId)
+   case "ot": aResult = pSl.GetIdxOhi(aSvcId)
+   case "al": aResult = pSl.GetIdxAttach(aSvcId, aState)
+   case "ml": aResult = pSl.GetIdxThread(aSvcId, aState)
    case "tl":
-      err = pSl.WriteResultSearch(iResp, aSvc, aState)
+      err = pSl.WriteResultSearch(iResp, aSvcId, aState)
    case "mo":
-      err = pSl.WriteMessagesThread(iResp, aSvc, aState, "")
+      err = pSl.WriteMessagesThread(iResp, aSvcId, aState, "")
    case "mn":
       if len(aOp_Id) < 2 { break }
-      err = pSl.WriteMessagesThread(iResp, aSvc, aState, aOp_Id[1])
+      err = pSl.WriteMessagesThread(iResp, aSvcId, aState, aOp_Id[1])
    case "an":
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
-      http.ServeFile(iResp, iReq, pSl.GetPathAttach(aSvc, aState, aOp_Id[1]))
+      http.ServeFile(iResp, iReq, pSl.GetPathAttach(aSvcId, aState, aOp_Id[1]))
    case "fn":
-      err = pSl.WriteTableFilledForm(iResp, aSvc, aOp_Id[1])
+      err = pSl.WriteTableFilledForm(iResp, aSvcId, aOp_Id[1])
    default:
       if err == nil { err = tError("unknown op") }
    }
    if err != nil {
       iResp.WriteHeader(http.StatusNotAcceptable)
       aResult = err.Error()
-      fmt.Fprintf(os.Stderr, "runService %s: op %s %s\n", aSvc, aOp_Id[0], err.Error())
+      fmt.Fprintf(os.Stderr, "runService %s: op %s %s\n", aSvcId, aOp_Id[0], err.Error())
    }
    if aResult != nil {
       err = json.NewEncoder(iResp).Encode(aResult)
-      if err != nil { fmt.Fprintf(os.Stderr, "runService %s: %s\n", aSvc, err.Error()) }
+      if err != nil { fmt.Fprintf(os.Stderr, "runService %s: %s\n", aSvcId, err.Error()) }
    }
 }
 
@@ -566,44 +566,44 @@ var sWsInit = pWs.Upgrader {
 }
 
 func runWs(iResp http.ResponseWriter, iReq *http.Request) {
-   aSvc := iReq.URL.Path[3:]; if aSvc == "" { aSvc = "local" }
-   if pSl.GetService(aSvc) == nil {
+   aSvcId := iReq.URL.Path[3:]; if aSvcId == "" { aSvcId = "local" }
+   if pSl.GetService(aSvcId) == nil {
       iResp.WriteHeader(http.StatusNotFound)
-      iResp.Write([]byte("service not found: "+aSvc))
+      iResp.Write([]byte("service not found: "+aSvcId))
       return
    }
 
    var aState *pSl.ClientState
    aClientId, _ := iReq.Cookie("clientid")
-   aClients := getService(aSvc).ccs
+   aClients := getService(aSvcId).ccs
    aCc := aClients.Get(aClientId.Value)
    if aCc != nil {
       aCc.WriteMessage(pWs.TextMessage, []byte("new connection from same client"))
       aCc.conn.Close()
       aState = aCc.state
    } else {
-      aState = pSl.OpenState(aClientId.Value, aSvc)
+      aState = pSl.OpenState(aClientId.Value, aSvcId)
    }
    aSock, err := sWsInit.Upgrade(iResp, iReq, nil)
    if err != nil { panic(err) }
    aClients.Set(aClientId.Value, &tWsConn{conn: aSock, state: aState})
 
-   aQ := getService(aSvc).queue
+   aQ := getService(aSvcId).queue
    for {
       _, aJson, err := aSock.ReadMessage()
       if err != nil {
-         fmt.Fprintf(os.Stderr, "runws %s: readmsg: %s\n", aSvc, err.Error())
+         fmt.Fprintf(os.Stderr, "runws %s: readmsg: %s\n", aSvcId, err.Error())
          if strings.HasSuffix(err.Error(), "use of closed network connection") {
             return // don't .Drop(aClientId.Value)
          }
          break
       }
-      fmt.Printf("runws %s: msg %s\n", aSvc, string(aJson))
+      fmt.Printf("runws %s: msg %s\n", aSvcId, string(aJson))
 
       var aUpdate pSl.Update
       err = json.Unmarshal(aJson, &aUpdate)
       if err != nil { panic(err) }
-      aFn, aSrec := pSl.HandleUpdtService(aSvc, aState, &aUpdate)
+      aFn, aSrec := pSl.HandleUpdtService(aSvcId, aState, &aUpdate)
 
       if aFn != nil {
          aClients.Range(func(cC *tWsConn) {
