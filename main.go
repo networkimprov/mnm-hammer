@@ -88,10 +88,10 @@ func mainResult() int {
    }
 
    http.HandleFunc("/"  , runService)
-   http.HandleFunc("/t/", runPost)
-   http.HandleFunc("/f/", runPost)
-   http.HandleFunc("/v/", runPost)
-   http.HandleFunc("/s/", runWs)
+   http.HandleFunc("/t/", runGlobal)
+   http.HandleFunc("/f/", runGlobal)
+   http.HandleFunc("/v/", runGlobal)
+   http.HandleFunc("/s/", runWebsocket)
    http.HandleFunc("/web/", runFile)
    err = sHttpSrvr.ListenAndServe()
    fmt.Fprintf(os.Stderr, "http server stopped %s\n", err.Error())
@@ -110,7 +110,7 @@ func startService(iSvcId string) {
       panic(fmt.Sprintf("startService %s: already started", iSvcId))
    }
    sServices[iSvcId] = tService{queue: newQueue(iSvcId), ccs: newClientConns()}
-   go runLink(iSvcId)
+   go runTmtpRecv(iSvcId)
 }
 
 func getService(iSvcId string) tService {
@@ -130,7 +130,7 @@ func toAllClients(iMsg interface{}) {
 }
 
 type tQueue struct {
-   sync.Once // to start runQueue
+   sync.Once // to start runTmtpSend
    once func() // input to .Do()
    service string // service name
    connSrc chan net.Conn // synchronize writes to server
@@ -149,7 +149,7 @@ func newQueue(iSvcId string) *tQueue {
    }
    var aQ *tQueue
    aQ = &tQueue{
-      once: func(){ go runElasticChan(aQ); go runQueue(aQ) },
+      once: func(){ go runElasticChan(aQ); go runTmtpSend(aQ) },
       service: iSvcId,
       connSrc: make(chan net.Conn, 1),
       in: make(chan *pSl.SendRecord),
@@ -177,7 +177,7 @@ func (o *tQueue) postAck(iId string) {
    o.connSrc <- aConn
 }
 
-func runQueue(o *tQueue) {
+func runTmtpSend(o *tQueue) {
    aSrec := <-o.out
    for {
       var aConn net.Conn
@@ -192,7 +192,7 @@ func runQueue(o *tQueue) {
          if err.Error() == "already sent" {
             aSrec = <-o.out
          } else {
-            fmt.Fprintf(os.Stderr, "runQueue %s: send error %s\n", o.service, err.Error())
+            fmt.Fprintf(os.Stderr, "runTmtpSend %s: send error %s\n", o.service, err.Error())
             time.Sleep(5 * time.Millisecond)
          }
          continue
@@ -202,14 +202,14 @@ func runQueue(o *tQueue) {
       select {
       case aMsgId := <-o.ack:
          if aMsgId != aSrec.Id {
-            fmt.Fprintf(os.Stderr, "runqueue %s: got ack for %s, expected %s\n",
+            fmt.Fprintf(os.Stderr, "runTmtpSend %s: got ack for %s, expected %s\n",
                         o.service, aMsgId, aSrec.Id)
             goto WaitForAck
          }
          aTmr.Stop()
          aSrec = <-o.out
       case <-aTmr.C:
-         fmt.Fprintf(os.Stderr, "runqueue %s: timeout awaiting ack\n", o.service)
+         fmt.Fprintf(os.Stderr, "runTmtpSend %s: timeout awaiting ack\n", o.service)
       }
    }
 }
@@ -244,7 +244,7 @@ Closed:
    close(o.out)
 }
 
-func runLink(iSvcId string) {
+func runTmtpRecv(iSvcId string) {
    aSvc := getService(iSvcId)
    var err error
    var aConn net.Conn
@@ -269,7 +269,7 @@ func runLink(iSvcId string) {
          aCfg = pSl.GetDataService(iSvcId)
          aConn, err = net.DialTimeout("tcp", aCfg.Addr, 3 * time.Second)
          if err == nil { break }
-         fmt.Fprintf(os.Stderr, "runLink %s: %s\n", iSvcId, err.Error())
+         fmt.Fprintf(os.Stderr, "runTmtpRecv %s: %s\n", iSvcId, err.Error())
          time.Sleep(time.Duration(5000 + time.Now().Nanosecond() % 1000 * 5) * time.Millisecond)
       }
 
@@ -313,7 +313,7 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
          } else if err.(net.Error).Timeout() {
             select {
             case <-aSvc.queue.connSrc:
-               // if runQueue is awaiting ack, we will miss it and retry
+               // if runTmtpSend is awaiting ack, we will miss it and retry
                fmt.Printf("_readLink %s: idle timeout\n", iSvcId)
             default:
                if aLogin {
@@ -498,7 +498,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    }
 }
 
-func runPost(iResp http.ResponseWriter, iReq *http.Request) {
+func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
    var aSet pSl.GlobalSet
    switch iReq.URL.Path[1] {
    case 'f': aSet = pSl.BlankForm
@@ -550,7 +550,7 @@ func runPost(iResp http.ResponseWriter, iReq *http.Request) {
    } else if aId == "" {
       aIdx := aSet.GetIdx()
       err := json.NewEncoder(iResp).Encode(aIdx)
-      if err != nil { fmt.Fprintf(os.Stderr, "runPost: %s\n", err.Error()) }
+      if err != nil { fmt.Fprintf(os.Stderr, "runGlobal: %s\n", err.Error()) }
    } else {
       aPath := aSet.GetPath(aId)
       if aPath == "" {
@@ -567,7 +567,7 @@ var sWsInit = pWs.Upgrader {
   WriteBufferSize: 1024,
 }
 
-func runWs(iResp http.ResponseWriter, iReq *http.Request) {
+func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
    aSvcId := iReq.URL.Path[3:]; if aSvcId == "" { aSvcId = "local" }
    aSvc := getService(aSvcId)
    if aSvc.queue == nil {
@@ -593,13 +593,13 @@ func runWs(iResp http.ResponseWriter, iReq *http.Request) {
    for {
       _, aJson, err := aSock.ReadMessage()
       if err != nil {
-         fmt.Fprintf(os.Stderr, "runws %s: readmsg: %s\n", aSvcId, err.Error())
+         fmt.Fprintf(os.Stderr, "runWebsocket %s: readmsg: %s\n", aSvcId, err.Error())
          if strings.HasSuffix(err.Error(), "use of closed network connection") {
             return // don't .Drop(aClientId.Value)
          }
          break
       }
-      fmt.Printf("runws %s: msg %s\n", aSvcId, string(aJson))
+      fmt.Printf("runWebsocket %s: msg %s\n", aSvcId, string(aJson))
 
       var aUpdate pSl.Update
       err = json.Unmarshal(aJson, &aUpdate)
