@@ -12,11 +12,15 @@ import (
    "bytes"
    "fmt"
    "io"
+   "encoding/json"
    "os"
    "sort"
    "strings"
    "sync"
 )
+
+type tGlobalService struct{}
+var Service tGlobalService
 
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]*tService)
@@ -83,19 +87,57 @@ func initServices(iFn func(string)) {
       if err != nil && !os.IsNotExist(err) { quit(err) }
       sServices[aSvc] = aService
    }
-   if sServices["test"] == nil {
-      err = _addService(&tCfgService{Name:"test", Addr:"localhost:8888", Alias:"_", LoginPeriod:30})
-      if err != nil { quit(err) }
-   }
    sServiceStartFn = iFn
 }
 
-func GetIdxService() []string {
+func (tGlobalService) GetIdx() interface{} {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
    aS := make([]string, len(sServices))
    a := 0
    for aS[a], _ = range sServices { a++ }
    return aS
+}
+
+func (tGlobalService) GetPath(string) string {
+   return ""
+}
+
+func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
+   var err error
+   var aCfg tCfgService
+   err = json.NewDecoder(iR).Decode(&aCfg)
+   if err != nil { return err } // todo only network errors
+
+   if iDup != "" {
+      return tError("duplicate disallowed")
+   }
+   if iName != aCfg.Name || len(iName) < 4 || strings.HasSuffix(iName, ".tmp") {
+      return tError("name not valid: " + iName)
+   }
+   sServicesDoor.Lock()
+   if sServices[iName] != nil {
+      sServicesDoor.Unlock()
+      return tError("name already exists: " + iName)
+   }
+   sServices[iName] = _newService(&aCfg)
+   aTemp := iName + ".tmp"
+   _makeTree(aTemp)
+   err = writeJsonFile(cfgFile(aTemp), &aCfg)
+   if err != nil { quit(err) }
+   err = syncDir(svcDir(aTemp))
+   if err != nil { quit(err) }
+   err = os.Rename(svcDir(aTemp), svcDir(iName))
+   if err != nil { quit(err) }
+   sServicesDoor.Unlock()
+
+   if sServiceStartFn != nil {
+      sServiceStartFn(iName)
+   }
+   return nil
+}
+
+func (tGlobalService) Drop(iName string) bool {
+   return false
 }
 
 func GetService(iSvc string) *tService {
@@ -145,43 +187,17 @@ func _makeTree(iSvc string) {
    }
 }
 
-func _addService(iService *tCfgService) error {
+func _updateService(iCfg *tCfgService) error {
    var err error
-   if len(iService.Name) < 4 || strings.HasSuffix(iService.Name, ".tmp") {
-      return tError(fmt.Sprintf("name %s not valid", iService.Name))
-   }
-   sServicesDoor.Lock(); defer sServicesDoor.Unlock()
-   if sServices[iService.Name] != nil {
-      return tError(fmt.Sprintf("name %s already exists", iService.Name))
-   }
-   aTemp := iService.Name + ".tmp"
-   _makeTree(aTemp)
-   err = writeJsonFile(cfgFile(aTemp), iService)
-   if err != nil { quit(err) }
-
-   err = syncDir(svcDir(aTemp))
-   if err != nil { quit(err) }
-   err = os.Rename(svcDir(aTemp), svcDir(iService.Name))
-   if err != nil { quit(err) }
-
-   sServices[iService.Name] = _newService(iService)
-   if sServiceStartFn != nil {
-      sServiceStartFn(iService.Name)
-   }
-   return nil
-}
-
-func _updateService(iService *tCfgService) error {
-   var err error
-   aSvc := GetService(iService.Name)
+   aSvc := GetService(iCfg.Name)
    if aSvc == nil {
-      return tError(iService.Name + " not found")
+      return tError(iCfg.Name + " not found")
    }
    aSvc.Lock(); defer aSvc.Unlock()
-   err = storeFile(cfgFile(iService.Name), iService)
+   err = storeFile(cfgFile(iCfg.Name), iCfg)
    if err != nil { quit(err) }
 
-   aSvc.cfg = *iService
+   aSvc.cfg = *iCfg
    return nil
 }
 
@@ -300,7 +316,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       aNewSvc.Node = iHead.NodeId
       err = _updateService(aNewSvc)
       if err != nil { return fErr }
-      aFn, aResult = fAll, []string{"sl"}
+      aFn, aResult = fAll, []string{"/v"}
    case "info":
       setFromOhi(iSvc, iHead)
       aFn, aResult = fAll, []string{"of"}
@@ -395,16 +411,13 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
 
    switch iUpdt.Op {
    case "open":
-      aFn, aResult = fOne, []string{"sl", "of", "ot", "ps", "pt", "pf", "if", "it", "gl",
-                                    "cf", "tl", "cs", "al", "_t", "ml", "mo", "/t", "/f"}
-   case "service_add":
-      err = _addService(iUpdt.Service)
-      if err != nil { return fErr, nil }
-      aFn, aResult = fAll, []string{"sl"}
+      aFn, aResult = fOne, []string{"of", "ot", "ps", "pt", "pf", "if", "it", "gl",
+                                    "cf", "tl", "cs", "al", "_t", "ml", "mo",
+                                    "/v", "/t", "/f"}
    case "service_update":
       err = _updateService(iUpdt.Service)
       if err != nil { return fErr, nil }
-      aFn, aResult = fAll, []string{"sl"}
+      aFn, aResult = fAll, []string{"/v"}
    case "ohi_add", "ohi_drop":
       aSrec = editOhi(iSvc, iUpdt)
       aFn, aResult = fAll, []string{"ot"}

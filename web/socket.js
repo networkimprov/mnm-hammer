@@ -14,10 +14,6 @@
    // caller implements these
    mnm.Log = mnm.Render = mnm.ThreadChange = function(){};
 
-   mnm.SvcAdd = function(iObj) { // with name, addr, alias, loginperiod
-      _wsSend(JSON.stringify({op:'service_add', service:iObj}))
-   };
-
    mnm.OhiAdd = function(iAliasTo) {
       _wsSend(JSON.stringify({op:'ohi_add', ohi:{alias:iAliasTo}}))
    };

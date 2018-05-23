@@ -83,13 +83,14 @@ func mainResult() int {
       return 1
    }
 
-   for _, aName := range pSl.GetIdxService() {
+   for _, aName := range pSl.Service.GetIdx().([]string) {
       startService(aName)
    }
 
    http.HandleFunc("/"  , runService)
    http.HandleFunc("/t/", runPost)
    http.HandleFunc("/f/", runPost)
+   http.HandleFunc("/v/", runPost)
    http.HandleFunc("/s/", runWs)
    http.HandleFunc("/web/", runFile)
    err = sHttpSrvr.ListenAndServe()
@@ -458,7 +459,6 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       }
       err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvc, "Addr":sHttpSrvr.Addr})
    case "cs": aResult = aState.GetSummary()
-   case "sl": aResult = pSl.GetIdxService()
    case "cf": aResult = pSl.GetDataService(aSvc)
    case "ps": aResult = pSl.GetDraftAdrsbk(aSvc)
    case "pt": aResult = pSl.GetSentAdrsbk(aSvc)
@@ -501,10 +501,11 @@ func runPost(iResp http.ResponseWriter, iReq *http.Request) {
    switch iReq.URL.Path[1] {
    case 'f': aSet = pSl.BlankForm
    case 't': aSet = pSl.Upload
+   case 'v': aSet = pSl.Service
    }
    aId := iReq.URL.Path[3:]
+   fErr := func(cSt int, cMsg string) { iResp.WriteHeader(cSt); iResp.Write([]byte(cMsg)) }
    if iReq.Method == "POST" {
-      fErr := func(cSt int, cMsg string) { iResp.WriteHeader(cSt); iResp.Write([]byte(cMsg)) }
       aStatus := "ok"
       if aId[0] == '+' {
          var aPart *multipart.Part
@@ -549,8 +550,13 @@ func runPost(iResp http.ResponseWriter, iReq *http.Request) {
       err := json.NewEncoder(iResp).Encode(aIdx)
       if err != nil { fmt.Fprintf(os.Stderr, "runPost: %s\n", err.Error()) }
    } else {
+      aPath := aSet.GetPath(aId)
+      if aPath == "" {
+         fErr(http.StatusNotAcceptable, "not a file type")
+         return
+      }
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
-      http.ServeFile(iResp, iReq, aSet.GetPath(aId))
+      http.ServeFile(iResp, iReq, aPath)
    }
 }
 
