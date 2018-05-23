@@ -73,7 +73,7 @@ type tGroupEl struct {
 
 
 func _loadAdrsbk(iSvc string) *tAdrsbk {
-   aSvc := &GetService(iSvc).adrsbk
+   aSvc := &getService(iSvc).adrsbk
    aSvc.Lock(); defer aSvc.Unlock()
    if aSvc.aliasIdx != nil {
       return aSvc
@@ -411,7 +411,7 @@ func completeAdrsbk(iSvc string, iTmp string) {
 }
 
 func GetDraftAdrsbk(iSvc string) tAdrsbkLog {
-   aDoor := &GetService(iSvc).adrsbk.draftDoor
+   aDoor := &getService(iSvc).adrsbk.draftDoor
    var aMap map[string]*tAdrsbkEl
    aDoor.RLock()
    err := readJsonFile(&aMap, pingFile(iSvc))
@@ -453,7 +453,7 @@ func sendJoinGroupAdrsbk(iW io.Writer, iSvc string, iQid, iId string) error {
 }
 
 func sendDraftAdrsbk(iW io.Writer, iSvc string, iQid, iId string) error {
-   aDoor := &GetService(iSvc).adrsbk.draftDoor
+   aDoor := &getService(iSvc).adrsbk.draftDoor
    var err error
    var aMap map[string]*tAdrsbkEl
    aDoor.RLock()
@@ -484,7 +484,7 @@ func sendDraftAdrsbk(iW io.Writer, iSvc string, iQid, iId string) error {
 }
 
 func storeDraftAdrsbk(iSvc string, iUpdt *Update) {
-   aDoor := &GetService(iSvc).adrsbk.draftDoor
+   aDoor := &getService(iSvc).adrsbk.draftDoor
    aDoor.Lock(); defer aDoor.Unlock()
    var err error
    aMap := make(map[string]*tAdrsbkEl)
@@ -499,7 +499,7 @@ func storeDraftAdrsbk(iSvc string, iUpdt *Update) {
 }
 
 func deleteDraftAdrsbk(iSvc string, iAlias, iGid string) {
-   aDoor := &GetService(iSvc).adrsbk.draftDoor
+   aDoor := &getService(iSvc).adrsbk.draftDoor
    aDoor.Lock(); defer aDoor.Unlock()
    var err error
    var aMap map[string]*tAdrsbkEl

@@ -34,7 +34,7 @@ func _listOhi(iMap tOhi) []tOhiEl {
 }
 
 func GetFromOhi(iSvc string) []tOhiEl {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    if aSvc.fromOhi == nil {
       return []tOhiEl{}
@@ -43,7 +43,7 @@ func GetFromOhi(iSvc string) []tOhiEl {
 }
 
 func setFromOhi(iSvc string, iHead *Header) {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aSvc.fromOhi = tOhi{}
    aDate := dateRFC3339()
@@ -53,7 +53,7 @@ func setFromOhi(iSvc string, iHead *Header) {
 }
 
 func updateFromOhi(iSvc string, iHead *Header) {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    if iHead.Status == 1 {
       aSvc.fromOhi[iHead.From] = dateRFC3339()
@@ -63,14 +63,14 @@ func updateFromOhi(iSvc string, iHead *Header) {
 }
 
 func dropFromOhi(iSvc string) {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aSvc.fromOhi = nil
 }
 
 func GetIdxOhi(iSvc string) []tOhiEl {
    var aMap tOhi
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.RLock()
    err := readJsonFile(&aMap, ohiFile(iSvc))
    aSvc.RUnlock()
@@ -84,7 +84,7 @@ func GetIdxOhi(iSvc string) []tOhiEl {
 func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
    var err error
    aMap := tOhi{}
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.RLock()
    err = readJsonFile(&aMap, ohiFile(iSvc))
    aSvc.RUnlock()
@@ -108,7 +108,7 @@ func editOhi(iSvc string, iUpdt *Update) *SendRecord {
       aUid = lookupAdrsbk(iSvc, []string{iUpdt.Ohi.Alias})[0].Id //todo drop this
       if aUid == "" { quit(tError("missing Uid")) }
    }
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aMap := tOhi{}
    err = readJsonFile(&aMap, ohiFile(iSvc))

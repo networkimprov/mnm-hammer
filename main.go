@@ -245,6 +245,7 @@ Closed:
 }
 
 func runLink(iSvcId string) {
+   aSvc := getService(iSvcId)
    var err error
    var aConn net.Conn
    var aJson []byte
@@ -259,7 +260,7 @@ func runLink(iSvcId string) {
          aTmr := time.NewTimer(time.Duration(aCfg.LoginPeriod + aRand) * time.Second)
          select {
          case <-aTmr.C:
-         case <-getService(iSvcId).queue.wakeup:
+         case <-aSvc.queue.wakeup:
             aTmr.Stop()
          }
       }
@@ -286,14 +287,14 @@ func runLink(iSvcId string) {
 
       aJson, err = json.Marshal(pSl.LogoutService(iSvcId))
       if err != nil { panic(err) }
-      getService(iSvcId).ccs.Range(func(cC *tWsConn) {
+      aSvc.ccs.Range(func(cC *tWsConn) {
          cC.WriteMessage(pWs.TextMessage, aJson)
       })
    }
 }
 
 func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
-   aQ := getService(iSvcId).queue
+   aSvc := getService(iSvcId)
    aBuf := make([]byte, kMsgHeaderMaxLen+4) //todo start smaller, realloc as needed
    aLogin := false
    var aHead *pSl.Header
@@ -311,12 +312,12 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
             break
          } else if err.(net.Error).Timeout() {
             select {
-            case <-aQ.connSrc:
+            case <-aSvc.queue.connSrc:
                // if runQueue is awaiting ack, we will miss it and retry
                fmt.Printf("_readLink %s: idle timeout\n", iSvcId)
             default:
                if aLogin {
-                  aQ.connSrc <- <-aQ.connSrc // wait for send to finish
+                  aSvc.queue.connSrc <- <-aSvc.queue.connSrc // wait for send to finish
                   iIdleMax += 15 * time.Second // allow time for ack
                   continue
                }
@@ -375,20 +376,20 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
          if aHead.Op == "info" && aHead.Info == "login ok" {
             pSl.SendAllOhi(iConn, iSvcId, kFirstOhiId)
             aLogin = true
-            aQ.connSrc <- iConn
+            aSvc.queue.connSrc <- iConn
          } else if aHead.Op == "ack" {
             select {
-            case aQ.ack <- aHead.Id:
+            case aSvc.queue.ack <- aHead.Id:
             default:
                fmt.Fprintf(os.Stderr, "_readLink %s: ack channel blocked\n", iSvcId)
             }
          }
          aFn := pSl.HandleTmtpService(iSvcId, aHead, &tTmtpInput{aData, iConn})
          if aHead.From != "" && aHead.Id != "" {
-            aQ.postAck(aHead.Id)
+            aSvc.queue.postAck(aHead.Id)
          }
          if aFn != nil {
-            getService(iSvcId).ccs.Range(func(cC *tWsConn) {
+            aSvc.ccs.Range(func(cC *tWsConn) {
                cMsg := aFn(cC.state)
                if cMsg == nil { return }
                cC.WriteJSON(cMsg)
@@ -403,7 +404,7 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
       aPos, aHeadEnd, aHeadStart = 0, 0, 4
    }
    if aLogin {
-      <-aQ.connSrc
+      <-aSvc.queue.connSrc
    }
 }
 
@@ -434,10 +435,11 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    aOp_Id := []string{"er", ""}
    aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
    if err == nil {
-      if pSl.GetService(aSvcId) == nil {
+      aSvc := getService(aSvcId)
+      if aSvc.queue == nil {
          err = tError("service not found")
       } else if aQuery != "" {
-         aCc := getService(aSvcId).ccs.Get(aCid)
+         aCc := aSvc.ccs.Get(aCid)
          if aCc == nil {
             err = tError("no client connected to service")
          } else {
@@ -567,7 +569,8 @@ var sWsInit = pWs.Upgrader {
 
 func runWs(iResp http.ResponseWriter, iReq *http.Request) {
    aSvcId := iReq.URL.Path[3:]; if aSvcId == "" { aSvcId = "local" }
-   if pSl.GetService(aSvcId) == nil {
+   aSvc := getService(aSvcId)
+   if aSvc.queue == nil {
       iResp.WriteHeader(http.StatusNotFound)
       iResp.Write([]byte("service not found: "+aSvcId))
       return
@@ -575,8 +578,7 @@ func runWs(iResp http.ResponseWriter, iReq *http.Request) {
 
    var aState *pSl.ClientState
    aClientId, _ := iReq.Cookie("clientid")
-   aClients := getService(aSvcId).ccs
-   aCc := aClients.Get(aClientId.Value)
+   aCc := aSvc.ccs.Get(aClientId.Value)
    if aCc != nil {
       aCc.WriteMessage(pWs.TextMessage, []byte("new connection from same client"))
       aCc.conn.Close()
@@ -586,9 +588,8 @@ func runWs(iResp http.ResponseWriter, iReq *http.Request) {
    }
    aSock, err := sWsInit.Upgrade(iResp, iReq, nil)
    if err != nil { panic(err) }
-   aClients.Set(aClientId.Value, &tWsConn{conn: aSock, state: aState})
+   aSvc.ccs.Set(aClientId.Value, &tWsConn{conn: aSock, state: aState})
 
-   aQ := getService(aSvcId).queue
    for {
       _, aJson, err := aSock.ReadMessage()
       if err != nil {
@@ -606,17 +607,17 @@ func runWs(iResp http.ResponseWriter, iReq *http.Request) {
       aFn, aSrec := pSl.HandleUpdtService(aSvcId, aState, &aUpdate)
 
       if aFn != nil {
-         aClients.Range(func(cC *tWsConn) {
+         aSvc.ccs.Range(func(cC *tWsConn) {
             cMsg := aFn(cC.state)
             if cMsg == nil { return }
             cC.WriteJSON(cMsg)
          })
       }
       if aSrec != nil {
-         aQ.postMsg(aSrec)
+         aSvc.queue.postMsg(aSrec)
       }
    }
-   aClients.Drop(aClientId.Value)
+   aSvc.ccs.Drop(aClientId.Value)
 }
 
 func runFile(iResp http.ResponseWriter, iReq *http.Request) {

@@ -140,26 +140,26 @@ func (tGlobalService) Drop(iName string) bool {
    return false
 }
 
-func GetService(iSvc string) *tService {
+func getService(iSvc string) *tService {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
    return sServices[iSvc]
 }
 
 func GetDataService(iSvc string) *tCfgService {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    aCfg := aSvc.cfg
    return &aCfg
 }
 
 func getUriService(iSvc string) string {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    return aSvc.cfg.Addr +"/"+ aSvc.cfg.Uid +"/"
 }
 
 func getDoorService(iSvc string, iId string, iMake func()tDoor) tDoor {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aDoor := aSvc.doors[iId]
    if aDoor == nil {
@@ -189,7 +189,7 @@ func _makeTree(iSvc string) {
 
 func _updateService(iCfg *tCfgService) error {
    var err error
-   aSvc := GetService(iCfg.Name)
+   aSvc := getService(iCfg.Name)
    if aSvc == nil {
       return tError(iCfg.Name + " not found")
    }
@@ -202,7 +202,7 @@ func _updateService(iCfg *tCfgService) error {
 }
 
 func getTabsService(iSvc string) []string {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    aList := make([]string, len(aSvc.tabs))
    copy(aList, aSvc.tabs)
@@ -210,7 +210,7 @@ func getTabsService(iSvc string) []string {
 }
 
 func addTabService(iSvc string, iTerm string) int {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aSvc.tabs = append(aSvc.tabs, iTerm)
    err := storeFile(tabFile(iSvc), aSvc.tabs)
@@ -219,7 +219,7 @@ func addTabService(iSvc string, iTerm string) int {
 }
 
 func dropTabService(iSvc string, iPos int) {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aSvc.tabs = aSvc.tabs[:iPos + copy(aSvc.tabs[iPos:], aSvc.tabs[iPos+1:])]
    err := storeFile(tabFile(iSvc), aSvc.tabs)
@@ -227,7 +227,7 @@ func dropTabService(iSvc string, iPos int) {
 }
 
 func GetQueueService(iSvc string) ([]*SendRecord, error) {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    aSort := make([]*tQueueEl, len(aSvc.sendQ))
    for a, _ := range aSvc.sendQ {
@@ -242,7 +242,7 @@ func GetQueueService(iSvc string) ([]*SendRecord, error) {
 }
 
 func queueHasService(iSvc string, iType byte, iId string) bool {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    aId := string(iType) + iId
    aEl := sort.Search(len(aSvc.sendQ), func(c int) bool { return aSvc.sendQ[c].Srec.Id >= aId })
@@ -250,7 +250,7 @@ func queueHasService(iSvc string, iType byte, iId string) bool {
 }
 
 func _queueAdd(iSvc string, iType byte, iId string) *SendRecord {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aId := string(iType) + iId
    aEl := sort.Search(len(aSvc.sendQ), func(c int) bool { return aSvc.sendQ[c].Srec.Id >= aId })
@@ -269,7 +269,7 @@ func _queueAdd(iSvc string, iType byte, iId string) *SendRecord {
 }
 
 func _queueDrop(iSvc string, iId string) {
-   aSvc := GetService(iSvc)
+   aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aEl := sort.Search(len(aSvc.sendQ), func(c int) bool { return aSvc.sendQ[c].Srec.Id >= iId })
    if aEl == len(aSvc.sendQ) || aSvc.sendQ[aEl].Srec.Id != iId {
