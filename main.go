@@ -483,12 +483,12 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "fn":
       err = pSl.WriteTableFilledForm(iResp, aSvc, aOp_Id[1])
    default:
-      iResp.WriteHeader(http.StatusNotFound)
       if err == nil { err = tError("unknown op") }
    }
    if err != nil {
+      iResp.WriteHeader(http.StatusNotAcceptable)
+      aResult = err.Error()
       fmt.Fprintf(os.Stderr, "runService %s: op %s %s\n", aSvc, aOp_Id[0], err.Error())
-      aResult = "error: " + err.Error()
    }
    if aResult != nil {
       err = json.NewEncoder(iResp).Encode(aResult)

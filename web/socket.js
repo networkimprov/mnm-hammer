@@ -99,7 +99,7 @@
         throw 'mnm.Upload: requires method=POST and valid action'
       var aXhr = new XMLHttpRequest();
       aXhr.onload = function() {
-         mnm.Log(aXhr.responseText);
+         mnm.Log(iForm.action +' '+ aXhr.responseText);
       };
       aXhr.open('POST', iForm.action);
       aXhr.send(new FormData(iForm));
@@ -112,7 +112,7 @@
          sWs.send(JSON.stringify({op:'open'}));
       };
       sWs.onmessage = function(iEvent) {
-         mnm.Log(iEvent.data);
+         mnm.Log('ws '+ iEvent.data);
          var aObj = JSON.parse(iEvent.data);
          if (!(aObj instanceof Array))
             return;
@@ -125,7 +125,7 @@
                _xhr(aObj[a]);
          }
       };
-      sWs.onclose = function(iEvent) { mnm.Log('closed') };
+      sWs.onclose = function(iEvent) { mnm.Log('ws closed') };
       sWs.onerror = function(iEvent) { mnm.Log('ws error: ' + iEvent.data) };
    };
 
@@ -134,12 +134,8 @@
       var aXhr = new XMLHttpRequest();
       aXhr.onload = function() {
          --sXhrPending;
-         if (aXhr.responseText.length === 0) {
-            mnm.Log(i +' empty');
-            return;
-         }
-         if (/^"error:/.test(aXhr.responseText)) {
-            mnm.Log(i +' '+ aXhr.responseText.slice(1, -2));
+         if (aXhr.status !== 200) {
+            mnm.Log(i +' '+ aXhr.responseText);
             return;
          }
          if (i !== 'mo' && i !== 'mn') {
@@ -182,10 +178,10 @@
 
    function _wsSend(i) {
       if (sWs.readyState !== 1) {
-         mnm.Log('op failed on closed socket');
+         mnm.Log('ws op failed on closed socket');
       } else if (sXhrPending > 0) {
          setTimeout(_wsSend, 5, i);
-         mnm.Log('op deferred for pending xhr');
+         mnm.Log('ws op deferred for pending xhr');
       } else {
          sWs.send(i);
       }
