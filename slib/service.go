@@ -389,6 +389,8 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
             }
          }
          aResult = []string{"tl", "pf", "al", "ml", "mn", iHead.MsgId}
+      case eSrecOhi:
+         return nil // not queued
       default:
          quit(tError("bad SendRecord " + aQid))
       }
