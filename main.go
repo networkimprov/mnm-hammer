@@ -477,7 +477,10 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "mo":
       err = pSl.WriteMessagesThread(iResp, aSvcId, aState, "")
    case "mn":
-      if len(aOp_Id) < 2 { break }
+      if aOp_Id[1] == "" {
+         err = tError("missing Id")
+         break
+      }
       err = pSl.WriteMessagesThread(iResp, aSvcId, aState, aOp_Id[1])
    case "an":
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
