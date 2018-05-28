@@ -83,10 +83,6 @@ func mainResult() int {
       return 1
    }
 
-   for _, aSvcId := range pSl.Service.GetIdx().([]string) {
-      startService(aSvcId)
-   }
-
    http.HandleFunc("/"  , runService)
    http.HandleFunc("/t/", runGlobal)
    http.HandleFunc("/f/", runGlobal)

@@ -189,6 +189,7 @@ func Init(iFn func(string)) {
    initForms()
    initStates()
    initServices(iFn)
+   startAllService()
 }
 
 // utilities follow

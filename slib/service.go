@@ -90,6 +90,12 @@ func initServices(iFn func(string)) {
    sServiceStartFn = iFn
 }
 
+func startAllService() {
+   for _, aSvc := range Service.GetIdx().([]string) {
+      sServiceStartFn(aSvc)
+   }
+}
+
 func (tGlobalService) GetIdx() interface{} {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
    aS := make([]string, len(sServices))
