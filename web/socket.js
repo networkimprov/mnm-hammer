@@ -113,9 +113,9 @@
       };
       sWs.onmessage = function(iEvent) {
          mnm.Log('ws '+ iEvent.data);
-         var aObj = JSON.parse(iEvent.data);
-         if (!(aObj instanceof Array))
+         if (iEvent.data.charAt(0) !== '[')
             return;
+         var aObj = JSON.parse(iEvent.data);
          for (var a=0; a < aObj.length; ++a) {
             if (aObj[a] === '_t')
                mnm.ThreadChange();

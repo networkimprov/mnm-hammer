@@ -307,7 +307,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
    var err error
    var aResult []string
    fAll := func(c *ClientState) interface{} { return aResult }
-   fErr := func(c *ClientState) interface{} { return tMsgError{iHead.Op, err.Error()} }
+   fErr := func(c *ClientState) interface{} { return iHead.Op +" "+ err.Error() }
 
    switch iHead.Op {
    case "registered":
@@ -409,7 +409,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    fAll := func(c *ClientState) interface{} { return aResult }
    fOne := func(c *ClientState) interface{} { if c == iState { return aResult }; return nil }
    fErr := func(c *ClientState) interface{} { if c == iState {
-                                      return tMsgError{iUpdt.Op, err.Error()} }; return nil }
+                                            return iUpdt.Op +" "+ err.Error() }; return nil }
 
    switch iUpdt.Op {
    case "open":
@@ -565,6 +565,4 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    }
    return aFn, aSrec
 }
-
-type tMsgError struct { Op, Err string }
 
