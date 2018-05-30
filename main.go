@@ -507,7 +507,6 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
    aId := iReq.URL.Path[3:]
    fErr := func(cSt int, cMsg string) { iResp.WriteHeader(cSt); iResp.Write([]byte(cMsg)) }
    if iReq.Method == "POST" {
-      aStatus := "ok"
       if aId[0] == '+' {
          var aPart *multipart.Part
          aR, err := iReq.MultipartReader()
@@ -521,7 +520,7 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
          defer aPart.Close()
          err = aSet.Add(aId[1:], "", aPart)
          if err != nil {
-            fErr(http.StatusInternalServerError, "upload error: " + err.Error())
+            fErr(http.StatusInternalServerError, "add error: " + err.Error())
             return
          }
       } else if aId[0] == '*' {
@@ -537,15 +536,17 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
             return
          }
       } else if aId[0] == '-' {
-         if !aSet.Drop(aId[1:]) {
-            aStatus = "not found"
+         err := aSet.Drop(aId[1:])
+         if err != nil {
+            fErr(http.StatusNotAcceptable, "drop error: " + err.Error())
+            return
          }
       } else {
          fErr(http.StatusNotAcceptable, "missing +/- operator")
          return
       }
       toAllClients([]string{iReq.URL.Path[:2]})
-      iResp.Write([]byte(`"id: `+aId+`, status: `+aStatus+`"`))
+      iResp.Write([]byte(`"ok"`))
    } else if aId == "" {
       aIdx := aSet.GetIdx()
       err := json.NewEncoder(iResp).Encode(aIdx)

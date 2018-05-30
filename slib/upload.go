@@ -103,10 +103,12 @@ func (tGlobalUpload) Add(iId, iDup string, iR io.Reader) error {
    return nil
 }
 
-func (tGlobalUpload) Drop(iId string) bool {
-   if iId == "" { quit(tError("missing filename")) }
+func (tGlobalUpload) Drop(iId string) error {
+   if iId == "" || strings.ContainsRune(iId, '/') {
+      return tError("missing or invalid filename")
+   }
    err := os.Remove(kUploadDir + iId)
    if err != nil && !os.IsNotExist(err) { quit(err) }
-   return err == nil
+   return err
 }
 

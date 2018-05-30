@@ -130,21 +130,21 @@ func (tGlobalBlankForm) Add(iFileName, iDupeRev string, iR io.Reader) error {
    return nil
 }
 
-func (tGlobalBlankForm) Drop(iFileName string) bool {
+func (tGlobalBlankForm) Drop(iFileName string) error {
    aName, aRev := _parseFileName(iFileName)
    aPath := kFormDir + aName + "." + aRev
 
    sBlankFormsDoor.Lock(); defer sBlankFormsDoor.Unlock()
    aBf := sBlankForms[aName]
    if aBf == nil {
-      return false
+      return tError("form not found for "+iFileName)
    }
    var a int
    for a, _ = range aBf.Revs {
       if aBf.Revs[a].Id == aRev { break }
    }
    if aBf.Revs[a].Id != aRev {
-      return false
+      return tError("rev not found for "+iFileName)
    }
    if len(aBf.Revs) == 1 {
       delete(sBlankForms, aName)
@@ -156,7 +156,7 @@ func (tGlobalBlankForm) Drop(iFileName string) bool {
    }
    err := os.Remove(aPath)
    if err != nil { quit(err) }
-   return true
+   return nil
 }
 
 func readFfnBlankForm(iFileName string) string {

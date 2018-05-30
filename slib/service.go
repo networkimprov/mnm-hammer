@@ -142,8 +142,8 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    return nil
 }
 
-func (tGlobalService) Drop(iName string) bool {
-   return false
+func (tGlobalService) Drop(iName string) error {
+   return tError("Drop not supported")
 }
 
 func getService(iSvc string) *tService {
