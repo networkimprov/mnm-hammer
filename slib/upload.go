@@ -57,18 +57,35 @@ func (tGlobalUpload) GetPath(iId string) string {
    return kUploadDir + iId
 }
 
-func (tGlobalUpload) Add(iId, iDupe string, iR io.Reader) error {
+func (tGlobalUpload) Add(iId, iDup string, iR io.Reader) error {
    if iId == "" || strings.ContainsRune(iId, '/') {
       return tError("missing or invalid filename")
    }
    aOrig := kUploadDir + iId
    aTemp := kUploadTmp + iId
+   if iDup != "" {
+      if strings.ContainsRune(iDup, '/') {
+         return tError("invalid dup revname")
+      }
+      aOrig += "." + iDup
+      aTemp += "." + iDup
+   }
    err := os.Symlink("upload_aborted", aOrig)
    if err != nil {
       if !os.IsExist(err) { quit(err) }
    } else {
       err = syncDir(kUploadDir)
       if err != nil { quit(err) }
+   }
+   if iDup != "" {
+      var aDfd *os.File
+      aDfd, err = os.Open(kUploadDir + iId)
+      if err != nil {
+         if !os.IsNotExist(err) { quit(err) }
+         return err
+      }
+      defer aDfd.Close()
+      iR = aDfd
    }
    aFd, err := os.OpenFile(aTemp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
