@@ -11,6 +11,7 @@ package slib
 import (
    "fmt"
    "io"
+   "io/ioutil"
    "encoding/json"
    "os"
    "strings"
@@ -33,20 +34,20 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
    if aId == "" {
       return []tAttachEl{}
    }
-   aList, err := readDirNames(attachSub(iSvc, aId))
+   aList, err := ioutil.ReadDir(attachSub(iSvc, aId))
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
       return []tAttachEl{}
    }
    aSend := make([]tAttachEl, len(aList))
    a := 0
-   for _, aFn := range aList {
-      if aFn == "ffnindex" {
+   for _, aFi := range aList {
+      if aFi.Name() == "ffnindex" {
          aSend = aSend[:len(aSend)-1]
          continue
       }
-      aSend[a].File = aFn
-      aPair := strings.SplitN(aFn, "_", 2)
+      aSend[a].File = aFi.Name()
+      aPair := strings.SplitN(aFi.Name(), "_", 2)
       if aId[0] == '_' {
          aSend[a].MsgId = aId
       } else if len(aPair[0]) == 12 { //todo codify
@@ -55,9 +56,6 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
          aSend[a].MsgId = aPair[0]
       }
       aSend[a].Name = aPair[1][2:] // omit x: tag
-      var aFi os.FileInfo
-      aFi, err = os.Lstat(attachSub(iSvc, aId) + aFn)
-      if err != nil { quit(err) }
       aSend[a].Size = aFi.Size()
       a++
    }
