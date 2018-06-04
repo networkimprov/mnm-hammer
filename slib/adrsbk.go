@@ -37,8 +37,8 @@ type tAdrsbk struct {
 type tAdrsbkLog []*tAdrsbkEl
 
 type tAdrsbkEl struct {
-   Type int8
-   Date string
+   Type int8           `json:",omitempty"`
+   Date string         `json:",omitempty"`
    Text string         `json:",omitempty"`
    Alias string        `json:",omitempty"`
    Uid string          `json:",omitempty"`
@@ -194,7 +194,14 @@ func _listLogs(iSvc *tAdrsbk, iIdx map[string]tAdrsbkLog) []tAdrsbkEl {
    aLog := make([]tAdrsbkEl, 0, len(iIdx))
    for _, aSet := range iIdx {
       for _, aEl := range aSet {
-         aLog = append(aLog, *aEl)
+         aEl2 := *aEl
+         if aEl.Response == nil {
+            aEl2.Response = &tAdrsbkEl{}
+         } else {
+            aEl2.Response = &tAdrsbkEl{Type: aEl.Response.Type, Date:  aEl.Response.Date,
+                                       Tid:  aEl.Response.Tid,  MsgId: aEl.Response.MsgId}
+         }
+         aLog = append(aLog, aEl2)
       }
    }
    iSvc.RUnlock()
