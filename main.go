@@ -22,8 +22,8 @@ package main
 // track form subscribers (clients with form in msg-editor) to send update on rev
 
 import (
+   "runtime/debug"
    "fmt"
-   pWs "github.com/gorilla/websocket-1.2.0"
    "net/http"
    "io"
    "encoding/json"
@@ -31,6 +31,7 @@ import (
    "net"
    "os"
    pSl "mnm-hammer/slib"
+   pWs "github.com/gorilla/websocket-1.2.0"
    "strconv"
    "strings"
    "sync"
@@ -688,6 +689,14 @@ func packMsg(iJso tMsg, iData []byte) []byte {
    aBuf = append(aBuf, aHead...)
    aBuf = append(aBuf, iData...)
    return aBuf
+}
+
+func dateRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
+
+func quit(err error) {
+   fmt.Fprintf(os.Stderr, "quit after %s\n", err.Error())
+   debug.PrintStack()
+   os.Exit(3)
 }
 
 type tError string
