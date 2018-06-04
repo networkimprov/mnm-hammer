@@ -790,7 +790,7 @@
 </script>
 
 <script type="text/x-template" id="mnm-pingresponse">
-   <span v-if="response">
+   <span v-if="response.Type">
       <a v-if="response.Tid"
          onclick="mnm.NavigateLink(this.href); return false"
          :href="'#'+ response.Tid +'&'+ response.MsgId"><span uk-icon="mail"></span></a>
