@@ -565,6 +565,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       iState.setTab(iUpdt.Tab.Type, iUpdt.Tab.PosFor, iUpdt.Tab.Pos)
       aAlt := "tl"; if iUpdt.Tab.Type == eTabThread { aAlt = "mo" }
       aFn, aResult = fOne, []string{"cs", aAlt}
+   case "test":
+      if len(iUpdt.Test.Request) > 0 {
+         aFn, aResult = fOne, iUpdt.Test.Request
+      }
    default:
       err = tError("unknown op")
       return fErr, nil

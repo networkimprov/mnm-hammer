@@ -169,6 +169,10 @@ type Update struct {
       Pos int
    }
    Service *tCfgService
+   Test *struct {
+      Poll time.Duration // for use by test.go
+      Request []string
+   }
 }
 
 type SendRecord struct {
