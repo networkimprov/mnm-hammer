@@ -23,6 +23,7 @@ package main
 
 import (
    "runtime/debug"
+   "flag"
    "fmt"
    "net/http"
    "io"
@@ -63,17 +64,17 @@ var sServices = make(map[string]tService)
 var sServiceTmpl *template.Template
 
 
-func main() { os.Exit(mainResult()) }
+func main() {
+   flag.StringVar(&sHttpSrvr.Addr, "http", sHttpSrvr.Addr, "[host]:port of http server")
+   flag.Parse() // may os.Exit(2)
+   os.Exit(mainResult())
+}
 
 func mainResult() int {
    // return 2 reserved for use by Go internals
    var err error
 
    fmt.Printf("mnm-hammer tmtp client v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
-
-   if len(os.Args) == 2 {
-      sHttpSrvr.Addr = os.Args[1]
-   }
 
    pSl.Init(startService)
    pSl.Test()
