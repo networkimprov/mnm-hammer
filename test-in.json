@@ -1,0 +1,393 @@
+[{
+
+"Name": "Blue1", "SvcId": "Blue",
+"Cfg": {"Name":"Blue", "Addr":"localhost:8888", "Alias":"Blue"},
+"Files": [{
+   "Name":"BlueFile", "Data":"abcdefghijklmnopqrstuvwxyz"
+}],
+"Forms": [{
+   "Name":"Blue.spec", "ffn":"networkimprov.github.io/mnm-registry/first"
+},{
+   "Name":"Blue.original", "fields": [
+      {"label":"SO", "model":"so", "type":"input", "inputType":"text"},
+      {"label":"NR", "model":"nr", "type":"input", "inputType":"number"},
+      {"label":"ASR", "model":"or.asr", "type":"checklist",
+       "listBox":true, "values":["a","b"]},
+      {"label":"ANO", "model":"or.ano", "type":"checklist", "inputType":"array",
+       "listBox":true, "values": [
+          {"name":"aa", "value":[1,2]},
+          {"name":"bb", "value":[2,2]}] }]
+}],
+"Orders": [{
+   "Updt": {"Op":"thread_save", "Thread":{"New":1, "Alias":"Blue", "Subject":"ohi"}},
+   "Result": {
+      "mo": [{"From":"self", "Id":"*", "Len":0, "Posted":"draft",
+              "SubHead":{"Alias":"Blue#td", "Cc":null, "ThreadId":"", "Subject":"ohi"},
+              "msg_data":"" }] ,
+      "tl": [{"Id":"*", "Date":"*d"}] ,
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":[], "Type":1}} ,
+      "al": [] }
+},{
+   "Updt": {"Op":"thread_save", "Thread":{
+                 "Id":"last", "Alias":"Blue", "Subject":"ohi there", "Data":"one"}},
+   "Result": {
+      "mn": [{"From":"self", "Id":"*", "Len":3, "Posted":"draft",
+              "SubHead":{"Alias":"Blue#td", "Cc":null, "ThreadId":"", "Subject":"ohi there"},
+              "msg_data":"one" }] ,
+      "al": [] }
+},{
+   "Updt": {"Op":"thread_discard", "Thread":{"Id":"last"}},
+   "Result": {
+      "mo": [] ,
+      "tl": [] ,
+      "ml": [] ,
+      "al": [] ,
+      "cs": {"Thread":"none", "History":{"Prev":false, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":[], "Type":1}} }
+},{
+   "Updt": {"Op":"ping_save", "Ping":{"Alias":"Blue", "To":"Gold"}},
+   "Result": {
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*"}] }
+},{
+   "Updt": {"Op":"ping_send", "Ping":{"Qid":"last"}},
+   "Result": {
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*", "Queued":true}] }
+},{
+   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["if"]}},
+   "Result": {
+      "if": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
+              "Gid":"Gold-G#td", "Uid":"*", "MsgId":"*", "Response":"**"}] }
+},{
+   "Updt": {"Op":"accept_send", "Accept":{"Qid":"last"}},
+   "Result": {
+      "if": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*", "Queued":true,
+              "Gid":"Gold-G#td", "Uid":"*", "MsgId":"*", "Response":"**"}] }
+},{
+   "Updt": {"Op":"thread_save", "Thread":{
+                 "New":1, "Alias":"Blue", "CC":["Gold"], "Subject":"ohi",
+                 "Attach":[{"Name":"upload/BlueFile"},
+                           {"Name":"form/Blue.original"}] }},
+   "Result": {
+      "mo": [{"From":"self", "Id":"*", "Len":0, "Posted":"draft",
+              "SubHead":{"Alias":"Blue#td", "Cc":["Gold#td"], "ThreadId":"", "Subject":"ohi",
+                         "Attach":[{"Name":"u:BlueFile"},
+                                   {"Name":"f:Blue.original",
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"" }] ,
+      "tl": [{"Id":"*", "Date":"*d"}] ,
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":[], "Type":1}} ,
+      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*", "File":"*"},
+             {"Name":"BlueFile",      "Size":26,  "MsgId":"*", "File":"*"}] }
+},{
+   "Updt": {"Op":"thread_save", "Thread":{
+                 "Id":"last", "Alias":"Blue", "CC":["Gold"], "Subject":"ohi",
+                 "Attach":[{"Name":"upload/BlueFile"},
+                           {"Name":"form/Blue.original"},
+                           {"Name":"form_fill/Blue.original", "FfKey":"lastfile"}],
+                 "FormFill":{"lastfile":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
+   "Result": {
+      "mn": [{"From":"self", "Id":"*", "Len":0, "Posted":"draft",
+              "SubHead":{"Alias":"Blue#td", "Cc":["Gold#td"], "ThreadId":"", "Subject":"ohi",
+                         "Attach":[{"Name":"u:BlueFile"},
+                                   {"Name":"f:Blue.original",
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"},
+                                   {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
+      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*", "File":"*"},
+             {"Name":"BlueFile",      "Size":26,  "MsgId":"*", "File":"*"}] }
+},{
+   "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
+   "Result": {
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":true}] }
+},{
+   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["ml"]}} ,
+   "Result": {
+      "ml": [{"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] }
+},{
+   "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Blue", "Cc":["Gold"]}},
+   "Result": {
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
+             {"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+      "mn": [{"From":"self", "Id":"*", "Len":0, "Posted":"draft",
+              "SubHead":{"Alias":"Blue#td", "Cc":["Gold#td"], "ThreadId":"*", "Subject":"",
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"" }] ,
+      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*", "File":"*"},
+             {"Name":"BlueFile",      "Size":26,  "MsgId":"*", "File":"*"}] }
+},{
+   "Updt": {"Op":"thread_discard", "Thread":{"Id":"last"}},
+   "Result": {
+      "ml": [{"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*", "File":"*"},
+             {"Name":"BlueFile",      "Size":26,  "MsgId":"*", "File":"*"}] }
+},{
+   "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
+   "Result": {
+      "tl": [{"Id":"*", "Date":"*d"},
+             {"Id":"*", "Date":"*d"}] }
+},{
+   "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
+   "Result": {
+      "mo": [{"From":"*", "Id":"*", "Len":0, "Posted":"*d",
+              "SubHead":{"Alias":"Gold#td", "Cc":["Blue#td"], "ThreadId":"", "Subject":"ohi",
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"" }] ,
+      "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":true, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":[], "Type":1}} ,
+      "al": [] }
+},{
+   "Updt": {"Op":"thread_open", "Thread":{"ThreadId":"last", "Id":"last"}},
+   "Result": {
+      "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"ohi", "Seen":"*d", "Queued":false}] }
+},{
+   "Updt": {"Op":"thread_close", "Thread":{"Id":"last"}},
+   "Result": null
+},{
+   "Updt": {"Op":"navigate_history", "Navigate":{"History":-1}},
+   "Result": {
+      "mo": [{"From":"*", "Id":"*", "Len":0, "Posted":"*d",
+              "SubHead":{"Alias":"Blue#td", "Cc":["Gold#td"], "ThreadId":"*", "Subject":"ohi",
+                         "Attach":[{"Name":"u:BlueFile"},
+                                   {"Name":"f:Blue.original",
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"},
+                                   {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"" }] ,
+      "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"", "Queued":false},
+             {"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":true},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":[], "Type":1}} ,
+      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*", "File":"*"},
+             {"Name":"BlueFile",      "Size":26,  "MsgId":"*", "File":"*"}] }
+},{
+   "Updt": {"Op":"navigate_link", "Navigate":{"ThreadId":"2ndlast", "MsgId":"2ndlast"}},
+   "Result": {
+      "mo": [{"From":"*", "Id":"*", "Len":0, "Posted":"*d",
+              "SubHead":{"Alias":"Blue#td", "Cc":["Gold#td"], "ThreadId":"*", "Subject":"ohi",
+                         "Attach":[{"Name":"u:BlueFile"},
+                                   {"Name":"f:Blue.original",
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"},
+                                   {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"" }] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":["*"], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":true},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":[], "Type":1}} }
+},{
+   "Updt": {"Op":"tab_drop", "Tab":{"Type":0}},
+   "Result": {
+      "mo": [{"From":"*", "Id":"*", "Len":0, "Posted":"*d",
+              "SubHead":{"Alias":"Blue#td", "Cc":["Gold#td"], "ThreadId":"*", "Subject":"ohi",
+                         "Attach":[{"Name":"u:BlueFile"},
+                                   {"Name":"f:Blue.original",
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"},
+                                   {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"" }] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":true},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":[], "Type":1}} }
+},{
+   "Updt": {"Op":"tab_add", "Tab":{"Type":1, "Term":"ohi"}},
+   "Result": {
+      "tl": [] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":true},
+             "SvcTabs":{"Pos":0, "PosFor":2, "Terms":["ohi"],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":[], "Type":1}} }
+},{
+   "Updt": {"Op":"tab_pin", "Tab":{"Type":1}},
+   "Result": {
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":true},
+             "SvcTabs":{"Pos":0, "PosFor":1, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":["ohi"], "Type":1}} }
+},{
+   "Updt": {"Op":"tab_select", "Tab":{"Type":1, "PosFor":0, "Pos":0}},
+   "Result": {
+      "tl": [{"Id":"*", "Date":"*d"},
+             {"Id":"*", "Date":"*d"}] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":true},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":["ohi"], "Type":1}} }
+},{
+   "Updt": {"Op":"open"},
+   "Result": {
+      "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"}] ,
+      "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
+                                                  {"Id":"spec",     "Date":"*d"}] }] ,
+      "/v": ["Blue", "Gold"] ,
+      "of": [{"Uid":"*", "Date":"*d"}] ,
+      "ot": [] ,
+      "ps": [] ,
+      "pt": [{"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
+              "Response":{"Type":6, "Date":"*d", "MsgId":"*", "Tid":"*"}}] ,
+      "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
+              "Gid":"Gold-G#td", "Uid":"*", "MsgId":"*", "Response":{"Type":3, "Date":"*d"}}] ,
+      "if": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
+              "Gid":"Gold-G#td", "Uid":"*", "MsgId":"*", "Response":{"Type":9, "Date":"*d"}}] ,
+      "it": [] ,
+      "gl": [{"Gid":"Gold-G#td", "Date":"*d", "Admin":false}] ,
+      "cf": {"Name":"Blue", "Description":"", "LoginPeriod":0, "Addr":"localhost:8888", "Uid":"*",
+             "Alias":"Blue#td", "Node":"*"} ,
+      "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"", "Queued":false},
+             {"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*", "File":"*"},
+             {"Name":"BlueFile",      "Size":26,  "MsgId":"*", "File":"*"}] ,
+      "mo": [{"From":"*", "Id":"*", "Len":0, "Posted":"*d",
+              "SubHead":{"Alias":"Blue#td", "Cc":["Gold#td"], "ThreadId":"*", "Subject":"ohi",
+                         "Attach":[{"Name":"u:BlueFile"},
+                                   {"Name":"f:Blue.original",
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"},
+                                   {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"" }] ,
+      "tl": [{"Id":"*", "Date":"*d"},
+             {"Id":"*", "Date":"*d"}] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":true},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":["ohi"], "Type":1}} }
+}]
+
+},{
+
+"Name": "Gold1", "SvcId": "Gold",
+"Cfg": {"Name":"Gold", "Addr":"localhost:8888", "Alias":"Gold"},
+"Orders":
+[{
+   "Updt": {"Op":"ping_save", "Ping":{"Alias":"Gold", "To":"Blue"}},
+   "Result": {
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td", "Qid":"*"}] }
+},{
+   "Updt": {"Op":"ping_discard", "Ping":{"To":"Blue"}},
+   "Result": {
+      "ps": [] }
+},{
+   "Updt": {"Op":"ping_save", "Ping":{"Alias":"Gold", "To":"Blue", "Gid":"Gold-G"}},
+   "Result": {
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#td", "MyAlias":"Gold#td", "Qid":"*"}] }
+},{
+   "Updt": {"Op":"ping_send", "Ping":{"Qid":"last"}},
+   "Result": {
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#td", "MyAlias":"Gold#td", "Qid":"*", "Queued":true}] }
+},{
+   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["pf"]}},
+   "Result": {
+      "pf":[{"Type":4, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td", "Uid":"*", "MsgId":"*",
+             "Response":"**"}] }
+},{
+   "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue"}},
+   "Result": {
+      "ot": [{"Uid":"*", "Date":"*d"}] }
+},{
+   "Updt": {"Op":"ohi_drop", "Ohi":{"Uid":"last"}},
+   "Result": {
+      "ot": [] }
+},{
+   "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue"}},
+   "Result": {
+      "ot": [{"Uid":"*", "Date":"*d"}] }
+},{
+   "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
+   "Result": {
+      "tl": [{"Id":"*", "Date":"*d"}] }
+},{
+   "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
+   "Result": {
+      "mo": [{"From":"*", "Id":"*", "Len":0, "Posted":"*d",
+              "SubHead":{"Alias":"Blue#td", "Cc":["Gold#td"], "ThreadId":"", "Subject":"ohi",
+                         "Attach":[{"Name":"u:BlueFile", "Size":26},
+                                   {"Name":"f:Blue.original", "Size":402,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"},
+                                   {"Name":"r:Blue.original", "Size":33,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"" }] ,
+      "ml": [{"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":[], "Type":1}} ,
+      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*", "File":"*"},
+             {"Name":"BlueFile",      "Size":26,  "MsgId":"*", "File":"*"}] }
+},{
+   "Updt": {"Op":"thread_save", "Thread":{
+                 "New":2, "Alias":"Gold", "CC":["Blue"], "Subject":"",
+                 "Attach": [{"Name":"form_fill/Blue.original", "FfKey":"lastfile"}],
+                 "FormFill":{"lastfile":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
+   "Result": {
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
+             {"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
+      "mn": [{"From":"self", "Id":"*", "Len":0, "Posted":"draft",
+              "SubHead":{"Alias":"Gold#td", "Cc":["Blue#td"], "ThreadId":"*", "Subject":"",
+                         "Attach":[{"Name":"r:Blue.original", "FfKey":"*", "Size":33,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
+      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*", "File":"*"},
+             {"Name":"BlueFile",      "Size":26,  "MsgId":"*", "File":"*"}] }
+},{
+   "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
+   "Result": {
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":true},
+             {"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] }
+},{
+   "Updt": {"Op":"thread_save", "Thread":{"New":1, "Alias":"Gold", "CC":["Blue"], "Subject":"ohi"}},
+   "Result": {
+      "mo": [{"From":"self", "Id":"*", "Len":0, "Posted":"draft",
+              "SubHead":{"Alias":"Gold#td", "Cc":["Blue#td"], "ThreadId":"", "Subject":"ohi",
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"" }] ,
+      "tl": [{"Id":"*", "Date":"*d"},
+             {"Id":"*", "Date":"*d"}] ,
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":true, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+                        "Default":["All", "Unread", "Todo", "FF"], "Pinned":[], "Type":1}} ,
+      "al": [] }
+},{
+   "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
+   "Result": {
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":true}] }
+}]
+
+}]
+
