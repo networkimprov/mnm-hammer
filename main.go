@@ -76,8 +76,11 @@ func mainResult() int {
 
    fmt.Printf("mnm-hammer tmtp client v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
 
-   pSl.Init(startService)
-   pSl.Test()
+   if sTest {
+      test()
+   } else {
+      pSl.Init(startService)
+   }
 
    sServiceTmpl, err = template.New("service.html").Delims("[{","}]").ParseFiles("web/service.html")
    if err != nil {
@@ -387,6 +390,9 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
             aSvc.queue.postAck(aHead.Id)
          }
          if aFn != nil {
+            for _, aStEl := range sTestState {
+               if aStEl.svcId == iSvcId { aFn(aStEl.state) }
+            }
             aSvc.ccs.Range(func(cC *tWsConn) {
                cMsg := aFn(cC.state)
                if cMsg == nil { return }
