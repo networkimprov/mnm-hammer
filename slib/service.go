@@ -30,7 +30,8 @@ type tCfgService struct {
    Name string
    Description string
    LoginPeriod int // seconds
-   Addr string // for Dial()
+   Addr string // for tls.Dial()
+   Verify bool // for tls.Config
    Uid string
    Alias string
    Node string

@@ -38,6 +38,7 @@ import (
    "sync"
    "html/template"
    "time"
+   "crypto/tls"
    "net/url"
 )
 
@@ -268,7 +269,9 @@ func runTmtpRecv(iSvcId string) {
 
       for {
          aCfg = pSl.GetDataService(iSvcId)
-         aConn, err = net.DialTimeout("tcp", aCfg.Addr, 3 * time.Second)
+         aCfgTls := tls.Config{InsecureSkipVerify: !aCfg.Verify}
+         aDlr := net.Dialer{Timeout: 3 * time.Second}
+         aConn, err = tls.DialWithDialer(&aDlr, "tcp", aCfg.Addr, &aCfgTls)
          if err == nil { break }
          fmt.Fprintf(os.Stderr, "runTmtpRecv %s: %s\n", iSvcId, err.Error())
          time.Sleep(time.Duration(5000 + time.Now().Nanosecond() % 1000 * 5) * time.Millisecond)
