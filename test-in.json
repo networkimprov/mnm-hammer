@@ -1,7 +1,7 @@
 [{
 
 "Name": "Blue1", "SvcId": "Blue",
-"Cfg": {"Name":"Blue", "Addr":"localhost:8888", "Alias":"Blue"},
+"Cfg": {"Name":"Blue", "Addr":"localhost:443", "Alias":"Blue"},
 "Files": [{
    "Name":"BlueFile", "Data":"abcdefghijklmnopqrstuvwxyz"
 }],
@@ -260,8 +260,8 @@
               "Gid":"Gold-G#td", "Uid":"*", "MsgId":"*", "Response":{"Type":9, "Date":"*d"}}] ,
       "it": [] ,
       "gl": [{"Gid":"Gold-G#td", "Date":"*d", "Admin":false}] ,
-      "cf": {"Name":"Blue", "Description":"", "LoginPeriod":0, "Addr":"localhost:8888", "Uid":"*",
-             "Alias":"Blue#td", "Node":"*"} ,
+      "cf": {"Name":"Blue", "Description":"", "LoginPeriod":0, "Addr":"localhost:443", "Verify":false,
+             "Uid":"*", "Alias":"Blue#td", "Node":"*"} ,
       "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"", "Queued":false},
              {"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
       "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*", "File":"*"},
@@ -287,7 +287,7 @@
 },{
 
 "Name": "Gold1", "SvcId": "Gold",
-"Cfg": {"Name":"Gold", "Addr":"localhost:8888", "Alias":"Gold"},
+"Cfg": {"Name":"Gold", "Addr":"localhost:443", "Alias":"Gold"},
 "Orders":
 [{
    "Updt": {"Op":"ping_save", "Ping":{"Alias":"Gold", "To":"Blue"}},
