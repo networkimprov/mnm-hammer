@@ -953,7 +953,7 @@
 
 <script type="text/x-template" id="mnm-svcadd">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5"
-        @hidden="addr = name = alias = loginperiod = null">
+        @hidden="verify = !(addr = name = alias = loginperiod = null)">
       <div class="uk-text-right uk-text-small">ADD ACCOUNT</div>
       <input v-model="addr"
              placeholder="Net Address" size="33" type="text">
@@ -964,6 +964,8 @@
       <input v-model.number="loginperiod"
              placeholder="(Login Frequency)" size="24" type="text">
       &nbsp; seconds<br>
+      <label><input v-model="verify"
+                    type="checkbox"> Verify identity (TLS certificate)</label>
       <form :action="'/v/+' + encodeURIComponent(name)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); return false;"
@@ -975,7 +977,7 @@
 </script><script>
    Vue.component('mnm-svcadd', {
       template: '#mnm-svcadd',
-      data: function() { return {addr:null, name:null, alias:null, loginperiod:null} },
+      data: function() { return {addr:null, name:null, alias:null, loginperiod:null, verify:true} },
    });
 </script>
 
@@ -985,10 +987,11 @@
    <div uk-dropdown="mode:click; offset:-4; pos:left-top" class="uk-width-1-5">
       <div class="uk-text-right uk-text-small">SETTINGS</div>
       <table class="uk-table uk-table-small" style="margin:0">
-         <tr><td>Net Address</td><td class="svccfg">{{mnm._data.cf.Addr }}</td></tr>
-         <tr><td>Title      </td><td class="svccfg">{{mnm._data.cf.Name }}</td></tr>
-         <tr><td>Alias      </td><td class="svccfg">{{mnm._data.cf.Alias}}</td></tr>
-         <tr><td>Uid        </td><td class="svccfg">{{mnm._data.cf.Uid  }}</td></tr>
+         <tr><td>Net Address</td><td class="svccfg">{{mnm._data.cf.Addr  }}</td></tr>
+         <tr><td>Title      </td><td class="svccfg">{{mnm._data.cf.Name  }}</td></tr>
+         <tr><td>Alias      </td><td class="svccfg">{{mnm._data.cf.Alias }}</td></tr>
+         <tr><td>Uid        </td><td class="svccfg">{{mnm._data.cf.Uid   }}</td></tr>
+         <tr><td>Verify     </td><td class="svccfg">{{mnm._data.cf.Verify}}</td></tr>
       </table>
    </div>
 </script><script>
