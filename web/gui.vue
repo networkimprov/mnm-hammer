@@ -954,7 +954,15 @@
 <script type="text/x-template" id="mnm-svcadd">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5"
         @hidden="verify = !(addr = name = alias = loginperiod = null)">
-      <div class="uk-text-right uk-text-small">ADD ACCOUNT</div>
+      <div class="uk-float-right uk-text-small">ADD ACCOUNT</div>
+      <form :action="'/v/+' + encodeURIComponent(name)"
+            method="POST" enctype="multipart/form-data"
+            onsubmit="mnm.Upload(this); return false;">
+         <input type="hidden" name="filename" :value="JSON.stringify($data)">
+         <button :disabled="!(addr && name && alias)"
+                 title="Register new account at service"
+                 class="btn-icon"><span uk-icon="forward"></span></button>
+      </form>
       <input v-model="addr"
              placeholder="Net Address" size="33" type="text">
       <input v-model="name"
@@ -966,13 +974,6 @@
       &nbsp; seconds<br>
       <label><input v-model="verify"
                     type="checkbox"> Verify identity (TLS certificate)</label>
-      <form :action="'/v/+' + encodeURIComponent(name)"
-            method="POST" enctype="multipart/form-data"
-            onsubmit="mnm.Upload(this); return false;"
-            class="uk-text-right">
-         <input type="hidden" name="filename" :value="JSON.stringify($data)">
-         <button :disabled="!(addr && name && alias)">Register</button>
-      </form>
    </div>
 </script><script>
    Vue.component('mnm-svcadd', {
