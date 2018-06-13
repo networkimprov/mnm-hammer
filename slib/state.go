@@ -18,7 +18,7 @@ import (
 
 const kHistoryLen = 4
 
-var sSvcTabsDefault = []string{"All","Unread","Todo","FF"}
+var sSvcTabsDefault = []string{"All","Unread","Todo","FFT"}
 var sThreadTabsDefault = []string{"Open","All"}
 
 var sStateDoor sync.Mutex
