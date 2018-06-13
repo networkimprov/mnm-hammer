@@ -640,7 +640,8 @@
             onsubmit="mnm.Upload(this); this.reset(); return false;"
             class="dropdown-scroll-item">
          <div class="uk-float-right uk-text-small">ATTACHABLE FORMS</div>
-         <input type="hidden" name="filename" value='{}'>
+         <input type="hidden" name="filename"
+                value='{"fields":[ {"label":"Untitled","model":"s","type":"input","inputType":"text"} ]}'>
          <input v-model="upname" type="text" size="40" placeholder="New Type">
          <button @click="upname = ''"
                  :disabled="!validName(upname.split('.'))"
