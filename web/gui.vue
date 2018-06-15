@@ -54,11 +54,21 @@
             return aD;
          return aD +' '+ iDate.substring(11, iHms === 'hm' ? 16 : 19);
       };
+      mnm._toClipboard = function(iRef) {
+         var aEl = document.getElementById('toclipboard');
+         aEl.value = iRef;
+         aEl.style.display = 'inline';
+         aEl.select();
+         document.execCommand('copy');
+         aEl.style.display = 'none';
+      };
    </script>
 </head><body>
 <base target="_blank">
 
 <div id="app"></div>
+
+<input id="toclipboard" style="display:none">
 
 <script type="text/x-template" id="mnm-main">
 <div uk-grid class="uk-grid-small">
@@ -159,10 +169,15 @@
                   </div>
                </template>
                <template v-else>
-                  <button v-if="!aMsg.Queued"
-                          @click="mnm.ThreadReply(getReplyTemplate(aMsg))"
-                          title="New reply draft"
-                          class="btn-icon btn-floatr"><span uk-icon="comment"></span></button>
+                  <div v-if="!aMsg.Queued"
+                       style="float:right">
+                     <a @click.prevent="mnm._toClipboard('#'+ cs.Thread +'&'+ aMsg.Id)"
+                        title="Copy reference to clipboard"
+                        :href="'#'+ cs.Thread +'&'+ aMsg.Id"><span uk-icon="link"></span></a>
+                     <button @click="mnm.ThreadReply(getReplyTemplate(aMsg))"
+                             title="New reply draft"
+                             class="btn-icon"><span uk-icon="comment"></span></button>
+                  </div>
                   <div v-if="mo[aMsg.Id].SubHead.For.length !== 1
                           || mo[aMsg.Id].SubHead.For[0].Id !== cf.Uid">
                      Cc:
@@ -372,6 +387,10 @@
             <button @click=""
                     title="Add to attachable files"
                     class="btn-icon"><span uk-icon="push"></span></button>
+            &nbsp;
+            <a @click.prevent="mnm._toClipboard(aFile.File)"
+               title="Copy reference to clipboard"
+               :href="'#@'+ aFile.File"><span uk-icon="link"></span></a>
             <a :href="'?ad=' + encodeURIComponent(aFile.File)">
                <span uk-icon="download"></span></a>
             <a :href="'?an=' + encodeURIComponent(aFile.File)" target="mnm_atc_[{.Title}]">
