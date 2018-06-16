@@ -86,7 +86,7 @@
          <button @click="mnm.ThreadRecv()"
                  title="Send test message to self"
                  class="btn-icon"><span uk-icon="cloud-download"></span></button>
-         <span uk-icon="copy" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
+         <span uk-icon="location" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
          <mnm-attach ref="al"></mnm-attach>
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
@@ -624,7 +624,7 @@
             <button v-if="toggle"
                     @click="$emit('attach', 'upload/'+aFile.Name)"
                     title="Attach file"
-                    class="btn-icon"><span uk-icon="copy"></span></button>
+                    class="btn-icon"><span uk-icon="location"></span></button>
             <a :href="'/t/!' + encodeURIComponent(aFile.Name)">
                <span uk-icon="download">&nbsp;</span></a>
             <a :href="'/t/' + encodeURIComponent(aFile.Name)" target="mnm_atc_[{.Title}]">
@@ -680,7 +680,7 @@
                <button v-if="toggle"
                        @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
                        title="Attach form"
-                       class="btn-icon"><span uk-icon="copy"></span></button>
+                       class="btn-icon"><span uk-icon="location"></span></button>
                <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.target)"
                   :id="'bf_'+aSet.Name+'.'+aFile.Id" href="#">
                   <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
