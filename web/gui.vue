@@ -384,9 +384,10 @@
             <span v-else
                   uk-icon="mail" style="visibility:hidden"></span>
             2018-01-17T04:16:57Z{{aFile.Date}} &nbsp;
-            <button @click=""
-                    title="Add to attachable files"
-                    class="btn-icon"><span uk-icon="push"></span></button>
+            <button v-if="false"
+                    title="Copy to attachable files/forms"
+                    class="btn-icon">
+               <span :uk-icon="aFile.File.charAt(17) === 'u' ? 'push' : 'file-edit'"></span></button>
             &nbsp;
             <a @click.prevent="mnm._toClipboard(aFile.File)"
                title="Copy reference to clipboard"
