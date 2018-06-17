@@ -16,6 +16,7 @@ import (
    "os"
    "strings"
    "syscall"
+   "time"
 )
 
 const kSuffixRecv = "_recv"
@@ -25,6 +26,7 @@ const kSuffixSent = "_sent"
 type tAttachEl struct {
    Name, MsgId, File string
    Size int64
+   Date string
 }
 
 type tFfnIndex map[string]string
@@ -57,6 +59,7 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
       }
       aSend[a].Name = aPair[1][2:] // omit x: tag
       aSend[a].Size = aFi.Size()
+      aSend[a].Date = aFi.ModTime().UTC().Format(time.RFC3339)
       a++
    }
    return aSend
@@ -108,6 +111,10 @@ func sendDraftAttach(iW io.Writer, iSvc string, iSubHead *tHeader2, iId tLocalId
 
 func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
    var err error
+   aMtime, err := time.Parse(time.RFC3339, iHead.Posted)
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "tempReceivedAttach %s: %s %s\n", iSvc, iHead.Posted, err.Error())
+   }
    aDoSync := false
    aPath := make([]string, len(iHead.SubHead.Attach))
    for a, aFile := range iHead.SubHead.Attach {
@@ -128,6 +135,10 @@ func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
       _, err = io.CopyN(aFd, iR, aFile.Size)
       if err != nil {
          break
+      }
+      if !aMtime.IsZero() {
+         err = os.Chtimes(aPath[a], time.Now(), aMtime)
+         if err != nil { quit(err) }
       }
       err = aFd.Sync()
       if err != nil { quit(err) }
