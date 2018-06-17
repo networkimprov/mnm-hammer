@@ -191,13 +191,16 @@
                   <div v-if="mo[aMsg.Id].SubHead.Attach">
                      Attached ({{ mo[aMsg.Id].SubHead.Attach.length }}):
                      <template v-for="aAtc in mo[aMsg.Id].SubHead.Attach">
-                        <template v-if="aAtc.Name.charAt(0) === 'r'">
-                           <span @click="tabSearch('ffn:'+ aAtc.Ffn +
-                                              (aMsg.From === cf.Uid ? '_sent' : '_recv'), cs.SvcTabs)"
-                                 class="uk-link">{{ aAtc.Name.substr(2) }}</span></template>
+                        <span v-if="aAtc.Name.charAt(0) === 'r'"
+                              @click="tabSearch('ffn:'+ aAtc.Ffn +
+                                           (aMsg.From === cf.Uid ? '_sent' : '_recv'), cs.SvcTabs)"
+                              class="uk-link">{{ aAtc.Name.substr(2) }}</span>
                         <template v-else>
-                           <a :href="'?an=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)"
-                              target="mnm_atc_[{.Title}]">{{ aAtc.Name.substr(2) }}</a></template>
+                           <a :href="'?ad=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)">
+                              <span uk-icon="download"></span></a
+                          ><a :href="'?an=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)"
+                              target="mnm_atc_[{.Title}]">{{ aAtc.Name.substr(2) }}</a>
+                        </template>
                         &#x25CA;
                      </template>
                   </div>
