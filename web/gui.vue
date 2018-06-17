@@ -26,7 +26,7 @@
          v:[], t:[], f:[], fo:'', // fo populated by f requests
       // per client
          cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}},
-         sort:{al:'Size', t:'Date', f:'Date'}, //todo move to cs
+         sort:{al:'Date', t:'Date', f:'Date'}, //todo move to cs
          ohiFrom:true, //todo move to cs
       // per service
          cf:{}, tl:[], ffn:'', // ffn derived from tl
@@ -374,8 +374,7 @@
 <script type="text/x-template" id="mnm-attach">
    <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3 dropdown-scroll">
       <ul uk-tab>
-         <!-- todo Date -->
-         <li v-for="aKey in ['Size','Name']"
+         <li v-for="aKey in ['Date','Name','Size']"
              :class="{'uk-active': aKey === mnm._data.sort.al}">
             <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
          </li></ul>
@@ -386,7 +385,7 @@
                :href="'#'+ mnm._data.cs.Thread +'&'+ aFile.MsgId"><span uk-icon="mail"></span></a>
             <span v-else
                   uk-icon="mail" style="visibility:hidden"></span>
-            2018-01-17T04:16:57Z{{aFile.Date}} &nbsp;
+            {{aFile.Date}} &nbsp;
             <button v-if="false"
                     title="Copy to attachable files/forms"
                     class="btn-icon">
