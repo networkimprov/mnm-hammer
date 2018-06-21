@@ -387,7 +387,8 @@
                   uk-icon="mail" style="visibility:hidden"></span>
             {{aFile.Date}} &nbsp;
             <button v-if="false"
-                    title="Copy to attachable files/forms"
+                    :title="aFile.File.charAt(17) === 'u' ? 'Copy to attachable files'
+                                                          : 'Copy to blank forms'"
                     class="btn-icon">
                <span :uk-icon="aFile.File.charAt(17) === 'u' ? 'push' : 'file-edit'"></span></button>
             &nbsp;
@@ -661,7 +662,7 @@
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); this.reset(); return false;"
             class="dropdown-scroll-item">
-         <div class="uk-float-right uk-text-small">ATTACHABLE FORMS</div>
+         <div class="uk-float-right uk-text-small">BLANK FORMS</div>
          <input type="hidden" name="filename"
                 value='{"fields":[ {"label":"Untitled","model":"s","type":"input","inputType":"text"} ]}'>
          <input v-model="upname" type="text" size="40" placeholder="New Type">
