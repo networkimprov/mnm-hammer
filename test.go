@@ -32,6 +32,7 @@ type tTestStateEl struct {
 }
 
 type tTestClient struct {
+   Version string
    Name string
    SvcId string
    Cfg struct {
@@ -90,6 +91,7 @@ func test() {
    err = os.Symlink("../../formspec", "formspec")
    if err != nil { quit(err) }
 
+   aAbout := getAbout()
    pSl.Init(startService)
 
    var aBuf bytes.Buffer
@@ -97,6 +99,10 @@ func test() {
    for a := range aClients {
       aTc := &aClients[a]
       sTestState = append(sTestState, tTestStateEl{aTc.SvcId, aTc.Name, nil})
+      if aTc.Version != "" && aTc.Version != aAbout.Version {
+         err = tError("version expect " + aTc.Version + ", got " + aAbout.Version)
+         goto ReturnErr
+      }
       if aTc.Cfg.Name != "" {
          aTc.Cfg.Alias += sTestDate
          err = aEnc.Encode(aTc.Cfg)
@@ -129,7 +135,7 @@ func test() {
       }
       continue
       ReturnErr:
-         fmt.Fprintf(os.Stderr, "%s %s  %s\nend test pass\n", aTc.Name, aTc.SvcId, err.Error())
+         fmt.Fprintf(os.Stderr, "%s %s\n  %s\nend test pass\n", aTc.Name, aTc.SvcId, err.Error())
          return
    }
    var aWg sync.WaitGroup

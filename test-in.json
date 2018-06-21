@@ -1,5 +1,6 @@
 [{
 
+"Version": "0.0.0",
 "Name": "Blue1", "SvcId": "Blue",
 "Cfg": {"Name":"Blue", "Addr":"localhost:443", "Alias":"Blue"},
 "Files": [{

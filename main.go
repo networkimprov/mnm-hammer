@@ -90,6 +90,7 @@ func mainResult() int {
    }
 
    http.HandleFunc("/"  , runService)
+   http.HandleFunc("/a/", runAbout)
    http.HandleFunc("/t/", runGlobal)
    http.HandleFunc("/f/", runGlobal)
    http.HandleFunc("/v/", runGlobal)
@@ -506,6 +507,18 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       err = json.NewEncoder(iResp).Encode(aResult)
       if err != nil { fmt.Fprintf(os.Stderr, "runService %s: %s\n", aSvcId, err.Error()) }
    }
+}
+
+func runAbout(iResp http.ResponseWriter, iReq *http.Request) {
+   err := json.NewEncoder(iResp).Encode(getAbout())
+   if err != nil { fmt.Fprintf(os.Stderr, "runAbout: %s\n", err.Error()) }
+}
+
+type tAbout struct { Version, VersionDate, HttpAddr string }
+
+func getAbout() *tAbout {
+   return &tAbout{ fmt.Sprintf("%d.%d.%d", kVersionA, kVersionB, kVersionC),
+                   kVersionDate, sHttpSrvr.Addr }
 }
 
 func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
