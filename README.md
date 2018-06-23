@@ -1,12 +1,25 @@
-## mnm-hammer
-
 _Mnm is Not Mail_
 
-You choose the websites you visit; now choose who can send you mail.
-See [Why mnm?](https://github.com/networkimprov/mnm/blob/master/Rationale.md)
+mnm provides the benefits of email without the huge risks of allowing 
+anyone, anywhere, claiming any identity to send you any content, any number of times. 
 
-mnm-hammer is a rich correspondence client for TMTP networks.  
-For the mnm message-relay server, see https://github.com/networkimprov/mnm
+mnm also offers electronic correspondence features missing from traditional email, 
+including forms/surveys which may be filled out and returned, 
+charts via [Chart.js or Vega-Lite], hyperlinks to messages, and slide shows. 
+It creates HTML-formatted messages via Markdown, which enables 
+mouseless (i.e. rapid) composition of rich text with graphical elements. 
+
+mnm is a client application that securely connects to 
+any number of TMTP relay services via separate accounts. 
+TMTP service accounts control who can send them correspondence. 
+Organizations of any size can run TMTP services on public or private network sites, 
+and may limit who participates in them. 
+See also [Why TMTP?](https://github.com/networkimprov/mnm/blob/master/Rationale.md) 
+
+This version of mnm is a localhost web app (i.e. it runs on personal devices and its UI runs 
+in a browser). 
+It's written in Go &amp; Vue.js. 
+The source is [on GitHub](https://github.com/networkimprov/mnm-hammer). 
 
 ### Status
 
@@ -16,9 +29,11 @@ A first release is in progress.
 
 1. Follow steps to install & start TCP at https://github.com/networkimprov/mnm
 
-1. Start mnm-hammer client  
+1. Start client  
 a) go get github.com/networkimprov/mnm-hammer  
 b) cd $GOPATH/src/github.com/networkimprov/mnm-hammer  
 c) go run mnm-hammer --test [--http [host]:port] # http default localhost:80 may require sudo
 
 1. Point FireFox to http://localhost/Blue # not yet tested in other browsers
+
+1. See docs in the &#9432; menu
