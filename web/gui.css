@@ -115,6 +115,13 @@ input[type=text] {
    font-family: Monaco, monospace;
    color: black;
 }
+.draftmenu-sample {
+   min-width: 0;
+   float: none;
+   margin: 0;
+   border: 1px solid dimgray;
+   display: inline-block;
+}
 .draftmenu-shown {
    padding: 1px calc(0.5em + 1px);
    min-height: 100%;
