@@ -213,7 +213,6 @@
                </template>
             </template>
          </li></ul>
-      <br/><div id="log"></div>
    </div>
 </div>
 
@@ -307,7 +306,16 @@
                      @click="mnm.NavigateThread(aRow.Id)"
                      style="padding:0"></span>
             </div></template>
-         <br/>{{JSON.stringify(mo)}}
+         <div style="margin-top:1em">
+            <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
+                 style="float:right; margin-right:1em; font-size:75%;">
+               <span class="uk-link">+/- mo</span></div
+           ><div style="display:none">{{JSON.stringify(mo)}}</div><br>
+            <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
+                 style="float:right; margin-right:1em; font-size:75%;">
+               <span class="uk-link">+/- log</span></div
+           ><div style="display:none" id="log"></div>
+         </div>
       </div>
       <div v-if="ohiFrom"
            class="uk-card uk-card-secondary uk-text-small uk-border-rounded"
