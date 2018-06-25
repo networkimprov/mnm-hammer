@@ -12,7 +12,7 @@
 
    <script src="/web/vue-25.js"></script>
    <script src="/web/markdown-it-84.js"></script>
-
+   <script src="/web/luxon-13.js"></script>
    <link  href="/web/vue-formgen-22.css" rel="stylesheet"/>
    <script src="/web/vue-formgen-22.js"></script>
 
@@ -47,6 +47,7 @@
          });
       };
       mnm._formatDate = function(iDate, iYmd, iHms) {
+         iDate = luxon.DateTime.fromISO(iDate).toString();
          var aD = iDate.substring(iYmd === 'md' ? 5 : 0, 10);
          if (aD.charAt(0) === '0')
             aD = '\u2007' + aD.substr(1);
