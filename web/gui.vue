@@ -46,15 +46,6 @@
             return 1;
          });
       };
-      mnm._formatDate = function(iDate, iYmd, iHms) {
-         iDate = luxon.DateTime.fromISO(iDate).toString();
-         var aD = iDate.substring(iYmd === 'md' ? 5 : 0, 10);
-         if (aD.charAt(0) === '0')
-            aD = '\u2007' + aD.substr(1);
-         if (!iHms)
-            return aD;
-         return aD +' '+ iDate.substring(11, iHms === 'hm' ? 16 : 19);
-      };
       mnm._toClipboard = function(iRef) {
          var aEl = document.getElementById('toclipboard');
          aEl.value = iRef;
@@ -119,7 +110,7 @@
                   class="message-title"
                   :class="{'message-title-edit': aMsg.From === '' && !aMsg.Queued,
                            'message-title-seen': aMsg.Seen !== ''}">
-               {{ fmtD(aMsg.Date,'md','hm') }}
+               <mnm-date :iso="aMsg.Date" ymd="md" hms="hm"></mnm-date>
                <b>{{ aMsg.Alias || aMsg.From }}</b>
             </span>
             <div v-if="aMsg.Queued"
@@ -291,13 +282,15 @@
                  onclick="this.lastChild.click()"
                  uk-grid class="uk-grid-small" style="margin:0; padding:0.25em 0; cursor:pointer"
                  :style="{'background-color': aRow.Id === cs.Thread ? 'wheat' : 'inherit'}">
-               <div class="uk-width-auto" style="padding:0">{{ fmtD(aRow.Date,'md') }}</div>
+               <div class="uk-width-auto" style="padding:0">
+                  <mnm-date :iso="aRow.Date" ymd="md"></mnm-date></div>
                <div v-if="aRow.Id.indexOf('/') < 0"
                     class="uk-width-1-6">{{'Last Author'}}</div>
                <div class="uk-width-expand">
                   {{'Something'}} {{aRow.Id}}
                </div>
-               <div class="uk-width-auto">{{ fmtD('2018-01-17T04:16:57Z') }}</div>
+               <div class="uk-width-auto">
+                  <mnm-date :iso="'2018-01-17T04:16:57Z'"></mnm-date></div>
                <div v-if="aRow.Id.indexOf('/') < 0"
                     class="uk-width-1-6">{{'Orig Author'}}</div>
                <span v-if="aRow.Id.indexOf('/') >= 0"
@@ -369,6 +362,30 @@
 </div>
 </script>
 
+<script type="text/x-template" id="mnm-date">
+   <span :title="title">{{text}}</span>
+</script><script>
+   Vue.component('mnm-date', {
+      template: '#mnm-date',
+      props: ['iso', 'ymd', 'hms'],
+      computed: {
+         local: function() { return luxon.DateTime.fromISO(this.iso) },
+         text: function() {
+            var aDate = this.local.toString();
+            var aD = aDate.substring(this.ymd === 'md' ? 5 : 0, 10);
+            if (aD.charAt(0) === '0')
+               aD = '\u2007' + aD.substr(1);
+            if (!this.hms)
+               return aD;
+            return aD +' '+ aDate.substring(11, this.hms === 'hm' ? 16 : 19);
+         },
+         title: function() {
+            return this.local.toLocaleString(luxon.DateTime.DATETIME_FULL_WITH_SECONDS);
+         },
+      },
+   });
+</script>
+
 <script type="text/x-template" id="mnm-subject">
    <div uk-dropdown="mode:click; offset:2" style="padding:0 0.5em 0.5em">
       <template v-for="aSubject in list">
@@ -398,7 +415,8 @@
                :href="'#'+ mnm._data.cs.Thread +'&'+ aFile.MsgId"><span uk-icon="mail"></span></a>
             <span v-else
                   uk-icon="mail" style="visibility:hidden"></span>
-            {{aFile.Date}} &nbsp;
+            <mnm-date :iso="aFile.Date" ymd="md" hms="hm"></mnm-date>
+            &nbsp;
             <button v-if="false"
                     :title="aFile.File.charAt(17) === 'u' ? 'Copy to attachable files'
                                                           : 'Copy to blank forms'"
@@ -637,7 +655,7 @@
          </li></ul>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
          <li v-for="aFile in mnm._data.t" :key="aFile.Name">
-            {{aFile.Date}}
+            <mnm-date :iso="aFile.Date" hms="hm"></mnm-date>
             <button v-if="toggle"
                     @click="$emit('attach', 'upload/'+aFile.Name)"
                     title="Attach file"
@@ -693,7 +711,7 @@
          <ul class="uk-list uk-list-divider dropdown-scroll-list">
             <template v-for="aSet in mnm._data.f">
             <li v-for="aFile in aSet.Revs" :key="aSet.Name+'.'+aFile.Id">
-               {{aFile.Date}}
+               <mnm-date :iso="aFile.Date" hms="hm"></mnm-date>
                <button v-if="toggle"
                        @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
                        title="Attach form"
@@ -833,13 +851,12 @@
          :href="'#'+ response.Tid +'&'+ response.MsgId"><span uk-icon="mail"></span></a>
       <template v-else>
          ping</template>
-      {{fmtD(response.Date)}}
+      <mnm-date :iso="response.Date"></mnm-date>
    </span>
 </script><script>
    Vue.component('mnm-pingresponse', {
       template: '#mnm-pingresponse',
       props: ['response'],
-      methods: { fmtD: mnm._formatDate }
    });
 </script>
 
@@ -854,14 +871,15 @@
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>From</th><th>Message</th><th>Response</th></tr>
                <tr v-for="a in mnm._data.pf">
-                  <td>{{fmtD(a.Date)}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
+                  <td><mnm-date :iso="a.Date"></mnm-date></td>
+                  <td>{{a.Alias}}</td><td>{{a.Text}}</td>
                   <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>Group</th><th>From</th><th>Msg</th><th>Response</th></tr>
                <tr v-for="a in mnm._data.if">
-                  <td>{{fmtD(a.Date)}}</td>
+                  <td><mnm-date :iso="a.Date"></mnm-date></td>
                   <td>{{a.Gid}}
                      <span v-if="mnm._data.gl.find(function(c){return c.Gid === a.Gid})"
                            class="uk-badge">in</span>
@@ -910,21 +928,23 @@
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>To</th><th>Message</th><th>Response</th></tr>
                <tr v-for="a in mnm._data.pt">
-                  <td>{{fmtD(a.Date)}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
+                  <td><mnm-date :iso="a.Date"></mnm-date></td>
+                  <td>{{a.Alias}}</td><td>{{a.Text}}</td>
                   <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>Group</th><th>To</th><th>Message</th><th>Response</th></tr>
                <tr v-for="a in mnm._data.it">
-                  <td>{{fmtD(a.Date)}}</td><td>{{a.Gid}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
+                  <td><mnm-date :iso="a.Date"></mnm-date></td>
+                  <td>{{a.Gid}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
                   <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>Group</th></tr>
                <tr v-for="a in mnm._data.gl">
-                  <td>{{fmtD(a.Date)}}</td>
+                  <td><mnm-date :iso="a.Date"></mnm-date></td>
                   <td>{{a.Gid}}
                      <span v-if="a.Admin"
                            class="uk-badge">A</span></td>
@@ -942,7 +962,8 @@
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>To</th><th></th></tr>
                <tr v-for="a in mnm._data.ot">
-                  <td>{{fmtD(a.Date)}}</td><td>{{a.Uid /*todo alias*/}}</td>
+                  <td><mnm-date :iso="a.Date"></mnm-date></td>
+                  <td>{{a.Uid /*todo alias*/}}</td>
                   <td><button @click="mnm.OhiDrop(null,a.Uid)"
                               title="Stop notifying contact"
                               class="btn-iconred"><span uk-icon="trash"></span></button></td>
@@ -966,7 +987,6 @@
          },
       },
       methods: {
-         fmtD: mnm._formatDate,
          rowId: function(iRec) { return iRec.Alias +'\0'+ (iRec.Gid || '') },
          startPing: function() {
             mnm.PingSave({alias:mnm._data.cf.Alias, to:this.draft.to, gid:this.draft.gid});
@@ -1068,7 +1088,6 @@
       template: '#mnm-main',
       data: mnm._data,
       methods: {
-         fmtD: mnm._formatDate,
          tabSearch: function(iText, iState) {
             if (iText.length === 0)
                return;
