@@ -101,12 +101,12 @@ func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
    return err
 }
 
-func editOhi(iSvc string, iUpdt *Update) *SendRecord {
+func editOhi(iSvc string, iUpdt *Update) (*SendRecord, error) {
    var err error
    aUid := iUpdt.Ohi.Uid
    if aUid == "" {
       aUid = lookupAdrsbk(iSvc, []string{iUpdt.Ohi.Alias})[0].Id //todo drop this
-      if aUid == "" { quit(tError("missing Uid")) }
+      if aUid == "" { return nil, tError("missing Uid") }
    }
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
@@ -123,7 +123,7 @@ func editOhi(iSvc string, iUpdt *Update) *SendRecord {
    }
    err = storeFile(ohiFile(iSvc), aMap)
    if err != nil { quit(err) }
-   return &SendRecord{Id: string(eSrecOhi) + aOp + makeLocalId(aUid)}
+   return &SendRecord{Id: string(eSrecOhi) + aOp + makeLocalId(aUid)}, nil
 }
 
 func sendEditOhi(iW io.Writer, iSvc string, iQid, iId string) error {

@@ -428,7 +428,8 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if err != nil { return fErr, nil }
       aFn, aResult = fAll, []string{"/v"}
    case "ohi_add", "ohi_drop":
-      aSrec = editOhi(iSvc, iUpdt)
+      aSrec, err = editOhi(iSvc, iUpdt)
+      if err != nil { return fErr, nil }
       aFn, aResult = fAll, []string{"ot"}
    case "ping_save":
       storeDraftAdrsbk(iSvc, iUpdt)
