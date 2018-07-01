@@ -154,6 +154,10 @@ type Update struct {
    Accept *struct {
       Qid string
    }
+   Adrsbk *struct {
+      Type int8
+      Term string
+   }
    Ohi *struct {
       Alias string
       Uid string

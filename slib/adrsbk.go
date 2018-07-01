@@ -209,6 +209,33 @@ func _listLogs(iSvc *tAdrsbk, iIdx map[string]tAdrsbkLog) []tAdrsbkEl {
    return aLog
 }
 
+func searchAdrsbk(iSvc string, iUpdt *Update) []string {
+   aSvc := _loadAdrsbk(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   aTerm := strings.ToLower(iUpdt.Adrsbk.Term)
+   var aResult, aSet []string
+   fMatch := func(cName string) {
+      aSet = strings.Split(strings.ToLower(cName), " ") //todo better split logic
+      for c := range aSet {
+         if strings.HasPrefix(aSet[c], aTerm) {
+            aResult = append(aResult, cName)
+            return
+         }
+      }
+   }
+   var aName string
+   if iUpdt.Adrsbk.Type & 1 == 1 {
+      for aName, _ = range aSvc.aliasIdx {
+         if _, ok := aSvc.groupIdx[aName]; !ok { fMatch(aName) }
+      }
+   }
+   if iUpdt.Adrsbk.Type & 2 == 2 {
+      for aName, _ = range aSvc.groupIdx { fMatch(aName) }
+   }
+   sort.Strings(aResult)
+   return aResult
+}
+
 func lookupAdrsbk(iSvc string, iAlias []string) []tHeaderFor {
    aSvc :=  _loadAdrsbk(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()

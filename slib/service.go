@@ -443,6 +443,13 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "accept_send":
       aSrec = _queueAdd(iSvc, eSrecAccept, iUpdt.Accept.Qid)
       aFn, aResult = fAll, []string{"if"}
+   case "adrsbk_search":
+      if iUpdt.Adrsbk.Term == "" {
+         err = tError("search term missing")
+         return fErr, nil
+      }
+      aResult = searchAdrsbk(iSvc, iUpdt)
+      aFn, aResult = fOne, append([]string{"_n"}, aResult...)
    case "thread_recvtest":
       aTid := iState.getThread()
       if len(aTid) > 0 && aTid[0] == '_' { break }

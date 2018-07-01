@@ -244,6 +244,10 @@
              "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
                         "Default":["All", "Unread", "Todo", "FFT"], "Pinned":["ohi"], "Type":1}} }
 },{
+   "Updt": {"Op":"adrsbk_search", "Adrsbk":{"Type":3, "Term":"go"}},
+   "Result": {
+      "_n": ["Gold-G#td", "Gold#td"] }
+},{
    "Updt": {"Op":"open"},
    "Result": {
       "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"}] ,

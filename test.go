@@ -278,6 +278,7 @@ func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
       _applyLastId(&iUpdt.Navigate.MsgId,    &aApply, iLastId, "ml")
    case "navigate_history",
         "tab_add", "tab_pin", "tab_drop", "tab_select",
+        "adrsbk_search",
         "open",
         "test":
       // nothing to do

@@ -33,6 +33,9 @@
    mnm.InviteAccept = function(i) {
       _wsSend(JSON.stringify({op:'accept_send', accept:{qid:i}}))
    };
+   mnm.AdrsbkSearch = function(iType, iTerm) {
+      _wsSend(JSON.stringify({op:'adrsbk_search', adrsbk:{type:iType, term:iTerm}}))
+   };
 
    mnm.NavigateThread = function(i) {
       _wsSend(JSON.stringify({op:'navigate_thread', navigate:{threadId:i}}))
@@ -117,6 +120,10 @@
             return;
          var aObj = JSON.parse(iEvent.data);
          for (var a=0; a < aObj.length; ++a) {
+            if (aObj[a] === '_n') {
+               mnm.Render('nameset', null, aObj.slice(a+1));
+               return;
+            }
             if (aObj[a] === '_t')
                mnm.ThreadChange();
             else if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')
