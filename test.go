@@ -203,6 +203,10 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
       for {
          for aN := 0; aN < len(aOps); aN++ {
             aOp, aId := aOps[aN], ""
+            if aOp == "_n" {
+               _verifyNameList(aOps[1+aN:], iTc.Orders[a].Result[aOp], aPrefix +" "+ aOp)
+               break
+            }
             if aOp == "_t" { continue }
             if aOp == "mn" || aOp == "an" || aOp == "fn" {
                aN++
@@ -304,6 +308,18 @@ func _applyLastId(iField, iMsg *string, iLastId tTestLastId, iType string) {
    }
    aAmp := ""; if *iMsg != "" { aAmp = " & " }
    *iMsg += aAmp + *iField
+}
+
+func _verifyNameList(iList []string, iExpect interface{}, iPrefix string) {
+   aGot := make([]interface{}, len(iList))
+   for aI := range iList { aGot[aI] = iList[aI] }
+   if iExpect == nil {
+      fmt.Fprintf(os.Stderr, "%s unexpected\n  got    %v\n",
+                             iPrefix, aGot)
+   } else if !_hasExpected(iExpect, aGot) {
+      fmt.Fprintf(os.Stderr, "%s mismatch\n  expect %v\n  got    %v\n",
+                             iPrefix, iExpect, aGot)
+   }
 }
 
 func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
