@@ -104,6 +104,23 @@ input[type=text] {
    max-width: 100%;
 }
 
+.adrsbkmenu {
+   box-sizing: border-box;
+   background-color: gainsboro;
+   padding: 4px;
+}
+.adrsbkmenu div, .adrsbkmenu span {
+   padding: 0 0.2em;
+   white-space: pre;
+   cursor: default;
+}
+.adrsbkmenu-none {
+   text-align: center;
+}
+.adrsbkmenu-select {
+   background-color: white;
+}
+
 .draftmenu {
    min-width: 4em;
    float: left;

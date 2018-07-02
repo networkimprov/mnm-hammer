@@ -20,6 +20,7 @@
    <script src="/web/socket.js"></script>
    <script>
       mnm._mdi = markdownit();
+      mnm._adrsbkmenu = null;
       mnm._lastPreview = '';
       mnm._data = {
       // global
@@ -128,8 +129,8 @@
                           class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
                   <div @keypress="keyAction('pv_'+aMsg.Id, $event)">
                      <div style="position:relative; padding:1px;">
-                        <input @keyup.enter="ccAdd(aMsg.Id, $event.target)"
-                               placeholder="+To" size="25" type="text">
+                        <mnm-adrsbkinput @keyup.enter.native="ccAdd(aMsg.Id, $event.target)"
+                                         :type="3" placeholder="+To" size="25"></mnm-adrsbkinput>
                         <div style="height:100%; position:absolute; left:13em; right:2em; top:0;">
                            <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Cc"
                                           :msgid="aMsg.Id" :drop="ccDrop"></mnm-draftmenu>
@@ -205,6 +206,7 @@
                </template>
             </template>
          </li></ul>
+      <mnm-adrsbkmenu></mnm-adrsbkmenu>
    </div>
 </div>
 
@@ -438,6 +440,92 @@
       template: '#mnm-attach',
       computed: { mnm: function() { return mnm } },
       methods: { listSort: function(i) { return mnm._listSort('al', i) } },
+   });
+</script>
+
+<script type="text/x-template" id="mnm-adrsbkinput">
+   <div style="display:inline-block">
+      <input @focus="menu.placeEl($el, type, $event.target.value)"
+             @blur ="menu.hideEl()"
+             @input="menu.search(type, $event.target.value)"
+             @keypress.down ="menu.selectItem($event.target,  1)"
+             @keypress.up   ="menu.selectItem($event.target, -1)"
+             @keypress.esc  ="menu.selectNone($event.target)"
+             @keyup.enter   ="menu.clear()"
+             v-bind="$attrs" type="text">
+      <!--menu appended here-->
+   </div>
+</script><script>
+   Vue.component('mnm-adrsbkinput', {
+      template: '#mnm-adrsbkinput',
+      props: ['type'],
+      inheritAttrs: false,
+      computed: { menu: function() { return mnm._adrsbkmenu } },
+   });
+</script>
+
+<script type="text/x-template" id="mnm-adrsbkmenu">
+   <div style="position:relative; display:none">
+      <div v-show="query"
+           @mousedown.prevent=""
+           style="position:absolute; min-width:100%" class="adrsbkmenu">
+         <div v-show="!list.length"
+              class="adrsbkmenu-none">[ no result ]</div>
+         <div v-for="(aName, aI) in list"
+              :title="'Use \u2191\u2193 keys to select'"
+              :class="{'adrsbkmenu-select': aI === select}">{{aName}}</div>
+      </div></div>
+</script><script>
+   Vue.component('mnm-adrsbkmenu', {
+      template: '#mnm-adrsbkmenu',
+      data: function() { return { query:'', list:[], select:-1 } },
+      created: function() { mnm._adrsbkmenu = this },
+      methods: {
+         clear: function() {
+            this.query = '';
+            this.select = -1;
+            this.list = [];
+         },
+         placeEl: function(iParent, iType, iQuery) {
+            if (iParent.lastChild !== this.$el) {
+               this.clear();
+               this.query = iQuery;
+               if (iQuery)
+                  mnm.AdrsbkSearch(iType, iQuery);
+               iParent.appendChild(this.$el);
+            }
+            this.$nextTick(function() {
+               this.$el.style.display = 'block';
+            });
+         },
+         hideEl: function() {
+            this.$el.style.display = 'none';
+         },
+         search: function(iType, iQuery) {
+            this.select = -1;
+            this.query = iQuery;
+            if (iQuery)
+               mnm.AdrsbkSearch(iType, iQuery);
+            else
+               this.list = [];
+         },
+         results: function(iList) {
+            this.list = iList;
+         },
+         selectNone: function(iInput) {
+            this.select = -1;
+            iInput.value = this.query;
+         },
+         selectItem: function(iInput, iDirection) {
+            if (this.select === -1 && iDirection === -1)
+               this.select = this.list.length;
+            this.select += iDirection;
+            if (this.select === this.list.length || this.select === -1)
+               this.selectNone(iInput);
+            else
+               iInput.value = this.list[this.select];
+         },
+      },
    });
 </script>
 
@@ -896,15 +984,21 @@
                </tr></table></li>
          <li>
             <form onsubmit="return false"
-                  style="text-align:center">
+                  style="margin: 0 auto; display:table">
                <input v-model="draft.to" placeholder="To" size="25" type="text">
-               <input v-model="draft.gid" placeholder="(Group)" size="25" type="text">
+               <div style="display:inline-block; vertical-align:top">
+                  <input v-model="draft.gid" placeholder="(Group)" size="25" type="text">
+                  <br>
+                  <mnm-adrsbkinput @keyup.enter.native="setGid($event.target)"
+                                   @keypress.enter.native.prevent=""
+                                   :type="2" placeholder="Search groups" size="25"></mnm-adrsbkinput>
+               </div>
                <button @click="startPing()"
                        :disabled="!validDraft"
                        title="New ping draft"
                        class="btn-icon"><span uk-icon="pencil"></span></button>
             </form>
-            <table class="uk-table uk-table-small">
+            <table class="uk-table uk-table-small" style="margin:0">
                <tr><th>To / (Group)</th><th></th><th>Message</th><th></th></tr>
                <tr v-for="a in mnm._data.ps" :key="rowId(a)">
                   <td>{{a.Alias}}<br>{{a.Gid && '('+a.Gid+')'}}</td>
@@ -951,10 +1045,11 @@
                </tr></table></li>
          <li>
             <form onsubmit="this.reset(); return false;"
-                  style="text-align:center">
-               <input oninput="this.nextElementSibling.disabled = !this.value"
-                      placeholder="Add someone" size="40" type="text" name="resets">
-               <button onclick="mnm.OhiAdd(this.previousElementSibling.value)"
+                  style="margin: 0 auto; display:table">
+               <mnm-adrsbkinput oninput="this.form.elements[1].disabled = !this.value"
+                                :type="1" placeholder="To" size="40"
+                                name="resets" autocomplete="off"></mnm-adrsbkinput>
+               <button onclick="mnm.OhiAdd(this.form.elements[0].value)"
                        disabled
                        title="Notify contact when you're online"
                        class="btn-icontxt">o/</button>
@@ -988,6 +1083,13 @@
       },
       methods: {
          rowId: function(iRec) { return iRec.Alias +'\0'+ (iRec.Gid || '') },
+         setGid: function(iInput) {
+            if (iInput.value) {
+               this.draft.gid = iInput.value;
+               iInput.value = '';
+            }
+            iInput.form.elements[1].focus();
+         },
          startPing: function() {
             mnm.PingSave(this.draft);
             this.draft.to = this.draft.gid = '';
@@ -1383,6 +1485,9 @@
                      Vue.set(aOrig.form_fill, aK, iEtc.form_fill[aK]);
             }
          }
+         break;
+      case 'nameset':
+         mnm._adrsbkmenu.results(iEtc);
          break;
       }
    };
