@@ -103,8 +103,8 @@
              class="uk-width-1-6 search-box">
    </div>
    <div uk-height-viewport="offset-top:true; offset-bottom:true"
-        class="firefox-minheight-fix uk-overflow-auto">
-      <ul id="msg-panel" class="uk-list uk-list-divider message-list">
+        class="firefox-minheight-fix uk-overflow-auto message-list">
+      <ul class="uk-list uk-list-divider">
          <li v-for="aMsg in ml" :key="aMsg.Id"
              :class="{'message-edit': aMsg.From === '' && !aMsg.Queued}" style="margin:0">
             <span @click="msgToggle(aMsg.Id)"

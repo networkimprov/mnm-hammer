@@ -16,6 +16,12 @@ body {
 .message-list {
    background-color: #fff7cf;
 }
+.message-list ul {
+   border-bottom: 4px double lightgray;
+}
+.message-list ul li {
+   padding: 0 0.2em 0 0.5em;
+}
 
 .message-edit {
    background-color: #ffffdc;
