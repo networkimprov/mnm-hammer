@@ -59,9 +59,7 @@ See also <a target="_blank" href="https://github.com/networkimprov/mnm/blob/mast
 
 <p>This version of mnm is a localhost web app (i.e. it runs on personal devices and its UI runs 
 in a browser). 
-It's written in Go &amp; Vue.js. 
-The source is <a target="_blank" href="https://github.com/networkimprov/mnm-hammer"
->on GitHub</a>. 
+The source is <a target="_blank" href="https://github.com/networkimprov/mnm-hammer">on GitHub</a>. 
 </p>
 
 <p>mnm stands for <i>Mnm is Not Mail</i></p>
@@ -382,8 +380,7 @@ This example illustrates all the options:
 </pre>
 
 <p style="margin-bottom:0">This version of mnm embeds the 
-<a target="_blank" href="https://github.com/vue-generators/vue-form-generator"
->Vue Form Generator</a> to render blank forms and produce results from user input. 
+Vue Form Generator to render blank forms and produce results from user input. 
 See the <a target="_blank" href="https://icebob.gitbooks.io/vueformgenerator/content/schema.html"
 >VFG docs</a> covering form definition objects. 
 This example definition conforms to the above spec: 
@@ -595,9 +592,6 @@ for essential rich-text HTML features.
 Markdown avoids the mouse reliance and inconsistent behavior of browser WYSIWYG editors. 
 Consult the <a target="_blank" href="http://commonmark.org/help/">CommonMark Reference</a> 
 for a description of its features. 
-This version of mnm embeds the 
-<a target="_blank" href="https://github.com/markdown-it/markdown-it">markdown-it</a> 
-rendering library. 
 mnm extends Markdown as follows: 
 </p>
 
@@ -661,7 +655,36 @@ to the right of the header, then paste the string from the clipboard.
 </p>
 
 
-<h3 id="lcns">13. License</h3>
+<h3 id="cred">13. Credits</h3>
+
+<p>The mnm client and server are written in 
+<a target="_blank" href="https://golang.org/">Go</a> (without which they probably would not exist). 
+The client also depends on 
+<a target="_blank" href="https://github.com/gorilla/websocket">Gorilla Websocket</a>. 
+</p>
+
+<p>The browser-based UI depends on 
+<a target="_blank" href="https://vuejs.org/">Vue.js</a> for HTML templates and components, 
+<a target="_blank" href="https://getuikit.com/">UIkit</a> for stylesheets, 
+<a target="_blank" href="https://github.com/markdown-it/markdown-it">markdown-it</a> 
+for Markdown rendering, 
+<a target="_blank" href="https://github.com/moment/luxon">Luxon</a> for Date/Time formatting, and 
+<a target="_blank" href="https://github.com/vue-generators/vue-form-generator">vue-form-generator</a> 
+for the Blank Forms feature. 
+</p>
+
+<p>mnm is always tested first with 
+<a target="_blank" href="https://www.mozilla.org/">Mozilla Firefox</a>, 
+and the author frequently turns to the 
+<a target="_blank" href="https://developer.mozilla.org/">MDN web docs</a>. 
+</p>
+
+<p>Development of mnm is mangaged with 
+<a target="_blank" href="https://git-scm.com/">Git</a>. 
+</p>
+
+
+<h3 id="lcns">14. License</h3>
 
 <p>Copyright 2018 Liam Breck
 <br>
@@ -704,6 +727,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See said License for detail
 </ol></li>
 <li><a href="#conf">General Configuration</a></li>
 <li><a href="#docs">Documentation</a></li>
+<li><a href="#cred">Credits</a></li>
 <li><a href="#lcns">License</a></li>
 </ol>
 
