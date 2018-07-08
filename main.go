@@ -77,7 +77,7 @@ func mainResult() int {
 
    fmt.Printf("mnm-hammer tmtp client v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
 
-   if sTest {
+   if sTestHost != "" {
       test()
    } else {
       pSl.Init(startService)

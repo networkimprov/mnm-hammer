@@ -22,7 +22,7 @@ import (
    "time"
 )
 
-var sTest = false // used by main.go
+var sTestHost = "" // used by main.go
 var sTestState []tTestStateEl // used by main.go
 var sTestDate = dateRFC3339()
 
@@ -66,7 +66,7 @@ type tTestAnyId []struct {
 }
 
 func init() {
-   flag.BoolVar(&sTest, "test", sTest, "run test sequence")
+   flag.StringVar(&sTestHost, "test", sTestHost, "run test sequence using named service host:port")
 }
 
 func test() {
@@ -104,6 +104,7 @@ func test() {
          goto ReturnErr
       }
       if aTc.Cfg.Name != "" {
+         aTc.Cfg.Addr = sTestHost
          aTc.Cfg.Alias += sTestDate
          err = aEnc.Encode(aTc.Cfg)
          if err != nil { quit(err) }
