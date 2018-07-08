@@ -82,7 +82,7 @@ func test() {
    if err != nil { quit(err) }
 
    aDir := "test-run/" + sTestDate
-   err = os.MkdirAll(aDir, 0600)
+   err = os.MkdirAll(aDir, 0700)
    if err != nil { quit(err) }
    err = os.Chdir(aDir)
    if err != nil { quit(err) }
