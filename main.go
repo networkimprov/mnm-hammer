@@ -78,6 +78,8 @@ func mainResult() int {
 
    fmt.Printf("mnm-hammer tmtp client v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
 
+   sServices["local"] = tService{ccs: newClientConns()}
+
    if sTestHost != "" {
       test()
    } else {
@@ -118,7 +120,7 @@ type tService struct {
 
 func startService(iSvcId string) {
    sServicesDoor.Lock(); defer sServicesDoor.Unlock()
-   if sServices[iSvcId].queue != nil {
+   if sServices[iSvcId].ccs != nil {
       panic(fmt.Sprintf("startService %s: already started", iSvcId))
    }
    sServices[iSvcId] = tService{queue: newQueue(iSvcId), ccs: newClientConns()}
@@ -453,7 +455,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
    if err == nil {
       aSvc := getService(aSvcId)
-      if aSvc.queue == nil {
+      if aSvc.ccs == nil {
          err = tError("service not found")
       } else if aQuery != "" {
          aCc := aSvc.ccs.Get(aCid)
@@ -603,7 +605,7 @@ var sWsInit = pWs.Upgrader {
 func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
    aSvcId := iReq.URL.Path[3:]; if aSvcId == "" { aSvcId = "local" }
    aSvc := getService(aSvcId)
-   if aSvc.queue == nil {
+   if aSvc.ccs == nil {
       iResp.WriteHeader(http.StatusNotFound)
       iResp.Write([]byte("service not found: "+aSvcId))
       return

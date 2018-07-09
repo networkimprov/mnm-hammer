@@ -153,7 +153,7 @@ func test() {
 func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    defer iWg.Done()
    aSvc := getService(iTc.SvcId)
-   if aSvc.queue == nil {
+   if aSvc.ccs == nil {
       fmt.Fprintf(os.Stderr, "%s %s  client quit\n  service unknown\n", iTc.Name, iTc.SvcId)
       return
    }

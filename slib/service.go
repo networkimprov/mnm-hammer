@@ -418,11 +418,20 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    fErr := func(c *ClientState) interface{} { if c == iState {
                                             return iUpdt.Op +" "+ err.Error() }; return nil }
 
+   if iSvc == "local" && iUpdt.Op != "open" {
+      err = tError("not supported")
+      return fErr, nil
+   }
+
    switch iUpdt.Op {
    case "open":
-      aFn, aResult = fOne, []string{"of", "ot", "ps", "pt", "pf", "if", "it", "gl",
-                                    "cf", "tl", "cs", "al", "_t", "ml", "mo",
-                                    "/v", "/t", "/f"}
+      if iSvc == "local" {
+         aFn, aResult = fOne, []string{"/v", "/t", "/f"}
+      } else {
+         aFn, aResult = fOne, []string{"of", "ot", "ps", "pt", "pf", "if", "it", "gl",
+                                       "cf", "tl", "cs", "al", "_t", "ml", "mo",
+                                       "/v", "/t", "/f"}
+      }
    case "service_update":
       err = _updateService(iUpdt.Service)
       if err != nil { return fErr, nil }

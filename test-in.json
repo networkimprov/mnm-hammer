@@ -1,6 +1,18 @@
 [{
 
 "Version": "0.0.0",
+"Name": "local1", "SvcId": "local",
+"Orders": [{
+   "Updt": {"Op":"open"},
+   "Result": {
+      "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"}] ,
+      "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
+                                                  {"Id":"spec",     "Date":"*d"}] }] ,
+      "/v": ["Blue", "Gold"] }
+}]
+
+},{
+
 "Name": "Blue1", "SvcId": "Blue",
 "Cfg": {"Name":"Blue", "Alias":"Blue"},
 "Files": [{
