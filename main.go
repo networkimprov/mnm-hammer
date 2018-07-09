@@ -31,6 +31,7 @@ import (
    "mime/multipart"
    "net"
    "os"
+   "path"
    pSl "mnm-hammer/slib"
    pWs "github.com/gorilla/websocket-1.2.0"
    "strconv"
@@ -80,6 +81,14 @@ func mainResult() int {
    if sTestHost != "" {
       test()
    } else {
+      _, err = os.Stat("web/service.html")
+      if err != nil {
+         err = os.Chdir(path.Dir(os.Args[0]))
+         if err != nil {
+            fmt.Fprintf(os.Stderr, "chdir: %s\n", err.Error())
+            return 1
+         }
+      }
       pSl.Init(startService)
    }
 
