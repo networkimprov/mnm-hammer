@@ -26,7 +26,7 @@
       // global
          v:[], t:[], f:[], fo:'', // fo populated by f requests
       // per client
-         cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}},
+         cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}},
          sort:{al:'Date', t:'Date', f:'Date'}, //todo move to cs
          ohiFrom:true, //todo move to cs
       // per service
