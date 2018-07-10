@@ -264,7 +264,8 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    }
    aUid := aSvc.aliasIdx[iHead.SubHead.Alias]
    if aUid != "" && aUid != kUidUnknown && aUid != iHead.From {
-      fmt.Fprintf(os.Stderr, "storeReceivedAdrsbk %s: ping from %s blocked\n", iSvc, iHead.From)
+      fmt.Fprintf(os.Stderr, "storeReceivedAdrsbk %s: blocked ping from %s aka %s\n",
+                             iSvc, iHead.From, aUid)
       _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
       return err
    }
