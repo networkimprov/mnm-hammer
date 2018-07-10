@@ -251,6 +251,8 @@
    <div class="uk-position-relative"><!-- context for ohi card -->
       <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto"
            :class="{'uk-background-muted':ffn}">
+         <div v-if="!cf.Uid">
+            <br>Welcome to mnm. See docs in the <span uk-icon="info"></span> menu at top right.</div>
          <template v-if="ffn">
             <table class="uk-table uk-table-small uk-table-hover uk-text-small">
                <tr>
