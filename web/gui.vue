@@ -1070,7 +1070,7 @@
 </script><script>
    Vue.component('mnm-adrsbk', {
       template: '#mnm-adrsbk',
-      data: function() { return {draft:{alias:mnm._data.cf.Alias, to:'', gid:''}, toSave:{}} },
+      data: function() { return {draft:{to:'', gid:''}, toSave:{}} },
       computed: {
          mnm: function() { return mnm },
          validDraft: function() {
@@ -1093,7 +1093,7 @@
             iInput.form.elements[1].focus();
          },
          startPing: function() {
-            mnm.PingSave(this.draft);
+            mnm.PingSave({alias:mnm._data.cf.Alias, to:this.draft.to, gid:this.draft.gid});
             this.draft.to = this.draft.gid = '';
          },
          timer: function(iRec, iText) {
