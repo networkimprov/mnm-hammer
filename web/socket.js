@@ -15,79 +15,78 @@
    mnm.Log = mnm.Render = mnm.ThreadChange = function(){};
 
    mnm.OhiAdd = function(iAliasTo) {
-      _wsSend(JSON.stringify({op:'ohi_add', ohi:{alias:iAliasTo}}))
+      _wsSend({op:'ohi_add', ohi:{alias:iAliasTo}})
    };
    mnm.OhiDrop = function(iAliasTo, iUid) {
-      _wsSend(JSON.stringify({op:'ohi_drop', ohi:{alias:iAliasTo, uid:iUid}}))
+      _wsSend({op:'ohi_drop', ohi:{alias:iAliasTo, uid:iUid}})
    };
 
    mnm.PingSave = function(iObj) { // with alias, to, text, gid
-      _wsSend(JSON.stringify({op:'ping_save', ping:iObj}))
+      _wsSend({op:'ping_save', ping:iObj})
    };
    mnm.PingDiscard = function(iObj) { // with to, gid
-      _wsSend(JSON.stringify({op:'ping_discard', ping:iObj}))
+      _wsSend({op:'ping_discard', ping:iObj})
    };
    mnm.PingSend = function(i) {
-      _wsSend(JSON.stringify({op:'ping_send', ping:{qid:i}}))
+      _wsSend({op:'ping_send', ping:{qid:i}})
    };
    mnm.InviteAccept = function(i) {
-      _wsSend(JSON.stringify({op:'accept_send', accept:{qid:i}}))
+      _wsSend({op:'accept_send', accept:{qid:i}})
    };
    mnm.AdrsbkSearch = function(iType, iTerm) {
-      _wsSend(JSON.stringify({op:'adrsbk_search', adrsbk:{type:iType, term:iTerm}}))
+      _wsSend({op:'adrsbk_search', adrsbk:{type:iType, term:iTerm}})
    };
 
    mnm.NavigateThread = function(i) {
-      _wsSend(JSON.stringify({op:'navigate_thread', navigate:{threadId:i}}))
+      _wsSend({op:'navigate_thread', navigate:{threadId:i}})
    };
    mnm.NavigateHistory = function(i) {
-      _wsSend(JSON.stringify({op:'navigate_history', navigate:{history:i}}))
+      _wsSend({op:'navigate_history', navigate:{history:i}})
    };
    mnm.NavigateLink = function(i) {
       var aPair = i.substr(i.indexOf('#')+1).split('&');
-      _wsSend(JSON.stringify({op:'navigate_link', navigate:
-                                 {threadId:aPair[0], msgId:aPair[1] || aPair[0]}}))
+      _wsSend({op:'navigate_link', navigate:{threadId:aPair[0], msgId:aPair[1] || aPair[0]}})
    };
 
    mnm.ThreadNew = function(iObj) { // with alias, (cc), (data), (attach), (formFill)
       iObj.new = 1;
-      _wsSend(JSON.stringify({op:'thread_save', thread:iObj}))
+      _wsSend({op:'thread_save', thread:iObj})
    };
    mnm.ThreadReply = function(iObj) { // with alias, (cc), (data), (attach), (formFill)
       iObj.new = 2;
-      _wsSend(JSON.stringify({op:'thread_save', thread:iObj}))
+      _wsSend({op:'thread_save', thread:iObj})
    };
    mnm.ThreadSave = function(iObj) { // with id, alias, (cc), (data), (attach), (formFill)
       delete iObj.new // just in case
-      _wsSend(JSON.stringify({op:'thread_save', thread:iObj}))
+      _wsSend({op:'thread_save', thread:iObj})
    };
    mnm.ThreadRecv = function() {
-      _wsSend(JSON.stringify({op:'thread_recvtest', thread:{}}))
+      _wsSend({op:'thread_recvtest', thread:{}})
    };
    mnm.ThreadOpen = function(iId) {
       _xhr('mn', iId, true);
    };
    mnm.ThreadClose = function(iId) {
-      _wsSend(JSON.stringify({op:'thread_close', thread:{id:iId}}))
+      _wsSend({op:'thread_close', thread:{id:iId}})
    };
    mnm.ThreadSend = function(iId) {
-      _wsSend(JSON.stringify({op:'thread_send', thread:{id:iId}}))
+      _wsSend({op:'thread_send', thread:{id:iId}})
    };
    mnm.ThreadDiscard = function(iId) {
-      _wsSend(JSON.stringify({op:'thread_discard', thread:{id:iId}}))
+      _wsSend({op:'thread_discard', thread:{id:iId}})
    };
 
    mnm.TabAdd = function(iObj) { // with type, term
-      _wsSend(JSON.stringify({op:'tab_add', tab:iObj}))
+      _wsSend({op:'tab_add', tab:iObj})
    };
    mnm.TabSelect = function(iObj) { // with type, posfor, pos
-      _wsSend(JSON.stringify({op:'tab_select', tab:iObj}))
+      _wsSend({op:'tab_select', tab:iObj})
    };
    mnm.TabPin = function(iType) {
-      _wsSend(JSON.stringify({op:'tab_pin', tab:{type:iType}}))
+      _wsSend({op:'tab_pin', tab:{type:iType}})
    };
    mnm.TabDrop = function(iType) {
-      _wsSend(JSON.stringify({op:'tab_drop', tab:{type:iType}}))
+      _wsSend({op:'tab_drop', tab:{type:iType}})
    };
 
    mnm.FormOpen = function(iId) {
@@ -172,8 +171,8 @@
             if (i === 'mn') {
                mnm.Render(i, aXhr.responseText, aHead);
                if (iOpen)
-                  _wsSend(JSON.stringify({op:'thread_open', thread:
-                                          {id:aHead.Id, threadid:aHead.SubHead.ThreadId || aHead.Id}}));
+                  _wsSend({op:'thread_open', thread:
+                              {id:aHead.Id, threadid:aHead.SubHead.ThreadId || aHead.Id}});
                return;
             }
             aMap[aHead.Id] = aHead;
@@ -192,7 +191,7 @@
          setTimeout(_wsSend, 5, i);
          mnm.Log('ws op deferred for pending xhr');
       } else {
-         sWs.send(i);
+         sWs.send(JSON.stringify(i));
       }
    }
 
