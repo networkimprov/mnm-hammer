@@ -399,16 +399,16 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
             aFn = func(c *ClientState) interface{} {
                c.renameThread(iHead.Id, iHead.MsgId)
                if c.getThread() == iHead.MsgId { return aResult }
-               return aResult[:2]
+               return aResult[1:3]
             }
          } else {
             aFn = func(c *ClientState) interface{} {
                c.renameMsg(aId.tid(), iHead.Id, iHead.MsgId)
-               if c.getThread() == aId.tid() { return aResult[1:] }
-               return aResult[1:2]
+               if c.getThread() == aId.tid() { return aResult[2:] }
+               return aResult[2:3]
             }
          }
-         aResult = []string{"tl", "pf", "al", "ml", "mn", iHead.MsgId}
+         aResult = []string{"cs", "tl", "pf", "al", "ml", "mn", iHead.MsgId}
       case eSrecOhi:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"_e", iHead.Error}
