@@ -122,10 +122,12 @@
          for (var a=0; a < aObj.length; ++a) {
             if (aObj[a] === '_n') {
                mnm.Render('nameset', null, aObj.slice(a+1));
-               return;
+               break;
             }
             if (aObj[a] === '_t')
                mnm.ThreadChange();
+            else if (aObj[a] === '_e')
+               mnm.Log('ws '+ aObj[++a]);
             else if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')
                _xhr(aObj[a], aObj[++a]);
             else

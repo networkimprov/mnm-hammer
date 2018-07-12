@@ -365,22 +365,35 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          aResult = []string{"pt", "al", "ml"}
       }
    case "ack":
-      if iHead.Error != "" {
-         err = tError("ack: " + iHead.Error)
-         return fErr
-      }
       if iHead.Id == "t_22" { break } //todo temp
       aQid := iHead.Id
       iHead.Id = iHead.Id[1:]
       aId := parseLocalId(iHead.Id)
       switch aQid[0] {
       case eSrecPing:
+         if iHead.Error != "" {
+            aFn, aResult = fAll, []string{"ps", "_e", iHead.Error}
+            break
+         }
          storeSentAdrsbk(iSvc, aId.ping(), iHead.Posted)
          aFn, aResult = fAll, []string{"ps", "pt", "pf", "it", "gl"}
       case eSrecAccept:
+         if iHead.Error != "" {
+            aFn, aResult = fAll, []string{"if", "_e", iHead.Error}
+            break
+         }
          acceptInviteAdrsbk(iSvc, aId.gid(), iHead.Posted)
          aFn, aResult = fAll, []string{"if", "gl"}
       case eSrecThread:
+         if iHead.Error != "" {
+            aTid := aId.tid(); if aTid == "" { aTid = iHead.Id }
+            aFn = func(c *ClientState) interface{} {
+               if c.getThread() == aTid { return aResult }
+               return aResult[1:]
+            }
+            aResult = []string{"ml", "_e", iHead.Error}
+            break
+         }
          storeSentThread(iSvc, iHead)
          if aId.tid() == "" {
             aFn = func(c *ClientState) interface{} {
@@ -397,7 +410,10 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          }
          aResult = []string{"tl", "pf", "al", "ml", "mn", iHead.MsgId}
       case eSrecOhi:
-         return nil // not queued
+         if iHead.Error != "" {
+            aFn, aResult = fAll, []string{"_e", iHead.Error}
+         }
+         return aFn // not queued
       default:
          quit(tError("bad SendRecord " + aQid))
       }
