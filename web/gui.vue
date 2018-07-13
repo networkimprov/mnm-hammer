@@ -55,6 +55,17 @@
          document.execCommand('copy');
          aEl.style.display = 'none';
       };
+      mnm._stringToSeconds = function(iStr) {
+         var aNum = iStr.split(':', 5);
+         if (aNum.length > 4)
+            return NaN;
+         var aSec = null;
+         if (aNum.length > 0 && aNum[0] !== '') aSec += aNum[0]*24*60*60;
+         if (aNum.length > 1 && aNum[1] !== '') aSec += aNum[1]*60*60;
+         if (aNum.length > 2 && aNum[2] !== '') aSec += aNum[2]*60;
+         if (aNum.length > 3 && aNum[3] !== '') aSec += aNum[3]*1;
+         return aSec;
+      };
    </script>
 </head><body>
 <base target="_blank">
@@ -1114,32 +1125,32 @@
 
 <script type="text/x-template" id="mnm-svcadd">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5"
-        @hidden="verify = !(addr = name = alias = loginperiod = null)">
+        @hidden="verify = !(addr = name = alias = lpin = loginperiod = null)">
       <div class="uk-float-right uk-text-small">ADD ACCOUNT</div>
       <form :action="'/v/+' + encodeURIComponent(name)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); return false;">
          <input type="hidden" name="filename" :value="JSON.stringify($data)">
-         <button :disabled="!(addr && name && alias)"
+         <button :disabled="!(addr && name && alias && alias.length >= 8 && !isNaN(loginperiod))"
                  title="Register new account at service"
                  class="btn-icon"><span uk-icon="forward"></span></button>
+         <input v-model="addr"  placeholder="Net Address (host:port)" size="33" type="text">
+         <input v-model="name"  placeholder="Title"                   size="33" type="text">
+         <input v-model="alias" placeholder="Alias (8+ characters)"   size="33" type="text">
+         <input v-model="lpin"  placeholder="(Pd days:hh:mm:ss)"      size="19" type="text"
+                @input="loginperiod = mnm._stringToSeconds($event.target.value)">
+         <div v-show="loginperiod"
+              style="float:right">{{loginperiod}} sec</div>
+         <br>
+         <label><input v-model="verify" type="checkbox"> Verify identity (TLS certificate)</label>
       </form>
-      <input v-model="addr"
-             placeholder="Net Address" size="33" type="text">
-      <input v-model="name"
-             placeholder="Title" size="33" type="text">
-      <input v-model="alias"
-             placeholder="Alias" size="33" type="text">
-      <input v-model.number="loginperiod"
-             placeholder="(Login Frequency)" size="24" type="text">
-      &nbsp; seconds<br>
-      <label><input v-model="verify"
-                    type="checkbox"> Verify identity (TLS certificate)</label>
    </div>
 </script><script>
    Vue.component('mnm-svcadd', {
       template: '#mnm-svcadd',
-      data: function() { return {addr:null, name:null, alias:null, loginperiod:null, verify:true} },
+      data: function() { return {addr:null, name:null, alias:null, lpin:null, loginperiod:null,
+                                 verify:true} },
+      computed: { mnm: function() { return mnm } },
    });
 </script>
 
