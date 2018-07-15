@@ -133,6 +133,11 @@ const ( _ int8 = iota; eForUser; eForGroupAll; eForGroupExcl; eForSelf )
 
 type Update struct {
    Op string
+   Service *struct {
+      Addr string
+      LoginPeriod int
+      Verify bool
+   }
    Thread *struct {
       Id string
       Alias string
@@ -172,7 +177,6 @@ type Update struct {
       PosFor int8
       Pos int
    }
-   Service *tCfgService
    Test *struct {
       Poll time.Duration // for use by test.go
       Request []string

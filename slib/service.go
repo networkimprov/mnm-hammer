@@ -449,9 +449,13 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
                                        "/v", "/t", "/f"}
       }
    case "service_update":
-      err = _updateService(iUpdt.Service)
+      aNewSvc := GetDataService(iSvc)
+      if iUpdt.Service.Addr != "" { aNewSvc.Addr = iUpdt.Service.Addr }
+      if iUpdt.Service.LoginPeriod >= 0 { aNewSvc.LoginPeriod = iUpdt.Service.LoginPeriod }
+      if iUpdt.Service.Verify { aNewSvc.Verify = !aNewSvc.Verify }
+      err = _updateService(aNewSvc)
       if err != nil { return fErr, nil }
-      aFn, aResult = fAll, []string{"/v"}
+      aFn, aResult = fAll, []string{"cf"}
    case "ohi_add", "ohi_drop":
       aSrec, err = editOhi(iSvc, iUpdt)
       if err != nil { return fErr, nil }
