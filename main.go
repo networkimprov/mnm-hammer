@@ -285,6 +285,9 @@ func runTmtpRecv(iSvcId string) {
          aDlr := net.Dialer{Timeout: 3 * time.Second}
          aConn, err = tls.DialWithDialer(&aDlr, "tcp", aCfg.Addr, &aCfgTls)
          if err == nil { break }
+         aSvc.ccs.Range(func(c *tWsConn) {
+            c.WriteJSON(err.Error())
+         })
          fmt.Fprintf(os.Stderr, "runTmtpRecv %s: %s\n", iSvcId, err.Error())
          time.Sleep(time.Duration(5000 + time.Now().Nanosecond() % 1000 * 5) * time.Millisecond)
       }
@@ -303,8 +306,8 @@ func runTmtpRecv(iSvcId string) {
 
       aJson, err = json.Marshal(pSl.LogoutService(iSvcId))
       if err != nil { panic(err) }
-      aSvc.ccs.Range(func(cC *tWsConn) {
-         cC.WriteMessage(pWs.TextMessage, aJson)
+      aSvc.ccs.Range(func(c *tWsConn) {
+         c.WriteMessage(pWs.TextMessage, aJson)
       })
    }
 }
