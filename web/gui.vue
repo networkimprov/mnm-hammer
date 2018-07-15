@@ -66,6 +66,9 @@
          if (aNum.length > 3 && aNum[3] !== '') aSec += aNum[3]*1;
          return aSec;
       };
+      mnm._secondsToString = function(iNum) {
+         return luxon.Duration.fromMillis(iNum * 1000).toFormat('d:hh:mm:ss');
+      };
    </script>
 </head><body>
 <base target="_blank">
@@ -1154,23 +1157,44 @@
    });
 </script>
 
-<style>.svccfg { word-break: break-all }</style>
-
 <script type="text/x-template" id="mnm-svccfg">
    <div uk-dropdown="mode:click; offset:-4; pos:left-top" class="uk-width-1-5">
-      <div class="uk-text-right uk-text-small">SETTINGS</div>
-      <table class="uk-table uk-table-small" style="margin:0">
-         <tr><td>Net Address</td><td class="svccfg">{{mnm._data.cf.Addr  }}</td></tr>
-         <tr><td>Title      </td><td class="svccfg">{{mnm._data.cf.Name  }}</td></tr>
-         <tr><td>Alias      </td><td class="svccfg">{{mnm._data.cf.Alias }}</td></tr>
-         <tr><td>Uid        </td><td class="svccfg">{{mnm._data.cf.Uid   }}</td></tr>
-         <tr><td>Verify     </td><td class="svccfg">{{mnm._data.cf.Verify}}</td></tr>
-      </table>
+      <div class="uk-float-right uk-text-small">SETTINGS</div>
+      <form onsubmit="return false">
+         <button @click="sendUpdate"
+                 :disabled="!(addr || verify || loginperiod >= 0) || isNaN(loginperiod)"
+                 title="Update settings"
+                 class="btn-icon"><span uk-icon="forward"></span></button>
+         <table class="svccfg">
+            <tr><td>Net Address    </td><td>{{mnm._data.cf.Addr  }}<br>
+               <input v-model="addr" placeholder="New host:port"     size="25" type="text"></td></tr>
+            <tr><td>Login Period   </td><td>{{mnm._secondsToString(mnm._data.cf.LoginPeriod)}}<br>
+               <input v-model="lpin" placeholder="New days:hh:mm:ss" size="25" type="text"
+                      @input="loginperiod = toSeconds($event.target.value)"></td></tr>
+            <tr><td>Verify identity</td><td>{{mnm._data.cf.Verify}}<br>
+               <label><input v-model="verify" type="checkbox"><tt>Toggle</tt></label></td></tr>
+            <tr><td>Title          </td><td>{{mnm._data.cf.Name  }}</td></tr>
+            <tr><td>Alias          </td><td>{{mnm._data.cf.Alias }}</td></tr>
+            <tr><td>Uid            </td><td>{{mnm._data.cf.Uid   }}</td></tr>
+         </table>
+      </form>
    </div>
 </script><script>
    Vue.component('mnm-svccfg', {
       template: '#mnm-svccfg',
+      data: function() { return {addr:null, lpin:null, loginperiod:-1, verify:false} },
       computed: { mnm: function() { return mnm } },
+      methods: {
+         toSeconds: function(i) {
+            var a = mnm._stringToSeconds(i);
+            return a === null ? -1 : a;
+         },
+         sendUpdate: function() {
+            mnm.ServiceUpdt(this.$data);
+            this.verify = !!(this.addr = this.lpin = null);
+            this.loginperiod = -1;
+         },
+      },
    });
 </script>
 

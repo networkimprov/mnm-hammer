@@ -9,6 +9,8 @@
 
 .firefox-minheight-fix { height: 0; }
 
+table { border-spacing: 0; }
+
 body {
    background-color: #f0f8f5;
 }
@@ -172,4 +174,12 @@ input[type=text] {
 .pane-slider     { width:200%; position:relative; }
 .pane-slider-rhs { right:100%; }
 .pane-scroller   { width: 50%; max-height:40vh; overflow:auto; float:left; }
+
+.svccfg tr td {
+   vertical-align: top;
+   padding: 0.5em 0;
+}
+.svccfg tr td:nth-child(2) {
+   word-break: break-all;
+}
 
