@@ -317,6 +317,8 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
    fErr := func(c *ClientState) interface{} { return iHead.Op +" "+ err.Error() }
 
    switch iHead.Op {
+   case "tmtprev":
+      //todo
    case "registered":
       aNewSvc := GetDataService(iSvc)
       aNewSvc.Uid = iHead.Uid
@@ -324,6 +326,8 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       err = _updateService(aNewSvc)
       if err != nil { return fErr }
       aFn, aResult = fAll, []string{"/v"}
+   case "login":
+      aFn, aResult = fAll, []string{"_e", "login by "+ iHead.Node}
    case "info":
       setFromOhi(iSvc, iHead)
       aFn, aResult = fAll, []string{"of"}

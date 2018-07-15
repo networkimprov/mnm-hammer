@@ -74,6 +74,7 @@ type Header struct {
    Error string
    Id, MsgId string
    Uid, NodeId string
+   Node string
    Info string
    Ohi []string
    From string
