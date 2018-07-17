@@ -27,13 +27,30 @@ A first release is in progress.
 
 ### Quick start
 
-1. Follow steps to install & start TCP at https://github.com/networkimprov/mnm
+1. Follow steps to install & start TCP server at https://github.com/networkimprov/mnm
 
-1. Start client  
+1. Build client  
 a) go get github.com/networkimprov/mnm-hammer  
 b) cd $GOPATH/src/github.com/networkimprov/mnm-hammer  
-c) go run mnm-hammer --test [--http [host]:port] # http default localhost:80 may require sudo
+c) ./webdeps.sh # download browser modules  
+d) go build mnm-hammer
+
+1. Start client  
+a) ./mnm-hammer --test server_host:port [--http [host]:port] # http default ":80" may require sudo  
+b) ctrl-C to stop client
 
 1. Point FireFox to http://localhost/Blue # not yet tested in other browsers
 
 1. See docs in the &#9432; menu
+
+### License
+
+Copyright 2018 Liam Breck
+
+This file is part of the "mnm" software. Anyone may redistribute mnm and/or modify
+it under the terms of the GNU Lesser General Public License version 3, as published
+by the Free Software Foundation. See https://www.gnu.org/licenses/
+
+Mnm is distributed WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See said License for details.
+
