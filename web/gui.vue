@@ -90,9 +90,6 @@
       <mnm-subject v-if="msgSubjects.length > 1"
                    :list="msgSubjects"></mnm-subject>
       <div class="uk-float-right">
-         <button @click="mnm.ThreadRecv()"
-                 title="Send test message to self"
-                 class="btn-icon"><span uk-icon="cloud-download"></span></button>
          <span uk-icon="location" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
          <mnm-attach ref="al"></mnm-attach>
          &nbsp;
