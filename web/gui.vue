@@ -1174,7 +1174,8 @@
             <tr><td>Verify identity</td><td>{{mnm._data.cf.Verify}}<br>
                <label><input v-model="verify" type="checkbox"><tt>Toggle</tt></label></td></tr>
             <tr><td>Title          </td><td>{{mnm._data.cf.Name  }}</td></tr>
-            <tr><td>Alias          </td><td>{{mnm._data.cf.Alias }}</td></tr>
+            <tr><td>Alias          </td><td>{{mnm._data.cf.Alias ||
+                                              mnm._data.cf.Error }}</td></tr>
             <tr><td>Uid            </td><td>{{mnm._data.cf.Uid   }}</td></tr>
          </table>
       </form>
