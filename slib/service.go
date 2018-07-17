@@ -35,6 +35,7 @@ type tCfgService struct {
    Uid string
    Alias string
    Node string
+   Error string `json:",omitempty"` // from "registered" message
 }
 
 type tQueueEl struct {
@@ -323,9 +324,16 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       aNewSvc := GetDataService(iSvc)
       aNewSvc.Uid = iHead.Uid
       aNewSvc.Node = iHead.NodeId
+      if iHead.Error != "" {
+         aNewSvc.Alias = ""
+         aNewSvc.Error = "["+ iHead.Error[len("AddAlias: alias "):] +"]"
+      }
       err = _updateService(aNewSvc)
-      if err != nil { return fErr }
-      aFn, aResult = fAll, []string{"/v"}
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "HandleTmtpService %s: %s %s\n", iSvc, iHead.Op, err.Error())
+         return fErr
+      }
+      aFn, aResult = fAll, []string{"cf"}
    case "login":
       aFn, aResult = fAll, []string{"_e", "login by "+ iHead.Node}
    case "info":
