@@ -212,12 +212,12 @@ func _listLogs(iSvc *tAdrsbk, iIdx map[string]tAdrsbkLog) []tAdrsbkEl {
 func searchAdrsbk(iSvc string, iUpdt *Update) []string {
    aSvc := _loadAdrsbk(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
-   aTerm := strings.ToLower(iUpdt.Adrsbk.Term)
+   aTerm := iUpdt.Adrsbk.Term
    var aResult, aSet []string
    fMatch := func(cName string) {
-      aSet = strings.Split(strings.ToLower(cName), " ") //todo better split logic
+      aSet = strings.Split(cName, " ") //todo better split logic
       for c := range aSet {
-         if strings.HasPrefix(aSet[c], aTerm) {
+         if len(aSet[c]) >= len(aTerm) && strings.EqualFold(aSet[c][:len(aTerm)], aTerm) {
             aResult = append(aResult, cName)
             return
          }
