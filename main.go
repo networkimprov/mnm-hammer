@@ -68,7 +68,12 @@ var sServiceTmpl *template.Template
 
 func main() {
    flag.StringVar(&sHttpSrvr.Addr, "http", sHttpSrvr.Addr, "[host]:port of http server")
+   aVersionQuit := flag.Bool("version", false, "print version and quit")
    flag.Parse() // may os.Exit(2)
+   if *aVersionQuit {
+      fmt.Printf("%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
+      os.Exit(0)
+   }
    os.Exit(mainResult())
 }
 
