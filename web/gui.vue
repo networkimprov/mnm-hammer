@@ -382,7 +382,7 @@
 </script><script>
    Vue.component('mnm-date', {
       template: '#mnm-date',
-      props: ['iso', 'ymd', 'hms'],
+      props: {iso:String, ymd:String, hms:String},
       computed: {
          local: function() { return luxon.DateTime.fromISO(this.iso) },
          text: function() {
@@ -411,7 +411,7 @@
 </script><script>
    Vue.component('mnm-subject', {
       template: '#mnm-subject',
-      props: ['list'],
+      props: {list:Array},
       computed: { mnm: function() { return mnm } },
    });
 </script>
@@ -471,7 +471,7 @@
 </script><script>
    Vue.component('mnm-adrsbkinput', {
       template: '#mnm-adrsbkinput',
-      props: ['type'],
+      props: {type:Number},
       inheritAttrs: false,
       computed: { menu: function() { return mnm._adrsbkmenu } },
    });
@@ -558,7 +558,7 @@
 </script><script>
    Vue.component('mnm-draftmenu', {
       template: '#mnm-draftmenu',
-      props: ['msgid', 'list', 'drop', 'getname', 'getkey'],
+      props: {msgid:String, list:Array, drop:Function, getname:Function, getkey:Function},
       watch: {
          list: function() {
             // show menu if changed by any client
@@ -593,7 +593,7 @@
 </script><script>
    Vue.component('mnm-textresize', {
       template: '#mnm-textresize',
-      props: ['src'],
+      props: {src:String},
       mounted: function() { this.resize() },
       updated: function() { this.resize() },
       methods: {
@@ -610,7 +610,7 @@
 </script><script>
    Vue.component('mnm-markdown', {
       template: '#mnm-markdown',
-      props: ['src', 'msgid', 'formfill', 'formreply', 'atchasff'],
+      props: {src:String, msgid:String, formfill:Object, formreply:[Object,String], atchasff:Function},
       computed: {
          mdi: function() { return mnm._mdi },
       },
@@ -654,7 +654,7 @@
 </script><script>
    Vue.component('mnm-formview', {
       template: '#mnm-formview',
-      props: ['file', 'fillMap', 'parent'],
+      props: {file:String, fillMap:Object, parent:Object},
       data: function() {
          return { formState: JSON.parse(this.fillMap[this.file] || '{}') };
       },
@@ -780,7 +780,7 @@
 </script><script>
    Vue.component('mnm-files', {
       template: '#mnm-files',
-      props: ['toggle'],
+      props: {toggle:String},
       data: function() { return {upname:'', vis:false} },
       computed: { mnm: function() { return mnm } },
       methods: { listSort: function(i) { return mnm._listSort('t', i) } },
@@ -871,7 +871,7 @@
 </script><script>
    Vue.component('mnm-forms', {
       template: '#mnm-forms',
-      props: ['toggle'],
+      props: {toggle:String},
       data: function() {
          return {upname:'', dupname:'', setName:'', fileId:'', revPos:'', codeShow:false, dupShow:''};
       },
@@ -957,7 +957,7 @@
 </script><script>
    Vue.component('mnm-pingresponse', {
       template: '#mnm-pingresponse',
-      props: ['response'],
+      props: {response:Object},
    });
 </script>
 
@@ -1211,7 +1211,7 @@
 </script><script>
    Vue.component('mnm-tabs', {
       template: '#mnm-tabs',
-      props: ['set', 'state'],
+      props: {set:Array, state:Object},
       computed: { mnm: function() { return mnm } }
    });
 </script>
