@@ -88,10 +88,10 @@
                class="dropdown-icon">&nbsp;&#x25BD;&nbsp;</span>
       </span>
       <mnm-subject v-if="msgSubjects.length > 1"
-                   :list="msgSubjects"></mnm-subject>
+                   :list="msgSubjects"/>
       <div class="uk-float-right">
          <span uk-icon="location" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
-         <mnm-attach ref="al"></mnm-attach>
+         <mnm-attach ref="al"/>
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
                  title="New thread draft"
@@ -108,7 +108,7 @@
    </div>
    <div uk-grid class="uk-grid-collapse">
       <mnm-tabs class="uk-width-expand"
-                :set="msgTabset" :state="cs.ThreadTabs"></mnm-tabs>
+                :set="msgTabset" :state="cs.ThreadTabs"/>
       <input @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)"
              :placeholder="' \u2315'" type="text"
              class="uk-width-1-6 search-box">
@@ -122,7 +122,7 @@
                   class="message-title"
                   :class="{'message-title-edit': aMsg.From === '' && !aMsg.Queued,
                            'message-title-seen': aMsg.Seen !== ''}">
-               <mnm-date :iso="aMsg.Date" ymd="md" hms="hm"></mnm-date>
+               <mnm-date :iso="aMsg.Date" ymd="md" hms="hm"/>
                <b>{{ aMsg.Alias || aMsg.From }}</b>
             </span>
             <div v-if="aMsg.Queued"
@@ -141,14 +141,14 @@
                   <div @keypress="keyAction('pv_'+aMsg.Id, $event)">
                      <div style="position:relative; padding:1px;">
                         <mnm-adrsbkinput @keyup.enter.native="ccAdd(aMsg.Id, $event.target)"
-                                         :type="3" placeholder="+To" size="25"></mnm-adrsbkinput>
+                                         :type="3" placeholder="+To" size="25"/>
                         <div style="height:100%; position:absolute; left:13em; right:2em; top:0;">
                            <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Cc"
-                                          :msgid="aMsg.Id" :drop="ccDrop"></mnm-draftmenu>
+                                          :msgid="aMsg.Id" :drop="ccDrop"/>
                            <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Attach"
                                           :msgid="aMsg.Id" :drop="atcDrop"
                                           :getname="atcGetName" :getkey="atcGetKey"
-                                          :style="{float:'right'}"></mnm-draftmenu>
+                                          :style="{float:'right'}"/>
                         </div>
                      </div>
                      <div style="float:right; margin-top:-1.7em;">
@@ -162,14 +162,14 @@
                                          @toggle="atcToggleFf(aMsg.Id, arguments[0], arguments[1])"
                                          :src=     "(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
                                          :formfill="(toSave[aMsg.Id] || mo[aMsg.Id]).form_fill"
-                                         :atchasff="atcHasFf" :msgid="aMsg.Id"></mnm-markdown></div>
+                                         :atchasff="atcHasFf" :msgid="aMsg.Id"/></div>
                      </div>
                      <input @input="subjAdd(aMsg.Id, $event.target.value)"
                             :value="(toSave[aMsg.Id] || mo[aMsg.Id].SubHead).Subject"
                             placeholder="Subject" type="text" style="width:100%">
                      <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
                                      :src="(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
-                                     placeholder="Ctrl-J to Preview" style="width:100%"></mnm-textresize>
+                                     placeholder="Ctrl-J to Preview" style="width:100%"/>
                   </div>
                </template>
                <template v-else>
@@ -213,11 +213,11 @@
                      <p><span uk-icon="comment"></span></p></div>
                   <mnm-markdown v-else
                                 :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"
-                                :formreply="aMsg.Queued ? 'Q' : getReplyTemplate(aMsg)"></mnm-markdown>
+                                :formreply="aMsg.Queued ? 'Q' : getReplyTemplate(aMsg)"/>
                </template>
             </template>
          </li></ul>
-      <mnm-adrsbkmenu></mnm-adrsbkmenu>
+      <mnm-adrsbkmenu/>
    </div>
 </div>
 
@@ -225,9 +225,9 @@
    <span v-for="aMsg in ml" :key="aMsg.Id"
          v-if="mo[aMsg.Id] && mo[aMsg.Id].Posted === 'draft'">
       <mnm-files @attach="atcAdd(aMsg.Id, arguments[0])"
-                 :toggle="'#t'+aMsg.Id" pos="right-top"></mnm-files>
+                 :toggle="'#t'+aMsg.Id" pos="right-top"/>
       <mnm-forms @attach="atcAdd(aMsg.Id, arguments[0])"
-                 :toggle="'#f'+aMsg.Id" pos="right-top"></mnm-forms>
+                 :toggle="'#f'+aMsg.Id" pos="right-top"/>
    </span>
    <div class="uk-clearfix">
       <span class="uk-text-large">
@@ -237,12 +237,12 @@
       <div class="uk-float-right">
          <span @mousedown="ohiFrom = !ohiFrom" class="dropdown-icon">&nbsp;o/</span>
          <span uk-icon="users" class="dropdown-icon">&nbsp;</span>
-         <mnm-adrsbk></mnm-adrsbk>
+         <mnm-adrsbk/>
          &nbsp;
          <span uk-icon="push" class="dropdown-icon">&nbsp;</span>
-         <mnm-files ref="t" pos="bottom-right"></mnm-files>
+         <mnm-files ref="t" pos="bottom-right"/>
          <span uk-icon="file-edit" class="dropdown-icon">&nbsp;</span>
-         <mnm-forms ref="f" pos="bottom-right"></mnm-forms>
+         <mnm-forms ref="f" pos="bottom-right"/>
          &nbsp;
       </div>
    </div>
@@ -258,7 +258,7 @@
              class="uk-width-1-2 search-box">
    </div>
    <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"
-             :set="svcTabset" :state="cs.SvcTabs"></mnm-tabs>
+             :set="svcTabset" :state="cs.SvcTabs"/>
    <div class="uk-position-relative"><!-- context for ohi card -->
       <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto"
            :class="{'uk-background-muted':ffn}">
@@ -298,14 +298,14 @@
                  uk-grid class="uk-grid-small" style="margin:0; padding:0.25em 0; cursor:pointer"
                  :style="{'background-color': aRow.Id === cs.Thread ? 'wheat' : 'inherit'}">
                <div class="uk-width-auto" style="padding:0">
-                  <mnm-date :iso="aRow.Date" ymd="md"></mnm-date></div>
+                  <mnm-date :iso="aRow.Date" ymd="md"/></div>
                <div v-if="aRow.Id.indexOf('/') < 0"
                     class="uk-width-1-6">{{'Last Author'}}</div>
                <div class="uk-width-expand">
                   {{'Something'}} {{aRow.Id}}
                </div>
                <div class="uk-width-auto">
-                  <mnm-date :iso="'2018-01-17T04:16:57Z'"></mnm-date></div>
+                  <mnm-date :iso="'2018-01-17T04:16:57Z'"/></div>
                <div v-if="aRow.Id.indexOf('/') < 0"
                     class="uk-width-1-6">{{'Orig Author'}}</div>
                <span v-if="aRow.Id.indexOf('/') >= 0"
@@ -343,7 +343,7 @@
 <div class="uk-width-expand uk-light service-panel">
    <div class="uk-clearfix">
       <span uk-icon="plus-circle" class="dropdown-icon"></span>
-      <mnm-svcadd></mnm-svcadd>
+      <mnm-svcadd/>
       <div style="float:right; margin:0 1em 1em 0">
          <span uk-icon="cog" class="dropdown-icon">&nbsp;</span>
          <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5">
@@ -360,7 +360,7 @@
             <template v-if="aSvc === '[{.Title}]'">
                <span style="visibility:hidden">1</span
               ><span uk-icon="settings" class="dropdown-icon">&nbsp;</span>
-               <mnm-svccfg></mnm-svccfg>
+               <mnm-svccfg/>
                {{aSvc}}
             </template>
             <template v-else>
@@ -430,7 +430,7 @@
                :href="'#'+ mnm._data.cs.Thread +'&'+ aFile.MsgId"><span uk-icon="mail"></span></a>
             <span v-else
                   uk-icon="mail" style="visibility:hidden"></span>
-            <mnm-date :iso="aFile.Date" ymd="md" hms="hm"></mnm-date>
+            <mnm-date :iso="aFile.Date" ymd="md" hms="hm"/>
             &nbsp;
             <button v-if="false"
                     :title="aFile.File.charAt(17) === 'u' ? 'Copy to attachable files'
@@ -649,7 +649,7 @@
                  class="btn-icon btn-floatr"><span uk-icon="commenting"></span></button>
       </div>
       <plugin-vfg @model-updated="onInput"
-                  :schema="formDef" :model="formState" :options="{}"></plugin-vfg>
+                  :schema="formDef" :model="formState" :options="{}"/>
    </div>
 </script><script>
    Vue.component('mnm-formview', {
@@ -756,7 +756,7 @@
          </li></ul>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
          <li v-for="aFile in mnm._data.t" :key="aFile.Name">
-            <mnm-date :iso="aFile.Date" hms="hm"></mnm-date>
+            <mnm-date :iso="aFile.Date" hms="hm"/>
             <button v-if="toggle"
                     @click="$emit('attach', 'upload/'+aFile.Name)"
                     title="Attach file"
@@ -812,7 +812,7 @@
          <ul class="uk-list uk-list-divider dropdown-scroll-list">
             <template v-for="aSet in mnm._data.f">
             <li v-for="aFile in aSet.Revs" :key="aSet.Name+'.'+aFile.Id">
-               <mnm-date :iso="aFile.Date" hms="hm"></mnm-date>
+               <mnm-date :iso="aFile.Date" hms="hm"/>
                <button v-if="toggle"
                        @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
                        title="Attach form"
@@ -849,11 +849,11 @@
                <div style="font-size:smaller; text-align:right">&nbsp;{{parseError}}</div>
                <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
                   <div class="pane-scroller" style="min-height:1px">
-                     <plugin-vfg :schema="formDef" :model="{}" :options="{}"></plugin-vfg></div>
+                     <plugin-vfg :schema="formDef" :model="{}" :options="{}"/></div>
                   <div class="pane-scroller">
                      <mnm-textresize @input.native="mnm._data.fo=$event.target.value"
                                      :src="mnm._data.fo"
-                                     name="filename" style="width:100%"></mnm-textresize></div>
+                                     name="filename" style="width:100%"/></div>
                </div>
             </form>
             <form :action="'/f/*' + encodeURIComponent(setName+'.'+fileId) +
@@ -952,7 +952,7 @@
          :href="'#'+ response.Tid +'&'+ response.MsgId"><span uk-icon="mail"></span></a>
       <template v-else>
          ping</template>
-      <mnm-date :iso="response.Date"></mnm-date>
+      <mnm-date :iso="response.Date"/>
    </span>
 </script><script>
    Vue.component('mnm-pingresponse', {
@@ -972,15 +972,15 @@
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>From</th><th>Message</th><th>Response</th></tr>
                <tr v-for="a in mnm._data.pf">
-                  <td><mnm-date :iso="a.Date"></mnm-date></td>
+                  <td><mnm-date :iso="a.Date"/></td>
                   <td>{{a.Alias}}</td><td>{{a.Text}}</td>
-                  <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
+                  <td><mnm-pingresponse :response="a.Response"/></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>Group</th><th>From</th><th>Msg</th><th>Response</th></tr>
                <tr v-for="a in mnm._data.if">
-                  <td><mnm-date :iso="a.Date"></mnm-date></td>
+                  <td><mnm-date :iso="a.Date"/></td>
                   <td>{{a.Gid}}
                      <span v-if="mnm._data.gl.find(function(c){return c.Gid === a.Gid})"
                            class="uk-badge">in</span>
@@ -993,7 +993,7 @@
                              class="btn-icon"><span uk-icon="forward"></span></button>
                   </td>
                   <td>{{a.Alias}}</td><td>{{a.Text}}</td>
-                  <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
+                  <td><mnm-pingresponse :response="a.Response"/></td>
                </tr></table></li>
          <li>
             <form onsubmit="return false"
@@ -1004,7 +1004,7 @@
                   <br>
                   <mnm-adrsbkinput @keyup.enter.native="setGid($event.target)"
                                    @keypress.enter.native.prevent=""
-                                   :type="2" placeholder="Search groups" size="25"></mnm-adrsbkinput>
+                                   :type="2" placeholder="Search groups" size="25"/>
                </div>
                <button @click="startPing()"
                        :disabled="!validDraft"
@@ -1035,23 +1035,23 @@
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>To</th><th>Message</th><th>Response</th></tr>
                <tr v-for="a in mnm._data.pt">
-                  <td><mnm-date :iso="a.Date"></mnm-date></td>
+                  <td><mnm-date :iso="a.Date"/></td>
                   <td>{{a.Alias}}</td><td>{{a.Text}}</td>
-                  <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
+                  <td><mnm-pingresponse :response="a.Response"/></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>Group</th><th>To</th><th>Message</th><th>Response</th></tr>
                <tr v-for="a in mnm._data.it">
-                  <td><mnm-date :iso="a.Date"></mnm-date></td>
+                  <td><mnm-date :iso="a.Date"/></td>
                   <td>{{a.Gid}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
-                  <td><mnm-pingresponse :response="a.Response"></mnm-pingresponse></td>
+                  <td><mnm-pingresponse :response="a.Response"/></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>Group</th></tr>
                <tr v-for="a in mnm._data.gl">
-                  <td><mnm-date :iso="a.Date"></mnm-date></td>
+                  <td><mnm-date :iso="a.Date"/></td>
                   <td>{{a.Gid}}
                      <span v-if="a.Admin"
                            class="uk-badge">A</span></td>
@@ -1061,7 +1061,7 @@
                   style="margin: 0 auto; display:table">
                <mnm-adrsbkinput oninput="this.form.elements[1].disabled = !this.value"
                                 :type="1" placeholder="To" size="40"
-                                name="resets" autocomplete="off"></mnm-adrsbkinput>
+                                name="resets" autocomplete="off"/>
                <button onclick="mnm.OhiAdd(this.form.elements[0].value)"
                        disabled
                        title="Notify contact when you're online"
@@ -1070,7 +1070,7 @@
             <table class="uk-table uk-table-small">
                <tr><th>Date</th><th>To</th><th></th></tr>
                <tr v-for="a in mnm._data.ot">
-                  <td><mnm-date :iso="a.Date"></mnm-date></td>
+                  <td><mnm-date :iso="a.Date"/></td>
                   <td>{{a.Uid /*todo alias*/}}</td>
                   <td><button @click="mnm.OhiDrop(null,a.Uid)"
                               title="Stop notifying contact"
