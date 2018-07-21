@@ -142,7 +142,7 @@
                      <div style="position:relative; padding:1px;">
                         <mnm-adrsbkinput @keyup.enter.native="ccAdd(aMsg.Id, $event.target)"
                                          :type="3" placeholder="+To" size="25"/>
-                        <div style="height:100%; position:absolute; left:13em; right:2em; top:0;">
+                        <div style="height:100%; position:absolute; left:13em; right:42px; top:0;">
                            <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Cc"
                                           :msgid="aMsg.Id" :drop="ccDrop"/>
                            <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Attach"

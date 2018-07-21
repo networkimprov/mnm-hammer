@@ -134,7 +134,6 @@ input[type=text] {
    float: left;
    box-sizing: border-box;
    padding: 0 0.5em;
-   margin-right: 1em;
    cursor: default;
    background: lightgray;
    font-family: Monaco, monospace;
@@ -143,7 +142,6 @@ input[type=text] {
 .draftmenu-sample {
    min-width: 0;
    float: none;
-   margin: 0;
    border: 1px solid dimgray;
    display: inline-block;
 }
