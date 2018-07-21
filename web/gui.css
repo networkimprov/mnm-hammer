@@ -133,22 +133,25 @@ input[type=text] {
    min-width: 4em;
    float: left;
    box-sizing: border-box;
-   padding: 0 0.5em;
+   border-radius: 4px;
+   padding: 0.25em 0.5em;
    cursor: default;
    background: lightgray;
    font-family: Monaco, monospace;
+   font-size: 82%;
    color: black;
 }
 .draftmenu-sample {
    min-width: 0;
    float: none;
    border: 1px solid dimgray;
+   line-height: 90%;
    display: inline-block;
 }
 .draftmenu-shown {
-   padding: 1px calc(0.5em + 1px);
+   border: 1px solid transparent;
    min-height: 100%;
-   box-shadow: 0 5px 12px rgba(0,0,0,.15);
+   box-shadow: 0 5px 12px rgba(0,0,0,0.15);
    filter: brightness(105%);
 }
 .draftmenu-hiddn {
