@@ -24,7 +24,8 @@ import (
 
 var sTestHost = "" // used by main.go
 var sTestState []tTestStateEl // used by main.go
-var sTestDate = dateRFC3339()
+var sTestNow = time.Now().Truncate(time.Second)
+var sTestDate = sTestNow.Format(" 0102150405")
 
 type tTestStateEl struct {
    svcId, name string
@@ -81,7 +82,7 @@ func test() {
    err = json.NewDecoder(aFd).Decode(&aClients)
    if err != nil { quit(err) }
 
-   aDir := "test-run/" + sTestDate
+   aDir := "test-run/" + sTestDate[1:]
    err = os.MkdirAll(aDir, 0700)
    if err != nil { quit(err) }
    err = os.Chdir(aDir)
@@ -260,6 +261,10 @@ func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
         "thread_open", "thread_close":
       _applyLastId(&iUpdt.Thread.Id,         &aApply, iLastId, "ml")
       _applyLastId(&iUpdt.Thread.ThreadId,   &aApply, iLastId, "ml")
+   case "adrsbk_search":
+      if iUpdt.Adrsbk.Term == "td" {
+         iUpdt.Adrsbk.Term = sTestDate[1:3]
+      }
    case "ping_save":
       iUpdt.Ping.Alias += sTestDate
       iUpdt.Ping.To    += sTestDate
@@ -283,7 +288,6 @@ func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
       _applyLastId(&iUpdt.Navigate.MsgId,    &aApply, iLastId, "ml")
    case "navigate_history",
         "tab_add", "tab_pin", "tab_drop", "tab_select",
-        "adrsbk_search",
         "open",
         "test":
       // nothing to do
@@ -446,8 +450,8 @@ func _hasExpected(iExpect, iGot interface{}) bool {
       aGot, ok := iGot.(string)
       if !ok { return false }
       if aExpect == "*d" {
-         _, err := time.Parse(time.RFC3339, aGot)
-         if err != nil || aGot[:19]+"Z" < sTestDate { return false }
+         aT, err := time.Parse(time.RFC3339, aGot)
+         if err != nil || aT.Before(sTestNow) { return false }
       } else if strings.HasSuffix(aExpect, "#td") {
          if aExpect[:len(aExpect)-3] + sTestDate != aGot { return false }
       } else if aExpect != "*" {

@@ -258,7 +258,11 @@
 },{
    "Updt": {"Op":"adrsbk_search", "Adrsbk":{"Type":3, "Term":"go"}},
    "Result": {
-      "_n": ["Gold-G#td", "Gold#td"] }
+      "_n": ["Gold#td", "Gold-G#td"] }
+},{
+   "Updt": {"Op":"adrsbk_search", "Adrsbk":{"Type":3, "Term":"td"}},
+   "Result": {
+      "_n": ["Gold#td", "Gold-G#td"] }
 },{
    "Updt": {"Op":"open"},
    "Result": {
