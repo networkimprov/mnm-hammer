@@ -580,14 +580,6 @@
    });
 </script>
 
-<style>
-.text-resize {
-   box-sizing: border-box;
-   resize: none;
-   overflow-y: hidden;
-}
-</style>
-
 <script type="text/x-template" id="mnm-textresize">
    <textarea @input="resize" @click.stop :value="src" class="text-resize"></textarea>
 </script><script>

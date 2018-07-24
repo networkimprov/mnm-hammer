@@ -33,14 +33,20 @@ body {
    background-color: #003333;
 }
 
-input[type=text] {
+input[type=text], textarea {
    font-family: Monaco, monospace;
+   font-size: 82%;
    box-sizing: border-box;
 }
 
 .search-box {
-   font-size: larger;
+   font-size: larger !important;
    color: #1e87f0;
+}
+
+.text-resize {
+   resize: none;
+   overflow-y: hidden;
 }
 
 .btn-icon    { padding: 0; }
