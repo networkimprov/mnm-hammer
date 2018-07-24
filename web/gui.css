@@ -11,6 +11,9 @@
 
 table { border-spacing: 0; }
 
+.uk-tab > li { padding: 0; } /* todo create a nicer tab layout */
+.uk-tab > li:first-child, .uk-tab > li[style="display: none;"] + li { padding-left:  20px; }
+
 body {
    background-color: #f0f8f5;
 }

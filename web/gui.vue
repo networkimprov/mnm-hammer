@@ -955,7 +955,7 @@
 
 <script type="text/x-template" id="mnm-adrsbk">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-2-5 dropdown-scroll">
-      <ul uk-tab style="margin-top:0">
+      <ul uk-tab class="uk-child-width-expand" style="margin-top:0; margin-right:20px">
          <li v-for="aName in ['pings','invites','drafts','pinged','invited','groups','ohi to']">
             <a @click.prevent="" href="#" style="cursor:default">{{aName}}</a>
          </li></ul>
