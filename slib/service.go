@@ -44,6 +44,7 @@ type tQueueEl struct {
 }
 
 func initServices(iFn func(string)) {
+   sServiceStartFn = iFn
    var err error
    aSvcs, err := readDirNames(kServiceDir)
    if err != nil { quit(err) }
@@ -55,11 +56,23 @@ func initServices(iFn func(string)) {
          continue
       }
       _makeTree(aSvc)
-      for _, aFile := range [...]string{cfgFile(aSvc), pingFile(aSvc), ohiFile(aSvc),
-                                        tabFile(aSvc), sendqFile(aSvc)} {
-         err = resolveTmpFile(aFile + ".tmp")
-         if err != nil { quit(err) }
+      aService := _newService(nil)
+      aSvcFiles := [...]struct { name string; cache interface{}; reqd bool }{
+         {cfgFile  (aSvc), &aService.cfg,    true },
+         {sendqFile(aSvc), &aService.sendQ,  false},
+         {tabFile  (aSvc), &aService.tabs,   false},
+         {pingFile (aSvc), nil,              false},
+         {ohiFile  (aSvc), nil,              false},
       }
+      for a := range aSvcFiles {
+         err = resolveTmpFile(aSvcFiles[a].name + ".tmp")
+         if err != nil { quit(err) }
+         if aSvcFiles[a].cache != nil {
+            err = readJsonFile(aSvcFiles[a].cache, aSvcFiles[a].name)
+            if err != nil && (aSvcFiles[a].reqd || !os.IsNotExist(err)) { quit(err) }
+         }
+      }
+      sServices[aSvc] = aService
       var aTmps []string
       aTmps, err = readDirNames(tempDir(aSvc))
       if err != nil { quit(err) }
@@ -80,16 +93,7 @@ func initServices(iFn func(string)) {
             completeThread(aSvc, aTmp)
          }
       }
-      aService := _newService(nil)
-      err = readJsonFile(&aService.cfg, cfgFile(aSvc))
-      if err != nil { quit(err) }
-      err = readJsonFile(&aService.sendQ, sendqFile(aSvc))
-      if err != nil && !os.IsNotExist(err) { quit(err) }
-      err = readJsonFile(&aService.tabs, tabFile(aSvc))
-      if err != nil && !os.IsNotExist(err) { quit(err) }
-      sServices[aSvc] = aService
    }
-   sServiceStartFn = iFn
 }
 
 func startAllService() {
