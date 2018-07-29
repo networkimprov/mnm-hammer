@@ -24,9 +24,9 @@
    "Name":"Blue.original", "fields": [
       {"label":"SO", "model":"so", "type":"input", "inputType":"text"},
       {"label":"NR", "model":"nr", "type":"input", "inputType":"number"},
-      {"label":"ASR", "model":"or.asr", "type":"checklist",
+      {"label":"ASO", "model":"or.aso", "type":"checklist",
        "listBox":true, "values":["a","b"]},
-      {"label":"ANO", "model":"or.ano", "type":"checklist", "inputType":"array",
+      {"label":"ANR", "model":"or.anr", "type":"checklist", "inputType":"array",
        "listBox":true, "values": [
           {"name":"aa", "value":[1,2]},
           {"name":"bb", "value":[2,2]}] }]
