@@ -24,13 +24,13 @@
       mnm._lastPreview = '';
       mnm._data = {
       // global
-         v:[], t:[], f:[], fo:'', // fo populated by f requests
+         v:[], t:[], f:[], fo:'', nlo:[], // fo populated by f requests
       // per client
          cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}},
          sort:{al:'Date', t:'Date', f:'Date'}, //todo move to cs
          ohiFrom:true, //todo move to cs
       // per service
-         cf:{}, tl:[], ffn:'', // ffn derived from tl
+         cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
          ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:[],
       // per thread
          al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
@@ -235,9 +235,11 @@
          [{.Title}]
       </span>
       <div class="uk-float-right">
-         <span @mousedown="ohiFrom = !ohiFrom" class="dropdown-icon">&nbsp;o/</span>
+         <span uk-icon="reply" class="dropdown-icon" style="font-weight:bold">{{nlNotSeen}}</span>
+         <mnm-notice offset="2" pos="bottom-right"/>
          <span uk-icon="users" class="dropdown-icon">&nbsp;</span>
          <mnm-adrsbk/>
+         <span @mousedown="ohiFrom = !ohiFrom" class="dropdown-icon">&nbsp;o/</span>
          &nbsp;
          <span uk-icon="push" class="dropdown-icon">&nbsp;</span>
          <mnm-files ref="t" pos="bottom-right"/>
@@ -340,8 +342,8 @@
    </div>
 </div>
 
-<div class="uk-width-expand uk-light service-panel">
-   <div class="uk-clearfix">
+<div class="uk-width-expand service-panel">
+   <div class="uk-clearfix uk-light">
       <span uk-icon="plus-circle" class="dropdown-icon"></span>
       <mnm-svcadd/>
       <div style="float:right; margin:0 1em 1em 0">
@@ -354,7 +356,7 @@
             <iframe src="/web/docs.html" style="width:100%; height:100%"></iframe></div>
       </div>
    </div>
-   <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto">
+   <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto uk-light">
       <ul class="uk-list uk-list-divider">
          <li v-for="aSvc in v" :key="aSvc">
             <template v-if="aSvc === '[{.Title}]'">
@@ -364,14 +366,15 @@
                {{aSvc}}
             </template>
             <template v-else>
-               <span uk-icon="reply" class="dropdown-icon">0{{aSvc.todo}} </span>
-               <div uk-dropdown="mode:click; offset:-4; pos:left-top" class="uk-width-1-5">
-                  <div class="uk-text-right uk-text-small">UPDATES</div>
-               </div>
-               <a :href="'/'+aSvc" :target="'mnm_'+aSvc">{{aSvc}}</a>
+               <span uk-icon="reply" :id="'n'+aSvc" class="dropdown-icon">0{{aSvc.todo}} </span>
+               <a :href="'/'+encodeURIComponent(aSvc)" :target="'mnm_'+aSvc">{{aSvc}}</a>
             </template>
          </li></ul>
    </div>
+   <!--todo create notice menus dynamically-->
+   <mnm-notice v-for="aSvc in v" :key="aSvc"
+               :svc="aSvc" offset="-4" pos="left-top" :toggle="'#n'+aSvc"
+               @beforeshow.native="mnm.NoticeOpen(aSvc)"/>
 </div>
 
 </div>
@@ -953,6 +956,52 @@
    });
 </script>
 
+<script type="text/x-template" id="mnm-notice">
+   <div uk-dropdown="mode:click" :toggle="toggle" class="uk-width-1-4 dropdown-scroll">
+      <button v-if="!svc"
+              @click="mnm.NoticeSeen(nl[0].MsgId)"
+              :disabled="!nl.length || nl[0].Seen > 0"
+              title="Mark all as seen"
+              style="margin-right:1em"
+              class="btn-icon btn-floatr"><span uk-icon="check"></span></button>
+      <div style="min-height:2em; font-style:oblique;">
+         <span v-for="aType in ['ping', 'invite']"
+               @click="$data[aType] = !$data[aType]"
+               class="uk-link" style="margin-right:0.5em">
+            <span :style="{visibility: $data[aType] ? 'visible' : 'hidden'}">&bull; </span>
+            {{ aType }}s</span>
+      </div>
+      <ul class="uk-list dropdown-scroll-list notice">
+         <li v-if="!nl.length"
+             style="text-align:center">No notices yet</li>
+         <li v-for="aNote in nl" :key="aNote.MsgId"
+             v-if="$data[aNote.Type]"
+             @click="$set(aNote, 'open', !aNote.open)"
+             :class="{'notice-seen':aNote.Seen, 'notice-hasblurb':aNote.Blurb}">
+            <div style="float:left; font-style:oblique">{{aNote.Type.charAt(0)}}</div>
+            <div style="margin-left:1em">
+               <div style="float:right"><mnm-date :iso="aNote.Date" ymd="md" hms="hm"/></div>
+               <template v-if="aNote.Type === 'invite'">
+                  {{aNote.Alias}} - {{aNote.Gid}}</template>
+               <template v-else-if="aNote.Type === 'ping'">
+                  {{aNote.Alias}}</template>
+               <span v-show="aNote.Blurb && !aNote.open">. . .</span>
+               <div v-show="aNote.open">{{aNote.Blurb}}</div>
+            </div>
+         </li></ul>
+   </div>
+</script><script>
+   Vue.component('mnm-notice', {
+      template: '#mnm-notice',
+      props: {svc:String, toggle:String},
+      data: function() { return { ping:true, invite:true } },
+      computed: {
+         nl: function() { return this.svc ? mnm._data.nlo : mnm._data.nl },
+         mnm: function() { return mnm },
+      },
+   });
+</script>
+
 <script type="text/x-template" id="mnm-adrsbk">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-2-5 dropdown-scroll">
       <ul uk-tab class="uk-child-width-expand" style="margin-top:0; margin-right:20px">
@@ -1387,6 +1436,10 @@
             }
             return aList;
          },
+         nlNotSeen: function() {
+            for (var aN=0; aN < mnm._data.nl.length && !mnm._data.nl[aN].Seen; ++aN) {}
+            return aN || null;
+         },
          ffnCol: function() {
             if (!mnm._data.ffn) return {};
             var aSet = {};
@@ -1445,9 +1498,9 @@
       }
 
       switch (i) {
-      case 'cs': case 'cf': case 'al': case 'ml':
+      case 'cs': case 'cf': case 'nl': case 'al': case 'ml':
       case 'ps': case 'pt': case 'pf': case 'it': case 'if': case 'gl': case 'ot': case 'of':
-      case 't' : case 'f' : case 'v':
+      case 't' : case 'f' : case 'v' : case 'nlo':
          if (i === 'f' && iEtc) {
             mnm._data.fo = iData;
          } else {

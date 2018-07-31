@@ -185,6 +185,24 @@ input[type=text], textarea {
 .pane-slider-rhs { right:100%; }
 .pane-scroller   { width: 50%; max-height:40vh; overflow:auto; float:left; }
 
+.notice {
+   padding-right: 0.5em;
+}
+.notice > li.notice-hasblurb {
+   cursor: pointer;
+}
+.notice > li.notice-seen {
+   margin: 0;
+   padding-top: 10px;
+   background-color: mintcream;
+}
+.notice > li:not(.notice-seen) + li.notice-seen,
+.notice > li:first-child.notice-seen {
+   border-top: 4px double lightgray;
+   padding-top: 6px;
+   margin-top: 10px;
+}
+
 .svccfg tr td {
    vertical-align: top;
    padding: 0.5em 0;

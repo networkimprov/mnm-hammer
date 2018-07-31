@@ -663,20 +663,43 @@ to the right of the header, then paste the string from the clipboard.
 </p>
 
 
-<h3 id="conf">11. General Configuration</h3>
+<h3 id="notc">11. Notices</h3>
+
+<p>Information received by mnm from TMTP servers is noted in the <span uk-icon="reply"></span> menu 
+(next to the <span uk-icon="users"></span> menu) for the account represented in the current 
+browser tab, and in the <span uk-icon="reply"></span> menus on the accounts panel for other accounts. 
+Notices appear for pings, invites, messages, new threads, group membership changes, and [more]. 
+A count of new notices appears to the left of the menu icon. 
+[partially implemented] 
+</p>
+
+<p>If a notice has a blurb, an elipsis (<i>. . .</i>) appears within it. 
+To show or hide the blurb, click anywhere on the notice. 
+</p>
+
+<p>To show a subset of notices, click the <i>&bull; pings</i> (etc) hyperlinks at the top of the menu. 
+</p>
+
+<p>To mark all new notices as seen and drop any previously seen notices older than one week, click the 
+<span uk-icon="check"></span> button at the top of the menu. 
+The period for which seen notices are retained is configurable [not yet implemented].
+</p>
+
+
+<h3 id="conf">12. General Configuration</h3>
 
 <p>General configuration is listed in the <span uk-icon="cog"></span> menu. 
 [not yet implemented]
 </p>
 
 
-<h3 id="docs">12. Documentation</h3>
+<h3 id="docs">13. Documentation</h3>
 
 <p>Documentation and the product version string are provided in the <span uk-icon="info"></span> menu. 
 </p>
 
 
-<h3 id="cred">13. Credits</h3>
+<h3 id="cred">14. Credits</h3>
 
 <p>The mnm client and server are written in 
 <a target="_blank" href="https://golang.org/">Go</a> (without which they probably would not exist). 
@@ -705,7 +728,7 @@ and the author frequently turns to the
 </p>
 
 
-<h3 id="lcns">14. License</h3>
+<h3 id="lcns">15. License</h3>
 
 <p>Copyright 2018 Liam Breck
 <br>
@@ -749,6 +772,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See said License for detail
 <li><a href="#comp">Draft Composition</a>
 <li><a href="#mark">Markdown</a></li>
 </ol></li>
+<li><a href="#notc">Notices</a></li>
 <li><a href="#conf">General Configuration</a></li>
 <li><a href="#docs">Documentation</a></li>
 <li><a href="#cred">Credits</a></li>
