@@ -201,7 +201,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
             fmt.Fprintf(os.Stderr, "%s missing %s\n  expect %v\n", aPrefix, aK, aV)
          }
       }
-      aSum := (*int32)(nil); if aUpdt.Op == "test" { aSum = new(int32) }
+      aSum := (*int32)(nil); if aUpdt.Test != nil && aUpdt.Test.Poll > 0 { aSum = new(int32) }
       for {
          for aN := 0; aN < len(aOps); aN++ {
             aOp, aId := aOps[aN], ""
@@ -218,7 +218,9 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
             go _runTestService(&aCtx, aOp, aId, iTc.Orders[a].Result[aOp], aPrefix, aSum)
          }
          aCtx.wg.Wait()
-         if aSum == nil || *aSum == int32(len(aOps)) { break }
+         if aSum == nil || *aSum == int32(len(aOps)) {
+            break
+         }
          time.Sleep(aUpdt.Test.Poll * time.Millisecond)
          *aSum = 0
       }
