@@ -289,10 +289,22 @@ func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
       _applyLastId(&iUpdt.Navigate.ThreadId, &aApply, iLastId, "ml")
       _applyLastId(&iUpdt.Navigate.MsgId,    &aApply, iLastId, "ml")
    case "navigate_history",
+        "notice_seen",
         "tab_add", "tab_pin", "tab_drop", "tab_select",
-        "open",
-        "test":
+        "open":
       // nothing to do
+   case "test":
+      if iUpdt.Test.Notice != nil {
+         aNow := time.Now().UTC()
+         for a := range iUpdt.Test.Notice {
+            aN, err := strconv.Atoi(iUpdt.Test.Notice[a].Date)
+            if err != nil {
+               fmt.Fprintf(os.Stderr, "%s notice date\n  %s\n", iPrefix, err.Error())
+               return false
+            }
+            iUpdt.Test.Notice[a].Date = aNow.AddDate(0,0,aN).Format(time.RFC3339)
+         }
+      }
    default:
       fmt.Fprintf(os.Stderr, "%s unknown op\n  update %s\n", iPrefix, iUpdt.Op)
       return false
@@ -347,6 +359,7 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    case "/v": aResult = pSl.Service.GetIdx()
    case "cs": aResult = iCtx.state.GetSummary()
    case "cf": aResult = pSl.GetDataService(iCtx.svcId)
+   case "nl": aResult = pSl.GetIdxNotice(iCtx.svcId)
    case "ps": aResult = pSl.GetDraftAdrsbk(iCtx.svcId)
    case "pt": aResult = pSl.GetSentAdrsbk(iCtx.svcId)
    case "pf": aResult = pSl.GetReceivedAdrsbk(iCtx.svcId)

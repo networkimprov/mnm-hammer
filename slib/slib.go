@@ -40,6 +40,7 @@ func adrsFile (iSvc string) string { return kServiceDir + iSvc + "/adrsbk"  }
 func ohiFile  (iSvc string) string { return kServiceDir + iSvc + "/ohi"     }
 func tabFile  (iSvc string) string { return kServiceDir + iSvc + "/tabs"    }
 func sendqFile(iSvc string) string { return kServiceDir + iSvc + "/sendq"   }
+func notcFile (iSvc string) string { return kServiceDir + iSvc + "/notice"  }
 
 func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
 func attachFfn(iSvc, iSub string) string { return attachSub(iSvc, iSub) + "ffnindex" }
@@ -58,6 +59,7 @@ type tService struct {
    sync.RWMutex // protects the following
    cfg tCfgService
    sendQ []tQueueEl
+   notice []tNoticeEl
    fromOhi tOhi
    tabs []string
    doors map[string]tDoor // shared by *Thread & *FilledForm
@@ -168,6 +170,9 @@ type Update struct {
       Alias string
       Uid string
    }
+   Notice *struct {
+      MsgId string
+   }
    Navigate *struct {
       History int
       ThreadId, MsgId string
@@ -181,6 +186,7 @@ type Update struct {
    Test *struct {
       Poll time.Duration // for use by test.go
       Request []string
+      Notice []tNoticeEl
    }
 }
 

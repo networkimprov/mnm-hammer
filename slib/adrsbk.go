@@ -402,6 +402,8 @@ func _completeAdrsbk(iSvc string, iTmp string, iEls []tAdrsbkEl) {
    aRec := strings.SplitN(iTmp, "_", 3)
    if aRec[2] == "sent" {
       deleteDraftAdrsbk(iSvc, iEls[0].Alias, iEls[0].Gid) // when sent, len(iEls)==1
+   } else if iEls[0].Type == eAbPingFrom || iEls[0].Type == eAbInviteFrom {
+      addPingNotice(iSvc, iEls[0].MsgId, iEls[0].Alias, iEls[0].Gid, iEls[0].Text)
    }
    aFd, err := os.OpenFile(adrsFile(iSvc), os.O_WRONLY|os.O_CREATE, 0600)
    if err != nil { quit(err) }

@@ -41,6 +41,13 @@
       _wsSend({op:'adrsbk_search', adrsbk:{type:iType, term:iTerm}})
    };
 
+   mnm.NoticeOpen = function(iSvc) {
+      _xhr('nlo', iSvc)
+   };
+   mnm.NoticeSeen = function(iMsgId) {
+      _wsSend({op:'notice_seen', notice:{msgid:iMsgId}})
+   };
+
    mnm.NavigateThread = function(i) {
       _wsSend({op:'navigate_thread', navigate:{threadId:i}})
    };
@@ -183,8 +190,12 @@
          }
          mnm.Render(i, aXhr.responseText, aMap);
       };
-      var aN = iId ? encodeURIComponent(iId) : '';
-      aXhr.open('GET', i.charAt(0) === '/' ? i+'/'+aN : '?'+i+(aN && '='+aN));
+      if (i === 'nlo') {
+         aXhr.open('GET', '/'+ encodeURIComponent(iId) +'?nl');
+      } else {
+         var aN = iId ? encodeURIComponent(iId) : '';
+         aXhr.open('GET', i.charAt(0) === '/' ? i+'/'+aN : '?'+i+(aN && '='+aN));
+      }
       aXhr.send();
    }
 

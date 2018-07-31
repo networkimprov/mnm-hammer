@@ -61,6 +61,7 @@ func initServices(iFn func(string)) {
          {cfgFile  (aSvc), &aService.cfg,    true },
          {sendqFile(aSvc), &aService.sendQ,  false},
          {tabFile  (aSvc), &aService.tabs,   false},
+         {notcFile (aSvc), &aService.notice, false},
          {pingFile (aSvc), nil,              false},
          {ohiFile  (aSvc), nil,              false},
       }
@@ -193,7 +194,8 @@ func _makeTree(iSvc string) {
       err = os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
-   for _, aFile := range [...]string{pingFile(iSvc), ohiFile(iSvc), tabFile(iSvc), sendqFile(iSvc)} {
+   for _, aFile := range [...]string{pingFile(iSvc), ohiFile(iSvc), tabFile(iSvc), sendqFile(iSvc),
+                                     notcFile(iSvc)} {
       err = os.Symlink("empty", aFile)
       if err != nil && !os.IsExist(err) { quit(err) }
    }
@@ -352,14 +354,14 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: ping error %s\n", iSvc, err.Error())
          return fErr
       }
-      aFn, aResult = fAll, []string{"pf", "pt"}
+      aFn, aResult = fAll, []string{"nl", "pf", "pt"}
    case "invite":
       err = storeReceivedAdrsbk(iSvc, iHead, iR)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: invite error %s\n", iSvc, err.Error())
          return fErr
       }
-      aFn, aResult = fAll, []string{"pf", "pt", "if"}
+      aFn, aResult = fAll, []string{"nl", "pf", "pt", "if"}
    case "member":
       if iHead.Act == "join" {
          groupJoinedAdrsbk(iSvc, iHead)
@@ -461,7 +463,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          aFn, aResult = fOne, []string{"/v", "/t", "/f"}
       } else {
          aFn, aResult = fOne, []string{"of", "ot", "ps", "pt", "pf", "if", "it", "gl",
-                                       "cf", "tl", "cs", "al", "_t", "ml", "mo",
+                                       "cf", "nl", "tl", "cs", "al", "_t", "ml", "mo",
                                        "/v", "/t", "/f"}
       }
    case "service_update":
@@ -495,6 +497,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       }
       aResult = searchAdrsbk(iSvc, iUpdt)
       aFn, aResult = fOne, append([]string{"_n"}, aResult...)
+   case "notice_seen":
+      err = setLastSeenNotice(iSvc, iUpdt)
+      if err != nil { return fErr, nil }
+      aFn, aResult = fAll, []string{"nl"}
    case "thread_recvtest":
       aTid := iState.getThread()
       if len(aTid) > 0 && aTid[0] == '_' { break }
@@ -622,6 +628,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "test":
       if len(iUpdt.Test.Request) > 0 {
          aFn, aResult = fOne, iUpdt.Test.Request
+      } else if iUpdt.Test.Notice != nil {
+         aSvc := getService(iSvc)
+         aSvc.Lock(); defer aSvc.Unlock()
+         aSvc.notice = iUpdt.Test.Notice
       }
    default:
       err = tError("unknown op")
