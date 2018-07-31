@@ -454,6 +454,9 @@ func _hasExpected(iExpect, iGot interface{}) bool {
       if aExpect == "*d" {
          aT, err := time.Parse(time.RFC3339, aGot)
          if err != nil || aT.Before(sTestNow) { return false }
+      } else if aExpect == "*dyo" {
+         aT, err := time.Parse(time.RFC3339, aGot)
+         if err != nil || aT.Before(sTestNow.AddDate(-1,0,0)) { return false }
       } else if strings.HasSuffix(aExpect, "#td") {
          if aExpect[:len(aExpect)-3] + sTestDate != aGot { return false }
       } else if aExpect != "*" {
