@@ -283,7 +283,7 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    aSvc.aliasIdx[aEl.Alias] = aEl.Uid
    _respondLog(aSvc.pingToIdx[aEl.Alias], &aEl)
    aSvc.pingFromIdx[iHead.From] = _appendLog(aLog, &aEl)
-   _storeAdrsbk(iSvc, []tAdrsbkEl{aEl}, false)
+   _storeAdrsbk(iSvc, []tAdrsbkEl{aEl})
    return nil
 }
 
@@ -318,7 +318,7 @@ func storeSentAdrsbk(iSvc string, iKey string, iDate string) {
       _respondLog(aSvc.pingFromIdx[aUid], aEl)
    }
    aSvc.pingToIdx[aEl.Alias] = _appendLog(aLog, aEl)
-   _storeAdrsbk(iSvc, []tAdrsbkEl{*aEl}, true)
+   _storeAdrsbk(iSvc, []tAdrsbkEl{*aEl})
 }
 
 func resolveReceivedAdrsbk(iSvc string, iDate string, iFor []tHeaderFor, iTid, iMsgId string) {
@@ -332,7 +332,7 @@ func resolveReceivedAdrsbk(iSvc string, iDate string, iFor []tHeaderFor, iTid, i
       }
    }
    if len(aEls) > 0 {
-      _storeAdrsbk(iSvc, aEls, false)
+      _storeAdrsbk(iSvc, aEls)
    }
 }
 
@@ -350,7 +350,7 @@ func resolveSentAdrsbk(iSvc string, iDate string, iFrom, iAlias string, iTid, iM
                     Uid:iFrom, Alias:iAlias}
    if _respondLog(aSvc.pingToIdx[iAlias], &aEl) {
       aSvc.aliasIdx[iAlias] = iFrom
-      _storeAdrsbk(iSvc, []tAdrsbkEl{aEl}, false)
+      _storeAdrsbk(iSvc, []tAdrsbkEl{aEl})
    }
 }
 
@@ -361,7 +361,7 @@ func acceptInviteAdrsbk(iSvc string, iGid string, iDate string) {
    if _respondLog(aSvc.inviteFromIdx[iGid], &aEl) {
       aSvc.groupIdx[iGid] = tGroupEl{Gid:iGid, Date:aEl.Date}
       aSvc.aliasIdx[iGid] = iGid
-      _storeAdrsbk(iSvc, []tAdrsbkEl{aEl}, false)
+      _storeAdrsbk(iSvc, []tAdrsbkEl{aEl})
    }
 }
 
@@ -370,19 +370,16 @@ func groupJoinedAdrsbk(iSvc string, iHead *Header) {
    aSvc.Lock(); defer aSvc.Unlock()
    aEl := tAdrsbkEl{Type:eAbMsgJoin, Date:iHead.Posted, Gid:iHead.Gid, Alias:iHead.Alias}
    if _respondLog(aSvc.inviteToIdx[aEl.Alias + "\x00" + aEl.Gid], &aEl) {
-      _storeAdrsbk(iSvc, []tAdrsbkEl{aEl}, false)
+      _storeAdrsbk(iSvc, []tAdrsbkEl{aEl})
    }
 }
 
-func _storeAdrsbk(iSvc string, iEls []tAdrsbkEl, iSent bool) {
+func _storeAdrsbk(iSvc string, iEls []tAdrsbkEl) {
    var err error
    aFi, err := os.Lstat(adrsFile(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos := int64(2); if err == nil { aPos = aFi.Size() }
-   aTempOk := tempDir(iSvc) + fmt.Sprintf("adrsbk_%d_", aPos)
-   if iSent {
-      aTempOk += "sent"
-   }
+   aTempOk := tempDir(iSvc) + "adrsbk_" + fmt.Sprint(aPos)
    aTemp := aTempOk + ".tmp"
 
    for a, _ := range iEls {
@@ -399,12 +396,13 @@ func _storeAdrsbk(iSvc string, iEls []tAdrsbkEl, iSent bool) {
 
 func _completeAdrsbk(iSvc string, iTmp string, iEls []tAdrsbkEl) {
    var err error
-   aRec := strings.SplitN(iTmp, "_", 3)
-   if aRec[2] == "sent" {
-      deleteDraftAdrsbk(iSvc, iEls[0].Alias, iEls[0].Gid) // when sent, len(iEls)==1
-   } else if iEls[0].Type == eAbPingFrom || iEls[0].Type == eAbInviteFrom {
+   switch iEls[0].Type {
+   case eAbPingTo, eAbInviteTo:
+      deleteDraftAdrsbk(iSvc, iEls[0].Alias, iEls[0].Gid)
+   case eAbPingFrom, eAbInviteFrom:
       addPingNotice(iSvc, iEls[0].MsgId, iEls[0].Alias, iEls[0].Gid, iEls[0].Text)
    }
+   aRec := strings.SplitN(iTmp, "_", 2)
    aFd, err := os.OpenFile(adrsFile(iSvc), os.O_WRONLY|os.O_CREATE, 0600)
    if err != nil { quit(err) }
    defer aFd.Close()
