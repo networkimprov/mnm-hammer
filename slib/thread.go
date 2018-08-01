@@ -57,7 +57,7 @@ func GetIdxThread(iSvc string, iState *ClientState) interface{} {
    }()
    for a, _ := range aIdx {
       if aIdx[a].From == "" {
-         aIdx[a].Queued = queueHasService(iSvc, eSrecThread, aIdx[a].Id)
+         aIdx[a].Queued = hasQueue(iSvc, eSrecThread, aIdx[a].Id)
       }
    }
    for a1, a2 := 0, len(aIdx)-1; a1 < a2; a1, a2 = a1+1, a2-1 {

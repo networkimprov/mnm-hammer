@@ -161,7 +161,7 @@ type tQueue struct {
 }
 
 func newQueue(iSvcId string) *tQueue {
-   aRecs, err := pSl.GetQueueService(iSvcId)
+   aRecs, err := pSl.GetQueue(iSvcId)
    if err != nil {
       fmt.Fprintf(os.Stderr, "newqueue %s failure: %s\n", iSvcId, err.Error())
       return nil

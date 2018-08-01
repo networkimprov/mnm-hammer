@@ -14,7 +14,6 @@ import (
    "io"
    "encoding/json"
    "os"
-   "sort"
    "strings"
    "sync"
 )
@@ -36,11 +35,6 @@ type tCfgService struct {
    Alias string
    Node string
    Error string `json:",omitempty"` // from "registered" message
-}
-
-type tQueueEl struct {
-  Srec SendRecord
-  Date string
 }
 
 func initServices(iFn func(string)) {
@@ -240,60 +234,6 @@ func dropTabService(iSvc string, iPos int) {
    if err != nil { quit(err) }
 }
 
-func GetQueueService(iSvc string) ([]*SendRecord, error) {
-   aSvc := getService(iSvc)
-   aSvc.RLock(); defer aSvc.RUnlock()
-   aSort := make([]*tQueueEl, len(aSvc.sendQ))
-   for a, _ := range aSvc.sendQ {
-      aSort[a] = &aSvc.sendQ[a]
-   }
-   sort.Slice(aSort, func(cA, cB int) bool { return aSort[cA].Date < aSort[cB].Date })
-   aQ := make([]*SendRecord, len(aSort))
-   for a, _ := range aSort {
-      aQ[a] = &aSort[a].Srec
-   }
-   return aQ, nil
-}
-
-func queueHasService(iSvc string, iType byte, iId string) bool {
-   aSvc := getService(iSvc)
-   aSvc.RLock(); defer aSvc.RUnlock()
-   aId := string(iType) + iId
-   aEl := sort.Search(len(aSvc.sendQ), func(c int) bool { return aSvc.sendQ[c].Srec.Id >= aId })
-   return aEl < len(aSvc.sendQ) && aSvc.sendQ[aEl].Srec.Id == aId
-}
-
-func _queueAdd(iSvc string, iType byte, iId string) *SendRecord {
-   aSvc := getService(iSvc)
-   aSvc.Lock(); defer aSvc.Unlock()
-   aId := string(iType) + iId
-   aEl := sort.Search(len(aSvc.sendQ), func(c int) bool { return aSvc.sendQ[c].Srec.Id >= aId })
-   if aEl < len(aSvc.sendQ) && aSvc.sendQ[aEl].Srec.Id == aId {
-      return nil
-   }
-   aSvc.sendQ = append(aSvc.sendQ, tQueueEl{})
-   if aEl < len(aSvc.sendQ) {
-      copy(aSvc.sendQ[aEl+1:], aSvc.sendQ[aEl:])
-   }
-   aSvc.sendQ[aEl].Srec = SendRecord{aId}
-   aSvc.sendQ[aEl].Date = dateRFC3339()
-   err := storeFile(sendqFile(iSvc), aSvc.sendQ)
-   if err != nil { quit(err) }
-   return &aSvc.sendQ[aEl].Srec
-}
-
-func _queueDrop(iSvc string, iId string) {
-   aSvc := getService(iSvc)
-   aSvc.Lock(); defer aSvc.Unlock()
-   aEl := sort.Search(len(aSvc.sendQ), func(c int) bool { return aSvc.sendQ[c].Srec.Id >= iId })
-   if aEl == len(aSvc.sendQ) || aSvc.sendQ[aEl].Srec.Id != iId {
-      return
-   }
-   aSvc.sendQ = aSvc.sendQ[:aEl + copy(aSvc.sendQ[aEl:], aSvc.sendQ[aEl+1:])]
-   err := storeFile(sendqFile(iSvc), aSvc.sendQ)
-   if err != nil { quit(err) }
-}
-
 func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
    var aFn func(io.Writer, string, string, string) error
    switch iSrec.Id[0] {
@@ -306,7 +246,7 @@ func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
    }
    err := aFn(iW, iSvc, iSrec.Id[1:], iSrec.Id)
    if err != nil && err.Error() == "already sent" {
-      _queueDrop(iSvc, iSrec.Id)
+      dropQueue(iSvc, iSrec.Id)
    }
    return err
 }
@@ -435,7 +375,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       default:
          quit(tError("bad SendRecord " + aQid))
       }
-      _queueDrop(iSvc, aQid)
+      dropQueue(iSvc, aQid)
    default:
       err = tError("unknown tmtp op")
       return fErr
@@ -485,10 +425,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       deleteDraftAdrsbk(iSvc, iUpdt.Ping.To, iUpdt.Ping.Gid)
       aFn, aResult = fAll, []string{"ps"}
    case "ping_send":
-      aSrec = _queueAdd(iSvc, eSrecPing, iUpdt.Ping.Qid)
+      aSrec = addQueue(iSvc, eSrecPing, iUpdt.Ping.Qid)
       aFn, aResult = fAll, []string{"ps"}
    case "accept_send":
-      aSrec = _queueAdd(iSvc, eSrecAccept, iUpdt.Accept.Qid)
+      aSrec = addQueue(iSvc, eSrecAccept, iUpdt.Accept.Qid)
       aFn, aResult = fAll, []string{"if"}
    case "adrsbk_search":
       if iUpdt.Adrsbk.Term == "" {
@@ -522,7 +462,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       os.Mkdir(attachSub(iSvc, "_22"), 0700)
       os.Link(kUploadDir + "trial",          attachSub(iSvc, "_22") + "22_u:trial")
       os.Link(kFormDir   + "trial.original", attachSub(iSvc, "_22") + "22_f:trial.original")
-      aSrec = _queueAdd(iSvc, eSrecThread, "_22")
+      aSrec = addQueue(iSvc, eSrecThread, "_22")
    case "thread_save":
       const ( _ int8 = iota; eNewThread; eNewReply )
       if iUpdt.Thread.New > 0 {
@@ -580,7 +520,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          return nil
       }
       aResult = []string{"ml"}
-      aSrec = _queueAdd(iSvc, eSrecThread, iUpdt.Thread.Id)
+      aSrec = addQueue(iSvc, eSrecThread, iUpdt.Thread.Id)
    case "thread_open":
       if iUpdt.Thread.ThreadId != iState.getThread() {
          err = tError("thread id out of sync")

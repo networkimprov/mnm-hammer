@@ -179,7 +179,7 @@ func GetInviteFromAdrsbk(iSvc string) []tAdrsbkEl {
    aSvc := _loadAdrsbk(iSvc)
    aLog := _listLogs(aSvc, aSvc.inviteFromIdx)
    for a, _ := range aLog {
-      aLog[a].Queued = queueHasService(iSvc, eSrecAccept, aLog[a].Qid)
+      aLog[a].Queued = hasQueue(iSvc, eSrecAccept, aLog[a].Qid)
    }
    return aLog
 }
@@ -460,7 +460,7 @@ func GetDraftAdrsbk(iSvc string) tAdrsbkLog {
    aList := make(tAdrsbkLog, len(aMap))
    a := 0
    for _, aList[a] = range aMap {
-      aList[a].Queued = queueHasService(iSvc, eSrecPing, aList[a].Qid)
+      aList[a].Queued = hasQueue(iSvc, eSrecPing, aList[a].Qid)
       a++
    }
    sort.Slice(aList, func(cA, cB int) bool {
