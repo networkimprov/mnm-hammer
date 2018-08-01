@@ -270,7 +270,7 @@ func runTmtpRecv(iSvcId string) {
    var aJson []byte
 
    for {
-      aCfg := pSl.GetDataService(iSvcId)
+      aCfg := pSl.GetConfigService(iSvcId)
 
       if aCfg.LoginPeriod > 0 && aCfg.Uid != "" {
          // add +/- 0-20% to aCfg.LoginPeriod
@@ -285,7 +285,7 @@ func runTmtpRecv(iSvcId string) {
       }
 
       for {
-         aCfg = pSl.GetDataService(iSvcId)
+         aCfg = pSl.GetConfigService(iSvcId)
          aCfgTls := tls.Config{InsecureSkipVerify: !aCfg.Verify}
          aDlr := net.Dialer{Timeout: 3 * time.Second}
          aConn, err = tls.DialWithDialer(&aDlr, "tcp", aCfg.Addr, &aCfgTls)
@@ -488,7 +488,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       }
       err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvcId, "Addr":sHttpSrvr.Addr})
    case "cs": aResult = aState.GetSummary()
-   case "cf": aResult = pSl.GetDataService(aSvcId)
+   case "cf": aResult = pSl.GetConfigService(aSvcId)
    case "nl": aResult = pSl.GetIdxNotice(aSvcId)
    case "ps": aResult = pSl.GetDraftAdrsbk(aSvcId)
    case "pt": aResult = pSl.GetSentAdrsbk(aSvcId)

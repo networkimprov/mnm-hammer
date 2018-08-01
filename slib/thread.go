@@ -342,7 +342,7 @@ func storeSentThread(iSvc string, iHead *Header) {
    }
    defer aSd.Close()
    aDh := _readDraftHead(aSd)
-   aHead := Header{Id:iHead.MsgId, From:GetDataService(iSvc).Uid, Posted:iHead.Posted,
+   aHead := Header{Id:iHead.MsgId, From:GetConfigService(iSvc).Uid, Posted:iHead.Posted,
                    DataLen:aDh.Len, SubHead:aDh.SubHead}
    aHead.SubHead.setupSent(aId.tid())
 

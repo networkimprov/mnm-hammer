@@ -25,7 +25,7 @@ var sServicesDoor sync.RWMutex
 var sServices = make(map[string]*tService)
 var sServiceStartFn func(string)
 
-type tCfgService struct {
+type tSvcConfig struct {
    Name string
    Description string
    LoginPeriod int // seconds
@@ -52,7 +52,7 @@ func initServices(iFn func(string)) {
       _makeTree(aSvc)
       aService := _newService(nil)
       aSvcFiles := [...]struct { name string; cache interface{}; reqd bool }{
-         {cfgFile  (aSvc), &aService.cfg,    true },
+         {cfgFile  (aSvc), &aService.config, true },
          {sendqFile(aSvc), &aService.sendQ,  false},
          {tabFile  (aSvc), &aService.tabs,   false},
          {notcFile (aSvc), &aService.notice, false},
@@ -111,7 +111,7 @@ func (tGlobalService) GetPath(string) string {
 
 func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    var err error
-   var aCfg tCfgService
+   var aCfg tSvcConfig
    err = json.NewDecoder(iR).Decode(&aCfg)
    if err != nil { return err } // todo only network errors
 
@@ -152,17 +152,17 @@ func getService(iSvc string) *tService {
    return sServices[iSvc]
 }
 
-func GetDataService(iSvc string) *tCfgService {
+func GetConfigService(iSvc string) *tSvcConfig {
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
-   aCfg := aSvc.cfg
+   aCfg := aSvc.config
    return &aCfg
 }
 
 func getUriService(iSvc string) string {
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
-   return aSvc.cfg.Addr +"/"+ aSvc.cfg.Uid +"/"
+   return aSvc.config.Addr +"/"+ aSvc.config.Uid +"/"
 }
 
 func getDoorService(iSvc string, iId string, iMake func()tDoor) tDoor {
@@ -176,9 +176,9 @@ func getDoorService(iSvc string, iId string, iMake func()tDoor) tDoor {
    return aDoor
 }
 
-func _newService(iCfg *tCfgService) *tService {
+func _newService(iCfg *tSvcConfig) *tService {
    aSvc := &tService{tabs: []string{}, doors: make(map[string]tDoor)}
-   if iCfg != nil { aSvc.cfg = *iCfg }
+   if iCfg != nil { aSvc.config = *iCfg }
    return aSvc
 }
 
@@ -195,17 +195,16 @@ func _makeTree(iSvc string) {
    }
 }
 
-func _updateService(iCfg *tCfgService) error {
+func _updateConfig(iCfg *tSvcConfig) error {
    var err error
    aSvc := getService(iCfg.Name)
    if aSvc == nil {
       return tError(iCfg.Name + " not found")
    }
    aSvc.Lock(); defer aSvc.Unlock()
+   aSvc.config = *iCfg
    err = storeFile(cfgFile(iCfg.Name), iCfg)
    if err != nil { quit(err) }
-
-   aSvc.cfg = *iCfg
    return nil
 }
 
@@ -267,14 +266,14 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
    case "tmtprev":
       //todo
    case "registered":
-      aNewSvc := GetDataService(iSvc)
-      aNewSvc.Uid = iHead.Uid
-      aNewSvc.Node = iHead.NodeId
+      aNewCfg := GetConfigService(iSvc)
+      aNewCfg.Uid = iHead.Uid
+      aNewCfg.Node = iHead.NodeId
       if iHead.Error != "" {
-         aNewSvc.Alias = ""
-         aNewSvc.Error = "["+ iHead.Error[len("AddAlias: alias "):] +"]"
+         aNewCfg.Alias = ""
+         aNewCfg.Error = "["+ iHead.Error[len("AddAlias: alias "):] +"]"
       }
-      err = _updateService(aNewSvc)
+      err = _updateConfig(aNewCfg)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: %s %s\n", iSvc, iHead.Op, err.Error())
          return fErr
@@ -406,12 +405,12 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
                                        "cf", "nl", "tl", "cs", "al", "_t", "ml", "mo",
                                        "/v", "/t", "/f"}
       }
-   case "service_update":
-      aNewSvc := GetDataService(iSvc)
-      if iUpdt.Service.Addr != "" { aNewSvc.Addr = iUpdt.Service.Addr }
-      if iUpdt.Service.LoginPeriod >= 0 { aNewSvc.LoginPeriod = iUpdt.Service.LoginPeriod }
-      if iUpdt.Service.Verify { aNewSvc.Verify = !aNewSvc.Verify }
-      err = _updateService(aNewSvc)
+   case "config_update":
+      aNewCfg := GetConfigService(iSvc)
+      if iUpdt.Config.Addr != "" { aNewCfg.Addr = iUpdt.Config.Addr }
+      if iUpdt.Config.LoginPeriod >= 0 { aNewCfg.LoginPeriod = iUpdt.Config.LoginPeriod }
+      if iUpdt.Config.Verify { aNewCfg.Verify = !aNewCfg.Verify }
+      err = _updateConfig(aNewCfg)
       if err != nil { return fErr, nil }
       aFn, aResult = fAll, []string{"cf"}
    case "ohi_add", "ohi_drop":
@@ -449,7 +448,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aData := bytes.NewBufferString("ohi there\n![?](this_f:trial.original)")
       aHead := Header{DataLen:int64(aData.Len()), SubHead:
                tHeader2{ThreadId:aTid, noAttachSize:true, For:
-               []tHeaderFor{{Id:GetDataService(iSvc).Uid, Type:1}}, Attach:
+               []tHeaderFor{{Id:GetConfigService(iSvc).Uid, Type:1}}, Attach:
                []tHeader2Attach{{Name:"u:trial"},
                   {Name:"r:abc", Size:80, FfKey:"abc",
                    Ffn:"localhost:8888/5X8SZWGW7MLR+4GNB1LF+P8YGXCZF4BN/abc"},

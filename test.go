@@ -234,9 +234,9 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
 func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
    var aApply string
    switch iUpdt.Op {
-   case "service_update":
-      if iUpdt.Service.Addr == "orig" {
-         iUpdt.Service.Addr = sTestHost
+   case "config_update":
+      if iUpdt.Config.Addr == "orig" {
+         iUpdt.Config.Addr = sTestHost
       }
    case "thread_save":
       if iUpdt.Thread.Alias != "" {
@@ -358,7 +358,7 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    case "/f": aResult = pSl.BlankForm.GetIdx()
    case "/v": aResult = pSl.Service.GetIdx()
    case "cs": aResult = iCtx.state.GetSummary()
-   case "cf": aResult = pSl.GetDataService(iCtx.svcId)
+   case "cf": aResult = pSl.GetConfigService(iCtx.svcId)
    case "nl": aResult = pSl.GetIdxNotice(iCtx.svcId)
    case "ps": aResult = pSl.GetDraftAdrsbk(iCtx.svcId)
    case "pt": aResult = pSl.GetSentAdrsbk(iCtx.svcId)

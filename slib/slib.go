@@ -57,7 +57,7 @@ type GlobalSet interface {
 type tService struct {
    adrsbk tAdrsbk
    sync.RWMutex // protects the following
-   cfg tCfgService
+   config tSvcConfig
    sendQ []tQueueEl
    notice []tNoticeEl
    fromOhi tOhi
@@ -136,7 +136,7 @@ const ( _ int8 = iota; eForUser; eForGroupAll; eForGroupExcl; eForSelf )
 
 type Update struct {
    Op string
-   Service *struct {
+   Config *struct {
       Addr string
       LoginPeriod int
       Verify bool

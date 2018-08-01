@@ -1229,7 +1229,7 @@
             return a === null ? -1 : a;
          },
          sendUpdate: function() {
-            mnm.ServiceUpdt(this.$data);
+            mnm.ConfigUpdt(this.$data);
             this.verify = !!(this.addr = this.lpin = null);
             this.loginperiod = -1;
          },

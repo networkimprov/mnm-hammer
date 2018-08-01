@@ -14,8 +14,8 @@
    // caller implements these
    mnm.Log = mnm.Render = mnm.ThreadChange = function(){};
 
-   mnm.ServiceUpdt = function(iObj) { // with addr, verify
-      _wsSend({op:'service_update', service:iObj})
+   mnm.ConfigUpdt = function(iObj) { // with addr, verify
+      _wsSend({op:'config_update', config:iObj})
    };
 
    mnm.OhiAdd = function(iAliasTo) {
