@@ -83,6 +83,7 @@ func initServices(iFn func(string)) {
          } else if strings.HasPrefix(aTmp, "ffnindex_") {
             renameRemove(tempDir(aSvc) + aTmp, attachFfn(aSvc, aTmp[9:]))
          } else if strings.HasSuffix(aTmp, ".tmp") {
+            // could be a valid attachment from thread transaction
             defer os.Remove(tempDir(aSvc) + aTmp)
          } else {
             completeThread(aSvc, aTmp)
