@@ -37,7 +37,7 @@ func GetFromOhi(iSvc string) []tOhiEl {
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    if aSvc.fromOhi == nil {
-      return []tOhiEl{}
+      return nil
    }
    return _listOhi(aSvc.fromOhi)
 }

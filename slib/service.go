@@ -250,7 +250,7 @@ func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
    return err
 }
 
-func LogoutService(iSvc string) interface{} {
+func LogoutService(iSvc string) []string {
    dropFromOhi(iSvc)
    return []string{"of"}
 }
