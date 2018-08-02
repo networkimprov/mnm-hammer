@@ -31,7 +31,7 @@
          ohiFrom:true, //todo move to cs
       // per service
          cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
-         ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:[],
+         ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:null,
       // per thread
          al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
          toSave:{}, // populated locally
@@ -328,16 +328,18 @@
            ><div style="display:none" id="log"></div>
          </div>
       </div>
-      <div v-if="ohiFrom"
+      <div v-show="ohiFrom"
            class="uk-card uk-card-secondary uk-text-small uk-border-rounded"
            style="padding:8px; position:absolute; bottom:10px; right:10px">
-         <div v-if="of.length === 0"
+         <div v-if="!of"
+              class="uk-text-danger">offline</div>
+         <div v-else-if="of.length === 0"
               class="uk-text-warning">no o/</div>
          <ul v-else
              class="uk-list uk-text-success" style="margin-bottom:0">
-            <li v-for="aUser in of">
-               {{aUser.Uid}}
-            </li></ul>
+            <li v-for="aUser in of" :key="aUser.Uid">
+               {{aUser.Uid}}</li>
+         </ul>
       </div>
    </div>
 </div>
