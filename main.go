@@ -45,6 +45,8 @@ import (
 
 const kVersionA, kVersionB, kVersionC = 0, 0, 0
 const kVersionDate = "(unreleased)"
+
+const kDialRetryDelayMax = 6 * 60
 const kIdleTimeFraction = 10
 const kMsgHeaderMinLen = int64(len(`{"op":1}`))
 const kMsgHeaderMaxLen = int64(1 << 16)
@@ -284,17 +286,21 @@ func runTmtpRecv(iSvcId string) {
          }
       }
 
-      for {
+      for aWait := 4; true; aWait *= 2 {
          aCfg = pSl.GetConfigService(iSvcId)
          aCfgTls := tls.Config{InsecureSkipVerify: !aCfg.Verify}
          aDlr := net.Dialer{Timeout: 3 * time.Second}
          aConn, err = tls.DialWithDialer(&aDlr, "tcp", aCfg.Addr, &aCfgTls)
-         if err == nil { break }
+         if err == nil {
+            break
+         }
          aSvc.ccs.Range(func(c *tWsConn) {
             c.WriteJSON(err.Error())
          })
          fmt.Fprintf(os.Stderr, "runTmtpRecv %s: %s\n", iSvcId, err.Error())
-         time.Sleep(time.Duration(5000 + time.Now().Nanosecond() % 1000 * 5) * time.Millisecond)
+         if aWait > kDialRetryDelayMax { aWait = kDialRetryDelayMax }
+         aVaries := time.Now().Nanosecond() % 1000
+         time.Sleep(time.Duration(aWait * 1000 + aVaries * aWait / 2) * time.Millisecond)
       }
 
       aMsg := tMsg{"Op":eOpTmtpRev, "Id":"1"}
