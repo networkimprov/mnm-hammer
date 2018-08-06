@@ -48,6 +48,7 @@ const kVersionDate = "(unreleased)"
 
 const kDialRetryDelayMax = 6 * 60
 const kIdleTimeFraction = 10
+const kPulsePeriod time.Duration = 115 * time.Second
 const kMsgHeaderMinLen = int64(len(`{"op":1}`))
 const kMsgHeaderMaxLen = int64(1 << 16)
 const kFirstOhiId = "first_ohi"
@@ -58,7 +59,8 @@ const (
    eOpUserEdit; eOpOhiEdit;
    eOpGroupInvite; eOpGroupEdit
    eOpPost; eOpPing
-   eOpAck; eOpQuit
+   eOpAck
+   eOpPulse; eOpQuit
    eOpEnd
 )
 
@@ -170,7 +172,7 @@ func newQueue(iSvcId string) *tQueue {
    }
    var aQ *tQueue
    aQ = &tQueue{
-      once: func(){ go runElasticChan(aQ); go runTmtpSend(aQ) },
+      once: func(){ go runElasticChan(aQ) },
       service: iSvcId,
       connSrc: make(chan net.Conn, 1),
       in: make(chan *pSl.SendRecord),
@@ -179,6 +181,7 @@ func newQueue(iSvcId string) *tQueue {
       ack: make(chan string, 2), //todo larger buffer?
       wakeup: make(chan bool),
    }
+   go runTmtpSend(aQ)
    if len(aRecs) > 0 {
       aQ.Do(aQ.once)
    }
@@ -198,8 +201,29 @@ func (o *tQueue) postAck(iId string) {
    o.connSrc <- aConn
 }
 
+func (o *tQueue) _waitForSrec() *pSl.SendRecord {
+   aTmr := time.NewTimer(kPulsePeriod)
+   for {
+      select {
+      case aSrec := <-o.out:
+         aTmr.Stop()
+         return aSrec
+      case <-aTmr.C:
+         select {
+         case aConn := <-o.connSrc:
+            _, err := aConn.Write(packMsg(tMsg{"Op":eOpPulse}, nil))
+            if err != nil { panic(err) }
+            o.connSrc <- aConn
+         default:
+         }
+         aTmr.Reset(kPulsePeriod)
+      }
+   }
+   return nil
+}
+
 func runTmtpSend(o *tQueue) {
-   aSrec := <-o.out
+   aSrec := o._waitForSrec()
    for {
       var aConn net.Conn
       select {
@@ -211,7 +235,7 @@ func runTmtpSend(o *tQueue) {
       o.connSrc <- aConn
       if err != nil { //todo retry transient error
          if err.Error() == "already sent" {
-            aSrec = <-o.out
+            aSrec = o._waitForSrec()
          } else {
             fmt.Fprintf(os.Stderr, "runTmtpSend %s: send error %s\n", o.service, err.Error())
             time.Sleep(5 * time.Millisecond)
@@ -228,7 +252,7 @@ func runTmtpSend(o *tQueue) {
             goto WaitForAck
          }
          aTmr.Stop()
-         aSrec = <-o.out
+         aSrec = o._waitForSrec()
       case <-aTmr.C:
          fmt.Fprintf(os.Stderr, "runTmtpSend %s: timeout awaiting ack\n", o.service)
       }
