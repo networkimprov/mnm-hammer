@@ -15,7 +15,7 @@ import (
    "fmt"
    "encoding/json"
    "os"
-   pSl "mnm-hammer/slib"
+   pSl "github.com/networkimprov/mnm-hammer/slib"
    "strconv"
    "strings"
    "sync"
