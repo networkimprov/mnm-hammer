@@ -34,9 +34,10 @@ type tIndexEl struct {
 
 const eSeenClear, eSeenLocal string = "!", "."
 
-func _makeIndexEl(iHead *Header, iPos int64) tIndexEl {
-   return tIndexEl{Id:iHead.Id, From:iHead.From, Date:iHead.Posted, Offset:iPos,
-                   Subject:iHead.SubHead.Subject, Alias:iHead.SubHead.Alias}
+func _setupIndexEl(iEl *tIndexEl, iHead *Header, iPos int64) *tIndexEl {
+   iEl.Id, iEl.From, iEl.Date, iEl.Offset, iEl.Subject, iEl.Alias =
+      iHead.Id, iHead.From, iHead.Posted, iPos, iHead.SubHead.Subject, iHead.SubHead.Alias
+   return iEl
 }
 
 func GetIdxThread(iSvc string, iState *ClientState) interface{} {
@@ -177,43 +178,12 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
    aIdx := []tIndexEl{{}}
    aIdxN := 0
    var aPos, aCopyLen int64
-
-   if aThreadId != iHead.Id {
-      aDoor := _getThreadDoor(iSvc, aThreadId)
-      aDoor.Lock(); defer aDoor.Unlock()
-      aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
-      if err != nil {
-         fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s not found\n", iSvc, aThreadId)
-         return fConsume()
-      }
-      defer aFd.Close()
-      aPos = _readIndex(aFd, &aIdx)
-      aIdxN = len(aIdx)
-      aIdx = append(aIdx, tIndexEl{})
-      for a, _ := range aIdx {
-         if aIdx[a].Id == iHead.Id {
-            fmt.Fprintf(os.Stderr, "storeReceivedThread %s: msg %s already stored\n", iSvc, iHead.Id)
-            return fConsume()
-         }
-         if aIdx[a].Id > iHead.Id {
-            aCopyLen = aPos - aIdx[a].Offset
-            aPos = aIdx[a].Offset
-            aIdxN = a
-            copy(aIdx[a+1:], aIdx[a:])
-            _, err = aFd.Seek(aPos, io.SeekStart)
-            if err != nil { quit(err) }
-            break
-         }
-      }
-   }
-   aIdx[aIdxN] = _makeIndexEl(iHead, aPos)
-   aIdx[aIdxN].Seen = eSeenClear
-   aTempOk += fmt.Sprint(aPos)
+   aEl := tIndexEl{Seen:eSeenClear}
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   err = _writeMsgTemp(aTd, iHead, iR, &aIdx[aIdxN])
+   err = _writeMsgTemp(aTd, iHead, iR, &aEl)
    if err == nil {
       err = tempReceivedAttach(iSvc, iHead, iR)
    }
@@ -221,17 +191,47 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
       os.Remove(aTemp)
       return err
    }
-   if aCopyLen > 0 {
-      _, err = io.CopyN(aTd, aFd, aCopyLen)
-      if err != nil { quit(err) }
-      _, err = aFd.Seek(aPos, io.SeekStart)
-      if err != nil { quit(err) }
-      for a := aIdxN+1; a < len(aIdx); a++ {
-         if aIdx[a].Offset >= 0 {
-            aIdx[a].Offset += aIdx[aIdxN].Size
+   if aThreadId != iHead.Id {
+      aDoor := _getThreadDoor(iSvc, aThreadId)
+      aDoor.Lock(); defer aDoor.Unlock()
+      aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s not found\n", iSvc, aThreadId)
+         os.Remove(aTemp)
+         return nil
+      }
+      defer aFd.Close()
+      aPos = _readIndex(aFd, &aIdx)
+      aIdxN = len(aIdx)
+      aIdx = append(aIdx, tIndexEl{})
+      for a, _ := range aIdx {
+         if aIdx[a].Id <  iHead.Id { continue }
+         if aIdx[a].Id == iHead.Id {
+            fmt.Fprintf(os.Stderr, "storeReceivedThread %s: msg %s already stored\n", iSvc, iHead.Id)
+            os.Remove(aTemp)
+            return nil
+         }
+         if aCopyLen == 0 {
+            aCopyLen = aPos - aIdx[a].Offset
+            aPos = aIdx[a].Offset
+            aIdxN = a
+            copy(aIdx[a+1:], aIdx[a:])
+            _, err = aFd.Seek(aPos, io.SeekStart)
+            if err != nil { quit(err) }
+            _, err = io.CopyN(aTd, aFd, aCopyLen)
+            if err != nil { quit(err) }
+            _, err = aFd.Seek(aPos, io.SeekStart)
+            if err != nil { quit(err) }
+         } else {
+            if aIdx[a].Offset >= 0 {
+               aIdx[a].Offset += aIdx[aIdxN].Size
+            }
          }
       }
    }
+   aIdx[aIdxN] = *_setupIndexEl(&aEl, iHead, aPos)
+   aTempOk += fmt.Sprint(aPos)
+
    _writeIndex(aTd, aIdx)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
@@ -351,6 +351,7 @@ func storeSentThread(iSvc string, iHead *Header) {
    var aTd, aFd *os.File
    aIdx := []tIndexEl{}
    var aPos int64
+   aEl := tIndexEl{}
 
    if aId.tid() != iHead.MsgId {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
@@ -363,7 +364,7 @@ func storeSentThread(iSvc string, iHead *Header) {
       }
       aIdx = aIdx[:a + copy(aIdx[a:], aIdx[a+1:])]
    }
-   aIdx = append(aIdx, _makeIndexEl(&aHead, aPos))
+   aIdx = append(aIdx, *_setupIndexEl(&aEl, &aHead, aPos))
    aTempOk += fmt.Sprint(aPos)
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
