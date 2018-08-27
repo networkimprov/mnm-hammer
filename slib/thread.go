@@ -113,7 +113,6 @@ func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
       quit(err)
    }
    defer aFd.Close()
-
    aDh := _readDraftHead(aFd)
    if len(aDh.SubHead.For) == 0 { quit(tError("missing to field")) }
 
@@ -121,10 +120,17 @@ func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    aAttachLen := sizeDraftAttach(iSvc, &aDh.SubHead, aId) // revs subhead
    aBuf1, err := json.Marshal(aDh.SubHead)
    if err != nil { quit(err) }
+   aUid := GetConfigService(iSvc).Uid
+   for a := len(aDh.SubHead.For)-1; a >= 0; a-- {
+      if aDh.SubHead.For[a].Id == aUid {
+         aDh.SubHead.For = aDh.SubHead.For[:a + copy(aDh.SubHead.For[a:], aDh.SubHead.For[a+1:])]
+      }
+   }
    aHead := Msg{"Op":7, "Id":iId, "For":aDh.SubHead.For,
                 "DataHead": len(aBuf1), "DataLen": int64(len(aBuf1)) + aDh.Len + aAttachLen }
    aBuf0, err := json.Marshal(aHead)
    if err != nil { quit(err) }
+
    err = sendHeaders(iW, aBuf0, aBuf1)
    if err != nil { return err }
    _, err = io.CopyN(iW, aFd, aDh.Len) //todo only return network errors
