@@ -54,7 +54,7 @@ type tAdrsbkEl struct {
 const (
    _ int8 = iota
    eAbPingDraft     // Type, Date, Text, Alias,      MyAlias,                 Qid
-   eAbNone //todo remove
+   eAbSelf          // Type, Date,              Uid, MyAlias
    eAbPingTo        // Type, Date, Text, Alias,      MyAlias
    eAbPingFrom      // Type, Date, Text, Alias, Uid, MyAlias, MsgId
    eAbMsgTo         // Type, Date,              Uid,          MsgId, Tid
@@ -90,6 +90,8 @@ func _loadAdrsbk(iSvc string) *tAdrsbk {
    if err != nil && !os.IsNotExist(err) { quit(err) }
    for a, _ := range aLog {
       switch aLog[a].Type {
+      case eAbSelf:
+         aSvc.aliasIdx[aLog[a].MyAlias] = aLog[a].Uid
       case eAbInviteTo:
          aKey := aLog[a].Alias + "\x00" + aLog[a].Gid
          aEl := aLog[a]
@@ -248,6 +250,18 @@ func lookupAdrsbk(iSvc string, iAlias []string) []tHeaderFor {
       }
    }
    return aFor
+}
+
+func storeSelfAdrsbk(iSvc string, iAlias string, iUid string) {
+   aSvc := _loadAdrsbk(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   aEl := tAdrsbkEl{Type:eAbSelf, Date:dateRFC3339(), MyAlias:iAlias, Uid:iUid}
+   if aSvc.aliasIdx[aEl.MyAlias] != "" {
+      fmt.Fprintf(os.Stderr, "storeSelfAdrsbk %s: MyAlias %s already stored\n", iSvc, aEl.MyAlias)
+      return
+   }
+   aSvc.aliasIdx[aEl.MyAlias] = aEl.Uid
+   _storeAdrsbk(iSvc, []tAdrsbkEl{aEl})
 }
 
 func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {

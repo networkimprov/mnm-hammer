@@ -273,6 +273,8 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       if iHead.Error != "" {
          aNewCfg.Alias = ""
          aNewCfg.Error = "["+ iHead.Error[len("AddAlias: alias "):] +"]"
+      } else {
+         storeSelfAdrsbk(iSvc, aNewCfg.Alias, aNewCfg.Uid)
       }
       err = _updateConfig(aNewCfg)
       if err != nil {
