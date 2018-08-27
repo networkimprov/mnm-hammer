@@ -262,7 +262,7 @@ func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
    case "thread_send", "thread_discard",
         "thread_open", "thread_close":
       _applyLastId(&iUpdt.Thread.Id,         &aApply, iLastId, "ml")
-      _applyLastId(&iUpdt.Thread.ThreadId,   &aApply, iLastId, "ml")
+      _applyLastId(&iUpdt.Thread.ThreadId,   &aApply, iLastId, "tl")
    case "adrsbk_search":
       if iUpdt.Adrsbk.Term == "td" {
          iUpdt.Adrsbk.Term = sTestDate[1:3]
