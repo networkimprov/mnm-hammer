@@ -156,10 +156,10 @@
 },{
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
-      "mo": [{"From":"*", "Id":"*", "Len":0, "Posted":"*d",
-              "SubHead":{"Alias":"Gold#td", "Cc":["Blue#td"], "ThreadId":"", "Subject":"ohi",
+      "mo": [{"From":"*", "Id":"*", "Len":14, "Posted":"*d",
+              "SubHead":{"Alias":"Gold#td", "Cc":["Blue#td"], "ThreadId":"*", "Subject":"ohi",
                          "For":[{"Id":"*", "Type":1}]},
-              "msg_data":"" }] ,
+              "msg_data":"second message" }] ,
       "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
       "cs": {"Thread":"*",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
@@ -420,10 +420,10 @@
       "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":true},
              {"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] }
 },{
-   "Updt": {"Op":"thread_save", "Thread":{"New":1, "Alias":"Gold", "CC":["Blue"], "Subject":"ohi"}},
+   "Updt": {"Op":"thread_save", "Thread":{"New":1, "Alias":"Gold", "CC":["Gold"], "Subject":"ohi"}},
    "Result": {
       "mo": [{"From":"self", "Id":"*", "Len":0, "Posted":"draft",
-              "SubHead":{"Alias":"Gold#td", "Cc":["Blue#td"], "ThreadId":"", "Subject":"ohi",
+              "SubHead":{"Alias":"Gold#td", "Cc":["Gold#td"], "ThreadId":"", "Subject":"ohi",
                          "For":[{"Id":"*", "Type":1}]},
               "msg_data":"" }] ,
       "tl": [{"Id":"*", "Date":"*d"},
@@ -439,6 +439,26 @@
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {
       "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":true}] }
+},{
+   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["ml"]}} ,
+   "Result": {
+      "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] }
+},{
+   "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Gold", "CC":["Blue"], "Subject":"ohi",
+                                          "Data":"second message"}},
+   "Result": {
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false},
+             {"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+      "mn": [{"From":"self", "Id":"*", "Len":14, "Posted":"draft",
+              "SubHead":{"Alias":"Gold#td", "Cc":["Blue#td"], "ThreadId":"*", "Subject":"ohi",
+                         "For":[{"Id":"*", "Type":1}]},
+              "msg_data":"second message" }] ,
+      "al": [] }
+},{
+   "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
+   "Result": {
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":true},
+             {"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] }
 }]
 
 }]
