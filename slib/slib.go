@@ -16,7 +16,6 @@ import (
    "encoding/json"
    "os"
    "path"
-   "strings"
    "sync"
    "time"
 )
@@ -229,10 +228,10 @@ func sendHeaders(iW io.Writer, iHead, iSub []byte) error {
 }
 
 func makeLocalId(iTid string) string {
-   return fmt.Sprintf("%s_%012x", iTid, time.Now().UTC().UnixNano() / 1e6) // milliseconds
+   return fmt.Sprintf("%s_%012x", iTid, time.Now().UnixNano() / 1e6) // milliseconds
 }
 
-func parseLocalId(i string) tLocalId { return strings.SplitN(i, "_", 2) }
+func parseLocalId(i string) tLocalId { return tLocalId{i[:len(i)-13], i[len(i)-12:]} }
 
 type tLocalId []string
 
