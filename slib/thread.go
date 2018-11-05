@@ -202,34 +202,35 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
       aDoor.Lock(); defer aDoor.Unlock()
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil {
-         if !os.IsNotExist(err) { quit(err) }
-      } else {
-         defer aFd.Close()
-         aPos = _readIndex(aFd, &aIdx)
-         aIdxN = len(aIdx)
-         aIdx = append(aIdx, tIndexEl{})
-         for a, _ := range aIdx {
-            if aIdx[a].Id <  iHead.Id { continue }
-            if aIdx[a].Id == iHead.Id {
-               fmt.Fprintf(os.Stderr, "storeReceivedThread %s: msg %s already stored\n", iSvc, iHead.Id)
-               os.Remove(aTemp)
-               return nil
-            }
-            if aCopyLen == 0 {
-               aCopyLen = aPos - aIdx[a].Offset
-               aPos = aIdx[a].Offset
-               aIdxN = a
-               copy(aIdx[a+1:], aIdx[a:])
-               _, err = aFd.Seek(aPos, io.SeekStart)
-               if err != nil { quit(err) }
-               _, err = io.CopyN(aTd, aFd, aCopyLen)
-               if err != nil { quit(err) }
-               _, err = aFd.Seek(aPos, io.SeekStart)
-               if err != nil { quit(err) }
-            } else {
-               if aIdx[a].Offset >= 0 {
-                  aIdx[a].Offset += aIdx[aIdxN].Size
-               }
+         fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s not found\n", iSvc, aThreadId)
+         os.Remove(aTemp)
+         return nil
+      }
+      defer aFd.Close()
+      aPos = _readIndex(aFd, &aIdx)
+      aIdxN = len(aIdx)
+      aIdx = append(aIdx, tIndexEl{})
+      for a, _ := range aIdx {
+         if aIdx[a].Id <  iHead.Id { continue }
+         if aIdx[a].Id == iHead.Id {
+            fmt.Fprintf(os.Stderr, "storeReceivedThread %s: msg %s already stored\n", iSvc, iHead.Id)
+            os.Remove(aTemp)
+            return nil
+         }
+         if aCopyLen == 0 {
+            aCopyLen = aPos - aIdx[a].Offset
+            aPos = aIdx[a].Offset
+            aIdxN = a
+            copy(aIdx[a+1:], aIdx[a:])
+            _, err = aFd.Seek(aPos, io.SeekStart)
+            if err != nil { quit(err) }
+            _, err = io.CopyN(aTd, aFd, aCopyLen)
+            if err != nil { quit(err) }
+            _, err = aFd.Seek(aPos, io.SeekStart)
+            if err != nil { quit(err) }
+         } else {
+            if aIdx[a].Offset >= 0 {
+               aIdx[a].Offset += aIdx[aIdxN].Size
             }
          }
       }
@@ -254,7 +255,7 @@ func _completeStoreReceived(iSvc string, iTmp string, iHead *tDraftHead, iFd, iT
    resolveSentAdrsbk(iSvc, iHead.Posted, iHead.From, iHead.SubHead.Alias, aRec.tid(), aRec.mid())
    storeReceivedAttach(iSvc, &iHead.SubHead, aRec)
 
-   if aRec.tid() == aRec.mid() || iFd == nil {
+   if aRec.tid() == aRec.mid() {
       err = os.Link(aTempOk, threadDir(iSvc) + aRec.tid())
       if err != nil && !os.IsExist(err) { quit(err) }
       err = syncDir(threadDir(iSvc))
@@ -685,13 +686,10 @@ func completeThread(iSvc string, iTempOk string) {
    var aFd, aTd *os.File
    if aRec.tid() != "" && aRec.tid() != aRec.mid() {
       aFd, err = os.OpenFile(threadDir(iSvc)+aRec.tid(), os.O_RDWR, 0600)
-      if err != nil {
-         if !os.IsNotExist(err) || aRec.op() != "sr" { quit(err) }
-      } else {
-         defer aFd.Close()
-         _, err = aFd.Seek(aRec.pos(), io.SeekStart)
-         if err != nil { quit(err) }
-      }
+      if err != nil { quit(err) }
+      defer aFd.Close()
+      _, err = aFd.Seek(aRec.pos(), io.SeekStart)
+      if err != nil { quit(err) }
    }
    aTd, err = os.Open(tempDir(iSvc)+iTempOk)
    if err != nil { quit(err) }
