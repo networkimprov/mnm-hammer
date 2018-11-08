@@ -240,7 +240,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
       aIdxN = len(aIdx)
       aIdx = append(aIdx, tIndexEl{})
       for a, _ := range aIdx {
-         if aIdx[a].Id <  iHead.Id { continue }
+         if aIdx[a].Id <  iHead.Id || aIdx[a].Offset < 0 { continue }
          if aIdx[a].Id == iHead.Id {
             fmt.Fprintf(os.Stderr, "storeReceivedThread %s: msg %s already stored\n", iSvc, iHead.Id)
             os.Remove(aTemp)
@@ -258,9 +258,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
             _, err = aFd.Seek(aPos, io.SeekStart)
             if err != nil { quit(err) }
          } else {
-            if aIdx[a].Offset >= 0 {
-               aIdx[a].Offset += aIdx[aIdxN].Size
-            }
+            aIdx[a].Offset += aEl.Size
          }
       }
    }
