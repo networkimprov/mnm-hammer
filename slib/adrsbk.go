@@ -211,31 +211,39 @@ func _listLogs(iSvc *tAdrsbk, iIdx map[string]tAdrsbkLog) []tAdrsbkEl {
    return aLog
 }
 
+type tSearchResult struct { name, id string }
+
 func searchAdrsbk(iSvc string, iUpdt *Update) []string {
    aSvc := _loadAdrsbk(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    aTerm := iUpdt.Adrsbk.Term
-   var aResult, aSet []string
-   fMatch := func(cName string) {
+   var aSet []string
+   var aResult []tSearchResult
+   fMatch := func(cName, cId string) {
       aSet = strings.Split(cName, " ") //todo better split logic
       for c := range aSet {
          if len(aSet[c]) >= len(aTerm) && strings.EqualFold(aSet[c][:len(aTerm)], aTerm) {
-            aResult = append(aResult, cName)
+            aResult = append(aResult, tSearchResult{cName, cId})
             return
          }
       }
    }
-   var aName string
+   var aName, aId string
    if iUpdt.Adrsbk.Type & 1 == 1 {
-      for aName, _ = range aSvc.aliasIdx {
-         if _, ok := aSvc.groupIdx[aName]; !ok { fMatch(aName) }
+      for aName, aId = range aSvc.aliasIdx {
+         if _, ok := aSvc.groupIdx[aName]; !ok { fMatch(aName, aId) }
       }
    }
    if iUpdt.Adrsbk.Type & 2 == 2 {
-      for aName, _ = range aSvc.groupIdx { fMatch(aName) }
+      for aName, _ = range aSvc.groupIdx { fMatch(aName, aName) }
    }
-   sort.Strings(aResult)
-   return aResult
+   sort.Slice(aResult, func(cA, cB int) bool { return aResult[cA].name < aResult[cB].name })
+   aList := make([]string, 2*len(aResult))
+   for a := range aResult {
+      aList[a*2]   = aResult[a].name
+      aList[a*2+1] = aResult[a].id
+   }
+   return aList
 }
 
 func lookupAdrsbk(iSvc string, iAlias []string) []tHeaderFor {

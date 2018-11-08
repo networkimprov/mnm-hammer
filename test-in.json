@@ -259,11 +259,11 @@
 },{
    "Updt": {"Op":"adrsbk_search", "Adrsbk":{"Type":3, "Term":"go"}},
    "Result": {
-      "_n": ["Gold#td", "Gold-G#td"] }
+      "_n": ["Gold#td", "*", "Gold-G#td", "Gold-G#td"] }
 },{
    "Updt": {"Op":"adrsbk_search", "Adrsbk":{"Type":3, "Term":"td"}},
    "Result": {
-      "_n": ["Blue#td", "Gold#td", "Gold-G#td"] }
+      "_n": ["Blue#td", "*", "Gold#td", "*", "Gold-G#td", "Gold-G#td"] }
 },{
    "Updt": {"Op":"open"},
    "Result": {
