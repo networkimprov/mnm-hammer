@@ -9,7 +9,6 @@
 package slib
 
 import (
-   "bytes"
    "fmt"
    "io"
    "encoding/json"
@@ -442,28 +441,6 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       err = setLastSeenNotice(iSvc, iUpdt)
       if err != nil { return fErr, nil }
       aFn, aResult = fAll, []string{"nl"}
-   case "thread_recvtest":
-      aTid := iState.getThread()
-      if len(aTid) > 0 && aTid[0] == '_' { break }
-      aFd, err := os.OpenFile(threadDir(iSvc) + "_22", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-      if err != nil { quit(err) }
-      aData := bytes.NewBufferString("ohi there\n![?](this_f:trial.original)")
-      aHead := Header{DataLen:int64(aData.Len()), SubHead:
-               tHeader2{ThreadId:aTid, noAttachSize:true, For:
-               []tHeaderFor{{Id:GetConfigService(iSvc).Uid, Type:1}}, Attach:
-               []tHeader2Attach{{Name:"u:trial"},
-                  {Name:"r:abc", Size:80, FfKey:"abc",
-                   Ffn:"localhost:8888/5X8SZWGW7MLR+4GNB1LF+P8YGXCZF4BN/abc"},
-                  {Name:"f:trial.original", Ffn:"form-reg.github.io/cat/trial"} }}}
-      aForm := map[string]string{"abc":
-         `{"nr":1, "so":"s", "bd":true, "or":{ "anr":[[1,2],[1,2]], "aso":["s","s","s"] }}`}
-      _writeMsgTemp(aFd, &aHead, aData, &tIndexEl{})
-      writeFormFillAttach(aFd, &aHead.SubHead, aForm, &tIndexEl{})
-      aFd.Close()
-      os.Mkdir(attachSub(iSvc, "_22"), 0700)
-      os.Link(kUploadDir + "trial",          attachSub(iSvc, "_22") + "22_u:trial")
-      os.Link(kFormDir   + "trial.original", attachSub(iSvc, "_22") + "22_f:trial.original")
-      aSrec = addQueue(iSvc, eSrecThread, "_22")
    case "thread_save":
       const ( _ int8 = iota; eNewThread; eNewReply )
       if iUpdt.Thread.New > 0 {
