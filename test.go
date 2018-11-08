@@ -160,7 +160,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    }
    aCtx := tTestContext{
       svcId: iTc.SvcId,
-      lastId: tTestLastId{"tl":{}, "al":{}, "ml":{}, "mn":{}, "ps":{}, "if":{}, "ot":{}},
+      lastId: tTestLastId{"tl":{}, "al":{}, "ml":{}, "mn":{}, "ps":{}, "if":{}, "pf":{}},
       state: pSl.OpenState(iTc.Name, iTc.SvcId),
    }
    for a := range sTestState {
@@ -279,10 +279,8 @@ func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
       iUpdt.Ping.To += sTestDate
    case "accept_send":
       _applyLastId(&iUpdt.Accept.Qid,        &aApply, iLastId, "if")
-   case "ohi_add":
-      iUpdt.Ohi.Alias += sTestDate
-   case "ohi_drop":
-      _applyLastId(&iUpdt.Ohi.Uid,           &aApply, iLastId, "ot")
+   case "ohi_add", "ohi_drop":
+      _applyLastId(&iUpdt.Ohi.Uid,           &aApply, iLastId, "pf")
    case "navigate_thread":
       _applyLastId(&iUpdt.Navigate.ThreadId, &aApply, iLastId, "tl")
    case "navigate_link":
@@ -326,7 +324,7 @@ func _applyLastId(iField, iMsg *string, iLastId tTestLastId, iType string) {
    switch iType {
    case "tl", "ml": *iField = aSet[a].Id
    case "if", "ps": *iField = aSet[a].Qid
-   case "ot":       *iField = aSet[a].Uid
+   case "pf":       *iField = aSet[a].Uid
    case "al":       *iField = aSet[a].File
    default:         return
    }

@@ -101,13 +101,8 @@ func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
    return err
 }
 
-func editOhi(iSvc string, iUpdt *Update) (*SendRecord, error) {
+func editOhi(iSvc string, iUpdt *Update) *SendRecord {
    var err error
-   aUid := iUpdt.Ohi.Uid
-   if aUid == "" {
-      aUid = lookupAdrsbk(iSvc, []string{iUpdt.Ohi.Alias})[0].Id //todo drop this
-      if aUid == "" { return nil, tError("missing Uid") }
-   }
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aMap := tOhi{}
@@ -116,14 +111,14 @@ func editOhi(iSvc string, iUpdt *Update) (*SendRecord, error) {
    var aOp string
    if iUpdt.Op == "ohi_add" {
       aOp = "+"
-      aMap[aUid] = dateRFC3339()
+      aMap[iUpdt.Ohi.Uid] = dateRFC3339()
    } else {
       aOp = "-"
-      delete(aMap, aUid)
+      delete(aMap, iUpdt.Ohi.Uid)
    }
    err = storeFile(ohiFile(iSvc), aMap)
    if err != nil { quit(err) }
-   return &SendRecord{Id: string(eSrecOhi) + aOp + makeLocalId(aUid)}, nil
+   return &SendRecord{Id: string(eSrecOhi) + aOp + makeLocalId(iUpdt.Ohi.Uid)}
 }
 
 func sendEditOhi(iW io.Writer, iSvc string, iQid, iId string) error {

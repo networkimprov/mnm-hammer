@@ -363,7 +363,7 @@
              "Response":"**"}] ,
       "nl": [{"Type":"ping", "Alias":"Blue#td", "MsgId":"*", "Date":"*d", "Seen":0}] }
 },{
-   "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue"}},
+   "Updt": {"Op":"ohi_add", "Ohi":{"Uid":"last"}},
    "Result": {
       "ot": [{"Uid":"*", "Date":"*d"}] }
 },{
@@ -371,7 +371,7 @@
    "Result": {
       "ot": [] }
 },{
-   "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue"}},
+   "Updt": {"Op":"ohi_add", "Ohi":{"Uid":"last"}},
    "Result": {
       "ot": [{"Uid":"*", "Date":"*d"}] }
 },{
