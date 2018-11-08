@@ -137,11 +137,9 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
 func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    aFd, err := os.Open(threadDir(iSvc) + iDraftId)
    if err != nil {
-      if os.IsNotExist(err) {
-         fmt.Fprintf(os.Stderr, "sendDraftThread %s: draft file was cleared %s\n", iSvc, iDraftId)
-         return tError("already sent")
-      }
-      quit(err)
+      if !os.IsNotExist(err) { quit(err) }
+      fmt.Fprintf(os.Stderr, "sendDraftThread %s: draft file was cleared %s\n", iSvc, iDraftId)
+      return tError("already sent")
    }
    defer aFd.Close()
    aDh := _readDraftHead(aFd)
@@ -373,11 +371,9 @@ func storeSentThread(iSvc string, iHead *Header) {
 
    aSd, err := os.Open(aDraft)
    if err != nil {
-      if os.IsNotExist(err) {
-         fmt.Fprintf(os.Stderr, "storeSentThread %s: draft file was cleared %s\n", iSvc, iHead.Id)
-         return
-      }
-      quit(err)
+      if !os.IsNotExist(err) { quit(err) }
+      fmt.Fprintf(os.Stderr, "storeSentThread %s: draft file was cleared %s\n", iSvc, iHead.Id)
+      return
    }
    defer aSd.Close()
    aDh := _readDraftHead(aSd)
