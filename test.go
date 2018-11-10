@@ -170,7 +170,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    for a := range iTc.Orders {
       aUpdt := &iTc.Orders[a].Updt
       aPrefix := fmt.Sprintf("%s %s %s", iTc.Name, iTc.SvcId, aUpdt.Op)
-      if !_prepUpdt(aUpdt, aCtx.lastId, aPrefix) {
+      if !_prepUpdt(aUpdt, &aCtx, aPrefix) {
          continue
       }
       aFn, aSrec := pSl.HandleUpdtService(iTc.SvcId, aCtx.state, aUpdt)
@@ -231,7 +231,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    }
 }
 
-func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
+func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
    var aApply string
    switch iUpdt.Op {
    case "config_update":
@@ -248,7 +248,7 @@ func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
       if iUpdt.Thread.FormFill != nil {
          aFf := iUpdt.Thread.FormFill["lastfile"]
          if aFf != "" {
-            aFileId := (*iLastId["al"])[0].File
+            aFileId := (*iCtx.lastId["al"])[0].File
             delete(iUpdt.Thread.FormFill, "lastfile")
             iUpdt.Thread.FormFill[aFileId] = aFf
             for a := range iUpdt.Thread.Attach {
@@ -261,8 +261,8 @@ func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
       fallthrough
    case "thread_send", "thread_discard",
         "thread_open", "thread_close":
-      _applyLastId(&iUpdt.Thread.Id,         &aApply, iLastId, "ml")
-      _applyLastId(&iUpdt.Thread.ThreadId,   &aApply, iLastId, "tl")
+      _applyLastId(&iUpdt.Thread.Id,         &aApply, iCtx.lastId, "ml")
+      _applyLastId(&iUpdt.Thread.ThreadId,   &aApply, iCtx.lastId, "tl")
    case "adrsbk_search":
       if iUpdt.Adrsbk.Term == "td" {
          iUpdt.Adrsbk.Term = sTestDate[1:3]
@@ -274,18 +274,18 @@ func _prepUpdt(iUpdt *pSl.Update, iLastId tTestLastId, iPrefix string) bool {
          iUpdt.Ping.Gid += sTestDate
       }
    case "ping_send":
-      _applyLastId(&iUpdt.Ping.Qid,          &aApply, iLastId, "ps")
+      _applyLastId(&iUpdt.Ping.Qid,          &aApply, iCtx.lastId, "ps")
    case "ping_discard":
       iUpdt.Ping.To += sTestDate
    case "accept_send":
-      _applyLastId(&iUpdt.Accept.Qid,        &aApply, iLastId, "if")
+      _applyLastId(&iUpdt.Accept.Qid,        &aApply, iCtx.lastId, "if")
    case "ohi_add", "ohi_drop":
-      _applyLastId(&iUpdt.Ohi.Uid,           &aApply, iLastId, "pf")
+      _applyLastId(&iUpdt.Ohi.Uid,           &aApply, iCtx.lastId, "pf")
    case "navigate_thread":
-      _applyLastId(&iUpdt.Navigate.ThreadId, &aApply, iLastId, "tl")
+      _applyLastId(&iUpdt.Navigate.ThreadId, &aApply, iCtx.lastId, "tl")
    case "navigate_link":
-      _applyLastId(&iUpdt.Navigate.ThreadId, &aApply, iLastId, "ml")
-      _applyLastId(&iUpdt.Navigate.MsgId,    &aApply, iLastId, "ml")
+      _applyLastId(&iUpdt.Navigate.ThreadId, &aApply, iCtx.lastId, "ml")
+      _applyLastId(&iUpdt.Navigate.MsgId,    &aApply, iCtx.lastId, "ml")
    case "navigate_history",
         "notice_seen",
         "tab_add", "tab_pin", "tab_drop", "tab_select",
