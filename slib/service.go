@@ -315,13 +315,13 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          return fErr
       }
       if iHead.SubHead.ThreadId == "" {
-         aFn, aResult = fAll, []string{"pt", "tl"}
+         aFn, aResult = fAll, []string{"pt", "pf", "tl"}
       } else {
          aFn = func(c *ClientState) interface{} {
             if c.getThread() == iHead.SubHead.ThreadId { return aResult }
-            return aResult[:1]
+            return aResult[:2]
          }
-         aResult = []string{"pt", "al", "ml"}
+         aResult = []string{"pt", "pf", "al", "ml"}
       }
    case "ack":
       if iHead.Id == "t_22" { break } //todo temp
@@ -367,7 +367,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
                return aResult[2:3]
             }
          }
-         aResult = []string{"cs", "tl", "pf", "al", "ml", "mn", iHead.MsgId}
+         aResult = []string{"cs", "tl", "pf", "cl", "al", "ml", "mn", iHead.MsgId}
       case eSrecOhi:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"_e", iHead.Error}
@@ -404,7 +404,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          aFn, aResult = fOne, []string{"/v", "/t", "/f"}
       } else {
          aFn, aResult = fOne, []string{"of", "ot", "ps", "pt", "pf", "if", "it", "gl",
-                                       "cf", "nl", "tl", "cs", "al", "_t", "ml", "mo",
+                                       "cf", "nl", "tl", "cs", "cl", "al", "_t", "ml", "mo",
                                        "/v", "/t", "/f"}
       }
    case "config_update":
@@ -454,7 +454,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if c == iState { return aResult }
             return aResult[:1]
          }
-         aResult = []string{"tl", "cs", "al", "_t", "ml", "mo"}
+         aResult = []string{"tl", "cs", "cl", "al", "_t", "ml", "mo"}
       } else if iUpdt.Thread.New == eNewReply {
          iState.openMsg(iUpdt.Thread.Id, true)
          aTid := iState.getThread()
@@ -468,7 +468,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if c.isOpen(iUpdt.Thread.Id) { return aResult }
             return nil
          }
-         aResult = []string{"al", "mn", iUpdt.Thread.Id}
+         aResult = []string{"cl", "al", "mn", iUpdt.Thread.Id}
+         if iUpdt.Thread.Id[0] != '_' {
+            aResult = aResult[1:]
+         }
       }
    case "thread_discard":
       deleteDraftThread(iSvc, iUpdt)
@@ -479,7 +482,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if c.getThread() == aTid { return aResult }
             return aResult[:1]
          }
-         aResult = []string{"tl", "cs", "al", "_t", "ml", "mo"}
+         aResult = []string{"tl", "cs", "cl", "al", "_t", "ml", "mo"}
       } else {
          aFn = func(c *ClientState) interface{} {
             c.openMsg(iUpdt.Thread.Id, false)
@@ -516,17 +519,17 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       // no result
    case "navigate_thread":
       iState.addThread(iUpdt.Navigate.ThreadId)
-      aFn, aResult = fOne, []string{"cs", "al", "_t", "ml", "mo"}
+      aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}
    case "navigate_history":
       iState.goThread(iUpdt.Navigate.History)
-      aFn, aResult = fOne, []string{"cs", "al", "_t", "ml", "mo"}
+      aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}
    case "navigate_link":
       _, err = os.Lstat(threadDir(iSvc) + iUpdt.Navigate.ThreadId)
       if err != nil { return fErr, nil }
       aDiff := iUpdt.Navigate.ThreadId != iState.getThread()
       iState.goLink(iUpdt.Navigate.ThreadId, iUpdt.Navigate.MsgId)
       aFn = fOne
-      aResult = []string{"cs", "mo"}; if aDiff { aResult = []string{"cs", "al", "_t", "ml", "mo"} }
+      aResult = []string{"cs", "mo"}; if aDiff { aResult = []string{"cs", "cl", "al", "_t", "ml", "mo"} }
    case "tab_add":
       iState.addTab(iUpdt.Tab.Type, iUpdt.Tab.Term)
       aAlt := "tl"; if iUpdt.Tab.Type == eTabThread { aAlt = "mo" }

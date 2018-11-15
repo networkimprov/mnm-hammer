@@ -63,7 +63,7 @@
       iObj.new = 1;
       _wsSend({op:'thread_save', thread:iObj})
    };
-   mnm.ThreadReply = function(iObj) { // with alias, (cc), (data), (attach), (formFill)
+   mnm.ThreadReply = function(iObj) { // with alias, (data), (attach), (formFill)
       iObj.new = 2;
       _wsSend({op:'thread_save', thread:iObj})
    };

@@ -92,11 +92,10 @@ type Header struct {
 
 type tHeader2 struct {
    Alias string
-   Cc []string
    ThreadId string
    Subject string
    Attach []tHeader2Attach `json:",omitempty"`
-   For []tHeaderFor `json:",omitempty"` // copied to outgoing Header.For
+   Cc []tCcEl `json:",omitempty"`
    noAttachSize bool
 }
 
@@ -110,9 +109,8 @@ type tHeader2Attach struct {
 func (o *tHeader2) setupDraft(iThreadId string, i *Update, iSvc string) {
    o.ThreadId = iThreadId
    o.Alias = i.Thread.Alias
-   o.Cc = i.Thread.Cc
-   o.For = lookupAdrsbk(iSvc, o.Cc)
    o.Subject = i.Thread.Subject
+   o.Cc = i.Thread.Cc
    o.Attach = setupDraftAttach(iSvc, iThreadId, i)
    o.noAttachSize = true
 }
@@ -144,7 +142,7 @@ type Update struct {
    Thread *struct {
       Id string
       Alias string
-      Cc []string
+      Cc []tCcEl
       Subject string
       Data string
       Attach []tHeader2Attach

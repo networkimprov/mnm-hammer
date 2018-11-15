@@ -242,8 +242,11 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
       if iUpdt.Thread.Alias != "" {
          iUpdt.Thread.Alias += sTestDate
       }
-      for aN := range iUpdt.Thread.Cc {
-         iUpdt.Thread.Cc[aN] += sTestDate
+      for a := range iUpdt.Thread.Cc {
+         iUpdt.Thread.Cc[a].Who += sTestDate
+         if iUpdt.Thread.Cc[a].WhoUid == "lookup" {
+            iUpdt.Thread.Cc[a].WhoUid = pSl.LookupAdrsbk(iCtx.svcId, iUpdt.Thread.Cc[a].Who)
+         }
       }
       if iUpdt.Thread.FormFill != nil {
          aFf := iUpdt.Thread.FormFill["lastfile"]
@@ -366,6 +369,7 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    case "gl": aResult = pSl.GetGroupAdrsbk(iCtx.svcId)
    case "of": aResult = pSl.GetFromOhi(iCtx.svcId)
    case "ot": aResult = pSl.GetIdxOhi(iCtx.svcId)
+   case "cl": aResult = pSl.GetCcThread(iCtx.svcId, iCtx.state)
    case "al": aResult = pSl.GetIdxAttach(iCtx.svcId, iCtx.state)
    case "ml": aResult = pSl.GetIdxThread(iCtx.svcId, iCtx.state)
    case "tl": err     = pSl.WriteResultSearch(&aResp, iCtx.svcId, iCtx.state)

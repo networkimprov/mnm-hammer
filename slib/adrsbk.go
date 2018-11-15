@@ -211,6 +211,16 @@ func _listLogs(iSvc *tAdrsbk, iIdx map[string]tAdrsbkLog) []tAdrsbkEl {
    return aLog
 }
 
+func LookupAdrsbk(iSvc string, iAlias string) string {
+   aSvc :=  _loadAdrsbk(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   aUid := aSvc.aliasIdx[iAlias]
+   if aUid == "" || aUid == kUidUnknown {
+      return ""
+   }
+   return aUid
+}
+
 type tSearchResult struct { name, id string }
 
 func searchAdrsbk(iSvc string, iUpdt *Update) []string {
@@ -244,20 +254,6 @@ func searchAdrsbk(iSvc string, iUpdt *Update) []string {
       aList[a*2+1] = aResult[a].id
    }
    return aList
-}
-
-func lookupAdrsbk(iSvc string, iAlias []string) []tHeaderFor {
-   aSvc :=  _loadAdrsbk(iSvc)
-   aSvc.RLock(); defer aSvc.RUnlock()
-   aFor := make([]tHeaderFor, len(iAlias))
-   for a, _ := range iAlias {
-      aUid := aSvc.aliasIdx[iAlias[a]]
-      if aUid != "" && aUid != kUidUnknown {
-         aType := eForUser; if aUid == iAlias[a] { aType = eForGroupExcl }
-         aFor[a] = tHeaderFor{Id:aUid, Type:aType}
-      }
-   }
-   return aFor
 }
 
 func storeSelfAdrsbk(iSvc string, iAlias string, iUid string) {
@@ -343,13 +339,16 @@ func storeSentAdrsbk(iSvc string, iKey string, iDate string) {
    _storeAdrsbk(iSvc, []tAdrsbkEl{*aEl})
 }
 
-func resolveReceivedAdrsbk(iSvc string, iDate string, iFor []tHeaderFor, iTid string) {
+func resolveReceivedAdrsbk(iSvc string, iDate string, iCc []tCcEl, iTid string) {
+   if len(iCc) == 0 {
+      return
+   }
    aSvc := _loadAdrsbk(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
-   var aEls []tAdrsbkEl
-   for a, _ := range iFor {
-      aEl := tAdrsbkEl{Type:eAbResolveFrom, Date:iDate, Tid:iTid, Uid:iFor[a].Id}
-      if _respondLog(aSvc.pingFromIdx[iFor[a].Id], &aEl) {
+   aEls := make([]tAdrsbkEl, 0, len(iCc))
+   for a := range iCc {
+      aEl := tAdrsbkEl{Type:eAbResolveFrom, Date:iDate, Tid:iTid, Uid:iCc[a].WhoUid}
+      if _respondLog(aSvc.pingFromIdx[iCc[a].WhoUid], &aEl) {
          aEls = append(aEls, aEl)
       }
    }
@@ -358,21 +357,25 @@ func resolveReceivedAdrsbk(iSvc string, iDate string, iFor []tHeaderFor, iTid st
    }
 }
 
-func resolveSentAdrsbk(iSvc string, iDate string, iFrom, iAlias string, iTid string) {
-   if iAlias == "" {
+func resolveSentAdrsbk(iSvc string, iDate string, iCc []tCcEl, iTid string) {
+   if len(iCc) == 0 {
       return
    }
    aSvc := _loadAdrsbk(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
-   aUid := aSvc.aliasIdx[iAlias]
-   if aUid != kUidUnknown && aUid != iFrom {
-      return
+   aEls := make([]tAdrsbkEl, 0, len(iCc))
+   for a := range iCc {
+      aUid := aSvc.aliasIdx[iCc[a].Who]
+      if aUid != kUidUnknown && aUid != iCc[a].WhoUid { continue }
+      aEl := tAdrsbkEl{Type:eAbResolveTo, Date:iDate, Tid:iTid,
+                       Uid:iCc[a].WhoUid, Alias:iCc[a].Who}
+      if _respondLog(aSvc.pingToIdx[iCc[a].Who], &aEl) {
+         aSvc.aliasIdx[iCc[a].Who] = iCc[a].WhoUid
+         aEls = append(aEls, aEl)
+      }
    }
-   aEl := tAdrsbkEl{Type:eAbResolveTo, Date:iDate, Tid:iTid,
-                    Uid:iFrom, Alias:iAlias}
-   if _respondLog(aSvc.pingToIdx[iAlias], &aEl) {
-      aSvc.aliasIdx[iAlias] = iFrom
-      _storeAdrsbk(iSvc, []tAdrsbkEl{aEl})
+   if len(aEls) > 0 {
+      _storeAdrsbk(iSvc, aEls)
    }
 }
 
