@@ -73,7 +73,7 @@ type tDoor interface {
 type Header struct {
    Op string
    Error string
-   Id, MsgId string
+   Id, MsgId, PostId string
    Uid, NodeId string
    Node string
    Info string
@@ -85,6 +85,7 @@ type Header struct {
    Alias string
    Act string
    Status int8
+   Notify uint16
    DataLen, DataHead int64
    SubHead tHeader2
 }

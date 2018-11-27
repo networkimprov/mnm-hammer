@@ -58,7 +58,7 @@ const (
    eOpRegister; eOpLogin
    eOpUserEdit; eOpOhiEdit;
    eOpGroupInvite; eOpGroupEdit
-   eOpPost; eOpPing
+   eOpPost; eOpPostNotify; eOpPing
    eOpAck
    eOpPulse; eOpQuit
    eOpEnd

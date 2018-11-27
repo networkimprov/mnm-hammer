@@ -526,7 +526,7 @@ func sendDraftAdrsbk(iW io.Writer, iSvc string, iQid, iId string) error {
    aSubh, err := json.Marshal(Msg{"Alias":aEl.MyAlias}) //todo drop when ping takes from:
    if err != nil { quit(err) }
    aData := []byte(aEl.Text)
-   aMsg := Msg{"Op":8, "Id":iId, "To":aEl.Alias, "From":aEl.MyAlias,
+   aMsg := Msg{"Op":9, "Id":iId, "To":aEl.Alias, "From":aEl.MyAlias,
                "DataHead":len(aSubh), "DataLen": len(aSubh) + len(aData)}
    if aEl.Gid != "" {
       aMsg["Op"] = 5
