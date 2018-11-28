@@ -87,6 +87,10 @@
       _wsSend({op:'thread_discard', thread:{id:iId}})
    };
 
+   mnm.ForwardSave = function(iId, iCc) {
+      _wsSend({op:'forward_save', forward:{threadId:iId, cc:iCc}})
+   };
+
    mnm.TabAdd = function(iObj) { // with type, term
       _wsSend({op:'tab_add', tab:iObj})
    };

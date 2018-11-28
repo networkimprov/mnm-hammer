@@ -41,6 +41,8 @@ func tabFile  (iSvc string) string { return kServiceDir + iSvc + "/tabs"    }
 func sendqFile(iSvc string) string { return kServiceDir + iSvc + "/sendq"   }
 func notcFile (iSvc string) string { return kServiceDir + iSvc + "/notice"  }
 
+func fwdFile  (iSvc, iTid string) string { return threadDir(iSvc) + iTid + "_forward" }
+
 func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
 func attachFfn(iSvc, iSub string) string { return attachSub(iSvc, iSub) + "ffnindex" }
 
@@ -150,6 +152,11 @@ type Update struct {
       New int8
       ThreadId string //todo move to new struct
    }
+   Forward *struct {
+      ThreadId string
+      Cc []tCcEl
+      Qid string
+   }
    Ping *struct {
       Alias string
       To string
@@ -192,7 +199,7 @@ type SendRecord struct {
    Id string // Id[0] is one of eSrec*
 }
 
-const eSrecThread, eSrecPing, eSrecOhi, eSrecAccept byte = 't', 'p', 'o', 'a'
+const eSrecThread, eSrecFwd, eSrecPing, eSrecOhi, eSrecAccept byte = 't', 'f', 'p', 'o', 'a'
 
 type Msg map[string]interface{}
 

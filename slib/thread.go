@@ -57,6 +57,11 @@ type tCcElCore struct {
    Subscribe bool
 }
 
+type tFwdEl struct {
+   Id string
+   Cc []tCcEl
+}
+
 func GetIdxThread(iSvc string, iState *ClientState) interface{} {
    aIdx := []struct{ Id, From, Alias, Date, Subject, Seen string
                      Queued bool }{}
@@ -84,20 +89,40 @@ func GetIdxThread(iSvc string, iState *ClientState) interface{} {
 }
 
 func GetCcThread(iSvc string, iState *ClientState) interface{} {
-   aCc := []tCcElCore{}
+   type tCcElFwd struct {
+      tCcElCore
+      Queued bool
+      Qid string `json:",omitempty"`
+   }
+   const kDraft, kSet = 0, 1
+   aCc := [2][]tCcElFwd{{},{}}
    aTid := iState.getThread()
    if aTid == "" { return aCc }
-   func() {
-      cDoor := _getThreadDoor(iSvc, aTid)
-      cDoor.RLock(); defer cDoor.RUnlock()
-      if cDoor.renamed { return }
 
-      cFd, err := os.Open(threadDir(iSvc) + aTid)
-      if err != nil { quit(err) }
-      defer cFd.Close()
-      _readCc(cFd, &aCc)
-   }()
-   sort.Slice(aCc, func(cA, cB int) bool { return aCc[cA].Who < aCc[cB].Who })
+   aDoor := _getThreadDoor(iSvc, aTid)
+   aDoor.RLock()
+   if aDoor.renamed {
+      aDoor.RUnlock()
+      return aCc
+   }
+   aFd, err := os.Open(threadDir(iSvc) + aTid)
+   if err != nil { quit(err) }
+   _readCc(aFd, &aCc[kSet])
+   aFd.Close(); aDoor.RUnlock()
+
+   aDoor = _getThreadDoor(iSvc, aTid + "_forward")
+   aDoor.RLock()
+   aFwd := _getFwd(iSvc, aTid, "")
+   aDoor.RUnlock()
+   for a := range aFwd {
+      aN := kDraft; if hasQueue(iSvc, eSrecFwd, aFwd[a].Id) { aN = kSet }
+      aQid := ""; if aN == kDraft { aQid = aFwd[a].Id }
+      for a1 := range aFwd[a].Cc {
+         aCc[aN] = append(aCc[aN], tCcElFwd{tCcElCore:aFwd[a].Cc[a1].tCcElCore, Queued:aN==kSet, Qid:aQid})
+      }
+   }
+
+   sort.Slice(aCc[kSet], func(cA, cB int) bool { return aCc[kSet][cA].Who < aCc[kSet][cB].Who })
    return aCc
 }
 
@@ -606,6 +631,87 @@ func deleteDraftThread(iSvc string, iUpdt *Update) {
 
 func _completeDeleteDraft(iSvc string, iTmp string, iFd, iTd *os.File) {
    _completeStoreDraft(iSvc, iTmp, &tDraftHead{}, iFd, iTd)
+}
+
+func storeFwdDraftThread(iSvc string, iUpdt *Update) {
+   aFwdOrig := fwdFile(iSvc, iUpdt.Forward.ThreadId)
+   aFwdTemp := tempDir(iSvc) + "forward_" + iUpdt.Forward.ThreadId
+
+   if iUpdt.Forward.ThreadId[0] == '_' { quit(tError("cannot forward draft")) }
+
+   aCcNew := iUpdt.Forward.Cc
+   fCheckInput := func(cSet []tCcEl) {
+      for c := len(aCcNew)-1; c >= 0; c-- {
+         if aCcNew[c].Date != "" { continue }
+         for c1 := range cSet {
+            if cSet[c1].WhoUid == aCcNew[c].WhoUid {
+               aCcNew = aCcNew[:c + copy(aCcNew[c:], aCcNew[c+1:])]
+               break
+            }
+         }
+      }
+   }
+   var aCcOrig []tCcEl
+   aDoor := _getThreadDoor(iSvc, iUpdt.Forward.ThreadId)
+   aDoor.RLock()
+   aFd, err := os.Open(threadDir(iSvc) + iUpdt.Forward.ThreadId)
+   if err != nil { quit(err) }
+   _readCc(aFd, &aCcOrig)
+   aFd.Close(); aDoor.RUnlock()
+   fCheckInput(aCcOrig)
+
+   aDoor = _getThreadDoor(iSvc, iUpdt.Forward.ThreadId + "_forward")
+   aDoor.Lock(); defer aDoor.Unlock()
+
+   aFwd := _getFwd(iSvc, iUpdt.Forward.ThreadId, "make")
+   if len(aFwd) == 0 || hasQueue(iSvc, eSrecFwd, aFwd[len(aFwd)-1].Id) {
+      aFwd = append(aFwd, tFwdEl{Id:makeLocalId(iUpdt.Forward.ThreadId)})
+   }
+   for a := 0; a < len(aFwd)-1; a++ {
+      fCheckInput(aFwd[a].Cc)
+   }
+   if len(aFwd) == 1 && len(aCcNew) == 0 {
+      err = os.Remove(aFwdOrig)
+      return
+   }
+   aFwd[len(aFwd)-1].Cc = _updateCc(iSvc, aCcNew, true)
+   err = writeJsonFile(aFwdTemp, aFwd)
+   if err != nil { quit(err) }
+   err = syncDir(tempDir(iSvc))
+   if err != nil { quit(err) }
+   err = os.Remove(aFwdOrig)
+   if err != nil { quit(err) }
+   err = os.Rename(aFwdTemp, aFwdOrig)
+   if err != nil { quit(err) }
+}
+
+func _getFwd(iSvc string, iTid string, iOpt string) []tFwdEl {
+   aPath := fwdFile(iSvc, iTid)
+   if iOpt == "temp" {
+      aPath = tempDir(iSvc) + iTid + "_forward.tmp"
+      iOpt = ""
+   }
+   var aFwd []tFwdEl
+   aFd, err := os.Open(aPath)
+   if err != nil {
+      if iOpt == "exist" || !os.IsNotExist(err) { quit(err) }
+      if iOpt == "" {
+         return aFwd
+      }
+      if iOpt != "make" { quit(tError("unknown option "+iOpt)) }
+      _, err = os.Lstat(threadDir(iSvc) + iTid)
+      if err != nil { quit(err) }
+      err = os.Symlink("placeholder", aPath)
+      if err == nil {
+         err = syncDir(threadDir(iSvc))
+      }
+      if err != nil && !os.IsExist(err) { quit(err) }
+   } else {
+      err = json.NewDecoder(aFd).Decode(&aFwd)
+      aFd.Close()
+      if err != nil { quit(err) }
+   }
+   return aFwd
 }
 
 func _updateCc(iSvc string, iCc []tCcEl, iOmitSelf bool) []tCcEl {

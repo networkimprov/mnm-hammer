@@ -79,6 +79,8 @@ func initServices(iFn func(string)) {
       for _, aTmp := range aTmps {
          if strings.HasPrefix(aTmp, "adrsbk_") {
             // handled above
+         } else if strings.HasPrefix(aTmp, "forward_") {
+            renameRemove(tempDir(aSvc) + aTmp, fwdFile(aSvc, aTmp[8:]))
          } else if strings.HasPrefix(aTmp, "ffnindex_") {
             renameRemove(tempDir(aSvc) + aTmp, attachFfn(aSvc, aTmp[9:]))
          } else if strings.HasSuffix(aTmp, ".tmp") {
@@ -517,6 +519,13 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "thread_close":
       iState.openMsg(iUpdt.Thread.Id, false)
       // no result
+   case "forward_save":
+      storeFwdDraftThread(iSvc, iUpdt)
+      aFn = func(c *ClientState) interface{} {
+         if c.getThread() == iUpdt.Forward.ThreadId { return aResult }
+         return nil
+      }
+      aResult = []string{"cl"}
    case "navigate_thread":
       iState.addThread(iUpdt.Navigate.ThreadId)
       aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}
