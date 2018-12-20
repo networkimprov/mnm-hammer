@@ -84,7 +84,7 @@ func initServices(iFn func(string)) {
          } else if strings.HasPrefix(aTmp, "ffnindex_") {
             renameRemove(tempDir(aSvc) + aTmp, attachFfn(aSvc, aTmp[9:]))
          } else if strings.HasSuffix(aTmp, ".tmp") {
-            // could be a valid attachment from thread transaction
+            // could be a valid attachment or forward from thread transaction
             defer os.Remove(tempDir(aSvc) + aTmp)
          } else {
             completeThread(aSvc, aTmp)
@@ -242,6 +242,7 @@ func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
    case eSrecPing:   aFn = sendDraftAdrsbk
    case eSrecAccept: aFn = sendJoinGroupAdrsbk
    case eSrecThread: aFn = sendDraftThread
+   case eSrecFwd:    aFn = sendFwdDraftThread
    default:
       quit(tError("unknown op " + iSrec.Id[:1]))
    }
@@ -311,20 +312,32 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          aFn, aResult = fAll, []string{"it"}
       }
    case "delivery":
-      err = storeReceivedThread(iSvc, iHead, iR)
+      var aGot string
+      aGot, err = storeReceivedThread(iSvc, iHead, iR)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: delivery error %s\n", iSvc, err.Error())
          return fErr
       }
-      if iHead.SubHead.ThreadId == "" {
+      if aGot == "thread" {
          aFn, aResult = fAll, []string{"pt", "pf", "tl"}
-      } else {
+      } else if aGot == "msg" {
          aFn = func(c *ClientState) interface{} {
             if c.getThread() == iHead.SubHead.ThreadId { return aResult }
             return aResult[:2]
          }
          aResult = []string{"pt", "pf", "al", "ml"}
       }
+   case "notify":
+      err = storeFwdNotifyThread(iSvc, iHead, iR)
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "HandleTmtpService %s: delivery error %s\n", iSvc, err.Error())
+         return fErr
+      }
+      aFn = func(c *ClientState) interface{} {
+         if c.getThread() == iHead.SubHead.ThreadId { return aResult }
+         return aResult[:2]
+      }
+      aResult = []string{"pt", "pf", "cl"}
    case "ack":
       if iHead.Id == "t_22" { break } //todo temp
       aQid := iHead.Id
@@ -370,6 +383,21 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
             }
          }
          aResult = []string{"cs", "tl", "pf", "cl", "al", "ml", "mn", iHead.MsgId}
+      case eSrecFwd:
+         if iHead.Error != "" {
+            aFn = func(c *ClientState) interface{} {
+               if c.getThread() == aId.tid() { return aResult }
+               return aResult[1:]
+            }
+            aResult = []string{"cl", "_e", iHead.Error}
+            break
+         }
+         storeFwdSentThread(iSvc, iHead)
+         aFn = func(c *ClientState) interface{} {
+            if c.getThread() == aId.tid() { return aResult }
+            return aResult[:1]
+         }
+         aResult = []string{"pf", "cl"}
       case eSrecOhi:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"_e", iHead.Error}
@@ -526,6 +554,13 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          return nil
       }
       aResult = []string{"cl"}
+   case "forward_send":
+      aFn = func(c *ClientState) interface{} {
+         if c.getThread() == iUpdt.Forward.ThreadId { return aResult }
+         return nil
+      }
+      aResult = []string{"cl"}
+      aSrec = addQueue(iSvc, eSrecFwd, iUpdt.Forward.Qid)
    case "navigate_thread":
       iState.addThread(iUpdt.Navigate.ThreadId)
       aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}

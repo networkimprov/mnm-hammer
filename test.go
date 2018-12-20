@@ -160,7 +160,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    }
    aCtx := tTestContext{
       svcId: iTc.SvcId,
-      lastId: tTestLastId{"tl":{}, "al":{}, "ml":{}, "mn":{}, "ps":{}, "if":{}, "pf":{}},
+      lastId: tTestLastId{"tl":{}, "al":{}, "ml":{}, "cl":{}, "mn":{}, "ps":{}, "if":{}, "pf":{}},
       state: pSl.OpenState(iTc.Name, iTc.SvcId),
    }
    for a := range sTestState {
@@ -266,6 +266,17 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
         "thread_open", "thread_close":
       _applyLastId(&iUpdt.Thread.Id,         &aApply, iCtx.lastId, "ml")
       _applyLastId(&iUpdt.Thread.ThreadId,   &aApply, iCtx.lastId, "tl")
+   case "forward_save":
+      for a := range iUpdt.Forward.Cc {
+         iUpdt.Forward.Cc[a].Who += sTestDate
+         if iUpdt.Forward.Cc[a].WhoUid == "lookup" {
+            iUpdt.Forward.Cc[a].WhoUid = pSl.LookupAdrsbk(iCtx.svcId, iUpdt.Forward.Cc[a].Who)
+         }
+      }
+      fallthrough
+   case "forward_send":
+      _applyLastId(&iUpdt.Forward.ThreadId,  &aApply, iCtx.lastId, "tl")
+      _applyLastId(&iUpdt.Forward.Qid,       &aApply, iCtx.lastId, "cl")
    case "adrsbk_search":
       if iUpdt.Adrsbk.Term == "td" {
          iUpdt.Adrsbk.Term = sTestDate[1:3]
@@ -325,11 +336,11 @@ func _applyLastId(iField, iMsg *string, iLastId tTestLastId, iType string) {
    }
    aSet := *iLastId[iType]
    switch iType {
-   case "tl", "ml": *iField = aSet[a].Id
-   case "if", "ps": *iField = aSet[a].Qid
-   case "pf":       *iField = aSet[a].Uid
-   case "al":       *iField = aSet[a].File
-   default:         return
+   case "tl", "ml":       *iField = aSet[a].Id
+   case "cl", "if", "ps": *iField = aSet[a].Qid
+   case "pf":             *iField = aSet[a].Uid
+   case "al":             *iField = aSet[a].File
+   default:               return
    }
    aAmp := ""; if *iMsg != "" { aAmp = " & " }
    *iMsg += aAmp + *iField
@@ -390,6 +401,11 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    }
    if iOp == "mn" {
       *iCtx.lastId[iOp] = tTestAnyId{{Id:iId}}
+   } else if iOp == "cl" {
+      aClPair := [2]tTestAnyId{}
+      err = json.Unmarshal(aResp.Bytes(), &aClPair)
+      if err != nil { goto ReturnErr }
+      *iCtx.lastId[iOp] = aClPair[0]
    } else if iCtx.lastId[iOp] != nil {
       err = json.Unmarshal(aResp.Bytes(), iCtx.lastId[iOp])
       if err != nil { goto ReturnErr }
@@ -474,6 +490,8 @@ func _hasExpected(iExpect, iGot interface{}) bool {
          if err != nil || aT.Before(sTestNow.AddDate(-1,0,0)) { return false }
       } else if strings.HasSuffix(aExpect, "#td") {
          if aExpect[:len(aExpect)-3] + sTestDate != aGot { return false }
+      } else if aExpect == "*mid" {
+         if len(aGot) != 16 { return false }
       } else if aExpect != "*" {
          if aExpect != aGot { return false }
       }

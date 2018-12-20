@@ -185,9 +185,10 @@
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
       "mo": [{"From":"*", "Id":"*", "Len":0, "Posted":"*d",
-              "SubHead":{"Alias":"Gold#td", "ThreadId":"", "Subject":"ohi"},
+              "SubHead":{"Alias":"Gold#td", "ThreadId":"*", "Subject":"to forward"},
               "msg_data":"" }] ,
-      "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
+      "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
+              "Queued":false, "ForwardBy":"*"}] ,
       "cs": {"Thread":"*",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
              "History":{"Prev":true, "Next":false},
@@ -195,14 +196,15 @@
                         "Default":["All", "Unread", "Todo", "FFT"], "Pinned":[], "Type":1}} ,
       "cl": [[],
              [{"Who":"Blue#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
-               "Date":"*d", "Note":"initial recipient", "Subscribe":true, "Queued":false},
+               "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":false},
               {"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
       "al": [] }
 },{
    "Updt": {"Op":"thread_open", "Thread":{"ThreadId":"last", "Id":"last"}},
    "Result": {
-      "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"ohi", "Seen":"*d", "Queued":false}] }
+      "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"*d",
+              "Queued":false, "ForwardBy":"*"}] }
 },{
    "Updt": {"Op":"thread_close", "Thread":{"Id":"last"}},
    "Result": null
@@ -420,7 +422,7 @@
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
       "mo": [{"From":"*", "Id":"*", "Len":0, "Posted":"*d",
-              "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
+              "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"ohi",
                          "Attach":[{"Name":"u:BlueFile", "Size":26},
                                    {"Name":"f:Blue.original", "Size":402,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"},
@@ -462,34 +464,51 @@
              {"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{
-                 "New":1, "Alias":"Gold", "Subject":"ohi",
-                 "Cc":[{"Who":"Blue", "WhoUid":"lookup", "Note":"initial recipient"}] }},
+                 "New":1, "Alias":"Gold", "Subject":"to forward", "Cc":[] }},
    "Result": {
       "mo": [{"From":"self", "Id":"*", "Len":0, "Posted":"draft",
-              "SubHead":{"Alias":"Gold#td", "ThreadId":"", "Subject":"ohi",
-                         "Cc":[{"Who":"Blue#td", "WhoUid":"*", "By":"Gold#td", "ByUid":"*",
-                                "Date":".", "Note":"initial recipient", "Subscribe":true},
-                               {"Who":"Gold#td", "WhoUid":"*", "By":"Gold#td", "ByUid":"*",
+              "SubHead":{"Alias":"Gold#td", "ThreadId":"", "Subject":"to forward",
+                         "Cc":[{"Who":"Gold#td", "WhoUid":"*", "By":"Gold#td", "ByUid":"*",
                                 "Date":".", "Note":"author", "Subscribe":true}] },
               "msg_data":"" }] ,
       "tl": [{"Id":"*", "Date":"*d"},
              {"Id":"*", "Date":"*d"}] ,
-      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] ,
       "cs": {"Thread":"*",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
              "History":{"Prev":true, "Next":false},
              "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
                         "Default":["All", "Unread", "Todo", "FFT"], "Pinned":[], "Type":1}} ,
       "cl": [[],
-             [{"Who":"Blue#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
-               "Date":".", "Note":"initial recipient", "Subscribe":true, "Queued":false},
-              {"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
+             [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
                "Date":".", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
       "al": [] }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {
-      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":true}] }
+      "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":true}] }
+},{
+   "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
+   "Result": {
+      "tl": [{"Id":"*mid", "Date":"*d"},
+             {"Id":"*mid", "Date":"*d"}] }
+},{
+   "Updt": {"Op":"forward_save", "Forward":{
+                 "ThreadId":"last",
+                 "Cc":[{"Who":"Blue", "WhoUid":"lookup", "Note":"add Blue"}] }},
+   "Result": {
+      "cl": [[{"Who":"Blue#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
+               "Date":".", "Note":"add Blue", "Subscribe":true, "Queued":false, "Qid":"*"}],
+             [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
+               "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] }
+},{
+   "Updt": {"Op":"forward_send", "Forward":{"ThreadId":"last", "Qid":"last"}},
+   "Result": {
+      "cl": [[],
+             [{"Who":"Blue#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
+               "Date":".", "Note":"add Blue", "Subscribe":true, "Queued":true},
+              {"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
+               "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] }
 }]
 
 }]
