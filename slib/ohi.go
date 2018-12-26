@@ -101,7 +101,7 @@ func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
    return err
 }
 
-func editOhi(iSvc string, iUpdt *Update) *SendRecord {
+func editOhi(iSvc string, iUpdt *Update) {
    var err error
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
@@ -118,7 +118,9 @@ func editOhi(iSvc string, iUpdt *Update) *SendRecord {
    }
    err = storeFile(ohiFile(iSvc), aMap)
    if err != nil { quit(err) }
-   return &SendRecord{Id: string(eSrecOhi) + aOp + makeLocalId(iUpdt.Ohi.Uid)}
+   if aSvc.sendQPost != nil {
+      aSvc.sendQPost(&SendRecord{Id: string(eSrecOhi) + aOp + makeLocalId(iUpdt.Ohi.Uid)})
+   }
 }
 
 func sendEditOhi(iW io.Writer, iSvc string, iQid, iId string) error {

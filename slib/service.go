@@ -415,7 +415,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
 }
 
 func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
-                       aFn func(*ClientState)interface{}, aSrec *SendRecord) {
+                       aFn func(*ClientState)interface{}) {
    var err error
    var aResult []string
    fAll := func(c *ClientState) interface{} { return aResult }
@@ -425,7 +425,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
 
    if iSvc == "local" && iUpdt.Op != "open" {
       err = tError("not supported")
-      return fErr, nil
+      return fErr
    }
 
    switch iUpdt.Op {
@@ -443,10 +443,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if iUpdt.Config.LoginPeriod >= 0 { aNewCfg.LoginPeriod = iUpdt.Config.LoginPeriod }
       if iUpdt.Config.Verify { aNewCfg.Verify = !aNewCfg.Verify }
       err = _updateConfig(aNewCfg)
-      if err != nil { return fErr, nil }
+      if err != nil { return fErr }
       aFn, aResult = fAll, []string{"cf"}
    case "ohi_add", "ohi_drop":
-      aSrec = editOhi(iSvc, iUpdt)
+      editOhi(iSvc, iUpdt)
       aFn, aResult = fAll, []string{"ot"}
    case "ping_save":
       storeDraftAdrsbk(iSvc, iUpdt)
@@ -455,21 +455,21 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       deleteDraftAdrsbk(iSvc, iUpdt.Ping.To, iUpdt.Ping.Gid)
       aFn, aResult = fAll, []string{"ps"}
    case "ping_send":
-      aSrec = addQueue(iSvc, eSrecPing, iUpdt.Ping.Qid)
+      addQueue(iSvc, eSrecPing, iUpdt.Ping.Qid)
       aFn, aResult = fAll, []string{"ps"}
    case "accept_send":
-      aSrec = addQueue(iSvc, eSrecAccept, iUpdt.Accept.Qid)
+      addQueue(iSvc, eSrecAccept, iUpdt.Accept.Qid)
       aFn, aResult = fAll, []string{"if"}
    case "adrsbk_search":
       if iUpdt.Adrsbk.Term == "" {
          err = tError("search term missing")
-         return fErr, nil
+         return fErr
       }
       aResult = searchAdrsbk(iSvc, iUpdt)
       aFn, aResult = fOne, append([]string{"_n"}, aResult...)
    case "notice_seen":
       err = setLastSeenNotice(iSvc, iUpdt)
-      if err != nil { return fErr, nil }
+      if err != nil { return fErr }
       aFn, aResult = fAll, []string{"nl"}
    case "thread_save":
       const ( _ int8 = iota; eNewThread; eNewReply )
@@ -524,18 +524,18 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "thread_send":
       if iUpdt.Thread.Id == "" { break }
       err = validateDraftThread(iSvc, iUpdt)
-      if err != nil { return fErr, nil }
+      if err != nil { return fErr }
       aTid := iState.getThread()
       aFn = func(c *ClientState) interface{} {
          if c.getThread() == aTid { return aResult }
          return nil
       }
       aResult = []string{"ml"}
-      aSrec = addQueue(iSvc, eSrecThread, iUpdt.Thread.Id)
+      addQueue(iSvc, eSrecThread, iUpdt.Thread.Id)
    case "thread_open":
       if iUpdt.Thread.ThreadId != iState.getThread() {
          err = tError("thread id out of sync")
-         return fErr, nil
+         return fErr
       }
       iState.openMsg(iUpdt.Thread.Id, true)
       seenReceivedThread(iSvc, iUpdt)
@@ -560,7 +560,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          return nil
       }
       aResult = []string{"cl"}
-      aSrec = addQueue(iSvc, eSrecFwd, iUpdt.Forward.Qid)
+      addQueue(iSvc, eSrecFwd, iUpdt.Forward.Qid)
    case "navigate_thread":
       iState.addThread(iUpdt.Navigate.ThreadId)
       aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}
@@ -569,7 +569,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}
    case "navigate_link":
       _, err = os.Lstat(threadDir(iSvc) + iUpdt.Navigate.ThreadId)
-      if err != nil { return fErr, nil }
+      if err != nil { return fErr }
       aDiff := iUpdt.Navigate.ThreadId != iState.getThread()
       iState.goLink(iUpdt.Navigate.ThreadId, iUpdt.Navigate.MsgId)
       aFn = fOne
@@ -600,8 +600,8 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       }
    default:
       err = tError("unknown op")
-      return fErr, nil
+      return fErr
    }
-   return aFn, aSrec
+   return aFn
 }
 

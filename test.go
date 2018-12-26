@@ -173,10 +173,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
       if !_prepUpdt(aUpdt, &aCtx, aPrefix) {
          continue
       }
-      aFn, aSrec := pSl.HandleUpdtService(iTc.SvcId, aCtx.state, aUpdt)
-      if aSrec != nil {
-         aSvc.queue.postMsg(aSrec)
-      }
+      aFn := pSl.HandleUpdtService(iTc.SvcId, aCtx.state, aUpdt)
       var aOps []string
       if aFn != nil {
          aSvc.ccs.Range(func(cC *tWsConn) {

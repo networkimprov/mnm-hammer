@@ -60,6 +60,7 @@ type tService struct {
    sync.RWMutex // protects the following
    config tSvcConfig
    sendQ []tQueueEl
+   sendQPost func(...*SendRecord)
    notice []tNoticeEl
    fromOhi tOhi
    tabs []string

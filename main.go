@@ -153,8 +153,6 @@ func toAllClients(iMsg interface{}) {
 }
 
 type tQueue struct {
-   sync.Once // to start runTmtpSend
-   once func() // input to .Do()
    service string // service name
    connSrc chan net.Conn // synchronize writes to server
    in chan *pSl.SendRecord // message queue input
@@ -165,14 +163,16 @@ type tQueue struct {
 }
 
 func newQueue(iSvcId string) *tQueue {
-   aRecs, err := pSl.GetQueue(iSvcId)
-   if err != nil {
-      fmt.Fprintf(os.Stderr, "newqueue %s failure: %s\n", iSvcId, err.Error())
-      return nil
-   }
    var aQ *tQueue
+   var aSo sync.Once
+   fChan := func(){ go runElasticChan(aQ) }
+   aRecs := pSl.GetQueue(iSvcId, func(cR ...*pSl.SendRecord){
+      aSo.Do(fChan)
+      for _, c := range cR {
+         aQ.in <- c
+      }
+   })
    aQ = &tQueue{
-      once: func(){ go runElasticChan(aQ) },
       service: iSvcId,
       connSrc: make(chan net.Conn, 1),
       in: make(chan *pSl.SendRecord),
@@ -183,14 +183,9 @@ func newQueue(iSvcId string) *tQueue {
    }
    go runTmtpSend(aQ)
    if len(aRecs) > 0 {
-      aQ.Do(aQ.once)
+      aSo.Do(fChan)
    }
    return aQ
-}
-
-func (o *tQueue) postMsg(iRec *pSl.SendRecord) {
-   o.Do(o.once)
-   o.in <- iRec
 }
 
 func (o *tQueue) postAck(iId string) {
@@ -679,7 +674,7 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
       var aUpdate pSl.Update
       err = json.Unmarshal(aJson, &aUpdate)
       if err != nil { panic(err) }
-      aFn, aSrec := pSl.HandleUpdtService(aSvcId, aState, &aUpdate)
+      aFn := pSl.HandleUpdtService(aSvcId, aState, &aUpdate)
 
       if aFn != nil {
          aSvc.ccs.Range(func(cC *tWsConn) {
@@ -687,9 +682,6 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
             if cMsg == nil { return }
             cC.WriteJSON(cMsg)
          })
-      }
-      if aSrec != nil {
-         aSvc.queue.postMsg(aSrec)
       }
    }
    aSvc.ccs.Drop(aClientId.Value)
