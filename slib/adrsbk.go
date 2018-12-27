@@ -57,8 +57,8 @@ const (
    eAbSelf          // Type, Date,              Uid, MyAlias
    eAbPingTo        // Type, Date, Text, Alias,      MyAlias
    eAbPingFrom      // Type, Date, Text, Alias, Uid, MyAlias, MsgId
-   eAbMsgTo         // Type, Date,              Uid,          MsgId, Tid
-   eAbMsgFrom       // Type, Date,       Alias, Uid,          MsgId, Tid
+   eAbResolveFrom   // Type, Date,              Uid,                 Tid
+   eAbResolveTo     // Type, Date,       Alias, Uid,                 Tid
    eAbInviteTo      // Type, Date, Text, Alias,      MyAlias,            Gid
    eAbInviteFrom    // Type, Date, Text, Alias, Uid, MyAlias, MsgId,     Gid, Qid
    eAbMsgAccept     // Type, Date,                                       Gid
@@ -121,9 +121,9 @@ func _loadAdrsbk(iSvc string) *tAdrsbk {
          _respondLog(aSvc.pingToIdx[aLog[a].Alias], &aLog[a])
          aUserLog := aSvc.pingFromIdx[aLog[a].Uid]
          aSvc.pingFromIdx[aLog[a].Uid] = _appendLog(aUserLog, &aLog[a])
-      case eAbMsgTo:
+      case eAbResolveFrom:
          _respondLog(aSvc.pingFromIdx[aLog[a].Uid], &aLog[a])
-      case eAbMsgFrom:
+      case eAbResolveTo:
          aSvc.aliasIdx[aLog[a].Alias] = aLog[a].Uid
          _respondLog(aSvc.pingToIdx[aLog[a].Alias], &aLog[a])
       case eAbMsgAccept:
@@ -201,7 +201,7 @@ func _listLogs(iSvc *tAdrsbk, iIdx map[string]tAdrsbkLog) []tAdrsbkEl {
             aEl2.Response = &tAdrsbkEl{}
          } else {
             aEl2.Response = &tAdrsbkEl{Type: aEl.Response.Type, Date:  aEl.Response.Date,
-                                       Tid:  aEl.Response.Tid,  MsgId: aEl.Response.MsgId}
+                                       Tid:  aEl.Response.Tid}
          }
          aLog = append(aLog, aEl2)
       }
@@ -343,12 +343,12 @@ func storeSentAdrsbk(iSvc string, iKey string, iDate string) {
    _storeAdrsbk(iSvc, []tAdrsbkEl{*aEl})
 }
 
-func resolveReceivedAdrsbk(iSvc string, iDate string, iFor []tHeaderFor, iTid, iMsgId string) {
+func resolveReceivedAdrsbk(iSvc string, iDate string, iFor []tHeaderFor, iTid string) {
    aSvc := _loadAdrsbk(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    var aEls []tAdrsbkEl
    for a, _ := range iFor {
-      aEl := tAdrsbkEl{Type:eAbMsgTo, Date:iDate, Tid:iTid, MsgId:iMsgId, Uid:iFor[a].Id}
+      aEl := tAdrsbkEl{Type:eAbResolveFrom, Date:iDate, Tid:iTid, Uid:iFor[a].Id}
       if _respondLog(aSvc.pingFromIdx[iFor[a].Id], &aEl) {
          aEls = append(aEls, aEl)
       }
@@ -358,7 +358,7 @@ func resolveReceivedAdrsbk(iSvc string, iDate string, iFor []tHeaderFor, iTid, i
    }
 }
 
-func resolveSentAdrsbk(iSvc string, iDate string, iFrom, iAlias string, iTid, iMsgId string) {
+func resolveSentAdrsbk(iSvc string, iDate string, iFrom, iAlias string, iTid string) {
    if iAlias == "" {
       return
    }
@@ -368,7 +368,7 @@ func resolveSentAdrsbk(iSvc string, iDate string, iFrom, iAlias string, iTid, iM
    if aUid != kUidUnknown && aUid != iFrom {
       return
    }
-   aEl := tAdrsbkEl{Type:eAbMsgFrom, Date:iDate, Tid:iTid, MsgId:iMsgId,
+   aEl := tAdrsbkEl{Type:eAbResolveTo, Date:iDate, Tid:iTid,
                     Uid:iFrom, Alias:iAlias}
    if _respondLog(aSvc.pingToIdx[iAlias], &aEl) {
       aSvc.aliasIdx[iAlias] = iFrom

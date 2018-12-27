@@ -275,7 +275,7 @@
       "ot": [] ,
       "ps": [] ,
       "pt": [{"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
-              "Response":{"Type":6, "Date":"*d", "MsgId":"*", "Tid":"*"}}] ,
+              "Response":{"Type":6, "Date":"*d", "Tid":"*"}}] ,
       "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
               "Gid":"Gold-G#td", "Uid":"*", "MsgId":"*", "Response":{"Type":3, "Date":"*d"}}] ,
       "if": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",

@@ -279,7 +279,7 @@ func _completeStoreReceived(iSvc string, iTmp string, iHead *tDraftHead, iFd, iT
    aRec := _parseTempOk(iTmp)
    aTempOk := tempDir(iSvc) + iTmp
 
-   resolveSentAdrsbk(iSvc, iHead.Posted, iHead.From, iHead.SubHead.Alias, aRec.tid(), aRec.mid())
+   resolveSentAdrsbk(iSvc, iHead.Posted, iHead.From, iHead.SubHead.Alias, aRec.tid())
    storeReceivedAttach(iSvc, &iHead.SubHead, aRec)
 
    if aRec.tid() == aRec.mid() {
@@ -414,7 +414,7 @@ func storeSentThread(iSvc string, iHead *Header) {
 func _completeStoreSent(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *os.File) {
    aRec := _parseTempOk(iTmp)
 
-   resolveReceivedAdrsbk(iSvc, iHead.Posted, iHead.SubHead.For, aRec.tid(), aRec.mid())
+   resolveReceivedAdrsbk(iSvc, iHead.Posted, iHead.SubHead.For, aRec.tid())
    storeSentAttach(iSvc, &iHead.SubHead, aRec)
 
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
