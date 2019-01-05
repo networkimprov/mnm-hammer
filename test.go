@@ -303,6 +303,7 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
         "open":
       // nothing to do
    case "test":
+      _applyLastId(&iUpdt.Test.ThreadId,     &aApply, iCtx.lastId, "tl")
       if iUpdt.Test.Notice != nil {
          aNow := time.Now().UTC()
          for a := range iUpdt.Test.Notice {

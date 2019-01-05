@@ -592,6 +592,9 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aFn, aResult = fOne, []string{"cs", aAlt}
    case "test":
       if len(iUpdt.Test.Request) > 0 {
+         if iUpdt.Test.ThreadId != "" {
+            iState.addThread(iUpdt.Test.ThreadId)
+         }
          aFn, aResult = fOne, iUpdt.Test.Request
       } else if iUpdt.Test.Notice != nil {
          aSvc := getService(iSvc)
