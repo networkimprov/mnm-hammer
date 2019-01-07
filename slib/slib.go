@@ -239,11 +239,10 @@ func makeLocalId(iTid string) string {
    return fmt.Sprintf("%s_%012x", iTid, time.Now().UnixNano() / 1e6) // milliseconds
 }
 
-func parseLocalId(i string) tLocalId { return tLocalId{i[:len(i)-13], i[len(i)-12:]} }
-
 type tLocalId []string
 
-func (o tLocalId) tidSet(i string) { o[0] = i }
+func parseLocalId(i string) tLocalId { return tLocalId{i[:len(i)-13], i[len(i)-12:]} }
+
 func (o tLocalId)  ping() string { return o[0] }
 func (o tLocalId)   gid() string { return o[0] }
 func (o tLocalId)   ohi() string { return o[0] }

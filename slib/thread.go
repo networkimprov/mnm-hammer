@@ -420,12 +420,10 @@ func _completeSeenReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
 func storeSentThread(iSvc string, iHead *Header) {
    var err error
    aId := parseLocalId(iHead.Id)
-   if aId.tid() == "" {
-      aId.tidSet(iHead.MsgId)
-   }
+   aTid := aId.tid(); if aTid == "" { aTid = iHead.MsgId }
    aDraft := threadDir(iSvc) + iHead.Id
-   aOrig := threadDir(iSvc) + aId.tid()
-   aTempOk := tempDir(iSvc) + aId.tid() + "_" + iHead.MsgId + "_ss_" + aId.lms() + "_"
+   aOrig := threadDir(iSvc) + aTid
+   aTempOk := tempDir(iSvc) + aTid + "_" + iHead.MsgId + "_ss_" + aId.lms() + "_"
    aTemp := aTempOk + ".tmp"
 
    aSd, err := os.Open(aDraft)
@@ -437,11 +435,11 @@ func storeSentThread(iSvc string, iHead *Header) {
    defer aSd.Close()
    aDh := _readDraftHead(aSd)
 
-   aTid := iHead.Id; if aId.tid() != iHead.MsgId { aTid = aId.tid() }
-   aDoor := _getThreadDoor(iSvc, aTid)
+   aDoorId := aTid; if aTid == iHead.MsgId { aDoorId = iHead.Id }
+   aDoor := _getThreadDoor(iSvc, aDoorId)
    aDoor.Lock(); defer aDoor.Unlock()
    if aDoor.renamed { quit(tError("unexpected rename")) }
-   if aId.tid() == iHead.MsgId {
+   if aTid == iHead.MsgId {
       aDoor.renamed = true
    }
 
@@ -452,7 +450,7 @@ func storeSentThread(iSvc string, iHead *Header) {
    aHeadCc := aDh.SubHead.Cc
    aDh.SubHead.Cc = nil
 
-   if aId.tid() == iHead.MsgId {
+   if aTid == iHead.MsgId {
       aCc = aHeadCc
       _revCc(aCc, iHead)
    } else {
@@ -468,7 +466,8 @@ func storeSentThread(iSvc string, iHead *Header) {
    }
    aHead := Header{Id:iHead.MsgId, From:GetConfigService(iSvc).Uid, Posted:iHead.Posted,
                    DataLen:aDh.Len, SubHead:aDh.SubHead}
-   aHead.SubHead.setupSent(aId.tid())
+   aHead.SubHead.setupSent(aTid)
+   sizeDraftAttach(iSvc, &aHead.SubHead, aId)
    aIdx = append(aIdx, *_setupIndexEl(&aEl, &aHead, aPos))
    aTempOk += fmt.Sprint(aPos)
 
