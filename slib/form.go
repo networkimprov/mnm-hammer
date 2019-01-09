@@ -9,6 +9,7 @@
 package slib
 
 import (
+   "bytes"
    "fmt"
    "io"
    "io/ioutil"
@@ -343,14 +344,27 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x", aPos, aPos))) // 2 copies for safety
    if err != nil { quit(err) }
 
-   aCw := tCrcWriter{}
-   aTee := io.MultiWriter(aFd, &aCw)
+   var aBuf bytes.Buffer
+   var aCw tCrcWriter
+   aTee := io.MultiWriter(aFd, &aBuf, &aCw)
    _, err = io.CopyN(aTee, iR, iFile.Size - 1) // omit closing '}'
    if err == nil {
-      _, err = iR.Read([]byte{0})
+      _, err = io.CopyN(&aBuf, iR, 1)
    }
    if err != nil {
       return err //todo only return network error
+   }
+   if aBuf.Bytes()[0] != '{' || json.Unmarshal(aBuf.Bytes(), &struct{}{}) != nil {
+      fmt.Fprintf(os.Stderr, "tempFilledForm %s: received bad json for %s\n", iSvc, iFile.Ffn+iSuffix)
+      var aJson []byte
+      aJson, err = json.Marshal(aBuf.String())
+      if err != nil { quit(err) }
+      _, err = aFd.Seek(32, io.SeekStart)
+      if err != nil { quit(err) }
+      aCw = tCrcWriter{}
+      aTee = io.MultiWriter(aFd, &aCw)
+      _, err = aTee.Write([]byte(fmt.Sprintf(`{"$text":%s`, aJson)))
+      if err != nil { quit(err) }
    }
    _, err = aTee.Write([]byte(fmt.Sprintf(`,"threadid":"%s","msgid":"%s"`, iThreadId, iMsgId)))
    if err != nil { quit(err) }
