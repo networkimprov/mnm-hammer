@@ -283,6 +283,17 @@
              "SvcTabs":{"Pos":0, "PosFor":1, "Terms":[],
                         "Default":["All", "Unread", "Todo", "FFT"], "Pinned":["ohi"], "Type":1}} }
 },{
+   "Updt": {"Op":"tab_add", "Tab":{"Type":1, "Term":"ffn:networkimprov.github.io/mnm-registry/first_recv"}},
+   "Result": {
+      "tl": {"Ffn":"networkimprov.github.io/mnm-registry/first_recv",
+             "Table":[{"nr":123, "or":{"anr":[[1],[2]]},
+                       "threadid":"*mid", "msgid":"*mid", "checksum":"**"}]} ,
+      "cs": {"Thread":"*",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":true},
+             "SvcTabs":{"Pos":0, "PosFor":2, "Terms":["ffn:networkimprov.github.io/mnm-registry/first_recv"],
+                        "Default":["All", "Unread", "Todo", "FFT"], "Pinned":["ohi"], "Type":1}} }
+},{
    "Updt": {"Op":"tab_select", "Tab":{"Type":1, "PosFor":0, "Pos":0}},
    "Result": {
       "tl": [{"Id":"*", "Date":"*d"},
@@ -290,7 +301,7 @@
       "cs": {"Thread":"*",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":["ffn:networkimprov.github.io/mnm-registry/first_recv"],
                         "Default":["All", "Unread", "Todo", "FFT"], "Pinned":["ohi"], "Type":1}} }
 },{
    "Updt": {"Op":"adrsbk_search", "Adrsbk":{"Type":3, "Term":"go"}},
@@ -343,7 +354,7 @@
       "cs": {"Thread":"*",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":["ffn:networkimprov.github.io/mnm-registry/first_recv"],
                         "Default":["All", "Unread", "Todo", "FFT"], "Pinned":["ohi"], "Type":1}} }
 },{
    "Updt": {"Op":"config_update", "Config":{"Addr":"new", "LoginPeriod":99, "Verify":true}},

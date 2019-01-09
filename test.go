@@ -404,6 +404,8 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
       err = json.Unmarshal(aResp.Bytes(), &aClPair)
       if err != nil { goto ReturnErr }
       *iCtx.lastId[iOp] = aClPair[0]
+   } else if iOp == "tl" && aResp.Bytes()[0] == '{' {
+      // nothing to do
    } else if iCtx.lastId[iOp] != nil {
       err = json.Unmarshal(aResp.Bytes(), iCtx.lastId[iOp])
       if err != nil { goto ReturnErr }
