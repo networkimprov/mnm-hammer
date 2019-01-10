@@ -237,12 +237,16 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    aTempOk := tempDir(iSvc) + aThreadId + "_" + aMsgId + "_sr__"
    aTemp := aTempOk + ".tmp"
 
+   if iHead.Notify > 0 && iHead.SubHead.ConfirmId != "" {
+      fmt.Fprintf(os.Stderr, "storeReceivedThread %s: erroneous confirm id\n", iSvc)
+      iHead.SubHead.ConfirmId = ""
+   }
    fConsume := func() error {
       _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
       return err
    }
-   if iHead.SubHead.ThreadId == "" && iHead.Notify > 0 {
-      fmt.Fprintf(os.Stderr, "storeReceivedThread %s: forward missing thread id\n", iSvc)
+   if iHead.SubHead.ThreadId == "" && (iHead.Notify > 0 || iHead.SubHead.ConfirmId != "") {
+      fmt.Fprintf(os.Stderr, "storeReceivedThread %s: missing thread id\n", iSvc)
       return "", fConsume()
    }
    if iHead.SubHead.ThreadId == "" || iHead.Notify > 0 {
@@ -262,7 +266,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    var aPos, aCopyLen int64
    aEl := tIndexEl{Seen:eSeenClear}
    aNewCc := iHead.SubHead.Cc; if aThreadId != aMsgId { aNewCc = nil }
-   iHead.SubHead.Cc = nil
+   aCid := iHead.SubHead.ConfirmId
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
@@ -270,6 +274,15 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    if iHead.Notify > 0 {
       _, err = io.CopyN(aTd, iR, iHead.DataLen)
    } else {
+      if aCid != "" {
+         aTempOk = tempDir(iSvc) + aThreadId + "_" + aCid + "_sc__"
+         aHead := *iHead; iHead = &aHead
+         iHead.Id = aCid
+         iHead.Posted = iHead.SubHead.ConfirmPosted
+      }
+      iHead.SubHead.Cc = nil
+      iHead.SubHead.ConfirmId = ""
+      iHead.SubHead.ConfirmPosted = ""
       iHead.SubHead.ThreadId = aThreadId
       err = _writeMsgTemp(aTd, iHead, iR, &aEl)
       if err == nil {
@@ -304,30 +317,47 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
       defer aFd.Close()
       aPos = _readIndex(aFd, &aIdx, &aCc)
       aIdxN := len(aIdx)
-      aIdx = append(aIdx, tIndexEl{})
-      for a, _ := range aIdx {
-         if aIdx[a].Id <  aMsgId || aIdx[a].Offset < 0 { continue }
-         if aIdx[a].Id == aMsgId {
-            fmt.Fprintf(os.Stderr, "storeReceivedThread %s: msg %s already stored\n", iSvc, aMsgId)
+      if aCid != "" {
+         for aIdxN = range aIdx {
+            if aIdx[aIdxN].Id == aCid { break }
+         }
+         if aIdx[aIdxN].Id != aCid || aIdx[aIdxN].ForwardBy == "" {
+            aMsg := "already confirmed"; if aIdx[aIdxN].Id != aCid { aMsg = "not found" }
+            fmt.Fprintf(os.Stderr, "storeReceivedThread %s: confirm id %s %s\n", iSvc, aCid, aMsg)
             os.Remove(aTemp)
             return "", nil
          }
-         if aCopyLen == 0 {
-            aCopyLen = aPos - aIdx[a].Offset
-            aPos = aIdx[a].Offset
-            aIdxN = a
-            copy(aIdx[a+1:], aIdx[a:])
-            _, err = aFd.Seek(aPos, io.SeekStart)
-            if err != nil { quit(err) }
-            _, err = io.CopyN(aTd, aFd, aCopyLen)
-            if err != nil { quit(err) }
-            _, err = aFd.Seek(aPos, io.SeekStart)
-            if err != nil { quit(err) }
+         if aIdx[aIdxN].Size == aEl.Size && aIdx[aIdxN].Checksum == aEl.Checksum {
+            aIdx[aIdxN].ForwardBy = ""
          } else {
-            aIdx[a].Offset += aEl.Size
+            aIdx[aIdxN].ForwardBy += ", confirm failed"
          }
+      } else {
+         aIdx = append(aIdx, tIndexEl{})
+         for a, _ := range aIdx {
+            if aIdx[a].Id <  aMsgId || aIdx[a].Offset < 0 { continue }
+            if aIdx[a].Id == aMsgId {
+               fmt.Fprintf(os.Stderr, "storeReceivedThread %s: msg %s already stored\n", iSvc, aMsgId)
+               os.Remove(aTemp)
+               return "", nil
+            }
+            if aCopyLen == 0 {
+               aCopyLen = aPos - aIdx[a].Offset
+               aPos = aIdx[a].Offset
+               aIdxN = a
+               copy(aIdx[a+1:], aIdx[a:])
+               _, err = aFd.Seek(aPos, io.SeekStart)
+               if err != nil { quit(err) }
+               _, err = io.CopyN(aTd, aFd, aCopyLen)
+               if err != nil { quit(err) }
+               _, err = aFd.Seek(aPos, io.SeekStart)
+               if err != nil { quit(err) }
+            } else {
+               aIdx[a].Offset += aEl.Size
+            }
+         }
+         aIdx[aIdxN] = *_setupIndexEl(&aEl, iHead, aPos)
       }
-      aIdx[aIdxN] = *_setupIndexEl(&aEl, iHead, aPos)
    }
    aTempOk += fmt.Sprint(aPos)
 
@@ -336,10 +366,44 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    if err != nil { quit(err) }
    err = syncDir(tempDir(iSvc))
    if err != nil { quit(err) }
-   _completeStoreReceived(iSvc, path.Base(aTempOk), _makeDraftHead(iHead, aNewCc), aFd, aTd)
+   if aCid != "" {
+      _completeStoreConfirm(iSvc, path.Base(aTempOk), _makeDraftHead(iHead, nil), aIdx, aFd, aTd)
+   } else {
+      _completeStoreReceived(iSvc, path.Base(aTempOk), _makeDraftHead(iHead, aNewCc), aFd, aTd)
+   }
 
    aKind := "msg"; if aThreadId == aMsgId { aKind = "thread" }
    return aKind, nil
+}
+
+func _completeStoreConfirm(iSvc string, iTmp string, iHead *tDraftHead, iIdx []tIndexEl, iFd, iTd *os.File) {
+   aRec := _parseTempOk(iTmp)
+   aTempOk := tempDir(iSvc) + iTmp
+   var err error
+
+   storeReceivedAttach(iSvc, &iHead.SubHead, aRec)
+
+   _readIndex(iTd, nil, nil) // don't copy message
+   err = iFd.Truncate(aRec.pos())
+   if err != nil { quit(err) }
+   _, err = io.Copy(iFd, iTd) // iFd has correct pos from caller
+   if err != nil { quit(err) }
+   err = iFd.Sync()
+   if err != nil { quit(err) }
+
+   var aEl *tIndexEl
+   for a := range iIdx {
+      aEl = &iIdx[a]
+      if iIdx[a].Id == aRec.mid() { break }
+   }
+   if aEl.ForwardBy != "" {
+      fmt.Fprintf(os.Stderr, "_completeStoreConfirm %s: saved confirm mismatch %s_%s\n",
+                             iSvc, aRec.tid(), aRec.mid())
+      err = renameRemove(aTempOk, threadDir(iSvc) + aRec.tid() +"_"+ aRec.mid())
+   } else {
+      err = os.Remove(aTempOk)
+   }
+   if err != nil { quit(err) }
 }
 
 func _completeStoreReceived(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *os.File) {
@@ -465,9 +529,9 @@ func storeSentThread(iSvc string, iHead *Header) {
       aIdx = aIdx[:a + copy(aIdx[a:], aIdx[a+1:])]
    }
    aHead := Header{Id:iHead.MsgId, From:GetConfigService(iSvc).Uid, Posted:iHead.Posted,
-                   DataLen:aDh.Len, SubHead:aDh.SubHead}
+                   DataLen:aDh.Len, SubHead:&aDh.SubHead}
    aHead.SubHead.setupSent(aTid)
-   sizeDraftAttach(iSvc, &aHead.SubHead, aId)
+   sizeDraftAttach(iSvc, aHead.SubHead, aId)
    aIdx = append(aIdx, *_setupIndexEl(&aEl, &aHead, aPos))
    aTempOk += fmt.Sprint(aPos)
 
@@ -556,10 +620,11 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(aData.Len())}
+   aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(aData.Len()),
+                   SubHead:&tHeader2{}}
    aHead.SubHead.setupDraft(aId.tid(), iUpdt, iSvc)
    _writeMsgTemp(aTd, &aHead, aData, &aIdx[aIdxN]) //todo stream from client
-   writeFormFillAttach(aTd, &aHead.SubHead, iUpdt.Thread.FormFill, &aIdx[aIdxN])
+   writeFormFillAttach(aTd, aHead.SubHead, iUpdt.Thread.FormFill, &aIdx[aIdxN])
    _writeIndex(aTd, aIdx, aCc)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
@@ -651,6 +716,54 @@ func deleteDraftThread(iSvc string, iUpdt *Update) {
 
 func _completeDeleteDraft(iSvc string, iTmp string, iFd, iTd *os.File) {
    _completeStoreDraft(iSvc, iTmp, &tDraftHead{}, iFd, iTd)
+}
+
+func sendFwdConfirmThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
+   const ( eTid = iota; eMid; eDate; eByUid )
+   aRec := strings.SplitN(iDraftId, "_", eByUid+1)
+
+   aDoor := _getThreadDoor(iSvc, aRec[eTid])
+   aDoor.RLock(); defer aDoor.RUnlock()
+
+   aFd, err := os.Open(threadDir(iSvc) + aRec[eTid])
+   if err != nil { quit(err) }
+   defer aFd.Close()
+
+   var aIdx []tIndexEl
+   var aCc []tCcEl
+   _readIndex(aFd, &aIdx, &aCc)
+
+   aFor := make([]tHeaderFor, 0, len(aCc))
+   for a := range aCc {
+      if aCc[a].Date != aRec[eDate] || aCc[a].ByUid != aRec[eByUid] { continue }
+      aType := eForUser; if aCc[a].WhoUid == aCc[a].Who { aType = eForGroupExcl }
+      aFor = append(aFor, tHeaderFor{Id:aCc[a].WhoUid, Type:aType})
+   }
+
+   var aEl *tIndexEl
+   for a := range aIdx {
+      aEl = &aIdx[a]
+      if aEl.Id == aRec[eMid] { break }
+   }
+   _, err = aFd.Seek(aEl.Offset, io.SeekStart)
+   if err != nil { quit(err) }
+   aDh := _readDraftHead(aFd)
+   aDh.SubHead.ConfirmId = aEl.Id
+   aDh.SubHead.ConfirmPosted = aEl.Date
+   aBufSub, err := json.Marshal(aDh.SubHead)
+   if err != nil { quit(err) }
+
+   aHead := Msg{"Op":7, "Id":iId, "For":aFor, "DataHead":len(aBufSub),
+                "DataLen": int64(len(aBufSub)) + aDh.Len + totalAttach(&aDh.SubHead)}
+   aBufHead, err := json.Marshal(aHead)
+   if err != nil { quit(err) }
+
+   err = sendHeaders(iW, aBufHead, aBufSub)
+   if err != nil { return err }
+   _, err = io.CopyN(iW, aFd, aDh.Len)
+   if err != nil { return err }
+   err = writeStoredAttach(iW, iSvc, &aDh.SubHead)
+   return err
 }
 
 func sendFwdDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
@@ -782,17 +895,11 @@ func storeFwdNotifyThread(iSvc string, iHead *Header, iR io.Reader) error {
 
 func _completeStoreFwdNotify(iSvc string, iTmp string, iCc []tCcEl, iFd, iTd *os.File) {
    aRec := _parseTempOk(iTmp)
-   var err error
 
    resolveSentAdrsbk    (iSvc, iCc[0].Date, iCc, aRec.tid())
    resolveReceivedAdrsbk(iSvc, iCc[0].Date, iCc, aRec.tid())
 
-   _, err = io.Copy(iFd, iTd) // iFd has correct pos from caller
-   if err != nil { quit(err) }
-   err = iFd.Sync()
-   if err != nil { quit(err) }
-   err = os.Remove(tempDir(iSvc) + iTmp)
-   if err != nil { quit(err) }
+   _finishStoreFwd(iSvc, iTmp, iCc, iFd, iTd)
 }
 
 func storeFwdSentThread(iSvc string, iHead *Header) {
@@ -865,12 +972,38 @@ func _completeStoreFwdSent(iSvc string, iTmp string, iFs *tFwdSent, iFd, iTd *os
       err = syncDir(threadDir(iSvc))
       if err != nil { quit(err) }
    }
+   _finishStoreFwd(iSvc, iTmp, iFs.cc, iFd, iTd)
+}
+
+func _finishStoreFwd(iSvc string, iTmp string, iCc []tCcEl, iFd, iTd *os.File) {
+   aRec := _parseTempOk(iTmp)
+   var err error
+
    _, err = io.Copy(iFd, iTd) // iFd has correct pos from caller
    if err != nil { quit(err) }
    err = iFd.Sync()
    if err != nil { quit(err) }
+
+   aUid := GetConfigService(iSvc).Uid
+   var aIds []string
+   var aIdx []tIndexEl
+   _readIndex(iFd, &aIdx, nil) //todo skip if aUid is in iCc?
+   for a := range aIdx {
+      if aIdx[a].From == aUid {
+         aIds = append(aIds, aRec.tid() +"_"+ aIdx[a].Id +"_"+ iCc[0].Date +"_"+ iCc[0].ByUid)
+      }
+   }
+   aPost := addListQueue(iSvc, eSrecCfm, aIds, "nopost")
+
    err = os.Remove(tempDir(iSvc) + iTmp)
    if err != nil { quit(err) }
+
+   if aPost != nil {
+      aSvc := getService(iSvc)
+      if aSvc.sendQPost != nil {
+         aSvc.sendQPost(aPost...)
+      }
+   }
 }
 
 func storeFwdDraftThread(iSvc string, iUpdt *Update) {
@@ -1001,7 +1134,7 @@ type tDraftHead struct {
 }
 
 func _makeDraftHead(iHead *Header, iCc []tCcEl) *tDraftHead {
-   return &tDraftHead{Posted:iHead.Posted, From:iHead.From, SubHead:iHead.SubHead, cc:iCc}
+   return &tDraftHead{Posted:iHead.Posted, From:iHead.From, SubHead:*iHead.SubHead, cc:iCc}
 }
 
 func _readDraftHead(iFd *os.File) *tDraftHead {
@@ -1107,7 +1240,7 @@ func _writeMsgTemp(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) err
    var err error
    var aCw tCrcWriter
    aTee := io.MultiWriter(iTd, &aCw)
-   aSize := iHead.DataLen - totalAttach(&iHead.SubHead)
+   aSize := iHead.DataLen - totalAttach(iHead.SubHead)
    if aSize < 0 { return tError("attachment size total exceeds DataLen") }
    aBuf, err := json.Marshal(Msg{"Id":iHead.Id, "From":iHead.From, "Posted":iHead.Posted,
                                  "Len":aSize, "SubHead":iHead.SubHead})
@@ -1152,7 +1285,7 @@ func completeThread(iSvc string, iTempOk string) {
    }
    fmt.Printf("complete %s\n", iTempOk)
    var aFd, aTd *os.File
-   if aRec.tid() != "" && aRec.tid() != aRec.mid() {
+   if aRec.op() == "sc" || aRec.tid() != "" && aRec.tid() != aRec.mid() {
       aFd, err = os.OpenFile(threadDir(iSvc)+aRec.tid(), os.O_RDWR, 0600)
       if err != nil { quit(err) }
       defer aFd.Close()
@@ -1169,6 +1302,11 @@ func completeThread(iSvc string, iTempOk string) {
       }
       aTd.Seek(0, io.SeekStart)
       return cDh
+   }
+   fIdx := func() []tIndexEl {
+      var cIdx []tIndexEl
+      _readIndex(aTd, &cIdx, nil)
+      return cIdx
    }
    fCc := func() []tCcEl {
       var cCc []tCcEl
@@ -1188,6 +1326,8 @@ func completeThread(iSvc string, iTempOk string) {
       return &cFs
    }
    switch aRec.op() {
+   case "sc":
+      _completeStoreConfirm(iSvc, iTempOk, fDraftHead(0), fIdx(), aFd, aTd)
    case "sr":
       _completeStoreReceived(iSvc, iTempOk, fDraftHead(1), aFd, aTd)
    case "nr":

@@ -419,6 +419,30 @@ func updateDraftAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
    }
 }
 
+func writeStoredAttach(iW io.Writer, iSvc string, iSubHead *tHeader2) error {
+   aPrefix := attachSub(iSvc, iSubHead.ThreadId) + iSubHead.ConfirmId + "_"
+   var aFd *os.File
+   var aLen int64
+   var err error
+   for _, aFile := range iSubHead.Attach {
+      if _isFormFill(aFile.Name) {
+         aLen, err = writeRowFilledForm(iW, iSvc, aFile.Ffn+kSuffixSent, iSubHead.ConfirmId)
+      } else {
+         aFd, err = os.Open(aPrefix + aFile.Name)
+         if err != nil { quit(err) }
+         aLen, err = io.Copy(iW, aFd)
+         aFd.Close()
+      }
+      if err != nil {
+         return err
+      }
+      if aLen != aFile.Size {
+         quit(fmt.Errorf("attachment %s size mismatch %d & %d\n", aPrefix + aFile.Name, aLen, aFile.Size))
+      }
+   }
+   return nil
+}
+
 func totalAttach(iSubHead *tHeader2) int64 {
    if iSubHead.noAttachSize { return 0 }
    var aLen int64

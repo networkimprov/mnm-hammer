@@ -5,7 +5,8 @@
 "Orders": [{
    "Updt": {"Op":"open"},
    "Result": {
-      "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"}] ,
+      "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"},
+             {"Name":"GoldFile", "Size":26, "Date":"*d"}] ,
       "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
       "/v": ["Blue", "Gold"] }
@@ -182,13 +183,21 @@
       "tl": [{"Id":"*", "Date":"*d"},
              {"Id":"*", "Date":"*d"}] }
 },{
+   "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["ml"], "ThreadId":"last"}},
+   "Result": {
+      "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
+              "Queued":false}] }
+},{
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
       "mo": [{"From":"*", "Id":"*", "Len":0, "Posted":"*d",
-              "SubHead":{"Alias":"Gold#td", "ThreadId":"*", "Subject":"to forward"},
+              "SubHead":{"Alias":"Gold#td", "ThreadId":"*", "Subject":"to forward",
+                         "Attach":[{"Name":"u:GoldFile", "Size":26},
+                                   {"Name":"r:Blue.original", "Size":33,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
               "msg_data":"" }] ,
       "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
-              "Queued":false, "ForwardBy":"*"}] ,
+              "Queued":false}] ,
       "cs": {"Thread":"*",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
              "History":{"Prev":true, "Next":false},
@@ -199,12 +208,12 @@
                "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":false},
               {"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
-      "al": [] }
+      "al": [{"Name":"GoldFile",      "Size":26,  "MsgId":"*", "File":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_open", "Thread":{"ThreadId":"last", "Id":"last"}},
    "Result": {
       "ml": [{"Id":"*", "From":"*", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"*d",
-              "Queued":false, "ForwardBy":"*"}] }
+              "Queued":false}] }
 },{
    "Updt": {"Op":"thread_close", "Thread":{"Id":"last"}},
    "Result": null
@@ -287,7 +296,9 @@
    "Result": {
       "tl": {"Ffn":"networkimprov.github.io/mnm-registry/first_recv",
              "Table":[{"nr":123, "or":{"anr":[[1],[2]]},
-                       "threadid":"*mid", "msgid":"*mid", "checksum":"**"}]} ,
+                       "$threadid":"*mid", "$msgid":"*mid", "$offset":3, "$size":33, "$checksum":"**"},
+                      {"nr":123, "or":{"anr":[[1],[2]]},
+                       "$threadid":"*mid", "$msgid":"*mid", "$offset":"**", "$size":33, "$checksum":"**"}]} ,
       "cs": {"Thread":"*",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
              "History":{"Prev":false, "Next":true},
@@ -314,7 +325,8 @@
 },{
    "Updt": {"Op":"open"},
    "Result": {
-      "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"}] ,
+      "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"},
+             {"Name":"GoldFile", "Size":26, "Date":"*d"}] ,
       "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
       "/v": ["Blue", "Gold"] ,
@@ -390,6 +402,9 @@
 
 "Name": "Gold1", "SvcId": "Gold",
 "Cfg": {"Name":"Gold", "Alias":"Gold"},
+"Files": [{
+   "Name":"GoldFile", "Data":"abcdefghijklmnopqrstuvwxyz"
+}],
 "Orders":
 [{
    "Updt": {"Op":"ping_save", "Ping":{"Alias":"Gold", "To":"Blue"}},
@@ -475,13 +490,19 @@
              {"Id":"*", "From":"*", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{
-                 "New":1, "Alias":"Gold", "Subject":"to forward", "Cc":[] }},
+                 "New":1, "Alias":"Gold", "Subject":"to forward", "Cc":[],
+                 "Attach":[{"Name":"upload/GoldFile"},
+                           {"Name":"form_fill/Blue.original", "FfKey":"0123456789ab_f:Blue.original"}],
+                 "FormFill":{"0123456789ab_f:Blue.original":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
    "Result": {
       "mo": [{"From":"self", "Id":"*", "Len":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"", "Subject":"to forward",
+                         "Attach":[{"Name":"u:GoldFile"},
+                                   {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
                          "Cc":[{"Who":"Gold#td", "WhoUid":"*", "By":"Gold#td", "ByUid":"*",
                                 "Date":".", "Note":"author", "Subscribe":true}] },
-              "msg_data":"" }] ,
+              "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
       "tl": [{"Id":"*", "Date":"*d"},
              {"Id":"*", "Date":"*d"}] ,
       "ml": [{"Id":"*", "From":"", "Alias":"", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] ,
@@ -493,7 +514,7 @@
       "cl": [[],
              [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*", "ByUid":"*",
                "Date":".", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
-      "al": [] }
+      "al": [{"Name":"GoldFile",      "Size":26,  "MsgId":"*", "File":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {

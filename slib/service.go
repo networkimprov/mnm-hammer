@@ -243,6 +243,7 @@ func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
    case eSrecAccept: aFn = sendJoinGroupAdrsbk
    case eSrecThread: aFn = sendDraftThread
    case eSrecFwd:    aFn = sendFwdDraftThread
+   case eSrecCfm:    aFn = sendFwdConfirmThread
    default:
       quit(tError("unknown op " + iSrec.Id[:1]))
    }
@@ -398,6 +399,10 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
             return aResult[:1]
          }
          aResult = []string{"pf", "cl"}
+      case eSrecCfm:
+         if iHead.Error != "" {
+            aFn, aResult = fAll, []string{"_e", iHead.Error}
+         }
       case eSrecOhi:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"_e", iHead.Error}

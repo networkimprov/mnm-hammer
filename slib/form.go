@@ -226,22 +226,45 @@ func WriteTableFilledForm(iW io.Writer, iSvc string, iFfn string) error {
    return err
 }
 
-func GetRecordFilledForm(iSvc string, iFfn, iMsgId string) Msg {
+func writeRowFilledForm(iW io.Writer, iSvc string, iFfn, iMsgId string) (int64, error) {
    var err error
    aDoor := _getFormDoor(iSvc, iFfn)
    aDoor.RLock(); defer aDoor.RUnlock()
    aFd, err := os.Open(formDir(iSvc) + _ffnFileName(iFfn))
    if err != nil { quit(err) }
    defer aFd.Close()
-   aData := []Msg{}
-   err = json.NewDecoder(aFd).Decode(aData)
+
+   aDc := json.NewDecoder(aFd)
+   aDc.UseNumber()
+   _, err = aDc.Token()
    if err != nil { quit(err) }
-   for _, aV := range aData {
-      if aV["msgid"].(string) == iMsgId {
-         return aV
-      }
+
+   var aRow Msg
+   for aRow = nil; aDc.More(); aRow = nil {
+      err = aDc.Decode(&aRow)
+      if err != nil { quit(err) }
+      if aRow["$msgid"].(string) == iMsgId { break }
    }
-   return nil
+   if aRow == nil {
+      quit(fmt.Errorf("%s formfill table %s lacks msgid %s\n", iSvc, iFfn, iMsgId))
+   }
+   aLen, err := aRow["$size"].(json.Number).Int64()
+   if err != nil { quit(err) }
+   aTxt := aRow["$text"]
+   if aTxt != nil {
+      _, err = io.WriteString(iW, aTxt.(string))
+      return aLen, err
+   }
+   aPos, err := aRow["$offset"].(json.Number).Int64()
+   if err != nil { quit(err) }
+
+   _, err = aFd.Seek(aPos, io.SeekStart)
+   if err != nil { quit(err) }
+   _, err = io.CopyN(iW, aFd, aLen-1)
+   if err == nil {
+      _, err = iW.Write([]byte{'}'})
+   }
+   return aLen, err //todo only net errors
 }
 
 func validateFilledForm(iSvc string, iBuf []byte, iFfn string) error {
@@ -340,8 +363,8 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    var aFi os.FileInfo
    aFi, err = os.Lstat(formDir(iSvc) + _ffnFileName(iFile.Ffn) + iSuffix)
    if err != nil && !os.IsNotExist(err) { quit(err) }
-   aPos := int64(2); if err == nil { aPos = aFi.Size() }
-   _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x", aPos, aPos))) // 2 copies for safety
+   aPos, aSep := int64(0), '['; if err == nil { aPos, aSep = aFi.Size() - 1, ',' }
+   _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x%c\n\n", aPos, aPos, aSep))) // 2 copies for safety
    if err != nil { quit(err) }
 
    var aBuf bytes.Buffer
@@ -366,10 +389,11 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
       _, err = aTee.Write([]byte(fmt.Sprintf(`{"$text":%s`, aJson)))
       if err != nil { quit(err) }
    }
-   _, err = aTee.Write([]byte(fmt.Sprintf(`,"threadid":"%s","msgid":"%s"`, iThreadId, iMsgId)))
+   _, err = aTee.Write([]byte(fmt.Sprintf(`,"$threadid":"%s","$msgid":"%s","$offset":%d,"$size":%d`,
+                                          iThreadId, iMsgId, aPos+3, iFile.Size)))
    if err != nil { quit(err) }
    aCw.Write([]byte{'}'}) // include closing '}' in checksum
-   _, err = aFd.Write([]byte(fmt.Sprintf(`,"checksum":%d}`, aCw.sum)))
+   _, err = aFd.Write([]byte(fmt.Sprintf(`,"$checksum":%d}]`, aCw.sum)))
    if err != nil { quit(err) }
 
    err = aFd.Sync()
@@ -404,17 +428,11 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
    aFd, err := os.OpenFile(aPath, os.O_WRONLY|os.O_CREATE, 0600)
    if err != nil { quit(err) }
    defer aFd.Close()
-   if aPos[0] == 2 {
-      _, err = aFd.Write([]byte{'[','\n'})
-   } else {
-      _, err = aFd.Seek(int64(aPos[0])-1, io.SeekStart)
+   if aPos[0] > 0 {
+      _, err = aFd.Seek(int64(aPos[0]), io.SeekStart)
       if err != nil { quit(err) }
-      _, err = aFd.Write([]byte{',','\n','\n'})
    }
-   if err != nil { quit(err) }
    _, err = io.Copy(aFd, aTd)
-   if err != nil { quit(err) }
-   _, err = aFd.Write([]byte{']'})
    if err != nil { quit(err) }
    err = aFd.Sync()
    if err != nil { quit(err) }

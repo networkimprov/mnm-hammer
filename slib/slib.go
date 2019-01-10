@@ -90,7 +90,7 @@ type Header struct {
    Status int8
    Notify uint16
    DataLen, DataHead int64
-   SubHead tHeader2
+   SubHead *tHeader2
 }
 
 type tHeader2 struct {
@@ -99,6 +99,8 @@ type tHeader2 struct {
    Subject string
    Attach []tHeader2Attach `json:",omitempty"`
    Cc []tCcEl `json:",omitempty"`
+   ConfirmId string `json:",omitempty"`
+   ConfirmPosted string `json:",omitempty"`
    noAttachSize bool
 }
 
@@ -201,7 +203,10 @@ type SendRecord struct {
    Id string // Id[0] is one of eSrec*
 }
 
-const eSrecThread, eSrecFwd, eSrecPing, eSrecOhi, eSrecAccept byte = 't', 'f', 'p', 'o', 'a'
+const (
+   eSrecThread = 't'; eSrecFwd = 'f'; eSrecCfm = 'c'
+   eSrecPing = 'p'; eSrecOhi = 'o'; eSrecAccept = 'a'
+)
 
 type Msg map[string]interface{}
 
