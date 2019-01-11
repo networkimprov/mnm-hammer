@@ -137,7 +137,7 @@ func test() {
       }
       continue
       ReturnErr:
-         fmt.Fprintf(os.Stderr, "%s %s\n  %s\nend test pass\n", aTc.Name, aTc.SvcId, err.Error())
+         fmt.Fprintf(os.Stderr, "%s %s %s\nend test pass\n", aTc.Name, aTc.SvcId, err)
          return
    }
    var aWg sync.WaitGroup
@@ -155,7 +155,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    defer iWg.Done()
    aSvc := getService(iTc.SvcId)
    if aSvc.ccs == nil {
-      fmt.Fprintf(os.Stderr, "%s %s  client quit\n  service unknown\n", iTc.Name, iTc.SvcId)
+      fmt.Fprintf(os.Stderr, "%s %s client quit; service unknown\n", iTc.Name, iTc.SvcId)
       return
    }
    aCtx := tTestContext{
@@ -184,7 +184,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          aMsg := aFn(aCtx.state)
          aOps, _ = aMsg.([]string)
          if aOps == nil {
-            fmt.Fprintf(os.Stderr, "%s update error\n  %s\n", aPrefix, aMsg.(string))
+            fmt.Fprintf(os.Stderr, "%s update error %s\n", aPrefix, aMsg.(string))
             continue
          }
       }
@@ -195,7 +195,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          aN := 0
          for ; aN < len(aOps) && aOps[aN] != aK; aN++ {}
          if aN == len(aOps) {
-            fmt.Fprintf(os.Stderr, "%s missing %s\n  expect %v\n", aPrefix, aK, aV)
+            fmt.Fprintf(os.Stderr, "%s missing result\n  expect %s %v\n", aPrefix, aK, aV)
          }
       }
       aSum := (*int32)(nil); if aUpdt.Test != nil && aUpdt.Test.Poll > 0 { aSum = new(int32) }
@@ -309,18 +309,18 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
          for a := range iUpdt.Test.Notice {
             aN, err := strconv.Atoi(iUpdt.Test.Notice[a].Date)
             if err != nil {
-               fmt.Fprintf(os.Stderr, "%s notice date\n  %s\n", iPrefix, err.Error())
+               fmt.Fprintf(os.Stderr, "%s notice date %s\n", iPrefix, err)
                return false
             }
             iUpdt.Test.Notice[a].Date = aNow.AddDate(0,0,aN).Format(time.RFC3339)
          }
       }
    default:
-      fmt.Fprintf(os.Stderr, "%s unknown op\n  update %s\n", iPrefix, iUpdt.Op)
+      fmt.Fprintf(os.Stderr, "%s unknown update op %s\n", iPrefix, iUpdt.Op)
       return false
    }
    if aApply != "" {
-      fmt.Printf("%s applied %s\n", iPrefix, aApply)
+      // fmt.Printf("%s applied %s\n", iPrefix, aApply)
    }
    return true
 }
@@ -348,11 +348,14 @@ func _verifyNameList(iList []string, iExpect interface{}, iPrefix string) {
    aGot := make([]interface{}, len(iList))
    for aI := range iList { aGot[aI] = iList[aI] }
    if iExpect == nil {
-      fmt.Fprintf(os.Stderr, "%s unexpected\n  got    %v\n",
+      fmt.Fprintf(os.Stderr, "%s unexpected\n  got    _n %v\n",
                              iPrefix, aGot)
-   } else if !_hasExpected(iExpect, aGot) {
-      fmt.Fprintf(os.Stderr, "%s mismatch\n  expect %v\n  got    %v\n",
-                             iPrefix, iExpect, aGot)
+   } else {
+      aName, aMis := _hasExpected("_n", iExpect, aGot)
+      if aName != "" {
+         fmt.Fprintf(os.Stderr, "%s mismatch\n  expect %v\n  got    %s %v\n",
+                                iPrefix, iExpect, aName, aMis)
+      }
    }
 }
 
@@ -360,8 +363,9 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
                     iPrefix string, iSum *int32) {
    defer iCtx.wg.Done()
    var err error
-   var aResult interface{}
+   var aResult, aMis interface{}
    var aResp bytes.Buffer
+   var aName string
 
    switch(iOp) {
    case "/t": aResult = pSl.Upload.GetIdx()
@@ -411,8 +415,8 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
       if err != nil { goto ReturnErr }
    }
    if iExpect == nil {
-      fmt.Fprintf(os.Stderr, "%s %s %s unexpected\n  got    %s\n",
-                             iPrefix, iOp, iId, aResp.Bytes())
+      fmt.Fprintf(os.Stderr, "%s unexpected\n  got    %s %s\n",
+                             iPrefix, iOp, aResp.Bytes())
       return
    }
    if iOp == "mo" || iOp == "mn" {
@@ -423,10 +427,11 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    }
    if err != nil { goto ReturnErr }
 
-   if !_hasExpected(iExpect, aResult) {
+   aName, aMis = _hasExpected(iOp, iExpect, aResult)
+   if aName != "" {
       aWhat := "mismatch"; if iSum != nil { aWhat = "polling" }
-      fmt.Fprintf(os.Stderr, "%s %s %s %s\n  expect %v\n  got    %v\n",
-                             iPrefix, iOp, iId, aWhat, iExpect, aResult)
+      fmt.Fprintf(os.Stderr, "%s %s\n  expect %v\n  got    %s %v\n",
+                             iPrefix, aWhat, iExpect, aName, aMis)
       return
    }
    if iSum != nil {
@@ -434,8 +439,8 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    }
    return
    ReturnErr:
-      fmt.Fprintf(os.Stderr, "%s %s %s %s\n  expect %v\n",
-                             iPrefix, iOp, iId, err.Error(), iExpect)
+      fmt.Fprintf(os.Stderr, "%s %s\n  expect %s %v\n",
+                             iPrefix, err, iOp, iExpect)
 }
 
 func _parseMessageStream(iBuf []byte) ([]interface{}, error) {
@@ -476,42 +481,51 @@ func _parseMessageStream(iBuf []byte) ([]interface{}, error) {
    return aList, nil
 }
 
-func _hasExpected(iExpect, iGot interface{}) bool {
+func _hasExpected(iName string, iExpect, iGot interface{}) (string, interface{}) {
    switch aExpect := iExpect.(type) {
    case string:
       if aExpect == "**" { break }
       aGot, ok := iGot.(string)
-      if !ok { return false }
+      if !ok { return iName, iGot }
       if aExpect == "*d" {
          aT, err := time.Parse(time.RFC3339, aGot)
-         if err != nil || aT.Before(sTestNow) { return false }
+         if err != nil || aT.Before(sTestNow) { return iName, iGot }
       } else if aExpect == "*dyo" {
          aT, err := time.Parse(time.RFC3339, aGot)
-         if err != nil || aT.Before(sTestNow.AddDate(-1,0,0)) { return false }
+         if err != nil || aT.Before(sTestNow.AddDate(-1,0,0)) { return iName, iGot }
       } else if strings.HasSuffix(aExpect, "#td") {
-         if aExpect[:len(aExpect)-3] + sTestDate != aGot { return false }
+         if aExpect[:len(aExpect)-3] + sTestDate != aGot { return iName, iGot }
       } else if aExpect == "*mid" {
-         if len(aGot) != 16 { return false }
+         if len(aGot) != 16 { return iName, iGot }
       } else if aExpect != "*" {
-         if aExpect != aGot { return false }
+         if aExpect != aGot { return iName, iGot }
       }
    case nil, bool, float64:
-      if iExpect != iGot { return false }
+      if iExpect != iGot { return iName, iGot }
    case []interface{}:
       aGot, _ := iGot.([]interface{})
-      if aGot == nil || len(aExpect) != len(aGot) { return false }
+      aDiff := len(aGot) - len(aExpect)
+      if aDiff != 0 { return fmt.Sprintf("%s%+d", iName, aDiff), iGot }
+      var aName string
       for a := range aExpect {
-         if !_hasExpected(aExpect[a], aGot[a]) { return false }
+         aName, iGot = _hasExpected(fmt.Sprintf("%s.%d", iName, a), aExpect[a], aGot[a])
+         if aName != "" { return aName, iGot }
       }
    case map[string]interface{}:
-      aGot, _ := iGot.(map[string]interface{})
-      if aGot == nil || len(aExpect) != len(aGot) { return false }
+      aGot, ok := iGot.(map[string]interface{})
+      if !ok { return iName, iGot }
+      for a := range aGot {
+         if _, ok = aExpect[a]; !ok { return iName +"+"+ a, aGot[a] }
+      }
+      var aName string
       for a := range aExpect {
-         if !_hasExpected(aExpect[a], aGot[a]) { return false }
+         if _, ok = aGot[a]; !ok { return iName +"-"+ a, aExpect[a] }
+         aName, iGot = _hasExpected(iName +"."+ a, aExpect[a], aGot[a])
+         if aName != "" { return aName, iGot }
       }
    default:
-      return false
+      return iName, iGot
    }
-   return true
+   return "", nil
 }
 
