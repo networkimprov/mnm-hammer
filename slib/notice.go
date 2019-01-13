@@ -47,7 +47,7 @@ func addPingNotice(iSvc string, iMsgId string, iAlias, iGid string, iBlurb strin
    aEl := tNoticeEl{MsgId:iMsgId, Date:dateRFC3339(), Alias:iAlias, Gid:iGid, Blurb:iBlurb}
    aEl.Type = "ping"; if iGid != "" { aEl.Type = "invite" }
    aSvc.notice = append(aSvc.notice, aEl)
-   err := storeFile(notcFile(iSvc), aSvc.notice)
+   err := storeFile(fileNotc(iSvc), aSvc.notice)
    if err != nil { quit(err) }
 }
 
@@ -82,7 +82,7 @@ func setLastSeenNotice(iSvc string, iUpdt *Update) error {
       }
    }
    aSvc.notice = aSvc.notice[aStart:]
-   err = storeFile(notcFile(iSvc), aSvc.notice)
+   err = storeFile(fileNotc(iSvc), aSvc.notice)
    if err != nil { quit(err) }
    return nil
 }

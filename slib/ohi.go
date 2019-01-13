@@ -72,7 +72,7 @@ func GetIdxOhi(iSvc string) []tOhiEl {
    var aMap tOhi
    aSvc := getService(iSvc)
    aSvc.RLock()
-   err := readJsonFile(&aMap, ohiFile(iSvc))
+   err := readJsonFile(&aMap, fileOhi(iSvc))
    aSvc.RUnlock()
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
@@ -86,7 +86,7 @@ func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
    aMap := tOhi{}
    aSvc := getService(iSvc)
    aSvc.RLock()
-   err = readJsonFile(&aMap, ohiFile(iSvc))
+   err = readJsonFile(&aMap, fileOhi(iSvc))
    aSvc.RUnlock()
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aFor := make(tForOhi, len(aMap))
@@ -106,7 +106,7 @@ func editOhi(iSvc string, iUpdt *Update) {
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aMap := tOhi{}
-   err = readJsonFile(&aMap, ohiFile(iSvc))
+   err = readJsonFile(&aMap, fileOhi(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    var aOp string
    if iUpdt.Op == "ohi_add" {
@@ -116,7 +116,7 @@ func editOhi(iSvc string, iUpdt *Update) {
       aOp = "-"
       delete(aMap, iUpdt.Ohi.Uid)
    }
-   err = storeFile(ohiFile(iSvc), aMap)
+   err = storeFile(fileOhi(iSvc), aMap)
    if err != nil { quit(err) }
    if aSvc.sendQPost != nil {
       aSvc.sendQPost(&SendRecord{Id: string(eSrecOhi) + aOp + makeLocalId(iUpdt.Ohi.Uid)})

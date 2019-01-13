@@ -40,10 +40,10 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    }
    var aDir []os.FileInfo
    if iState.SvcTabs.Pos == 3 {
-      aDir, err = ioutil.ReadDir(formDir(iSvc))
+      aDir, err = ioutil.ReadDir(dirForm(iSvc))
       if err != nil { quit(err) }
    } else {
-      aDir, err = ioutil.ReadDir(threadDir(iSvc))
+      aDir, err = ioutil.ReadDir(dirThread(iSvc))
       if err != nil { quit(err) }
       sort.Slice(aDir, func(cA, cB int) bool { return aDir[cA].ModTime().After(aDir[cB].ModTime()) })
    }

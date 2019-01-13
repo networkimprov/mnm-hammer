@@ -55,7 +55,7 @@ func addQueue(iSvc string, iType byte, iId string) {
    }
    aSvc.sendQ[aEl].Srec = SendRecord{aId}
    aSvc.sendQ[aEl].Date = dateRFC3339()
-   err := storeFile(sendqFile(iSvc), aSvc.sendQ)
+   err := storeFile(fileSendq(iSvc), aSvc.sendQ)
    if err != nil { quit(err) }
    if aSvc.sendQPost != nil {
       aSvc.sendQPost(&aSvc.sendQ[aEl].Srec)
@@ -87,7 +87,7 @@ func addListQueue(iSvc string, iType byte, iIds []string, iNoPost string) []*Sen
    }
    copy(aNewQ[aN+a+1:], aSvc.sendQ[aN:])
    aSvc.sendQ = aNewQ
-   err := storeFile(sendqFile(iSvc), aSvc.sendQ)
+   err := storeFile(fileSendq(iSvc), aSvc.sendQ)
    if err != nil { quit(err) }
    if iNoPost != "" {
       return aRecs
@@ -106,7 +106,7 @@ func dropQueue(iSvc string, iId string) {
       return
    }
    aSvc.sendQ = aSvc.sendQ[:aEl + copy(aSvc.sendQ[aEl:], aSvc.sendQ[aEl+1:])]
-   err := storeFile(sendqFile(iSvc), aSvc.sendQ)
+   err := storeFile(fileSendq(iSvc), aSvc.sendQ)
    if err != nil { quit(err) }
 }
 

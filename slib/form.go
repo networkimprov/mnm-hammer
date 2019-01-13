@@ -219,7 +219,7 @@ func WriteTableFilledForm(iW io.Writer, iSvc string, iFfn string) error {
    var err error
    aDoor := _getFormDoor(iSvc, iFfn)
    aDoor.RLock(); defer aDoor.RUnlock()
-   aFd, err := os.Open(formDir(iSvc) + _ffnFileName(iFfn))
+   aFd, err := os.Open(dirForm(iSvc) + _ffnFileName(iFfn))
    if err != nil { return err }
    defer aFd.Close()
    _, err = io.Copy(iW, aFd)
@@ -230,7 +230,7 @@ func writeRowFilledForm(iW io.Writer, iSvc string, iFfn, iMsgId string) (int64, 
    var err error
    aDoor := _getFormDoor(iSvc, iFfn)
    aDoor.RLock(); defer aDoor.RUnlock()
-   aFd, err := os.Open(formDir(iSvc) + _ffnFileName(iFfn))
+   aFd, err := os.Open(dirForm(iSvc) + _ffnFileName(iFfn))
    if err != nil { quit(err) }
    defer aFd.Close()
 
@@ -361,7 +361,7 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    defer aFd.Close()
 
    var aFi os.FileInfo
-   aFi, err = os.Lstat(formDir(iSvc) + _ffnFileName(iFile.Ffn) + iSuffix)
+   aFi, err = os.Lstat(dirForm(iSvc) + _ffnFileName(iFile.Ffn) + iSuffix)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos, aSep := int64(0), '['; if err == nil { aPos, aSep = aFi.Size() - 1, ',' }
    _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x%c\n\n", aPos, aPos, aSep))) // 2 copies for safety
@@ -421,7 +421,7 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
       quit(tError(fmt.Sprintf("position values do not match in %s", aFn)))
       //todo recovery instructions
    }
-   aPath := formDir(iSvc) + _ffnFileName(iFile.Ffn) + iSuffix
+   aPath := dirForm(iSvc) + _ffnFileName(iFile.Ffn) + iSuffix
    _, err = os.Lstat(aPath)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aDoSync := err != nil

@@ -28,23 +28,24 @@ const kUploadTmp  = kUploadDir  + "temp/"
 const kFormDir    = kStorageDir + "form/"
 const kFormRegDir = kStorageDir + "reg-cache/"
 
-func svcDir   (iSvc string) string { return kServiceDir + iSvc + "/"        }
+func dirSvc   (iSvc string) string { return kServiceDir + iSvc + "/" }
 func tempDir  (iSvc string) string { return kServiceDir + iSvc + "/temp/"   }
-func threadDir(iSvc string) string { return kServiceDir + iSvc + "/thread/" }
-func attachDir(iSvc string) string { return kServiceDir + iSvc + "/attach/" }
-func formDir  (iSvc string) string { return kServiceDir + iSvc + "/form/"   }
-func cfgFile  (iSvc string) string { return kServiceDir + iSvc + "/config"  }
-func pingFile (iSvc string) string { return kServiceDir + iSvc + "/ping-draft" }
-func adrsFile (iSvc string) string { return kServiceDir + iSvc + "/adrsbk"  }
-func ohiFile  (iSvc string) string { return kServiceDir + iSvc + "/ohi"     }
-func tabFile  (iSvc string) string { return kServiceDir + iSvc + "/tabs"    }
-func sendqFile(iSvc string) string { return kServiceDir + iSvc + "/sendq"   }
-func notcFile (iSvc string) string { return kServiceDir + iSvc + "/notice"  }
+func dirThread(iSvc string) string { return kServiceDir + iSvc + "/thread/" }
+func dirAttach(iSvc string) string { return kServiceDir + iSvc + "/attach/" }
+func dirForm  (iSvc string) string { return kServiceDir + iSvc + "/form/" }
 
-func fwdFile  (iSvc, iTid string) string { return threadDir(iSvc) + iTid + "_forward" }
+func fileCfg  (iSvc string) string { return kServiceDir + iSvc + "/config" }
+func filePing (iSvc string) string { return kServiceDir + iSvc + "/ping-draft" }
+func fileAdrs (iSvc string) string { return kServiceDir + iSvc + "/adrsbk" }
+func fileOhi  (iSvc string) string { return kServiceDir + iSvc + "/ohi" }
+func fileTab  (iSvc string) string { return kServiceDir + iSvc + "/tabs" }
+func fileSendq(iSvc string) string { return kServiceDir + iSvc + "/sendq" }
+func fileNotc (iSvc string) string { return kServiceDir + iSvc + "/notice" }
 
-func attachSub(iSvc, iSub string) string { return attachDir(iSvc) + iSub + "/" }
-func attachFfn(iSvc, iSub string) string { return attachSub(iSvc, iSub) + "ffnindex" }
+func fileFwd  (iSvc, iTid string) string { return dirThread(iSvc) + iTid + "_forward" }
+
+func subAttach(iSvc, iSub string) string { return dirAttach(iSvc) + iSub + "/" }
+func fileFfn  (iSvc, iSub string) string { return subAttach(iSvc, iSub) + "ffnindex" }
 
 var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
@@ -65,7 +66,7 @@ type tService struct {
    fromOhi tOhi
    tabs []string
    doors map[string]tDoor // shared by *Thread & *FilledForm
-   // ohiFile(svc), not cached
+   // fileOhi(svc), not cached
 }
 
 type tDoor interface {

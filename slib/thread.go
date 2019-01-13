@@ -74,7 +74,7 @@ func GetIdxThread(iSvc string, iState *ClientState) interface{} {
       cDoor.RLock(); defer cDoor.RUnlock()
       if cDoor.renamed { return }
 
-      cFd, err := os.Open(threadDir(iSvc) + aTid)
+      cFd, err := os.Open(dirThread(iSvc) + aTid)
       if err != nil { quit(err) }
       defer cFd.Close()
       _ = _readIndex(cFd, &aIdx, nil)
@@ -107,7 +107,7 @@ func GetCcThread(iSvc string, iState *ClientState) interface{} {
       aDoor.RUnlock()
       return aCc
    }
-   aFd, err := os.Open(threadDir(iSvc) + aTid)
+   aFd, err := os.Open(dirThread(iSvc) + aTid)
    if err != nil { quit(err) }
    _readCc(aFd, &aCc[kSet])
    aFd.Close(); aDoor.RUnlock()
@@ -136,7 +136,7 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    aDoor.RLock(); defer aDoor.RUnlock()
    if aDoor.renamed { return tError("thread name changed") }
 
-   aFd, err := os.Open(threadDir(iSvc) + aTid)
+   aFd, err := os.Open(dirThread(iSvc) + aTid)
    if err != nil { quit(err) }
    defer aFd.Close()
    var aIdx []tIndexEl
@@ -149,7 +149,7 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
             if err != nil { quit(err) }
             aXd = aFd
          } else {
-            aRd, err = os.Open(threadDir(iSvc) + aIdx[a].Id)
+            aRd, err = os.Open(dirThread(iSvc) + aIdx[a].Id)
             if err != nil { quit(err) }
             defer aRd.Close()
             aXd = aRd
@@ -165,7 +165,7 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
 }
 
 func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
-   aFd, err := os.Open(threadDir(iSvc) + iDraftId)
+   aFd, err := os.Open(dirThread(iSvc) + iDraftId)
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
       fmt.Fprintf(os.Stderr, "sendDraftThread %s: draft file was cleared %s\n", iSvc, iDraftId)
@@ -180,7 +180,7 @@ func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
       aDoor := _getThreadDoor(iSvc, aId.tid())
       aDoor.RLock()
       var aOfd *os.File
-      aOfd, err = os.Open(threadDir(iSvc) + aId.tid())
+      aOfd, err = os.Open(dirThread(iSvc) + aId.tid())
       if err != nil { quit(err) }
       _readCc(aOfd, &aCc)
       aOfd.Close(); aDoor.RUnlock()
@@ -216,7 +216,7 @@ func loadThread(iSvc string, iId string) string {
    aDoor.RLock(); defer aDoor.RUnlock()
    if aDoor.renamed { return "" }
 
-   aFd, err := os.Open(threadDir(iSvc) + iId)
+   aFd, err := os.Open(dirThread(iSvc) + iId)
    if err != nil { quit(err) }
    defer aFd.Close()
    var aIdx []tIndexEl
@@ -233,7 +233,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    var err error
    aThreadId := iHead.SubHead.ThreadId; if aThreadId == "" { aThreadId = iHead.Id }
    aMsgId := iHead.Id; if iHead.Notify > 0 { aMsgId = aThreadId }
-   aOrig := threadDir(iSvc) + aThreadId
+   aOrig := dirThread(iSvc) + aThreadId
    aTempOk := tempDir(iSvc) + aThreadId + "_" + aMsgId + "_sr__"
    aTemp := aTempOk + ".tmp"
 
@@ -399,7 +399,7 @@ func _completeStoreConfirm(iSvc string, iTmp string, iHead *tDraftHead, iIdx []t
    if aEl.ForwardBy != "" {
       fmt.Fprintf(os.Stderr, "_completeStoreConfirm %s: saved confirm mismatch %s_%s\n",
                              iSvc, aRec.tid(), aRec.mid())
-      err = renameRemove(aTempOk, threadDir(iSvc) + aRec.tid() +"_"+ aRec.mid())
+      err = renameRemove(aTempOk, dirThread(iSvc) + aRec.tid() +"_"+ aRec.mid())
    } else {
       err = os.Remove(aTempOk)
    }
@@ -416,9 +416,9 @@ func _completeStoreReceived(iSvc string, iTmp string, iHead *tDraftHead, iFd, iT
    storeReceivedAttach(iSvc, &iHead.SubHead, aRec)
 
    if aRec.tid() == aRec.mid() {
-      err = os.Link(aTempOk, threadDir(iSvc) + aRec.tid())
+      err = os.Link(aTempOk, dirThread(iSvc) + aRec.tid())
       if err != nil && !os.IsExist(err) { quit(err) }
-      err = syncDir(threadDir(iSvc))
+      err = syncDir(dirThread(iSvc))
       if err != nil { quit(err) }
    } else {
       _, err = io.Copy(iFd, iTd) // iFd has correct pos from _readIndex
@@ -431,7 +431,7 @@ func _completeStoreReceived(iSvc string, iTmp string, iHead *tDraftHead, iFd, iT
 }
 
 func seenReceivedThread(iSvc string, iUpdt *Update) {
-   aOrig := threadDir(iSvc) + iUpdt.Thread.ThreadId
+   aOrig := dirThread(iSvc) + iUpdt.Thread.ThreadId
    aTempOk := tempDir(iSvc) + iUpdt.Thread.ThreadId + "__nr__"
    aTemp := aTempOk + ".tmp"
    var err error
@@ -485,8 +485,8 @@ func storeSentThread(iSvc string, iHead *Header) {
    var err error
    aId := parseLocalId(iHead.Id)
    aTid := aId.tid(); if aTid == "" { aTid = iHead.MsgId }
-   aDraft := threadDir(iSvc) + iHead.Id
-   aOrig := threadDir(iSvc) + aTid
+   aDraft := dirThread(iSvc) + iHead.Id
+   aOrig := dirThread(iSvc) + aTid
    aTempOk := tempDir(iSvc) + aTid + "_" + iHead.MsgId + "_ss_" + aId.lms() + "_"
    aTemp := aTempOk + ".tmp"
 
@@ -555,7 +555,7 @@ func _completeStoreSent(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *o
    storeSentAttach(iSvc, &iHead.SubHead, aRec)
 
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
-   err := os.Remove(threadDir(iSvc) + aTid + "_" + aRec.lms())
+   err := os.Remove(dirThread(iSvc) + aTid + "_" + aRec.lms())
    if err != nil && !os.IsNotExist(err) { quit(err) }
 
    _completeStoreReceived(iSvc, iTmp, &tDraftHead{}, iFd, iTd)
@@ -563,7 +563,7 @@ func _completeStoreSent(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *o
 
 func validateDraftThread(iSvc string, iUpdt *Update) error {
    aId := parseLocalId(iUpdt.Thread.Id)
-   aFd, err := os.Open(threadDir(iSvc) + aId.tid() + "_" + aId.lms())
+   aFd, err := os.Open(dirThread(iSvc) + aId.tid() + "_" + aId.lms())
    if err != nil { quit(err) }
    defer aFd.Close()
    aDh := _readDraftHead(aFd)
@@ -578,7 +578,7 @@ func validateDraftThread(iSvc string, iUpdt *Update) error {
 
 func storeDraftThread(iSvc string, iUpdt *Update) {
    aId := parseLocalId(iUpdt.Thread.Id)
-   aOrig := threadDir(iSvc) + aId.tid()
+   aOrig := dirThread(iSvc) + aId.tid()
    aTempOk := tempDir(iSvc) + aId.tid() + "__ws_" + aId.lms() + "_"
    aTemp := aTempOk + ".tmp"
    aData := bytes.NewBufferString(iUpdt.Thread.Data)
@@ -636,7 +636,7 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
 func _completeStoreDraft(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *os.File) {
    var err error
    aRec := _parseTempOk(iTmp)
-   aDraft := threadDir(iSvc) + aRec.tid() + "_" + aRec.lms()
+   aDraft := dirThread(iSvc) + aRec.tid() + "_" + aRec.lms()
    aTempOk := tempDir(iSvc) + iTmp
 
    var aSubHeadOld *tHeader2
@@ -655,7 +655,7 @@ func _completeStoreDraft(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *
       err = os.Link(aTempOk, aDraft)
       if err != nil { quit(err) }
    }
-   err = syncDir(threadDir(iSvc))
+   err = syncDir(dirThread(iSvc))
    if err != nil { quit(err) }
 
    if aRec.tid() != "" {
@@ -673,7 +673,7 @@ func _completeStoreDraft(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *
 
 func deleteDraftThread(iSvc string, iUpdt *Update) {
    aId := parseLocalId(iUpdt.Thread.Id)
-   aOrig := threadDir(iSvc) + aId.tid()
+   aOrig := dirThread(iSvc) + aId.tid()
    aTempOk := tempDir(iSvc) + aId.tid() + "__ds_" + aId.lms() + "_"
    aTemp := aTempOk + ".tmp"
    var err error
@@ -725,7 +725,7 @@ func sendFwdConfirmThread(iW io.Writer, iSvc string, iDraftId, iId string) error
    aDoor := _getThreadDoor(iSvc, aRec[eTid])
    aDoor.RLock(); defer aDoor.RUnlock()
 
-   aFd, err := os.Open(threadDir(iSvc) + aRec[eTid])
+   aFd, err := os.Open(dirThread(iSvc) + aRec[eTid])
    if err != nil { quit(err) }
    defer aFd.Close()
 
@@ -804,7 +804,7 @@ func sendFwdDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    aDoor = _getThreadDoor(iSvc, aId.tid())
    aDoor.RLock(); defer aDoor.RUnlock()
 
-   aFd, err := os.Open(threadDir(iSvc) + aId.tid())
+   aFd, err := os.Open(dirThread(iSvc) + aId.tid())
    if err != nil { quit(err) }
    defer aFd.Close()
 
@@ -844,7 +844,7 @@ func sendFwdDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
 }
 
 func storeFwdNotifyThread(iSvc string, iHead *Header, iR io.Reader) error {
-   aOrig := threadDir(iSvc) + iHead.SubHead.ThreadId
+   aOrig := dirThread(iSvc) + iHead.SubHead.ThreadId
    aTempOk := tempDir(iSvc) + iHead.SubHead.ThreadId + "__fn__"
    aTemp := aTempOk + ".tmp"
    var err error
@@ -904,7 +904,7 @@ func _completeStoreFwdNotify(iSvc string, iTmp string, iCc []tCcEl, iFd, iTd *os
 
 func storeFwdSentThread(iSvc string, iHead *Header) {
    aId := parseLocalId(iHead.Id)
-   aOrig := threadDir(iSvc) + aId.tid()
+   aOrig := dirThread(iSvc) + aId.tid()
    aTempOk := tempDir(iSvc) + aId.tid() + "__fs_" + aId.lms() + "_"
    aTemp := aTempOk + ".tmp"
    aFwdTemp := tempDir(iSvc) + aId.tid() + "_forward.tmp"
@@ -954,7 +954,7 @@ func storeFwdSentThread(iSvc string, iHead *Header) {
 
 func _completeStoreFwdSent(iSvc string, iTmp string, iFs *tFwdSent, iFd, iTd *os.File) {
    aRec := _parseTempOk(iTmp)
-   aFwdOrig := fwdFile(iSvc, aRec.tid())
+   aFwdOrig := fileFwd(iSvc, aRec.tid())
    aFwdTemp := tempDir(iSvc) + aRec.tid() + "_forward.tmp"
    var err error
 
@@ -969,7 +969,7 @@ func _completeStoreFwdSent(iSvc string, iTmp string, iFs *tFwdSent, iFd, iTd *os
          err = os.Remove(aFwdTemp)
       }
       if err != nil { quit(err) }
-      err = syncDir(threadDir(iSvc))
+      err = syncDir(dirThread(iSvc))
       if err != nil { quit(err) }
    }
    _finishStoreFwd(iSvc, iTmp, iFs.cc, iFd, iTd)
@@ -1007,7 +1007,7 @@ func _finishStoreFwd(iSvc string, iTmp string, iCc []tCcEl, iFd, iTd *os.File) {
 }
 
 func storeFwdDraftThread(iSvc string, iUpdt *Update) {
-   aFwdOrig := fwdFile(iSvc, iUpdt.Forward.ThreadId)
+   aFwdOrig := fileFwd(iSvc, iUpdt.Forward.ThreadId)
    aFwdTemp := tempDir(iSvc) + "forward_" + iUpdt.Forward.ThreadId
 
    if iUpdt.Forward.ThreadId[0] == '_' { quit(tError("cannot forward draft")) }
@@ -1027,7 +1027,7 @@ func storeFwdDraftThread(iSvc string, iUpdt *Update) {
    var aCcOrig []tCcEl
    aDoor := _getThreadDoor(iSvc, iUpdt.Forward.ThreadId)
    aDoor.RLock()
-   aFd, err := os.Open(threadDir(iSvc) + iUpdt.Forward.ThreadId)
+   aFd, err := os.Open(dirThread(iSvc) + iUpdt.Forward.ThreadId)
    if err != nil { quit(err) }
    _readCc(aFd, &aCcOrig)
    aFd.Close(); aDoor.RUnlock()
@@ -1064,7 +1064,7 @@ type tFwdSent struct {
 }
 
 func _getFwd(iSvc string, iTid string, iOpt string) []tFwdEl {
-   aPath := fwdFile(iSvc, iTid)
+   aPath := fileFwd(iSvc, iTid)
    if iOpt == "temp" {
       aPath = tempDir(iSvc) + iTid + "_forward.tmp"
       iOpt = ""
@@ -1077,11 +1077,11 @@ func _getFwd(iSvc string, iTid string, iOpt string) []tFwdEl {
          return aFwd
       }
       if iOpt != "make" { quit(tError("unknown option "+iOpt)) }
-      _, err = os.Lstat(threadDir(iSvc) + iTid)
+      _, err = os.Lstat(dirThread(iSvc) + iTid)
       if err != nil { quit(err) }
       err = os.Symlink("placeholder", aPath)
       if err == nil {
-         err = syncDir(threadDir(iSvc))
+         err = syncDir(dirThread(iSvc))
       }
       if err != nil && !os.IsExist(err) { quit(err) }
    } else {
@@ -1286,7 +1286,7 @@ func completeThread(iSvc string, iTempOk string) {
    fmt.Printf("complete %s\n", iTempOk)
    var aFd, aTd *os.File
    if aRec.op() == "sc" || aRec.tid() != "" && aRec.tid() != aRec.mid() {
-      aFd, err = os.OpenFile(threadDir(iSvc)+aRec.tid(), os.O_RDWR, 0600)
+      aFd, err = os.OpenFile(dirThread(iSvc)+aRec.tid(), os.O_RDWR, 0600)
       if err != nil { quit(err) }
       defer aFd.Close()
       _, err = aFd.Seek(aRec.pos(), io.SeekStart)

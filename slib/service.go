@@ -44,19 +44,19 @@ func initServices(iFn func(string)) {
 
    for _, aSvc := range aSvcs {
       if strings.HasSuffix(aSvc, ".tmp") {
-         err = os.RemoveAll(svcDir(aSvc))
+         err = os.RemoveAll(dirSvc(aSvc))
          if err != nil { quit(err) }
          continue
       }
       _makeTree(aSvc)
       aService := _newService(nil)
       aSvcFiles := [...]struct { name string; cache interface{}; reqd bool }{
-         {cfgFile  (aSvc), &aService.config, true },
-         {sendqFile(aSvc), &aService.sendQ,  false},
-         {tabFile  (aSvc), &aService.tabs,   false},
-         {notcFile (aSvc), &aService.notice, false},
-         {pingFile (aSvc), nil,              false},
-         {ohiFile  (aSvc), nil,              false},
+         {fileCfg  (aSvc), &aService.config, true },
+         {fileSendq(aSvc), &aService.sendQ,  false},
+         {fileTab  (aSvc), &aService.tabs,   false},
+         {fileNotc (aSvc), &aService.notice, false},
+         {filePing (aSvc), nil,              false},
+         {fileOhi  (aSvc), nil,              false},
       }
       for a := range aSvcFiles {
          err = resolveTmpFile(aSvcFiles[a].name + ".tmp")
@@ -80,9 +80,9 @@ func initServices(iFn func(string)) {
          if strings.HasPrefix(aTmp, "adrsbk_") {
             // handled above
          } else if strings.HasPrefix(aTmp, "forward_") {
-            renameRemove(tempDir(aSvc) + aTmp, fwdFile(aSvc, aTmp[8:]))
+            renameRemove(tempDir(aSvc) + aTmp, fileFwd(aSvc, aTmp[8:]))
          } else if strings.HasPrefix(aTmp, "ffnindex_") {
-            renameRemove(tempDir(aSvc) + aTmp, attachFfn(aSvc, aTmp[9:]))
+            renameRemove(tempDir(aSvc) + aTmp, fileFfn(aSvc, aTmp[9:]))
          } else if strings.HasSuffix(aTmp, ".tmp") {
             // could be a valid attachment or forward from thread transaction
             defer os.Remove(tempDir(aSvc) + aTmp)
@@ -131,11 +131,11 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    sServices[iName] = _newService(&aCfg)
    aTemp := iName + ".tmp"
    _makeTree(aTemp)
-   err = writeJsonFile(cfgFile(aTemp), &aCfg)
+   err = writeJsonFile(fileCfg(aTemp), &aCfg)
    if err != nil { quit(err) }
-   err = syncDir(svcDir(aTemp))
+   err = syncDir(dirSvc(aTemp))
    if err != nil { quit(err) }
-   err = os.Rename(svcDir(aTemp), svcDir(iName))
+   err = os.Rename(dirSvc(aTemp), dirSvc(iName))
    if err != nil { quit(err) }
    sServicesDoor.Unlock()
 
@@ -186,12 +186,12 @@ func _newService(iCfg *tSvcConfig) *tService {
 
 func _makeTree(iSvc string) {
    var err error
-   for _, aDir := range [...]string{tempDir(iSvc), threadDir(iSvc), attachDir(iSvc), formDir(iSvc)} {
+   for _, aDir := range [...]string{tempDir(iSvc), dirThread(iSvc), dirAttach(iSvc), dirForm(iSvc)} {
       err = os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
-   for _, aFile := range [...]string{pingFile(iSvc), ohiFile(iSvc), tabFile(iSvc), sendqFile(iSvc),
-                                     notcFile(iSvc)} {
+   for _, aFile := range [...]string{filePing(iSvc), fileOhi(iSvc), fileTab(iSvc), fileSendq(iSvc),
+                                     fileNotc(iSvc)} {
       err = os.Symlink("empty", aFile)
       if err != nil && !os.IsExist(err) { quit(err) }
    }
@@ -205,7 +205,7 @@ func _updateConfig(iCfg *tSvcConfig) error {
    }
    aSvc.Lock(); defer aSvc.Unlock()
    aSvc.config = *iCfg
-   err = storeFile(cfgFile(iCfg.Name), iCfg)
+   err = storeFile(fileCfg(iCfg.Name), iCfg)
    if err != nil { quit(err) }
    return nil
 }
@@ -222,7 +222,7 @@ func addTabService(iSvc string, iTerm string) int {
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aSvc.tabs = append(aSvc.tabs, iTerm)
-   err := storeFile(tabFile(iSvc), aSvc.tabs)
+   err := storeFile(fileTab(iSvc), aSvc.tabs)
    if err != nil { quit(err) }
    return len(aSvc.tabs)-1
 }
@@ -231,7 +231,7 @@ func dropTabService(iSvc string, iPos int) {
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aSvc.tabs = aSvc.tabs[:iPos + copy(aSvc.tabs[iPos:], aSvc.tabs[iPos+1:])]
-   err := storeFile(tabFile(iSvc), aSvc.tabs)
+   err := storeFile(fileTab(iSvc), aSvc.tabs)
    if err != nil { quit(err) }
 }
 
@@ -573,7 +573,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       iState.goThread(iUpdt.Navigate.History)
       aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}
    case "navigate_link":
-      _, err = os.Lstat(threadDir(iSvc) + iUpdt.Navigate.ThreadId)
+      _, err = os.Lstat(dirThread(iSvc) + iUpdt.Navigate.ThreadId)
       if err != nil { return fErr }
       aDiff := iUpdt.Navigate.ThreadId != iState.getThread()
       iState.goLink(iUpdt.Navigate.ThreadId, iUpdt.Navigate.MsgId)
