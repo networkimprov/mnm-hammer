@@ -9,7 +9,6 @@
 package slib
 
 import (
-   "bytes"
    "hash/crc32"
    "fmt"
    "io"
@@ -581,7 +580,7 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
    aOrig := dirThread(iSvc) + aId.tid()
    aTempOk := ftmpSd(iSvc, aId.tid(), aId.lms())
    aTemp := aTempOk + ".tmp"
-   aData := bytes.NewBufferString(iUpdt.Thread.Data)
+   aData := strings.NewReader(iUpdt.Thread.Data)
    var err error
 
    aTid := aId.tid(); if aTid == "" { aTid = "_" + aId.lms() }
