@@ -234,7 +234,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    aThreadId := iHead.SubHead.ThreadId; if aThreadId == "" { aThreadId = iHead.Id }
    aMsgId := iHead.Id; if iHead.Notify > 0 { aMsgId = aThreadId }
    aOrig := dirThread(iSvc) + aThreadId
-   aTempOk := tempDir(iSvc) + aThreadId + "_" + aMsgId + "_sr__"
+   aTempOk := ftmpSr(iSvc, aThreadId, aMsgId)
    aTemp := aTempOk + ".tmp"
 
    if iHead.Notify > 0 && iHead.SubHead.ConfirmId != "" {
@@ -275,7 +275,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
       _, err = io.CopyN(aTd, iR, iHead.DataLen)
    } else {
       if aCid != "" {
-         aTempOk = tempDir(iSvc) + aThreadId + "_" + aCid + "_sc__"
+         aTempOk = ftmpSc(iSvc, aThreadId, aCid)
          aHead := *iHead; iHead = &aHead
          iHead.Id = aCid
          iHead.Posted = iHead.SubHead.ConfirmPosted
@@ -364,7 +364,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    _writeIndex(aTd, aIdx, aCc)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    if aCid != "" {
       _completeStoreConfirm(iSvc, path.Base(aTempOk), _makeDraftHead(iHead, nil), aIdx, aFd, aTd)
@@ -378,7 +378,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
 
 func _completeStoreConfirm(iSvc string, iTmp string, iHead *tDraftHead, iIdx []tIndexEl, iFd, iTd *os.File) {
    aRec := _parseTempOk(iTmp)
-   aTempOk := tempDir(iSvc) + iTmp
+   aTempOk := dirTemp(iSvc) + iTmp
    var err error
 
    storeReceivedAttach(iSvc, &iHead.SubHead, aRec)
@@ -409,7 +409,7 @@ func _completeStoreConfirm(iSvc string, iTmp string, iHead *tDraftHead, iIdx []t
 func _completeStoreReceived(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *os.File) {
    var err error
    aRec := _parseTempOk(iTmp)
-   aTempOk := tempDir(iSvc) + iTmp
+   aTempOk := dirTemp(iSvc) + iTmp
 
    resolveSentAdrsbk    (iSvc, iHead.Posted, iHead.cc, aRec.tid())
    resolveReceivedAdrsbk(iSvc, iHead.Posted, iHead.cc, aRec.tid())
@@ -432,7 +432,7 @@ func _completeStoreReceived(iSvc string, iTmp string, iHead *tDraftHead, iFd, iT
 
 func seenReceivedThread(iSvc string, iUpdt *Update) {
    aOrig := dirThread(iSvc) + iUpdt.Thread.ThreadId
-   aTempOk := tempDir(iSvc) + iUpdt.Thread.ThreadId + "__nr__"
+   aTempOk := ftmpNr(iSvc, iUpdt.Thread.ThreadId)
    aTemp := aTempOk + ".tmp"
    var err error
 
@@ -464,14 +464,14 @@ func seenReceivedThread(iSvc string, iUpdt *Update) {
    _writeIndex(aTd, aIdx, aCc)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    _completeSeenReceived(iSvc, path.Base(aTempOk), aFd, aTd)
 }
 
 func _completeSeenReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
    var err error
-   aTempOk := tempDir(iSvc) + iTmp
+   aTempOk := dirTemp(iSvc) + iTmp
 
    _, err = io.Copy(iFd, iTd) // iFd has correct pos from _readIndex
    if err != nil { quit(err) }
@@ -487,7 +487,7 @@ func storeSentThread(iSvc string, iHead *Header) {
    aTid := aId.tid(); if aTid == "" { aTid = iHead.MsgId }
    aDraft := dirThread(iSvc) + iHead.Id
    aOrig := dirThread(iSvc) + aTid
-   aTempOk := tempDir(iSvc) + aTid + "_" + iHead.MsgId + "_ss_" + aId.lms() + "_"
+   aTempOk := ftmpSs(iSvc, aTid, iHead.MsgId, aId.lms())
    aTemp := aTempOk + ".tmp"
 
    aSd, err := os.Open(aDraft)
@@ -543,7 +543,7 @@ func storeSentThread(iSvc string, iHead *Header) {
    tempSentAttach(iSvc, &aHead, aSd)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    _completeStoreSent(iSvc, path.Base(aTempOk), _makeDraftHead(&aHead, aHeadCc), aFd, aTd)
 }
@@ -579,7 +579,7 @@ func validateDraftThread(iSvc string, iUpdt *Update) error {
 func storeDraftThread(iSvc string, iUpdt *Update) {
    aId := parseLocalId(iUpdt.Thread.Id)
    aOrig := dirThread(iSvc) + aId.tid()
-   aTempOk := tempDir(iSvc) + aId.tid() + "__ws_" + aId.lms() + "_"
+   aTempOk := ftmpSd(iSvc, aId.tid(), aId.lms())
    aTemp := aTempOk + ".tmp"
    aData := bytes.NewBufferString(iUpdt.Thread.Data)
    var err error
@@ -628,7 +628,7 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
    _writeIndex(aTd, aIdx, aCc)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    _completeStoreDraft(iSvc, path.Base(aTempOk), _makeDraftHead(&aHead, nil), aFd, aTd)
 }
@@ -637,7 +637,7 @@ func _completeStoreDraft(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *
    var err error
    aRec := _parseTempOk(iTmp)
    aDraft := dirThread(iSvc) + aRec.tid() + "_" + aRec.lms()
-   aTempOk := tempDir(iSvc) + iTmp
+   aTempOk := dirTemp(iSvc) + iTmp
 
    var aSubHeadOld *tHeader2
    aSd, err := os.Open(aDraft)
@@ -674,7 +674,7 @@ func _completeStoreDraft(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *
 func deleteDraftThread(iSvc string, iUpdt *Update) {
    aId := parseLocalId(iUpdt.Thread.Id)
    aOrig := dirThread(iSvc) + aId.tid()
-   aTempOk := tempDir(iSvc) + aId.tid() + "__ds_" + aId.lms() + "_"
+   aTempOk := ftmpDd(iSvc, aId.tid(), aId.lms())
    aTemp := aTempOk + ".tmp"
    var err error
 
@@ -709,7 +709,7 @@ func deleteDraftThread(iSvc string, iUpdt *Update) {
    _writeIndex(aTd, aIdx, aCc)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    _completeDeleteDraft(iSvc, path.Base(aTempOk), aFd, aTd)
 }
@@ -845,7 +845,7 @@ func sendFwdDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
 
 func storeFwdNotifyThread(iSvc string, iHead *Header, iR io.Reader) error {
    aOrig := dirThread(iSvc) + iHead.SubHead.ThreadId
-   aTempOk := tempDir(iSvc) + iHead.SubHead.ThreadId + "__fn__"
+   aTempOk := ftmpFn(iSvc, iHead.SubHead.ThreadId)
    aTemp := aTempOk + ".tmp"
    var err error
 
@@ -887,7 +887,7 @@ func storeFwdNotifyThread(iSvc string, iHead *Header, iR io.Reader) error {
    aTempOk += fmt.Sprint(aPos)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    _completeStoreFwdNotify(iSvc, path.Base(aTempOk), iHead.SubHead.Cc, aFd, aTd)
    return nil
@@ -905,9 +905,9 @@ func _completeStoreFwdNotify(iSvc string, iTmp string, iCc []tCcEl, iFd, iTd *os
 func storeFwdSentThread(iSvc string, iHead *Header) {
    aId := parseLocalId(iHead.Id)
    aOrig := dirThread(iSvc) + aId.tid()
-   aTempOk := tempDir(iSvc) + aId.tid() + "__fs_" + aId.lms() + "_"
+   aTempOk := ftmpFs(iSvc, aId.tid(), aId.lms())
    aTemp := aTempOk + ".tmp"
-   aFwdTemp := tempDir(iSvc) + aId.tid() + "_forward.tmp"
+   aFwdTemp := ftmpFwdS(iSvc, aId.tid())
    var err error
 
    aDoor := _getThreadDoor(iSvc, aId.tid() + "_forward")
@@ -920,7 +920,7 @@ func storeFwdSentThread(iSvc string, iHead *Header) {
    }
    err = writeJsonFile(aFwdTemp, aFwd[1:])
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
 
    aDoor = _getThreadDoor(iSvc, aId.tid())
@@ -946,7 +946,7 @@ func storeFwdSentThread(iSvc string, iHead *Header) {
    aTempOk += fmt.Sprint(aPos)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    aFs := tFwdSent{cc: aFwd[0].Cc, fwdN: len(aFwd)-1}
    _completeStoreFwdSent(iSvc, path.Base(aTempOk), &aFs, aFd, aTd)
@@ -955,7 +955,7 @@ func storeFwdSentThread(iSvc string, iHead *Header) {
 func _completeStoreFwdSent(iSvc string, iTmp string, iFs *tFwdSent, iFd, iTd *os.File) {
    aRec := _parseTempOk(iTmp)
    aFwdOrig := fileFwd(iSvc, aRec.tid())
-   aFwdTemp := tempDir(iSvc) + aRec.tid() + "_forward.tmp"
+   aFwdTemp := ftmpFwdS(iSvc, aRec.tid())
    var err error
 
    resolveReceivedAdrsbk(iSvc, iFs.cc[0].Date, iFs.cc, aRec.tid())
@@ -995,7 +995,7 @@ func _finishStoreFwd(iSvc string, iTmp string, iCc []tCcEl, iFd, iTd *os.File) {
    }
    aPost := addListQueue(iSvc, eSrecCfm, aIds, "nopost")
 
-   err = os.Remove(tempDir(iSvc) + iTmp)
+   err = os.Remove(dirTemp(iSvc) + iTmp)
    if err != nil { quit(err) }
 
    if aPost != nil {
@@ -1008,7 +1008,7 @@ func _finishStoreFwd(iSvc string, iTmp string, iCc []tCcEl, iFd, iTd *os.File) {
 
 func storeFwdDraftThread(iSvc string, iUpdt *Update) {
    aFwdOrig := fileFwd(iSvc, iUpdt.Forward.ThreadId)
-   aFwdTemp := tempDir(iSvc) + "forward_" + iUpdt.Forward.ThreadId
+   aFwdTemp := ftmpFwdD(iSvc, iUpdt.Forward.ThreadId)
 
    if iUpdt.Forward.ThreadId[0] == '_' { quit(tError("cannot forward draft")) }
 
@@ -1050,7 +1050,7 @@ func storeFwdDraftThread(iSvc string, iUpdt *Update) {
    aFwd[len(aFwd)-1].Cc = _updateCc(iSvc, aCcNew, true)
    err = writeJsonFile(aFwdTemp, aFwd)
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    err = os.Remove(aFwdOrig)
    if err != nil { quit(err) }
@@ -1066,7 +1066,7 @@ type tFwdSent struct {
 func _getFwd(iSvc string, iTid string, iOpt string) []tFwdEl {
    aPath := fileFwd(iSvc, iTid)
    if iOpt == "temp" {
-      aPath = tempDir(iSvc) + iTid + "_forward.tmp"
+      aPath = ftmpFwdS(iSvc, iTid)
       iOpt = ""
    }
    var aFwd []tFwdEl
@@ -1280,7 +1280,7 @@ func completeThread(iSvc string, iTempOk string) {
    var err error
    aRec := _parseTempOk(iTempOk)
    if len(aRec) != 5 {
-      fmt.Fprintf(os.Stderr, "completeThread: unexpected file %s%s\n", tempDir(iSvc), iTempOk)
+      fmt.Fprintf(os.Stderr, "completeThread: unexpected file %s%s\n", dirTemp(iSvc), iTempOk)
       return
    }
    fmt.Printf("complete %s\n", iTempOk)
@@ -1292,7 +1292,7 @@ func completeThread(iSvc string, iTempOk string) {
       _, err = aFd.Seek(aRec.pos(), io.SeekStart)
       if err != nil { quit(err) }
    }
-   aTd, err = os.Open(tempDir(iSvc)+iTempOk)
+   aTd, err = os.Open(dirTemp(iSvc)+iTempOk)
    if err != nil { quit(err) }
    defer aTd.Close()
    fDraftHead := func(cFlag int8) *tDraftHead {
@@ -1343,6 +1343,6 @@ func completeThread(iSvc string, iTempOk string) {
    case "fs":
       _completeStoreFwdSent(iSvc, iTempOk, fFwdSent(), aFd, aTd)
    default:
-      fmt.Fprintf(os.Stderr, "completeThread: unexpected op %s%s\n", tempDir(iSvc), iTempOk)
+      fmt.Fprintf(os.Stderr, "completeThread: unexpected op %s%s\n", dirTemp(iSvc), iTempOk)
    }
 }

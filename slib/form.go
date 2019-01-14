@@ -355,7 +355,7 @@ func _validateType(iResult *[]byte, iParent string, iField interface{}, iEl *tSp
 func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHeader2Attach,
                     iR io.Reader) error {
    var err error
-   aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name + ".tmp"
+   aFn := ftmpAttach(iSvc, iMsgId, iFile.Name)
    aFd, err := os.OpenFile(aFn, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aFd.Close()
@@ -405,7 +405,7 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
    var err error
    aDoor := _getFormDoor(iSvc, iFile.Ffn + iSuffix)
    aDoor.Lock(); defer aDoor.Unlock()
-   aFn := tempDir(iSvc) + iMsgId + "_" + iFile.Name + ".tmp"
+   aFn := ftmpAttach(iSvc, iMsgId, iFile.Name)
    aTd, err := os.Open(aFn)
    if err != nil { quit(err) }
    defer aTd.Close()

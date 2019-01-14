@@ -68,7 +68,7 @@ func initServices(iFn func(string)) {
       }
       sServices[aSvc] = aService
       var aTmps []string
-      aTmps, err = readDirNames(tempDir(aSvc))
+      aTmps, err = readDirNames(dirTemp(aSvc))
       if err != nil { quit(err) }
       for _, aTmp := range aTmps {
          // some adrsbk ops stem from thread ops; complete them first
@@ -80,12 +80,12 @@ func initServices(iFn func(string)) {
          if strings.HasPrefix(aTmp, "adrsbk_") {
             // handled above
          } else if strings.HasPrefix(aTmp, "forward_") {
-            renameRemove(tempDir(aSvc) + aTmp, fileFwd(aSvc, aTmp[8:]))
+            renameRemove(dirTemp(aSvc) + aTmp, fileFwd(aSvc, aTmp[8:]))
          } else if strings.HasPrefix(aTmp, "ffnindex_") {
-            renameRemove(tempDir(aSvc) + aTmp, fileFfn(aSvc, aTmp[9:]))
+            renameRemove(dirTemp(aSvc) + aTmp, fileFfn(aSvc, aTmp[9:]))
          } else if strings.HasSuffix(aTmp, ".tmp") {
             // could be a valid attachment or forward from thread transaction
-            defer os.Remove(tempDir(aSvc) + aTmp)
+            defer os.Remove(dirTemp(aSvc) + aTmp)
          } else {
             completeThread(aSvc, aTmp)
          }
@@ -186,7 +186,7 @@ func _newService(iCfg *tSvcConfig) *tService {
 
 func _makeTree(iSvc string) {
    var err error
-   for _, aDir := range [...]string{tempDir(iSvc), dirThread(iSvc), dirAttach(iSvc), dirForm(iSvc)} {
+   for _, aDir := range [...]string{dirTemp(iSvc), dirThread(iSvc), dirAttach(iSvc), dirForm(iSvc)} {
       err = os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }

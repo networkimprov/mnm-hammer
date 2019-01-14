@@ -404,7 +404,7 @@ func _storeAdrsbk(iSvc string, iEls []tAdrsbkEl) {
    aFi, err := os.Lstat(fileAdrs(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos := int64(2); if err == nil { aPos = aFi.Size() }
-   aTempOk := tempDir(iSvc) + "adrsbk_" + fmt.Sprint(aPos)
+   aTempOk := ftmpAdrsbk(iSvc, fmt.Sprint(aPos))
    aTemp := aTempOk + ".tmp"
 
    for a, _ := range iEls {
@@ -414,7 +414,7 @@ func _storeAdrsbk(iSvc string, iEls []tAdrsbkEl) {
    if err != nil { quit(err) }
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    _completeAdrsbk(iSvc, path.Base(aTempOk), iEls)
 }
@@ -454,18 +454,18 @@ func _completeAdrsbk(iSvc string, iTmp string, iEls []tAdrsbkEl) {
       err = syncDir(dirSvc(iSvc))
       if err != nil { quit(err) }
    }
-   err = os.Remove(tempDir(iSvc) + iTmp)
+   err = os.Remove(dirTemp(iSvc) + iTmp)
    if err != nil { quit(err) }
 }
 
 func completeAdrsbk(iSvc string, iTmp string) {
    if strings.HasSuffix(iTmp, ".tmp") {
-      os.Remove(tempDir(iSvc) + iTmp)
+      os.Remove(dirTemp(iSvc) + iTmp)
       return
    }
    fmt.Println("complete " + iTmp)
    var aEls []tAdrsbkEl
-   err := readJsonFile(&aEls, tempDir(iSvc) + iTmp)
+   err := readJsonFile(&aEls, dirTemp(iSvc) + iTmp)
    if err != nil { quit(err) }
    _completeAdrsbk(iSvc, iTmp, aEls)
 }

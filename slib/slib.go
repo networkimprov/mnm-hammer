@@ -29,7 +29,7 @@ const kFormDir    = kStorageDir + "form/"
 const kFormRegDir = kStorageDir + "reg-cache/"
 
 func dirSvc   (iSvc string) string { return kServiceDir + iSvc + "/" }
-func tempDir  (iSvc string) string { return kServiceDir + iSvc + "/temp/"   }
+func dirTemp  (iSvc string) string { return kServiceDir + iSvc + "/temp/" }
 func dirThread(iSvc string) string { return kServiceDir + iSvc + "/thread/" }
 func dirAttach(iSvc string) string { return kServiceDir + iSvc + "/attach/" }
 func dirForm  (iSvc string) string { return kServiceDir + iSvc + "/form/" }
@@ -46,6 +46,25 @@ func fileFwd  (iSvc, iTid string) string { return dirThread(iSvc) + iTid + "_for
 
 func subAttach(iSvc, iSub string) string { return dirAttach(iSvc) + iSub + "/" }
 func fileFfn  (iSvc, iSub string) string { return subAttach(iSvc, iSub) + "ffnindex" }
+
+// these have either ".tmp" or a decimal string appended
+func ftmpSr(iSvc, iTid, iMid string) string { return dirTemp(iSvc) + iTid +"_"+ iMid +"_sr__" }
+func ftmpSc(iSvc, iTid, iMid string) string { return dirTemp(iSvc) + iTid +"_"+ iMid +"_sc__" }
+func ftmpNr(iSvc, iTid       string) string { return dirTemp(iSvc) + iTid +"__nr__" }
+func ftmpSs(iSvc, iTid, iMid,
+                        iLms string) string { return dirTemp(iSvc) + iTid +"_"+ iMid +"_ss_"+ iLms +"_" }
+func ftmpSd(iSvc, iTid, iLms string) string { return dirTemp(iSvc) + iTid +"__ws_"+ iLms +"_" }
+func ftmpDd(iSvc, iTid, iLms string) string { return dirTemp(iSvc) + iTid +"__ds_"+ iLms +"_" }
+func ftmpFn(iSvc, iTid       string) string { return dirTemp(iSvc) + iTid +"__fn__" }
+func ftmpFs(iSvc, iTid, iLms string) string { return dirTemp(iSvc) + iTid +"__fs_"+ iLms +"_" }
+
+func ftmpFwdS(iSvc, iTid string) string { return dirTemp(iSvc) + iTid +"_fwd.tmp" }
+func ftmpFwdD(iSvc, iTid string) string { return dirTemp(iSvc) +"forward_"+ iTid }
+
+func ftmpAttach(iSvc, iMid, iFile string) string { return dirTemp(iSvc) + iMid +"_"+ iFile +".tmp" } //todo deconflict
+
+func ftmpFfn   (iSvc, iTid string) string { return dirTemp(iSvc) +"ffnindex_"+ iTid }
+func ftmpAdrsbk(iSvc, iPos string) string { return dirTemp(iSvc) +"adrsbk_"+   iPos }
 
 var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 

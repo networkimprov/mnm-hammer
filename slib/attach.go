@@ -119,7 +119,7 @@ func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
    aPath := make([]string, len(iHead.SubHead.Attach))
    for a, aFile := range iHead.SubHead.Attach {
       aDoSync = true
-      aPath[a] = tempDir(iSvc) + iHead.Id + "_" + aFile.Name + ".tmp" //todo escape '/' in .Name
+      aPath[a] = ftmpAttach(iSvc, iHead.Id, aFile.Name) //todo escape '/' in .Name
       if _isFormFill(aFile.Name) {
          aTid := iHead.SubHead.ThreadId; if aTid == "" { aTid = iHead.Id }
          err = tempFilledForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iR)
@@ -150,7 +150,7 @@ func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
       return err
    }
    if aDoSync {
-      err = syncDir(tempDir(iSvc))
+      err = syncDir(dirTemp(iSvc))
       if err != nil { quit(err) }
    }
    return nil
@@ -173,7 +173,7 @@ func storeReceivedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
       if _isFormFill(aFile.Name) { continue }
       aDoSync = true
       aDoFfn = aDoFfn || _isForm(aFile.Name)
-      err = renameRemove(tempDir(iSvc) + iRec.mid() + "_" + aFile.Name + ".tmp",
+      err = renameRemove(ftmpAttach(iSvc, iRec.mid(), aFile.Name),
                          subAttach(iSvc, iRec.tid()) + iRec.mid() + "_" + aFile.Name)
       if err != nil { quit(err) }
    }
@@ -197,7 +197,7 @@ func tempSentAttach(iSvc string, iHead *Header, iSd *os.File) {
       if err != nil { quit(err) }
    }
    if aDoSync {
-      err = syncDir(tempDir(iSvc))
+      err = syncDir(dirTemp(iSvc))
       if err != nil { quit(err) }
    }
 }
@@ -252,11 +252,11 @@ func _updateFfnIndex(iSvc string, iRec tComplete, iIdx tFfnIndex, iSubHead *tHea
       iIdx[iRec.mid() + "_" + aFile.Name] = aFile.Ffn
    }
    var err error
-   aTemp := tempDir(iSvc) + "ffnindex_" + iRec.tid()
+   aTemp := ftmpFfn(iSvc, iRec.tid())
    aPath := fileFfn(iSvc, iRec.tid())
    err = writeJsonFile(aTemp, iIdx)
    if err != nil { quit(err) }
-   err = syncDir(tempDir(iSvc))
+   err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    err = os.Remove(aPath)
    if err != nil { quit(err) }
