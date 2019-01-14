@@ -252,11 +252,9 @@ func writeHeaders(iW io.Writer, iHead, iSub []byte) error {
    _, err = iW.Write(aLen)
    if err != nil { return err }
    _, err = iW.Write(iHead)
-   if iSub != nil {
-      if err != nil { return err }
+   if err == nil && iSub != nil {
       _, err = iW.Write(iSub)
    }
-   //fmt.Printf("writeHeaders: %s%s%s\n", aLen, iHead, iSub)
    return err
 }
 
