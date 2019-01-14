@@ -61,7 +61,7 @@ func ftmpFs(iSvc, iTid, iLms string) string { return dirTemp(iSvc) + iTid +"__fs
 func ftmpFwdS(iSvc, iTid string) string { return dirTemp(iSvc) + iTid +"_fwd.tmp" }
 func ftmpFwdD(iSvc, iTid string) string { return dirTemp(iSvc) +"forward_"+ iTid }
 
-func ftmpAttach(iSvc, iMid, iFile string) string { return dirTemp(iSvc) + iMid +"_"+ iFile +".tmp" } //todo deconflict
+func ftmpAttach(iSvc, iMid, iFile string) string { return dirTemp(iSvc) + iMid +"_"+ iFile +"_atc.tmp" }
 
 func ftmpFfn   (iSvc, iTid string) string { return dirTemp(iSvc) +"ffnindex_"+ iTid }
 func ftmpAdrsbk(iSvc, iPos string) string { return dirTemp(iSvc) +"adrsbk_"+   iPos }
