@@ -202,11 +202,11 @@ func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    aBuf0, err := json.Marshal(aHead)
    if err != nil { quit(err) }
 
-   err = sendHeaders(iW, aBuf0, aBuf1)
+   err = writeHeaders(iW, aBuf0, aBuf1)
    if err != nil { return err }
    _, err = io.CopyN(iW, aFd, aDh.Len) //todo only return network errors
    if err != nil { return err }
-   err = sendDraftAttach(iW, iSvc, &aDh.SubHead, aId, aFd)
+   err = writeDraftAttach(iW, iSvc, &aDh.SubHead, aId, aFd)
    return err
 }
 
@@ -758,7 +758,7 @@ func sendFwdConfirmThread(iW io.Writer, iSvc string, iDraftId, iId string) error
    aBufHead, err := json.Marshal(aHead)
    if err != nil { quit(err) }
 
-   err = sendHeaders(iW, aBufHead, aBufSub)
+   err = writeHeaders(iW, aBufHead, aBufSub)
    if err != nil { return err }
    _, err = io.CopyN(iW, aFd, aDh.Len)
    if err != nil { return err }
@@ -831,7 +831,7 @@ func sendFwdDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    aBufHead, err := json.Marshal(aHead)
    if err != nil { quit(err) }
 
-   err = sendHeaders(iW, aBufHead, append(aBufNote, aBufSubh...))
+   err = writeHeaders(iW, aBufHead, append(aBufNote, aBufSubh...))
    if err != nil { return err }
    _, err = io.CopyN(iW, aFd, aLenMsg)
    if err != nil { return err }

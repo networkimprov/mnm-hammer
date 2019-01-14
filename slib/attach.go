@@ -87,7 +87,7 @@ func sizeDraftAttach(iSvc string, iSubHead *tHeader2, iId tLocalId) int64 {
    return aTotal
 }
 
-func sendDraftAttach(iW io.Writer, iSvc string, iSubHead *tHeader2, iId tLocalId, iFd *os.File) error {
+func writeDraftAttach(iW io.Writer, iSvc string, iSubHead *tHeader2, iId tLocalId, iFd *os.File) error {
    var err error
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.lms() }
    aPrefix := subAttach(iSvc, aTid) + iId.lms() + "_"

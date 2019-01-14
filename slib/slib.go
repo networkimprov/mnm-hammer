@@ -245,7 +245,7 @@ func Init(iFn func(string)) {
 
 // utilities follow
 
-func sendHeaders(iW io.Writer, iHead, iSub []byte) error {
+func writeHeaders(iW io.Writer, iHead, iSub []byte) error {
    var err error
    aLen := []byte(fmt.Sprintf("%04x", len(iHead)))
    if len(aLen) > 4 { quit(tError("header too long")) }
@@ -256,7 +256,7 @@ func sendHeaders(iW io.Writer, iHead, iSub []byte) error {
       if err != nil { return err }
       _, err = iW.Write(iSub)
    }
-   //fmt.Printf("sendHeaders: %s%s%s\n", aLen, iHead, iSub)
+   //fmt.Printf("writeHeaders: %s%s%s\n", aLen, iHead, iSub)
    return err
 }
 

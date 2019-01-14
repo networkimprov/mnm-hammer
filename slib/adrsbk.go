@@ -508,7 +508,7 @@ func sendJoinGroupAdrsbk(iW io.Writer, iSvc string, iQid, iId string) error {
    var err error
    aHead, err := json.Marshal(Msg{"Op":6, "Id":iId, "Act":"join", "Gid":aId.gid()})
    if err != nil { quit(err) }
-   err = sendHeaders(iW, aHead, nil)
+   err = writeHeaders(iW, aHead, nil)
    return err
 }
 
@@ -537,7 +537,7 @@ func sendDraftAdrsbk(iW io.Writer, iSvc string, iQid, iId string) error {
    }
    aHead, err := json.Marshal(aMsg)
    if err != nil { quit(err) }
-   err = sendHeaders(iW, aHead, aSubh)
+   err = writeHeaders(iW, aHead, aSubh)
    if err != nil { return err }
    _, err = iW.Write(aData)
    return err

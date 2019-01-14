@@ -97,7 +97,7 @@ func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
    }
    aHead, err := json.Marshal(Msg{"Op":4, "Id":iId, "For":aFor, "Type":"add"})
    if err != nil { quit(err) }
-   err = sendHeaders(iW, aHead, nil)
+   err = writeHeaders(iW, aHead, nil)
    return err
 }
 
@@ -130,7 +130,7 @@ func sendEditOhi(iW io.Writer, iSvc string, iQid, iId string) error {
    aType := "add"; if aId.ohi()[0] == '-' { aType = "drop" }
    aHead, err := json.Marshal(Msg{"Op":4, "Id":iId, "For":aFor, "Type":aType})
    if err != nil { quit(err) }
-   err = sendHeaders(iW, aHead, nil)
+   err = writeHeaders(iW, aHead, nil)
    return err
 }
 
