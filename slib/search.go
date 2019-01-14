@@ -54,7 +54,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       if iState.SvcTabs.Pos == 3 {
          aList[aI].Id = strings.Replace(aDir[a].Name(), "@", "/", -1)
          aI++
-      } else if aDir[a].Name() != "_22" && !strings.ContainsRune(aDir[a].Name()[1:], '_') {
+      } else if !strings.ContainsRune(aDir[a].Name()[1:], '_') {
          aList[aI].Id = aDir[a].Name()
          aI++
       }

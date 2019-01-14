@@ -340,7 +340,6 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       }
       aResult = []string{"pt", "pf", "cl"}
    case "ack":
-      if iHead.Id == "t_22" { break } //todo temp
       aQid := iHead.Id
       iHead.Id = iHead.Id[1:]
       aId := parseLocalId(iHead.Id)
