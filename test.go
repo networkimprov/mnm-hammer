@@ -112,24 +112,24 @@ func test() {
          err = pSl.Service.Add(aTc.SvcId, "", &aBuf)
          if err != nil { goto ReturnErr }
       }
-      for aN := range aTc.Files {
-         _, err = aBuf.WriteString(aTc.Files[aN].Data)
+      for a1 := range aTc.Files {
+         _, err = aBuf.WriteString(aTc.Files[a1].Data)
          if err != nil { quit(err) }
-         err = pSl.Upload.Add(aTc.Files[aN].Name, "", &aBuf)
+         err = pSl.Upload.Add(aTc.Files[a1].Name, "", &aBuf)
          if err != nil { goto ReturnErr }
-         err = pSl.Upload.Add(aTc.Files[aN].Name, "Dup", nil)
+         err = pSl.Upload.Add(aTc.Files[a1].Name, "Dup", nil)
          if err != nil { goto ReturnErr }
-         err = pSl.Upload.Drop(aTc.Files[aN].Name+".Dup")
+         err = pSl.Upload.Drop(aTc.Files[a1].Name+".Dup")
          if err != nil { goto ReturnErr }
       }
-      for aN := range aTc.Forms { // expects .spec file first
-         err = aEnc.Encode(aTc.Forms[aN])
+      for a1 := range aTc.Forms { // expects .spec file first
+         err = aEnc.Encode(aTc.Forms[a1])
          if err != nil { quit(err) }
-         err = pSl.BlankForm.Add(aTc.Forms[aN].Name, "", &aBuf)
+         err = pSl.BlankForm.Add(aTc.Forms[a1].Name, "", &aBuf)
          if err != nil { goto ReturnErr }
-         aPair := strings.SplitN(aTc.Forms[aN].Name, ".", 2)
+         aPair := strings.SplitN(aTc.Forms[a1].Name, ".", 2)
          if len(aPair) == 1 || aPair[1] != "spec" {
-            err = pSl.BlankForm.Add(aTc.Forms[aN].Name, "Dup", nil)
+            err = pSl.BlankForm.Add(aTc.Forms[a1].Name, "Dup", nil)
             if err != nil { goto ReturnErr }
             err = pSl.BlankForm.Drop(aPair[0]+".Dup")
             if err != nil { goto ReturnErr }
@@ -192,24 +192,24 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          iTc.Orders[a].Result = make(map[string]interface{})
       }
       for aK, aV := range iTc.Orders[a].Result {
-         aN := 0
-         for ; aN < len(aOps) && aOps[aN] != aK; aN++ {}
-         if aN == len(aOps) {
+         a1 := 0
+         for ; a1 < len(aOps) && aOps[a1] != aK; a1++ {}
+         if a1 == len(aOps) {
             fmt.Fprintf(os.Stderr, "%s missing result\n  expect %s %v\n", aPrefix, aK, aV)
          }
       }
       aSum := (*int32)(nil); if aUpdt.Test != nil && aUpdt.Test.Poll > 0 { aSum = new(int32) }
       for {
-         for aN := 0; aN < len(aOps); aN++ {
-            aOp, aId := aOps[aN], ""
+         for a1 := 0; a1 < len(aOps); a1++ {
+            aOp, aId := aOps[a1], ""
             if aOp == "_n" {
-               _verifyNameList(aOps[1+aN:], iTc.Orders[a].Result[aOp], aPrefix +" "+ aOp)
+               _verifyNameList(aOps[1+a1:], iTc.Orders[a].Result[aOp], aPrefix +" "+ aOp)
                break
             }
             if aOp == "_t" { continue }
             if aOp == "mn" || aOp == "an" || aOp == "fn" {
-               aN++
-               aId = aOps[aN]
+               a1++
+               aId = aOps[a1]
             }
             aCtx.wg.Add(1)
             go _runTestService(&aCtx, aOp, aId, iTc.Orders[a].Result[aOp], aPrefix, aSum)
@@ -346,7 +346,7 @@ func _applyLastId(iField, iMsg *string, iLastId tTestLastId, iType string) {
 
 func _verifyNameList(iList []string, iExpect interface{}, iPrefix string) {
    aGot := make([]interface{}, len(iList))
-   for aI := range iList { aGot[aI] = iList[aI] }
+   for a := range iList { aGot[a] = iList[a] }
    if iExpect == nil {
       fmt.Fprintf(os.Stderr, "%s unexpected\n  got    _n %v\n",
                              iPrefix, aGot)
