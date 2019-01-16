@@ -365,16 +365,16 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    if aCid != "" {
-      _completeStoreConfirm(iSvc, path.Base(aTempOk), _makeDraftHead(iHead, nil), aIdx, aFd, aTd)
+      _completeStoreConfirm(iSvc, path.Base(aTempOk), aFd, aTd, _makeDraftHead(iHead, nil), aIdx)
    } else {
-      _completeStoreReceived(iSvc, path.Base(aTempOk), _makeDraftHead(iHead, aNewCc), aFd, aTd)
+      _completeStoreReceived(iSvc, path.Base(aTempOk), aFd, aTd, _makeDraftHead(iHead, aNewCc))
    }
 
    aKind := "msg"; if aThreadId == aMsgId { aKind = "thread" }
    return aKind, nil
 }
 
-func _completeStoreConfirm(iSvc string, iTmp string, iHead *tDraftHead, iIdx []tIndexEl, iFd, iTd *os.File) {
+func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tDraftHead, iIdx []tIndexEl) {
    aRec := _parseTempOk(iTmp)
    aTempOk := dirTemp(iSvc) + iTmp
    var err error
@@ -404,7 +404,7 @@ func _completeStoreConfirm(iSvc string, iTmp string, iHead *tDraftHead, iIdx []t
    if err != nil { quit(err) }
 }
 
-func _completeStoreReceived(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *os.File) {
+func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tDraftHead) {
    var err error
    aRec := _parseTempOk(iTmp)
    aTempOk := dirTemp(iSvc) + iTmp
@@ -543,10 +543,10 @@ func storeSentThread(iSvc string, iHead *Header) {
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreSent(iSvc, path.Base(aTempOk), _makeDraftHead(&aHead, aHeadCc), aFd, aTd)
+   _completeStoreSent(iSvc, path.Base(aTempOk), aFd, aTd, _makeDraftHead(&aHead, aHeadCc))
 }
 
-func _completeStoreSent(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *os.File) {
+func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tDraftHead) {
    aRec := _parseTempOk(iTmp)
 
    resolveReceivedAdrsbk(iSvc, iHead.Posted, iHead.cc, aRec.tid())
@@ -556,7 +556,7 @@ func _completeStoreSent(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *o
    err := os.Remove(dirThread(iSvc) + aTid + "_" + aRec.lms())
    if err != nil && !os.IsNotExist(err) { quit(err) }
 
-   _completeStoreReceived(iSvc, iTmp, &tDraftHead{}, iFd, iTd)
+   _completeStoreReceived(iSvc, iTmp, iFd, iTd, &tDraftHead{})
 }
 
 func validateDraftThread(iSvc string, iUpdt *Update) error {
@@ -628,10 +628,10 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreDraft(iSvc, path.Base(aTempOk), _makeDraftHead(&aHead, nil), aFd, aTd)
+   _completeStoreDraft(iSvc, path.Base(aTempOk), aFd, aTd, _makeDraftHead(&aHead, nil))
 }
 
-func _completeStoreDraft(iSvc string, iTmp string, iHead *tDraftHead, iFd, iTd *os.File) {
+func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tDraftHead) {
    var err error
    aRec := _parseTempOk(iTmp)
    aDraft := dirThread(iSvc) + aRec.tid() + "_" + aRec.lms()
@@ -713,7 +713,7 @@ func deleteDraftThread(iSvc string, iUpdt *Update) {
 }
 
 func _completeDeleteDraft(iSvc string, iTmp string, iFd, iTd *os.File) {
-   _completeStoreDraft(iSvc, iTmp, &tDraftHead{}, iFd, iTd)
+   _completeStoreDraft(iSvc, iTmp, iFd, iTd, &tDraftHead{})
 }
 
 func sendFwdConfirmThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
@@ -887,17 +887,17 @@ func storeFwdNotifyThread(iSvc string, iHead *Header, iR io.Reader) error {
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreFwdNotify(iSvc, path.Base(aTempOk), iHead.SubHead.Cc, aFd, aTd)
+   _completeStoreFwdNotify(iSvc, path.Base(aTempOk), aFd, aTd, iHead.SubHead.Cc)
    return nil
 }
 
-func _completeStoreFwdNotify(iSvc string, iTmp string, iCc []tCcEl, iFd, iTd *os.File) {
+func _completeStoreFwdNotify(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl) {
    aRec := _parseTempOk(iTmp)
 
    resolveSentAdrsbk    (iSvc, iCc[0].Date, iCc, aRec.tid())
    resolveReceivedAdrsbk(iSvc, iCc[0].Date, iCc, aRec.tid())
 
-   _finishStoreFwd(iSvc, iTmp, iCc, iFd, iTd)
+   _finishStoreFwd(iSvc, iTmp, iFd, iTd, iCc)
 }
 
 func storeFwdSentThread(iSvc string, iHead *Header) {
@@ -947,10 +947,10 @@ func storeFwdSentThread(iSvc string, iHead *Header) {
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    aFs := tFwdSent{cc: aFwd[0].Cc, fwdN: len(aFwd)-1}
-   _completeStoreFwdSent(iSvc, path.Base(aTempOk), &aFs, aFd, aTd)
+   _completeStoreFwdSent(iSvc, path.Base(aTempOk), aFd, aTd, &aFs)
 }
 
-func _completeStoreFwdSent(iSvc string, iTmp string, iFs *tFwdSent, iFd, iTd *os.File) {
+func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iFs *tFwdSent) {
    aRec := _parseTempOk(iTmp)
    aFwdOrig := fileFwd(iSvc, aRec.tid())
    aFwdTemp := ftmpFwdS(iSvc, aRec.tid())
@@ -970,10 +970,10 @@ func _completeStoreFwdSent(iSvc string, iTmp string, iFs *tFwdSent, iFd, iTd *os
       err = syncDir(dirThread(iSvc))
       if err != nil { quit(err) }
    }
-   _finishStoreFwd(iSvc, iTmp, iFs.cc, iFd, iTd)
+   _finishStoreFwd(iSvc, iTmp, iFd, iTd, iFs.cc)
 }
 
-func _finishStoreFwd(iSvc string, iTmp string, iCc []tCcEl, iFd, iTd *os.File) {
+func _finishStoreFwd(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl) {
    aRec := _parseTempOk(iTmp)
    var err error
 
@@ -1324,22 +1324,14 @@ func completeThread(iSvc string, iTempOk string) {
       return &cFs
    }
    switch aRec.op() {
-   case "sc":
-      _completeStoreConfirm(iSvc, iTempOk, fDraftHead(0), fIdx(), aFd, aTd)
-   case "sr":
-      _completeStoreReceived(iSvc, iTempOk, fDraftHead(1), aFd, aTd)
-   case "nr":
-      _completeSeenReceived(iSvc, iTempOk, aFd, aTd)
-   case "ss":
-      _completeStoreSent(iSvc, iTempOk, fDraftHead(1), aFd, aTd)
-   case "ws":
-      _completeStoreDraft(iSvc, iTempOk, fDraftHead(0), aFd, aTd)
-   case "ds":
-      _completeDeleteDraft(iSvc, iTempOk, aFd, aTd)
-   case "fn":
-      _completeStoreFwdNotify(iSvc, iTempOk, fCc(), aFd, aTd)
-   case "fs":
-      _completeStoreFwdSent(iSvc, iTempOk, fFwdSent(), aFd, aTd)
+   case "sc": _completeStoreConfirm  (iSvc, iTempOk, aFd, aTd, fDraftHead(0), fIdx())
+   case "sr": _completeStoreReceived (iSvc, iTempOk, aFd, aTd, fDraftHead(1))
+   case "nr": _completeSeenReceived  (iSvc, iTempOk, aFd, aTd)
+   case "ss": _completeStoreSent     (iSvc, iTempOk, aFd, aTd, fDraftHead(1))
+   case "ws": _completeStoreDraft    (iSvc, iTempOk, aFd, aTd, fDraftHead(0))
+   case "ds": _completeDeleteDraft   (iSvc, iTempOk, aFd, aTd)
+   case "fn": _completeStoreFwdNotify(iSvc, iTempOk, aFd, aTd, fCc())
+   case "fs": _completeStoreFwdSent  (iSvc, iTempOk, aFd, aTd, fFwdSent())
    default:
       fmt.Fprintf(os.Stderr, "completeThread: unexpected op %s%s\n", dirTemp(iSvc), iTempOk)
    }
