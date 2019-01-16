@@ -63,12 +63,11 @@ func initForms() {
 
 func (tGlobalBlankForm) GetIdx() interface{} {
    sBlankFormsDoor.RLock(); defer sBlankFormsDoor.RUnlock()
-   aList := make([]*tBlankForm, len(sBlankForms))
-   a := 0
-   for _, aList[a] = range sBlankForms { a++ }
-   sort.Slice(aList, func(cA, cB int) bool {
-      return aList[cA].Revs[0].Date > aList[cB].Revs[0].Date
-   })
+   aList := make([]*tBlankForm, 0, len(sBlankForms))
+   for _, aV := range sBlankForms {
+      aList = append(aList, aV)
+   }
+   sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Revs[0].Date > aList[cB].Revs[0].Date })
    return aList
 }
 

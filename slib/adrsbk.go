@@ -159,9 +159,10 @@ func _respondLog(iLog tAdrsbkLog, iEl *tAdrsbkEl) bool {
 func GetGroupAdrsbk(iSvc string) []tGroupEl {
    aSvc := _loadAdrsbk(iSvc)
    aSvc.RLock()
-   aList := make([]tGroupEl, len(aSvc.groupIdx))
-   a := 0
-   for _, aList[a] = range aSvc.groupIdx { a++ }
+   aList := make([]tGroupEl, 0, len(aSvc.groupIdx))
+   for _, aV := range aSvc.groupIdx {
+      aList = append(aList, aV)
+   }
    aSvc.RUnlock()
    sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Date > aList[cB].Date })
    return aList
@@ -248,10 +249,10 @@ func searchAdrsbk(iSvc string, iUpdt *Update) []string {
       for aName, _ = range aSvc.groupIdx { fMatch(aName, aName) }
    }
    sort.Slice(aResult, func(cA, cB int) bool { return aResult[cA].name < aResult[cB].name })
-   aList := make([]string, 2*len(aResult))
+   aList := make([]string, 0, 2*len(aResult))
    for a := range aResult {
-      aList[a*2]   = aResult[a].name
-      aList[a*2+1] = aResult[a].id
+      aList = append(aList, aResult[a].name)
+      aList = append(aList, aResult[a].id)
    }
    return aList
 }

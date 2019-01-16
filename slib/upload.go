@@ -38,18 +38,13 @@ type tUploadEl struct {
 func (tGlobalUpload) GetIdx() interface{} {
    aDir, err := ioutil.ReadDir(kUploadDir)
    if err != nil { quit(err) }
-   aList := make([]tUploadEl, len(aDir)-1) // omit temp/
-   a := 0
+   aList := make([]tUploadEl, 0, len(aDir)-1) // omit temp/
    for _, aFi := range aDir {
       if aFi.Name() == "temp" { continue }
-      aList[a].Size = aFi.Size()
-      aList[a].Name = aFi.Name()
-      aList[a].Date = aFi.ModTime().UTC().Format(time.RFC3339)
-      a++
+      aList = append(aList, tUploadEl{Name:aFi.Name(), Size:aFi.Size(),
+                                      Date:aFi.ModTime().UTC().Format(time.RFC3339)})
    }
-   sort.Slice(aList, func(cA, cB int) bool {
-      return aList[cA].Date > aList[cB].Date
-   })
+   sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Date > aList[cB].Date })
    return aList
 }
 

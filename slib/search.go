@@ -47,19 +47,17 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       if err != nil { quit(err) }
       sort.Slice(aDir, func(cA, cB int) bool { return aDir[cA].ModTime().After(aDir[cB].ModTime()) })
    }
-   aList := make([]struct{Id string; Date string}, len(aDir))
-   aI := 0
-   for a, _ := range aDir {
-      aList[aI].Date = aDir[a].ModTime().UTC().Format(time.RFC3339)
+   type tSearchEl struct { Id, Date string }
+   aList := make([]tSearchEl, 0, len(aDir))
+   for _, aFi := range aDir {
+      aDate := aFi.ModTime().UTC().Format(time.RFC3339)
       if iState.SvcTabs.Pos == 3 {
-         aList[aI].Id = strings.Replace(aDir[a].Name(), "@", "/", -1)
-         aI++
-      } else if !strings.ContainsRune(aDir[a].Name()[1:], '_') {
-         aList[aI].Id = aDir[a].Name()
-         aI++
+         aList = append(aList, tSearchEl{Date:aDate, Id: strings.Replace(aFi.Name(), "@", "/", -1)})
+      } else if !strings.ContainsRune(aFi.Name()[1:], '_') {
+         aList = append(aList, tSearchEl{Date:aDate, Id: aFi.Name()})
       }
    }
-   err = json.NewEncoder(iW).Encode(aList[:aI])
+   err = json.NewEncoder(iW).Encode(aList)
    return err
 }
 

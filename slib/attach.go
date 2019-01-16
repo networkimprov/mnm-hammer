@@ -36,20 +36,21 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
    if aId == "" {
       return []tAttachEl{}
    }
-   aList, err := ioutil.ReadDir(subAttach(iSvc, aId))
+   aDir, err := ioutil.ReadDir(subAttach(iSvc, aId))
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
       return []tAttachEl{}
    }
-   aSend := make([]tAttachEl, len(aList))
-   a := 0
-   for _, aFi := range aList {
-      if aFi.Name() == "ffnindex" {
-         aSend = aSend[:len(aSend)-1]
-         continue
-      }
-      aSend[a].File = aFi.Name()
-      aPair := strings.SplitN(aFi.Name(), "_", 2)
+   aSend := make([]tAttachEl, 0, len(aDir))
+   var a int
+   var aPair []string
+   for _, aFi := range aDir {
+      if aFi.Name() == "ffnindex" { continue }
+      aPair = strings.SplitN(aFi.Name(), "_", 2)
+      a = len(aSend)
+      aSend = append(aSend, tAttachEl{File: aFi.Name(), Size: aFi.Size(),
+                                      Name: aPair[1][2:], // omit x: tag
+                                      Date: aFi.ModTime().UTC().Format(time.RFC3339)})
       if aId[0] == '_' {
          aSend[a].MsgId = aId
       } else if len(aPair[0]) == 12 { //todo codify
@@ -57,10 +58,6 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
       } else {
          aSend[a].MsgId = aPair[0]
       }
-      aSend[a].Name = aPair[1][2:] // omit x: tag
-      aSend[a].Size = aFi.Size()
-      aSend[a].Date = aFi.ModTime().UTC().Format(time.RFC3339)
-      a++
    }
    return aSend
 }

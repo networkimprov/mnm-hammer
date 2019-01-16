@@ -26,9 +26,10 @@ type tOhiEl struct {
 type tForOhi []struct { Id string }
 
 func _listOhi(iMap tOhi) []tOhiEl {
-   aList := make([]tOhiEl, len(iMap))
-   a := 0
-   for aList[a].Uid, aList[a].Date = range iMap { a++ }
+   aList := make([]tOhiEl, 0, len(iMap))
+   for aK, aV := range iMap {
+      aList = append(aList, tOhiEl{Uid:aK, Date:aV})
+   }
    sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Date > aList[cB].Date })
    return aList
 }

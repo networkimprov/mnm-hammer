@@ -189,12 +189,11 @@ func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    aBuf1, err := json.Marshal(aDh.SubHead)
    if err != nil { quit(err) }
    aUid := GetConfigService(iSvc).Uid
-   aFor := make([]tHeaderFor, len(aCc)-1)
-   for a,aC := 0,0; a < len(aFor); a++ {
-      if aCc[aC].WhoUid == aUid { aC++ }
-      aType := eForUser; if aCc[aC].WhoUid == aCc[aC].Who { aType = eForGroupExcl }
-      aFor[a].Id, aFor[a].Type = aCc[aC].WhoUid, aType
-      aC++
+   aFor := make([]tHeaderFor, 0, len(aCc)-1)
+   for a := range aCc {
+      if aCc[a].WhoUid == aUid { continue }
+      aType := eForUser; if aCc[a].WhoUid == aCc[a].Who { aType = eForGroupExcl }
+      aFor = append(aFor, tHeaderFor{Id:aCc[a].WhoUid, Type:aType})
    }
    aHead := Msg{"Op":7, "Id":iId, "For":aFor,
                 "DataHead": len(aBuf1), "DataLen": int64(len(aBuf1)) + aDh.Len + aAttachLen }

@@ -101,9 +101,10 @@ func startAllService() {
 
 func (tGlobalService) GetIdx() interface{} {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   aS := make([]string, len(sServices))
-   a := 0
-   for aS[a], _ = range sServices { a++ }
+   aS := make([]string, 0, len(sServices))
+   for aK := range sServices {
+      aS = append(aS, aK)
+   }
    return aS
 }
 
@@ -213,9 +214,7 @@ func _updateConfig(iCfg *tSvcConfig) error {
 func getTabsService(iSvc string) []string {
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
-   aList := make([]string, len(aSvc.tabs))
-   copy(aList, aSvc.tabs)
-   return aList
+   return append([]string(nil), aSvc.tabs...)
 }
 
 func addTabService(iSvc string, iTerm string) int {

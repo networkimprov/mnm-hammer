@@ -28,8 +28,7 @@ type tNoticeEl struct {
 func GetIdxNotice(iSvc string) []tNoticeEl {
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
-   aIdx := make([]tNoticeEl, len(aSvc.notice))
-   copy(aIdx, aSvc.notice)
+   aIdx := append([]tNoticeEl(nil), aSvc.notice...)
    for a1, a2 := 0, len(aIdx)-1; a1 < a2; a1, a2 = a1+1, a2-1 {
       aIdx[a1], aIdx[a2] = aIdx[a2], aIdx[a1]
    }
