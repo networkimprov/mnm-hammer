@@ -25,13 +25,17 @@ import (
 const kCcNoteMaxLen = 1024
 
 type tIndexEl struct {
-   Id string
+   tIndexElCore
    Offset, Size int64
+   Checksum uint32
+}
+
+type tIndexElCore struct {
+   Id string
    From string
    Alias string
    Date string
    Subject string
-   Checksum uint32
    Seen string // mutable
    ForwardBy string `json:",omitempty"` // mutable
 }
@@ -63,9 +67,7 @@ type tFwdEl struct {
 }
 
 func GetIdxThread(iSvc string, iState *ClientState) interface{} {
-   aIdx := []struct{ Id, From, Alias, Date, Subject, Seen string
-                     ForwardBy string `json:",omitempty"`
-                     Queued bool }{}
+   aIdx := []struct{ tIndexElCore; Queued bool }{}
    aTid := iState.getThread()
    if aTid == "" { return aIdx }
    func() {
@@ -262,7 +264,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    var aTd, aFd *os.File
    aIdx, aCc := []tIndexEl{{}}, []tCcEl{}
    var aPos, aCopyLen int64
-   aEl := tIndexEl{Seen:eSeenClear}
+   aEl := tIndexEl{tIndexElCore:tIndexElCore{Seen:eSeenClear}}
    aNewCc := iHead.SubHead.Cc; if aThreadId != aMsgId { aNewCc = nil }
    aCid := iHead.SubHead.ConfirmId
 
@@ -591,7 +593,8 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
    aIdx, aCc := []tIndexEl{}, []tCcEl{}
    aIdxN := -1
    var aPos int64
-   aEl := tIndexEl{Id:iUpdt.Thread.Id, Date:dateRFC3339(), Subject:iUpdt.Thread.Subject, Offset:-1}
+   aEl := tIndexEl{Offset:-1, tIndexElCore:
+                   tIndexElCore{Id:iUpdt.Thread.Id, Date:dateRFC3339(), Subject:iUpdt.Thread.Subject}}
 
    if aId.tid() == "" {
       aCc = _updateCc(iSvc, iUpdt.Thread.Cc, false)
