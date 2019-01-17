@@ -173,8 +173,8 @@ func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    defer aFd.Close()
 
    aId := parseLocalId(iDraftId)
-   aDh := _readDraftHead(aFd)
-   aCc := aDh.SubHead.Cc
+   aMh := _readMsgHead(aFd)
+   aCc := aMh.SubHead.Cc
    if aCc == nil {
       aDoor := _getThreadDoor(iSvc, aId.tid())
       aDoor.RLock()
@@ -185,8 +185,8 @@ func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
       aOfd.Close(); aDoor.RUnlock()
    }
 
-   aAttachLen := sizeDraftAttach(iSvc, &aDh.SubHead, aId) // revs subhead
-   aBuf1, err := json.Marshal(aDh.SubHead)
+   aAttachLen := sizeDraftAttach(iSvc, &aMh.SubHead, aId) // revs subhead
+   aBuf1, err := json.Marshal(aMh.SubHead)
    if err != nil { quit(err) }
    aUid := GetConfigService(iSvc).Uid
    aFor := make([]tHeaderFor, 0, len(aCc)-1)
@@ -196,15 +196,15 @@ func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
       aFor = append(aFor, tHeaderFor{Id:aCc[a].WhoUid, Type:aType})
    }
    aHead := Msg{"Op":7, "Id":iId, "For":aFor,
-                "DataHead": len(aBuf1), "DataLen": int64(len(aBuf1)) + aDh.Len + aAttachLen }
+                "DataHead": len(aBuf1), "DataLen": int64(len(aBuf1)) + aMh.Len + aAttachLen }
    aBuf0, err := json.Marshal(aHead)
    if err != nil { quit(err) }
 
    err = writeHeaders(iW, aBuf0, aBuf1)
    if err != nil { return err }
-   _, err = io.CopyN(iW, aFd, aDh.Len) //todo only return network errors
+   _, err = io.CopyN(iW, aFd, aMh.Len) //todo only return network errors
    if err != nil { return err }
-   err = writeDraftAttach(iW, iSvc, &aDh.SubHead, aId, aFd)
+   err = writeDraftAttach(iW, iSvc, &aMh.SubHead, aId, aFd)
    return err
 }
 
@@ -282,7 +282,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
       iHead.SubHead.ConfirmId = ""
       iHead.SubHead.ConfirmPosted = ""
       iHead.SubHead.ThreadId = aThreadId
-      err = _writeMsgTemp(aTd, iHead, iR, &aEl)
+      err = _writeMsg(aTd, iHead, iR, &aEl)
       if err == nil {
          err = tempReceivedAttach(iSvc, iHead, iR)
       }
@@ -365,16 +365,16 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    if aCid != "" {
-      _completeStoreConfirm(iSvc, path.Base(aTempOk), aFd, aTd, _makeDraftHead(iHead, nil), aIdx)
+      _completeStoreConfirm(iSvc, path.Base(aTempOk), aFd, aTd, _newMsgHead(iHead), aIdx)
    } else {
-      _completeStoreReceived(iSvc, path.Base(aTempOk), aFd, aTd, _makeDraftHead(iHead, aNewCc))
+      _completeStoreReceived(iSvc, path.Base(aTempOk), aFd, aTd, _newMsgHead(iHead), aNewCc)
    }
 
    aKind := "msg"; if aThreadId == aMsgId { aKind = "thread" }
    return aKind, nil
 }
 
-func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tDraftHead, iIdx []tIndexEl) {
+func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iIdx []tIndexEl) {
    aRec := _parseTempOk(iTmp)
    aTempOk := dirTemp(iSvc) + iTmp
    var err error
@@ -404,13 +404,13 @@ func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *t
    if err != nil { quit(err) }
 }
 
-func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tDraftHead) {
+func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iCc []tCcEl) {
    var err error
    aRec := _parseTempOk(iTmp)
    aTempOk := dirTemp(iSvc) + iTmp
 
-   resolveSentAdrsbk    (iSvc, iHead.Posted, iHead.cc, aRec.tid())
-   resolveReceivedAdrsbk(iSvc, iHead.Posted, iHead.cc, aRec.tid())
+   resolveSentAdrsbk    (iSvc, iHead.Posted, iCc, aRec.tid())
+   resolveReceivedAdrsbk(iSvc, iHead.Posted, iCc, aRec.tid())
    storeReceivedAttach(iSvc, &iHead.SubHead, aRec)
 
    if aRec.tid() == aRec.mid() {
@@ -495,7 +495,7 @@ func storeSentThread(iSvc string, iHead *Header) {
       return
    }
    defer aSd.Close()
-   aDh := _readDraftHead(aSd)
+   aMh := _readMsgHead(aSd)
 
    aDoorId := aTid; if aTid == iHead.MsgId { aDoorId = iHead.Id }
    aDoor := _getThreadDoor(iSvc, aDoorId)
@@ -509,8 +509,8 @@ func storeSentThread(iSvc string, iHead *Header) {
    aIdx, aCc := []tIndexEl{}, []tCcEl{}
    var aPos int64
    aEl := tIndexEl{}
-   aHeadCc := aDh.SubHead.Cc
-   aDh.SubHead.Cc = nil
+   aHeadCc := aMh.SubHead.Cc
+   aMh.SubHead.Cc = nil
 
    if aTid == iHead.MsgId {
       aCc = aHeadCc
@@ -527,7 +527,7 @@ func storeSentThread(iSvc string, iHead *Header) {
       aIdx = aIdx[:a + copy(aIdx[a:], aIdx[a+1:])]
    }
    aHead := Header{Id:iHead.MsgId, From:GetConfigService(iSvc).Uid, Posted:iHead.Posted,
-                   DataLen:aDh.Len, SubHead:&aDh.SubHead}
+                   DataLen:aMh.Len, SubHead:&aMh.SubHead}
    aHead.SubHead.setupSent(aTid)
    sizeDraftAttach(iSvc, aHead.SubHead, aId)
    aIdx = append(aIdx, *_setupIndexEl(&aEl, &aHead, aPos))
@@ -536,27 +536,27 @@ func storeSentThread(iSvc string, iHead *Header) {
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   _writeMsgTemp(aTd, &aHead, aSd, &aIdx[len(aIdx)-1])
+   _writeMsg(aTd, &aHead, aSd, &aIdx[len(aIdx)-1])
    _writeIndex(aTd, aIdx, aCc)
    tempSentAttach(iSvc, &aHead, aSd)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreSent(iSvc, path.Base(aTempOk), aFd, aTd, _makeDraftHead(&aHead, aHeadCc))
+   _completeStoreSent(iSvc, path.Base(aTempOk), aFd, aTd, _newMsgHead(&aHead), aHeadCc)
 }
 
-func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tDraftHead) {
+func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iCc []tCcEl) {
    aRec := _parseTempOk(iTmp)
 
-   resolveReceivedAdrsbk(iSvc, iHead.Posted, iHead.cc, aRec.tid())
+   resolveReceivedAdrsbk(iSvc, iHead.Posted, iCc, aRec.tid())
    storeSentAttach(iSvc, &iHead.SubHead, aRec)
 
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
    err := os.Remove(dirThread(iSvc) + aTid + "_" + aRec.lms())
    if err != nil && !os.IsNotExist(err) { quit(err) }
 
-   _completeStoreReceived(iSvc, iTmp, iFd, iTd, &tDraftHead{})
+   _completeStoreReceived(iSvc, iTmp, iFd, iTd, &tMsgHead{}, nil)
 }
 
 func validateDraftThread(iSvc string, iUpdt *Update) error {
@@ -564,13 +564,13 @@ func validateDraftThread(iSvc string, iUpdt *Update) error {
    aFd, err := os.Open(dirThread(iSvc) + aId.tid() + "_" + aId.lms())
    if err != nil { quit(err) }
    defer aFd.Close()
-   aDh := _readDraftHead(aFd)
-   if aDh.SubHead.Subject == "" && aId.tid() == "" {
+   aMh := _readMsgHead(aFd)
+   if aMh.SubHead.Subject == "" && aId.tid() == "" {
       return tError("subject missing")
    }
-   _, err = aFd.Seek(aDh.Len, io.SeekCurrent)
+   _, err = aFd.Seek(aMh.Len, io.SeekCurrent)
    if err != nil { quit(err) }
-   err = validateDraftAttach(iSvc, &aDh.SubHead, aId, aFd)
+   err = validateDraftAttach(iSvc, &aMh.SubHead, aId, aFd)
    return err
 }
 
@@ -621,17 +621,17 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
    aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(aData.Len()),
                    SubHead:&tHeader2{}}
    aHead.SubHead.setupDraft(aId.tid(), iUpdt, iSvc)
-   _writeMsgTemp(aTd, &aHead, aData, &aIdx[aIdxN]) //todo stream from client
+   _writeMsg(aTd, &aHead, aData, &aIdx[aIdxN]) //todo stream from client
    writeFormFillAttach(aTd, aHead.SubHead, iUpdt.Thread.FormFill, &aIdx[aIdxN])
    _writeIndex(aTd, aIdx, aCc)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreDraft(iSvc, path.Base(aTempOk), aFd, aTd, _makeDraftHead(&aHead, nil))
+   _completeStoreDraft(iSvc, path.Base(aTempOk), aFd, aTd, _newMsgHead(&aHead))
 }
 
-func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tDraftHead) {
+func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead) {
    var err error
    aRec := _parseTempOk(iTmp)
    aDraft := dirThread(iSvc) + aRec.tid() + "_" + aRec.lms()
@@ -642,7 +642,7 @@ func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tDr
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
    } else {
-      aSubHeadOld = &_readDraftHead(aSd).SubHead
+      aSubHeadOld = &_readMsgHead(aSd).SubHead
       aSd.Close()
    }
    updateDraftAttach(iSvc, aSubHeadOld, &iHead.SubHead, aRec)
@@ -713,7 +713,7 @@ func deleteDraftThread(iSvc string, iUpdt *Update) {
 }
 
 func _completeDeleteDraft(iSvc string, iTmp string, iFd, iTd *os.File) {
-   _completeStoreDraft(iSvc, iTmp, iFd, iTd, &tDraftHead{})
+   _completeStoreDraft(iSvc, iTmp, iFd, iTd, &tMsgHead{})
 }
 
 func sendFwdConfirmThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
@@ -745,22 +745,22 @@ func sendFwdConfirmThread(iW io.Writer, iSvc string, iDraftId, iId string) error
    }
    _, err = aFd.Seek(aEl.Offset, io.SeekStart)
    if err != nil { quit(err) }
-   aDh := _readDraftHead(aFd)
-   aDh.SubHead.ConfirmId = aEl.Id
-   aDh.SubHead.ConfirmPosted = aEl.Date
-   aBufSub, err := json.Marshal(aDh.SubHead)
+   aMh := _readMsgHead(aFd)
+   aMh.SubHead.ConfirmId = aEl.Id
+   aMh.SubHead.ConfirmPosted = aEl.Date
+   aBufSub, err := json.Marshal(aMh.SubHead)
    if err != nil { quit(err) }
 
    aHead := Msg{"Op":7, "Id":iId, "For":aFor, "DataHead":len(aBufSub),
-                "DataLen": int64(len(aBufSub)) + aDh.Len + totalAttach(&aDh.SubHead)}
+                "DataLen": int64(len(aBufSub)) + aMh.Len + totalAttach(&aMh.SubHead)}
    aBufHead, err := json.Marshal(aHead)
    if err != nil { quit(err) }
 
    err = writeHeaders(iW, aBufHead, aBufSub)
    if err != nil { return err }
-   _, err = io.CopyN(iW, aFd, aDh.Len)
+   _, err = io.CopyN(iW, aFd, aMh.Len)
    if err != nil { return err }
-   err = writeStoredAttach(iW, iSvc, &aDh.SubHead)
+   err = writeStoredAttach(iW, iSvc, &aMh.SubHead)
    return err
 }
 
@@ -1123,20 +1123,20 @@ func _revCc(iCc []tCcEl, iHead *Header) {
    }
 }
 
-type tDraftHead struct {
+type tMsgHead struct {
+   Id string
    Len int64
    Posted string
    From string
    SubHead tHeader2
-   cc []tCcEl
 }
 
-func _makeDraftHead(iHead *Header, iCc []tCcEl) *tDraftHead {
-   return &tDraftHead{Posted:iHead.Posted, From:iHead.From, SubHead:*iHead.SubHead, cc:iCc}
+func _newMsgHead(iHead *Header) *tMsgHead {
+   return &tMsgHead{Posted:iHead.Posted, From:iHead.From, SubHead:*iHead.SubHead}
 }
 
-func _readDraftHead(iFd *os.File) *tDraftHead {
-   var aHead tDraftHead
+func _readMsgHead(iFd *os.File) *tMsgHead {
+   var aHead tMsgHead
    aBuf := make([]byte, 65536)
    _, err := iFd.Read(aBuf[:4])
    if err != nil { quit(err) }
@@ -1148,21 +1148,6 @@ func _readDraftHead(iFd *os.File) *tDraftHead {
    _, err = iFd.Seek(1, io.SeekCurrent) // consume newline
    if err != nil { quit(err) }
    return &aHead
-}
-
-func _parseTempOk(i string) tComplete { return strings.SplitN(i, "_", 5) }
-
-type tComplete []string
-
-func (o tComplete) tid() string { return o[0] } // thread id
-func (o tComplete) mid() string { return o[1] } // message id
-func (o tComplete)  op() string { return o[2] } // transaction type
-func (o tComplete) lms() string { return o[3] } // local id milliseconds
-
-func (o tComplete) pos() int64 { // thread offset to index
-   aPos, err := strconv.ParseInt(o[4], 10, 64)
-   if err != nil { quit(err) }
-   return aPos
 }
 
 func _readIndex(iFd *os.File, iIdx, iCc interface{}) int64 {
@@ -1234,14 +1219,15 @@ func _writeCc(iTd *os.File, iCc []tCcEl, iLenIdx int64) {
    if err != nil { quit(err) }
 }
 
-func _writeMsgTemp(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) error {
+func _writeMsg(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) error {
    var err error
    var aCw tCrcWriter
    aTee := io.MultiWriter(iTd, &aCw)
    aSize := iHead.DataLen - totalAttach(iHead.SubHead)
    if aSize < 0 { return tError("attachment size total exceeds DataLen") }
-   aBuf, err := json.Marshal(Msg{"Id":iHead.Id, "From":iHead.From, "Posted":iHead.Posted,
-                                 "Len":aSize, "SubHead":iHead.SubHead})
+   aHead := tMsgHead{Id:iHead.Id, From:iHead.From, Posted:iHead.Posted,
+                     Len:aSize, SubHead:*iHead.SubHead}
+   aBuf, err := json.Marshal(aHead)
    if err != nil { quit(err) }
    aLen, err := aTee.Write([]byte(fmt.Sprintf("%04x", len(aBuf))))
    if err != nil { quit(err) }
@@ -1250,7 +1236,9 @@ func _writeMsgTemp(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) err
    if err != nil { quit(err) }
    if aSize > 0 {
       _, err = io.CopyN(aTee, iR, aSize)
-      if err != nil { return err }
+      if err != nil {
+         return err
+      }
    }
    _, err = iTd.Write([]byte{'\n'})
    if err != nil { quit(err) }
@@ -1263,6 +1251,21 @@ func _writeMsgTemp(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) err
    iEl.Size, err = iTd.Seek(0, io.SeekCurrent)
    if err != nil { quit(err) }
    return nil
+}
+
+type tComplete []string
+
+func _parseTempOk(i string) tComplete { return strings.SplitN(i, "_", 5) }
+
+func (o tComplete) tid() string { return o[0] } // thread id
+func (o tComplete) mid() string { return o[1] } // message id
+func (o tComplete)  op() string { return o[2] } // transaction type
+func (o tComplete) lms() string { return o[3] } // local id milliseconds
+
+func (o tComplete) pos() int64 { // thread offset to index
+   aPos, err := strconv.ParseInt(o[4], 10, 64)
+   if err != nil { quit(err) }
+   return aPos
 }
 
 type tThreadDoor struct {
@@ -1293,30 +1296,32 @@ func completeThread(iSvc string, iTempOk string) {
    aTd, err = os.Open(dirTemp(iSvc)+iTempOk)
    if err != nil { quit(err) }
    defer aTd.Close()
-   fDraftHead := func(cFlag int8) *tDraftHead {
-      cDh := _readDraftHead(aTd)
-      if cFlag == 1 && aRec.tid() == aRec.mid() {
-         _readCc(aTd, &cDh.cc)
-      }
+   fMsgHead := func() *tMsgHead {
+      cMh := _readMsgHead(aTd)
       aTd.Seek(0, io.SeekStart)
-      return cDh
+      return cMh
    }
    fIdx := func() []tIndexEl {
       var cIdx []tIndexEl
       _readIndex(aTd, &cIdx, nil)
       return cIdx
    }
-   fCc := func() []tCcEl {
+   fCc := func(cFlag string) []tCcEl {
       var cCc []tCcEl
-      _readCc(aTd, &cCc)
-      aTd.Seek(0, io.SeekStart)
+      if cFlag != "orig" || aRec.tid() == aRec.mid() {
+         _readCc(aTd, &cCc)
+         aTd.Seek(0, io.SeekStart)
+      }
+      if cFlag == "orig" {
+         return cCc
+      }
       c := len(cCc)-1
       for cD, cB := cCc[c].Date, cCc[c].ByUid;
           c > 0 && cCc[c-1].Date == cD && cCc[c-1].ByUid == cB; c-- {}
       return cCc[c:]
    }
    fFwdSent := func() *tFwdSent {
-      cFs := tFwdSent{cc: fCc(), fwdN: -1}
+      cFs := tFwdSent{cc: fCc("fwd"), fwdN: -1}
       cFwd := _getFwd(iSvc, aRec.tid(), "temp")
       if cFwd != nil {
          cFs.fwdN = len(cFwd)
@@ -1324,13 +1329,13 @@ func completeThread(iSvc string, iTempOk string) {
       return &cFs
    }
    switch aRec.op() {
-   case "sc": _completeStoreConfirm  (iSvc, iTempOk, aFd, aTd, fDraftHead(0), fIdx())
-   case "sr": _completeStoreReceived (iSvc, iTempOk, aFd, aTd, fDraftHead(1))
+   case "sc": _completeStoreConfirm  (iSvc, iTempOk, aFd, aTd, fMsgHead(), fIdx())
+   case "sr": _completeStoreReceived (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
    case "nr": _completeSeenReceived  (iSvc, iTempOk, aFd, aTd)
-   case "ss": _completeStoreSent     (iSvc, iTempOk, aFd, aTd, fDraftHead(1))
-   case "ws": _completeStoreDraft    (iSvc, iTempOk, aFd, aTd, fDraftHead(0))
+   case "ss": _completeStoreSent     (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
+   case "ws": _completeStoreDraft    (iSvc, iTempOk, aFd, aTd, fMsgHead())
    case "ds": _completeDeleteDraft   (iSvc, iTempOk, aFd, aTd)
-   case "fn": _completeStoreFwdNotify(iSvc, iTempOk, aFd, aTd, fCc())
+   case "fn": _completeStoreFwdNotify(iSvc, iTempOk, aFd, aTd, fCc("fwd"))
    case "fs": _completeStoreFwdSent  (iSvc, iTempOk, aFd, aTd, fFwdSent())
    default:
       fmt.Fprintf(os.Stderr, "completeThread: unexpected op %s%s\n", dirTemp(iSvc), iTempOk)
