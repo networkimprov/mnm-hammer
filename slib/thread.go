@@ -946,22 +946,21 @@ func storeFwdSentThread(iSvc string, iHead *Header) {
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   aFs := tFwdSent{cc: aFwd[0].Cc, fwdN: len(aFwd)-1}
-   _completeStoreFwdSent(iSvc, path.Base(aTempOk), aFd, aTd, &aFs)
+   _completeStoreFwdSent(iSvc, path.Base(aTempOk), aFd, aTd, aFwd[0].Cc, len(aFwd)-1)
 }
 
-func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iFs *tFwdSent) {
+func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl, iFwdN int) {
    aRec := _parseTempOk(iTmp)
    aFwdOrig := fileFwd(iSvc, aRec.tid())
    aFwdTemp := ftmpFwdS(iSvc, aRec.tid())
    var err error
 
-   resolveReceivedAdrsbk(iSvc, iFs.cc[0].Date, iFs.cc, aRec.tid())
+   resolveReceivedAdrsbk(iSvc, iCc[0].Date, iCc, aRec.tid())
 
-   if iFs.fwdN >= 0 {
+   if iFwdN >= 0 {
       err = os.Remove(aFwdOrig)
       if err != nil && !os.IsNotExist(err) { quit(err) }
-      if iFs.fwdN > 0 {
+      if iFwdN > 0 {
          err = os.Rename(aFwdTemp, aFwdOrig)
       } else {
          err = os.Remove(aFwdTemp)
@@ -970,7 +969,7 @@ func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iFs *tFw
       err = syncDir(dirThread(iSvc))
       if err != nil { quit(err) }
    }
-   _finishStoreFwd(iSvc, iTmp, iFd, iTd, iFs.cc)
+   _finishStoreFwd(iSvc, iTmp, iFd, iTd, iCc)
 }
 
 func _finishStoreFwd(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl) {
@@ -1054,11 +1053,6 @@ func storeFwdDraftThread(iSvc string, iUpdt *Update) {
    if err != nil { quit(err) }
    err = os.Rename(aFwdTemp, aFwdOrig)
    if err != nil { quit(err) }
-}
-
-type tFwdSent struct {
-   cc []tCcEl
-   fwdN int
 }
 
 func _getFwd(iSvc string, iTid string, iOpt string) []tFwdEl {
@@ -1320,13 +1314,12 @@ func completeThread(iSvc string, iTempOk string) {
           c > 0 && cCc[c-1].Date == cD && cCc[c-1].ByUid == cB; c-- {}
       return cCc[c:]
    }
-   fFwdSent := func() *tFwdSent {
-      cFs := tFwdSent{cc: fCc("fwd"), fwdN: -1}
+   fFwdSent := func() int {
       cFwd := _getFwd(iSvc, aRec.tid(), "temp")
       if cFwd != nil {
-         cFs.fwdN = len(cFwd)
+         return len(cFwd)
       }
-      return &cFs
+      return -1
    }
    switch aRec.op() {
    case "sc": _completeStoreConfirm  (iSvc, iTempOk, aFd, aTd, fMsgHead(), fIdx())
@@ -1336,7 +1329,7 @@ func completeThread(iSvc string, iTempOk string) {
    case "ws": _completeStoreDraft    (iSvc, iTempOk, aFd, aTd, fMsgHead())
    case "ds": _completeDeleteDraft   (iSvc, iTempOk, aFd, aTd)
    case "fn": _completeStoreFwdNotify(iSvc, iTempOk, aFd, aTd, fCc("fwd"))
-   case "fs": _completeStoreFwdSent  (iSvc, iTempOk, aFd, aTd, fFwdSent())
+   case "fs": _completeStoreFwdSent  (iSvc, iTempOk, aFd, aTd, fCc("fwd"), fFwdSent())
    default:
       fmt.Fprintf(os.Stderr, "completeThread: unexpected op %s%s\n", dirTemp(iSvc), iTempOk)
    }
