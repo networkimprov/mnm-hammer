@@ -312,8 +312,12 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          aFn, aResult = fAll, []string{"it"}
       }
    case "delivery":
-      var aGot string
-      aGot, err = storeReceivedThread(iSvc, iHead, iR)
+      aGot := "thread"
+      if iHead.Notify > 0 {
+         err = storeFwdReceivedThread(iSvc, iHead, iR)
+      } else {
+         aGot, err = storeReceivedThread(iSvc, iHead, iR)
+      }
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: delivery error %s\n", iSvc, err.Error())
          return fErr

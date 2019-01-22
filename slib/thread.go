@@ -232,33 +232,26 @@ func loadThread(iSvc string, iId string) string {
 func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, error) {
    var err error
    aThreadId := iHead.SubHead.ThreadId; if aThreadId == "" { aThreadId = iHead.Id }
-   aMsgId := iHead.Id; if iHead.Notify > 0 { aMsgId = aThreadId }
+   aMsgId := iHead.Id
    aOrig := dirThread(iSvc) + aThreadId
    aTempOk := ftmpSr(iSvc, aThreadId, aMsgId)
    aTemp := aTempOk + ".tmp"
 
-   if iHead.Notify > 0 && iHead.SubHead.ConfirmId != "" {
-      fmt.Fprintf(os.Stderr, "storeReceivedThread %s: erroneous confirm id\n", iSvc)
-      iHead.SubHead.ConfirmId = ""
-   }
-   fConsume := func() error {
+   fErr := func(cS string, cA ...interface{}) error {
+      fmt.Fprintf(os.Stderr, "storeReceivedThread "+ cS, cA...)
       _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
       return err
    }
-   if iHead.SubHead.ThreadId == "" && (iHead.Notify > 0 || iHead.SubHead.ConfirmId != "") {
-      fmt.Fprintf(os.Stderr, "storeReceivedThread %s: missing thread id\n", iSvc)
-      return "", fConsume()
-   }
-   if iHead.SubHead.ThreadId == "" || iHead.Notify > 0 {
+   if iHead.SubHead.ThreadId == "" {
+      if iHead.SubHead.ConfirmId != "" {
+         return "", fErr("%s: missing thread id\n", iSvc)
+      }
       _, err = os.Lstat(aOrig)
       if err == nil {
-         fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s already stored\n", iSvc, aThreadId)
-         return "", fConsume()
+         return "", fErr("%s: thread %s already stored\n", iSvc, aThreadId)
       }
-   }
-   if aThreadId[0] == '_' {
-      fmt.Fprintf(os.Stderr, "storeReceivedThread %s: invalid thread id %s\n", iSvc, aThreadId)
-      return "", fConsume()
+   } else if iHead.SubHead.ThreadId[0] == '_' {
+      return "", fErr("%s: invalid thread id %s\n", iSvc, aThreadId)
    }
 
    var aTd, aFd *os.File
@@ -271,35 +264,25 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   if iHead.Notify > 0 {
-      _, err = io.CopyN(aTd, iR, iHead.DataLen)
-   } else {
-      if aCid != "" {
-         aTempOk = ftmpSc(iSvc, aThreadId, aCid)
-         aHead := *iHead; iHead = &aHead
-         iHead.Id = aCid
-         iHead.Posted = iHead.SubHead.ConfirmPosted
-      }
-      iHead.SubHead.Cc = nil
-      iHead.SubHead.ConfirmId = ""
-      iHead.SubHead.ConfirmPosted = ""
-      iHead.SubHead.ThreadId = aThreadId
-      err = _writeMsg(aTd, iHead, iR, &aEl)
-      if err == nil {
-         err = tempReceivedAttach(iSvc, iHead, iR)
-      }
+   if aCid != "" {
+      aTempOk = ftmpSc(iSvc, aThreadId, aCid)
+      aHead := *iHead; iHead = &aHead
+      iHead.Id = aCid
+      iHead.Posted = iHead.SubHead.ConfirmPosted
+   }
+   iHead.SubHead.Cc = nil
+   iHead.SubHead.ConfirmId = ""
+   iHead.SubHead.ConfirmPosted = ""
+   iHead.SubHead.ThreadId = aThreadId
+   err = _writeMsg(aTd, iHead, iR, &aEl)
+   if err == nil {
+      err = tempReceivedAttach(iSvc, iHead, iR)
    }
    if err != nil {
       os.Remove(aTemp)
       return "", err
    }
-   if iHead.Notify > 0 {
-      _ = _readIndex(aTd, &aIdx, &aNewCc)
-      aCc = aNewCc
-      for a := range aIdx {
-         aIdx[a].ForwardBy = iHead.From
-      }
-   } else if aThreadId == aMsgId {
+   if aThreadId == aMsgId {
       if aNewCc != nil { //todo handle invalid/missing SubHead.Cc
          aCc = aNewCc
          _revCc(aCc, iHead)
@@ -844,6 +827,65 @@ func sendFwdDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    return err
 }
 
+func storeFwdReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
+   aOrig := dirThread(iSvc) + iHead.SubHead.ThreadId
+   aTempOk := ftmpFr(iSvc, iHead.SubHead.ThreadId)
+   aTemp := aTempOk + ".tmp"
+   var err error
+
+   fErr := func(cS string, cA ...interface{}) error {
+      fmt.Fprintf(os.Stderr, "storeFwdReceivedThread "+ cS, cA...)
+      _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
+      return err
+   }
+   if iHead.SubHead.ThreadId == "" {
+      return fErr("%s: missing thread id\n", iSvc)
+   }
+   if iHead.SubHead.ThreadId[0] == '_' {
+      return fErr("%s: invalid thread id %s\n", iSvc, iHead.SubHead.ThreadId)
+   }
+   _, err = os.Lstat(aOrig)
+   if err == nil {
+      return fErr("%s: thread %s already stored\n", iSvc, iHead.SubHead.ThreadId)
+   }
+
+   aTd, err := os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
+   if err != nil { quit(err) }
+   defer aTd.Close()
+   _, err = io.CopyN(aTd, iR, iHead.DataLen)
+   if err != nil {     //todo network errors only
+      os.Remove(aTemp)
+      return err
+   }
+
+   aIdx, aCc := []tIndexEl{}, []tCcEl{}
+   _ = _readIndex(aTd, &aIdx, &aCc)
+   for a := range aIdx {
+      aIdx[a].ForwardBy = iHead.From
+   }
+   _writeIndex(aTd, aIdx, aCc)
+
+   aTempOk += "0"
+   err = os.Rename(aTemp, aTempOk)
+   if err != nil { quit(err) }
+   err = syncDir(dirTemp(iSvc))
+   if err != nil { quit(err) }
+   _completeStoreFwdReceived(iSvc, path.Base(aTempOk))
+   return nil
+}
+
+func _completeStoreFwdReceived(iSvc string, iTmp string) {
+   aRec := _parseTempOk(iTmp)
+   aTempOk := dirTemp(iSvc) + iTmp
+
+   err := os.Link(aTempOk, dirThread(iSvc) + aRec.tid())
+   if err != nil && !os.IsExist(err) { quit(err) }
+   err = syncDir(dirThread(iSvc))
+   if err != nil { quit(err) }
+   err = os.Remove(aTempOk)
+   if err != nil { quit(err) }
+}
+
 func storeFwdNotifyThread(iSvc string, iHead *Header, iR io.Reader) error {
    aOrig := dirThread(iSvc) + iHead.SubHead.ThreadId
    aTempOk := ftmpFn(iSvc, iHead.SubHead.ThreadId)
@@ -1325,14 +1367,15 @@ func completeThread(iSvc string, iTempOk string) {
       return -1
    }
    switch aRec.op() {
-   case "sc": _completeStoreConfirm  (iSvc, iTempOk, aFd, aTd, fMsgHead(), fIdx())
-   case "sr": _completeStoreReceived (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
-   case "nr": _completeSeenReceived  (iSvc, iTempOk, aFd, aTd)
-   case "ss": _completeStoreSent     (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
-   case "ws": _completeStoreDraft    (iSvc, iTempOk, aFd, aTd, fMsgHead())
-   case "ds": _completeDeleteDraft   (iSvc, iTempOk, aFd, aTd)
-   case "fn": _completeStoreFwdNotify(iSvc, iTempOk, aFd, aTd, fCc("fwd"))
-   case "fs": _completeStoreFwdSent  (iSvc, iTempOk, aFd, aTd, fCc("fwd"), fFwdSent())
+   case "sc": _completeStoreConfirm    (iSvc, iTempOk, aFd, aTd, fMsgHead(), fIdx())
+   case "sr": _completeStoreReceived   (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
+   case "nr": _completeSeenReceived    (iSvc, iTempOk, aFd, aTd)
+   case "ss": _completeStoreSent       (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
+   case "ws": _completeStoreDraft      (iSvc, iTempOk, aFd, aTd, fMsgHead())
+   case "ds": _completeDeleteDraft     (iSvc, iTempOk, aFd, aTd)
+   case "fr": _completeStoreFwdReceived(iSvc, iTempOk)
+   case "fn": _completeStoreFwdNotify  (iSvc, iTempOk, aFd, aTd, fCc("fwd"))
+   case "fs": _completeStoreFwdSent    (iSvc, iTempOk, aFd, aTd, fCc("fwd"), fFwdSent())
    default:
       fmt.Fprintf(os.Stderr, "completeThread: unexpected op %s%s\n", dirTemp(iSvc), iTempOk)
    }
