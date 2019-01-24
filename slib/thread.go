@@ -1311,9 +1311,9 @@ type tComplete []string
 
 func _parseTempOk(i string) tComplete { return strings.SplitN(i, "_", 5) }
 
-func (o tComplete) tid() string { return o[0] } // thread id
-func (o tComplete) mid() string { return o[1] } // message id
-func (o tComplete)  op() string { return o[2] } // transaction type
+func (o tComplete)  op() string { return o[0] } // transaction type
+func (o tComplete) tid() string { return o[1] } // thread id
+func (o tComplete) mid() string { return o[2] } // message id
 func (o tComplete) lms() string { return o[3] } // local id milliseconds
 
 func (o tComplete) pos() int64 { // thread offset to index
