@@ -274,7 +274,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    iHead.SubHead.ConfirmId = ""
    iHead.SubHead.ConfirmPosted = ""
    iHead.SubHead.ThreadId = aThreadId
-   err = _writeMsg(aTd, iHead, iR, &aEl)
+   aMh, err := _writeMsg(aTd, iHead, iR, &aEl)
    if err == nil {
       err = tempReceivedAttach(iSvc, iHead, iR)
    }
@@ -350,9 +350,9 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    if aCid != "" {
-      _completeStoreConfirm(iSvc, path.Base(aTempOk), aFd, aTd, _newMsgHead(iHead), aIdx)
+      _completeStoreConfirm(iSvc, path.Base(aTempOk), aFd, aTd, aMh, aIdx)
    } else {
-      _completeStoreReceived(iSvc, path.Base(aTempOk), aFd, aTd, _newMsgHead(iHead), aNewCc)
+      _completeStoreReceived(iSvc, path.Base(aTempOk), aFd, aTd, aMh, aNewCc)
    }
 
    aKind := "msg"; if aThreadId == aMsgId { aKind = "thread" }
@@ -521,14 +521,15 @@ func storeSentThread(iSvc string, iHead *Header) {
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
-   _writeMsg(aTd, &aHead, aSd, &aIdx[len(aIdx)-1])
+   aMh, err = _writeMsg(aTd, &aHead, aSd, &aIdx[len(aIdx)-1])
+   if err != nil { quit(err) }
    _writeIndex(aTd, aIdx, aCc)
    tempSentAttach(iSvc, &aHead, aSd)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreSent(iSvc, path.Base(aTempOk), aFd, aTd, _newMsgHead(&aHead), aHeadCc)
+   _completeStoreSent(iSvc, path.Base(aTempOk), aFd, aTd, aMh, aHeadCc)
 }
 
 func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iCc []tCcEl) {
@@ -607,14 +608,15 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
    aHead := Header{Id:iUpdt.Thread.Id, From:"self", Posted:"draft", DataLen:int64(aData.Len()),
                    SubHead:&tHeader2{}}
    aHead.SubHead.setupDraft(aId.tid(), iUpdt, iSvc)
-   _writeMsg(aTd, &aHead, aData, &aIdx[aIdxN]) //todo stream from client
+   aMh, err := _writeMsg(aTd, &aHead, aData, &aIdx[aIdxN]) //todo stream from client
+   if err != nil { quit(err) }
    writeFormFillAttach(aTd, aHead.SubHead, iUpdt.Thread.FormFill, &aIdx[aIdxN])
    _writeIndex(aTd, aIdx, aCc)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreDraft(iSvc, path.Base(aTempOk), aFd, aTd, _newMsgHead(&aHead))
+   _completeStoreDraft(iSvc, path.Base(aTempOk), aFd, aTd, aMh)
 }
 
 func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead) {
@@ -1186,10 +1188,6 @@ type tMsgHead struct {
    SubHead tHeader2
 }
 
-func _newMsgHead(iHead *Header) *tMsgHead {
-   return &tMsgHead{Posted:iHead.Posted, From:iHead.From, SubHead:*iHead.SubHead}
-}
-
 func _readMsgHead(iFd *os.File) *tMsgHead {
    var aHead tMsgHead
    aBuf := make([]byte, 65536)
@@ -1274,14 +1272,15 @@ func _writeCc(iTd *os.File, iCc []tCcEl, iLenIdx int64) {
    if err != nil { quit(err) }
 }
 
-func _writeMsg(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) error {
+func _writeMsg(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) (*tMsgHead, error) {
    var err error
    var aCw tCrcWriter
    aTee := io.MultiWriter(iTd, &aCw)
    aSize := iHead.DataLen - totalAttach(iHead.SubHead)
-   if aSize < 0 { return tError("attachment size total exceeds DataLen") }
-   aHead := tMsgHead{Id:iHead.Id, From:iHead.From, Posted:iHead.Posted,
-                     Len:aSize, SubHead:*iHead.SubHead}
+   if aSize < 0 {
+      return nil, tError("attachment size total exceeds DataLen")
+   }
+   aHead := tMsgHead{Id:iHead.Id, From:iHead.From, Posted:iHead.Posted, Len:aSize, SubHead:*iHead.SubHead}
    aBuf, err := json.Marshal(aHead)
    if err != nil { quit(err) }
    aLen, err := aTee.Write([]byte(fmt.Sprintf("%04x", len(aBuf))))
@@ -1292,7 +1291,7 @@ func _writeMsg(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) error {
    if aSize > 0 {
       _, err = io.CopyN(aTee, iR, aSize)
       if err != nil {
-         return err
+         return nil, err //todo only net errors
       }
    }
    _, err = iTd.Write([]byte{'\n'})
@@ -1305,7 +1304,7 @@ func _writeMsg(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) error {
    iEl.Checksum = aCw.sum // excludes final '\n'
    iEl.Size, err = iTd.Seek(0, io.SeekCurrent)
    if err != nil { quit(err) }
-   return nil
+   return &aHead, nil
 }
 
 type tComplete []string
