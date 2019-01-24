@@ -925,22 +925,33 @@ func storeFwdNotifyThread(iSvc string, iHead *Header, iR io.Reader) error {
    if err != nil { quit(err) }
    defer aTd.Close()
    _revCc(iHead.SubHead.Cc, iHead)
-   _writeCc(aTd, append(aCc, iHead.SubHead.Cc...), aLenIdx)
+   aCc = append(aCc, iHead.SubHead.Cc...)
+   _writeCc(aTd, aCc, aLenIdx)
 
    aTempOk += fmt.Sprint(aPos)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreFwdNotify(iSvc, path.Base(aTempOk), aFd, aTd, iHead.SubHead.Cc)
+   _completeStoreFwdNotify(iSvc, path.Base(aTempOk), aFd, aTd, aCc)
    return nil
 }
 
 func _completeStoreFwdNotify(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl) {
    aRec := _parseTempOk(iTmp)
+   aUid := GetConfigService(iSvc).Uid
+   var aCcRes []tCcEl
 
-   resolveSentAdrsbk    (iSvc, iCc[0].Date, iCc, aRec.tid())
-   resolveReceivedAdrsbk(iSvc, iCc[0].Date, iCc, aRec.tid())
+   a := len(iCc)-1
+   if iCc[a].WhoUid == aUid { aCcRes = iCc }
+   for aD, aB := iCc[a].Date, iCc[a].ByUid; a > 0 && iCc[a-1].Date == aD && iCc[a-1].ByUid == aB; a-- {
+      if iCc[a-1].WhoUid == aUid { aCcRes = iCc }
+   }
+   if aCcRes == nil { aCcRes = iCc[a:] }
+   iCc = iCc[a:]
+
+   resolveSentAdrsbk    (iSvc, iCc[0].Date, aCcRes, aRec.tid())
+   resolveReceivedAdrsbk(iSvc, iCc[0].Date, aCcRes, aRec.tid())
 
    _finishStoreFwd(iSvc, iTmp, iFd, iTd, iCc)
 }
@@ -984,14 +995,15 @@ func storeFwdSentThread(iSvc string, iHead *Header) {
    if err != nil { quit(err) }
    defer aTd.Close()
    _revCc(aFwd[0].Cc, iHead)
-   _writeCc(aTd, append(aCc, aFwd[0].Cc...), aLenIdx)
+   aCc = append(aCc, aFwd[0].Cc...)
+   _writeCc(aTd, aCc, aLenIdx)
 
    aTempOk += fmt.Sprint(aPos)
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreFwdSent(iSvc, path.Base(aTempOk), aFd, aTd, aFwd[0].Cc, len(aFwd)-1)
+   _completeStoreFwdSent(iSvc, path.Base(aTempOk), aFd, aTd, aCc, len(aFwd)-1)
 }
 
 func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl, iFwdN int) {
@@ -999,6 +1011,10 @@ func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tC
    aFwdOrig := fileFwd(iSvc, aRec.tid())
    aFwdTemp := ftmpFwdS(iSvc, aRec.tid())
    var err error
+
+   a := len(iCc)-1
+   for aD, aB := iCc[a].Date, iCc[a].ByUid; a > 0 && iCc[a-1].Date == aD && iCc[a-1].ByUid == aB; a-- {}
+   iCc = iCc[a:]
 
    resolveReceivedAdrsbk(iSvc, iCc[0].Date, iCc, aRec.tid())
 
@@ -1351,13 +1367,7 @@ func completeThread(iSvc string, iTempOk string) {
          _readCc(aTd, &cCc)
          aTd.Seek(0, io.SeekStart)
       }
-      if cFlag == "orig" {
-         return cCc
-      }
-      c := len(cCc)-1
-      for cD, cB := cCc[c].Date, cCc[c].ByUid;
-          c > 0 && cCc[c-1].Date == cD && cCc[c-1].ByUid == cB; c-- {}
-      return cCc[c:]
+      return cCc
    }
    fFwdSent := func() int {
       cFwd := _getFwd(iSvc, aRec.tid(), "temp")
