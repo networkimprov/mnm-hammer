@@ -360,7 +360,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
 }
 
 func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iIdx []tIndexEl) {
-   aRec := _parseTempOk(iTmp)
+   aRec := _parseFtmp(iTmp)
    aTempOk := dirTemp(iSvc) + iTmp
    var err error
 
@@ -391,7 +391,7 @@ func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *t
 
 func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iCc []tCcEl) {
    var err error
-   aRec := _parseTempOk(iTmp)
+   aRec := _parseFtmp(iTmp)
    aTempOk := dirTemp(iSvc) + iTmp
 
    resolveSentAdrsbk    (iSvc, iHead.Posted, iCc, aRec.tid())
@@ -533,7 +533,7 @@ func storeSentThread(iSvc string, iHead *Header) {
 }
 
 func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iCc []tCcEl) {
-   aRec := _parseTempOk(iTmp)
+   aRec := _parseFtmp(iTmp)
 
    resolveReceivedAdrsbk(iSvc, iHead.Posted, iCc, aRec.tid())
    storeSentAttach(iSvc, &iHead.SubHead, aRec)
@@ -621,7 +621,7 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
 
 func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead) {
    var err error
-   aRec := _parseTempOk(iTmp)
+   aRec := _parseFtmp(iTmp)
    aDraft := dirThread(iSvc) + aRec.tid() + "_" + aRec.lms()
    aTempOk := dirTemp(iSvc) + iTmp
 
@@ -877,7 +877,7 @@ func storeFwdReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
 }
 
 func _completeStoreFwdReceived(iSvc string, iTmp string) {
-   aRec := _parseTempOk(iTmp)
+   aRec := _parseFtmp(iTmp)
    aTempOk := dirTemp(iSvc) + iTmp
 
    err := os.Link(aTempOk, dirThread(iSvc) + aRec.tid())
@@ -940,7 +940,7 @@ func storeFwdNotifyThread(iSvc string, iHead *Header, iR io.Reader) error {
 }
 
 func _completeStoreFwdNotify(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl) {
-   aRec := _parseTempOk(iTmp)
+   aRec := _parseFtmp(iTmp)
    aUid := GetConfigService(iSvc).Uid
    var aCcRes []tCcEl
 
@@ -1009,7 +1009,7 @@ func storeFwdSentThread(iSvc string, iHead *Header) {
 }
 
 func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl, iFwdN int) {
-   aRec := _parseTempOk(iTmp)
+   aRec := _parseFtmp(iTmp)
    aFwdOrig := fileFwd(iSvc, aRec.tid())
    aFwdTemp := ftmpFwdS(iSvc, aRec.tid())
    var err error
@@ -1036,7 +1036,7 @@ func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tC
 }
 
 func _finishStoreFwd(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl) {
-   aRec := _parseTempOk(iTmp)
+   aRec := _parseFtmp(iTmp)
    var err error
 
    _, err = io.Copy(iFd, iTd) // iFd has correct pos from caller
@@ -1309,7 +1309,7 @@ func _writeMsg(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) (*tMsgH
 
 type tComplete []string
 
-func _parseTempOk(i string) tComplete { return strings.SplitN(i, "_", 5) }
+func _parseFtmp(i string) tComplete { return strings.SplitN(i, "_", 5) }
 
 func (o tComplete)  op() string { return o[0] } // transaction type
 func (o tComplete) tid() string { return o[1] } // thread id
@@ -1333,7 +1333,7 @@ func _getThreadDoor(iSvc string, iTid string) *tThreadDoor {
 
 func completeThread(iSvc string, iTempOk string) {
    var err error
-   aRec := _parseTempOk(iTempOk)
+   aRec := _parseFtmp(iTempOk)
    if len(aRec) != 5 {
       fmt.Fprintf(os.Stderr, "completeThread: unexpected file %s%s\n", dirTemp(iSvc), iTempOk)
       return
