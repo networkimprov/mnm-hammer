@@ -270,16 +270,16 @@
             <table class="uk-table uk-table-small uk-table-hover uk-text-small">
                <tr>
                   <th v-for="(a, aKey) in ffnCol"
-                      v-if="aKey !== 'checksum' && aKey !== 'threadid'"
+                      v-if="aKey.charAt(0) !== '$' || aKey === '$msgid'"
                       style="position:sticky; top:0" class="uk-background-muted">
-                     {{ aKey === 'msgid' ? 'source' : aKey }}</th>
+                     {{ aKey === '$msgid' ? 'source' : aKey }}</th>
                </tr>
                <tr v-for="aRow in tl">
                   <td v-for="(a, aKey) in ffnCol"
-                      v-if="aKey !== 'checksum' && aKey !== 'threadid'">
-                     <a v-if="aKey === 'msgid'"
+                      v-if="aKey.charAt(0) !== '$' || aKey === '$msgid'">
+                     <a v-if="aKey === '$msgid'"
                         onclick="mnm.NavigateLink(this.href); return false"
-                        :href="'#'+ aRow.threadid +'&'+ aRow.msgid"><span uk-icon="mail"></span></a>
+                        :href="'#'+ aRow.$threadid +'&'+ aRow.$msgid"><span uk-icon="mail"></span></a>
                      <table v-else-if="aRow[aKey] instanceof Object"
                             class="uk-table">
                         <tr>
