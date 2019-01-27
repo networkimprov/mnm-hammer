@@ -10,6 +10,7 @@ package main
 
 import (
    "sync/atomic"
+   "encoding/base32"
    "bytes"
    "flag"
    "fmt"
@@ -26,6 +27,7 @@ var sTestHost = "" // used by main.go
 var sTestState []tTestStateEl // used by main.go
 var sTestNow = time.Now().Truncate(time.Second)
 var sTestDate = sTestNow.Format(" 0102150405")
+var sTestBase32 = base32.NewEncoding("%+123456789BCDFGHJKLMNPQRSTVWXYZ")
 
 type tTestStateEl struct {
    svcId, name string
@@ -496,7 +498,20 @@ func _hasExpected(iName string, iExpect, iGot interface{}) (string, interface{})
       } else if strings.HasSuffix(aExpect, "#td") {
          if aExpect[:len(aExpect)-3] + sTestDate != aGot { return iName, iGot }
       } else if aExpect == "*mid" {
-         if len(aGot) != 16 { return iName, iGot }
+         _, err := strconv.ParseUint(aGot, 16, 64)
+         if err != nil || len(aGot) != 16 { return iName, iGot }
+      } else if aExpect == "*midt" {
+         _, err := strconv.ParseUint(aGot[1:], 16, 64)
+         if err != nil || len(aGot) != 13 || aGot[0] != '_' { return iName, iGot }
+      } else if aExpect == "*midm" {
+         _, err := strconv.ParseUint(aGot[:16], 16, 64)
+         if err == nil {
+            _, err = strconv.ParseUint(aGot[17:], 16, 64)
+         }
+         if err != nil || len(aGot) != 29 || aGot[16] != '_' { return iName, iGot }
+      } else if aExpect == "*uid" {
+         aBuf, err := sTestBase32.DecodeString(aGot)
+         if err != nil || len(aBuf) != 20 { return iName, iGot }
       } else if aExpect != "*" {
          if aExpect != aGot { return iName, iGot }
       }
