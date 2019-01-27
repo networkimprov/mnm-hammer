@@ -520,7 +520,7 @@ func _hasExpected(iName string, iExpect, iGot interface{}) (string, interface{})
    case []interface{}:
       aGot, _ := iGot.([]interface{})
       aDiff := len(aGot) - len(aExpect)
-      if aDiff != 0 { return fmt.Sprintf("%s%+d", iName, aDiff), iGot }
+      if aDiff != 0 || aGot == nil { return fmt.Sprintf("%s%+d", iName, aDiff), iGot }
       var aName string
       for a := range aExpect {
          aName, iGot = _hasExpected(fmt.Sprintf("%s.%d", iName, a), aExpect[a], aGot[a])

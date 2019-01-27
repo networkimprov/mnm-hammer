@@ -99,7 +99,7 @@ type tTabs struct {
 const ( ePosForDefault=iota; ePosForPinned; ePosForTerms; ePosForEnd )
 
 func (o *tTabs) copy() *tTabs {
-   return &tTabs{Pos:o.Pos, PosFor:o.PosFor, Terms:append([]string(nil), o.Terms...)}
+   return &tTabs{Pos:o.Pos, PosFor:o.PosFor, Terms:append([]string{}, o.Terms...)}
 }
 
 type tOpenState map[string]bool // key msg id

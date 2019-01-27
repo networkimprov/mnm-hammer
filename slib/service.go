@@ -214,7 +214,7 @@ func _updateConfig(iCfg *tSvcConfig) error {
 func getTabsService(iSvc string) []string {
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
-   return append([]string(nil), aSvc.tabs...)
+   return append([]string{}, aSvc.tabs...)
 }
 
 func addTabService(iSvc string, iTerm string) int {
