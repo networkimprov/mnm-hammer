@@ -543,12 +543,42 @@ To view a form, click its <span uk-icon="triangle-left"></span>formname hyperlin
 </p>
 
 
-<h4 id="recv">10a. Received/Sent Messages</h4>
+<h4 id="rcpt">10a. Recipients</h4>
+
+<p>Individuals or groups who have received a copy of the thread are listed 
+in the <span uk-icon="social"></span> menu. 
+Recipients who have unsubscribed from the thread do not receive new messages, and are 
+indicated by <span style="text-decoration:line-through">&nbsp;Recipient Name&nbsp;</span>. 
+To view the <i>Note</i> for a recipient, mouse over their name in the list. 
+The list may be sorted using the <i>Date</i>, <i>Who</i>, and <i>By</i> tabs. 
+</p>
+
+<p>To forward a thread to new recipients (or resubscribe unsubscribed recipients), 
+open the <span uk-icon="social"></span> menu, and 
+enter an alias or group name in the <i>+Forward</i> field; repeat for any additional recipients. 
+To remove a recipient from the forward, click the pop-up menu to reveal its contents, 
+then click the &times; button for the target item. 
+Add an optional explanation in the <i>Note</i> field. 
+Then click the <span uk-icon="forward"></span> button. 
+</p>
+
+<p>A forwarded thread is delivered without any attachments. 
+These are automatically delivered separately by the attachments' original senders. 
+This policy prevents the transmission of malware disguised as a benign attachment from a trusted sender. 
+A copy of each message is also automatically delivered by its original sender. 
+Until the copy is received, the sender's name on the message is labeled <i>[unverified]</i>, 
+and the label's hover text gives the identity of the account that forwarded the thread. 
+If the original copy does not match the forwarded version, the sender's name is labeled 
+<i>[possibly forged]</i>.
+</p>
+
+
+<h4 id="recv">10b. Received/Sent Messages</h4>
 
 <p>Heretofore unopened messages present the sender's alias in bold text in the header. 
 </p>
 
-<p>Open messages display the Cc, Subject, and Attached fields (unless empty). 
+<p>Open messages display the Subject and Attached fields (unless empty). 
 The Body displays <span uk-icon="comment"></span> if empty. 
 </p>
 
@@ -568,16 +598,21 @@ Blank forms are fillable only in the preview panel of the draft editor.
 </p>
 
 
-<h4 id="comp">10b. Draft Composition</h4>
+<h4 id="comp">10c. Draft Composition</h4>
 
 <p>Starting a new thread or a reply within an existing thread opens a draft editor. 
-Its input fields are the To/Cc list (required), an Attachment list (optional), 
+Its input fields are the Attachment list (optional), 
 the Subject (optional for replies), and a Body (optional). 
 Edits to all fields are automatically saved. 
 The Subject and Body are saved every few seconds. 
 </p>
 
-<p>To add to the To/Cc list, enter an alias in the <i>+To</i> field. 
+<p>To name recipients of a new thread, open the <span uk-icon="social"></span> menu, 
+edit the <i>Note</i> field if desired, and 
+enter an alias or group name in the <i>+To</i> field. 
+(Recipients won't receive anything until the draft is sent.) 
+To remove a recipient from the list, click the pop-up menu to reveal its contents, 
+then click the &times; button for the target item.
 </p>
 
 <p>To attach a file or blank form, click the <span uk-icon="push"></span> or 
@@ -587,7 +622,7 @@ then attach an item by clicking its <span uk-icon="location"></span> button.
 To display an image or blank form in the Body, see <a href="#mark">Markdown</a>. 
 </p>
 
-<p>To drop an entry in the To/Cc or Attachment list, click the list's pop-up menu to reveal its contents, 
+<p>To drop an entry in the Attachment list, click the list's pop-up menu to reveal its contents, 
 then click the &times; button for the target item. 
 </p>
 
@@ -610,7 +645,7 @@ by the <span uk-icon="bolt"></span> icon to the right of the header.
 </p>
 
 
-<h4 id="mark">10c. Markdown</h4>
+<h4 id="mark">10d. Markdown</h4>
 
 <p>The message Body is written in Markdown, a widely used plain-text shorthand 
 for essential rich-text HTML features. 
@@ -774,6 +809,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See said License for detail
 </ol></li>
 <li><a href="#msgs">Messages</a>
 <ol type="a">
+<li><a href="#rcpt">Recipients</a></li>
 <li><a href="#recv">Received/Sent Messages</a></li>
 <li><a href="#comp">Draft Composition</a>
 <li><a href="#mark">Markdown</a></li>

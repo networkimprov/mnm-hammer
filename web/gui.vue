@@ -21,25 +21,27 @@
    <script>
       mnm._mdi = markdownit();
       mnm._adrsbkmenu = null;
+      mnm._adrsbkmenuId = null;
       mnm._lastPreview = '';
       mnm._data = {
       // global
          v:[], t:[], f:[], fo:'', nlo:[], // fo populated by f requests
       // per client
          cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}},
-         sort:{al:'Date', t:'Date', f:'Date'}, //todo move to cs
+         sort:{cl:'Who', al:'Date', t:'Date', f:'Date'}, //todo move to cs
          ohiFrom:true, //todo move to cs
       // per service
          cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
          ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:null,
       // per thread
-         al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
+         cl:[[],[]], al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
          toSave:{}, // populated locally
       };
-      mnm._listSort = function(iList, iKey) {
+      mnm._listSort = function(iName, iKey) {
          var aTmp;
-         mnm._data.sort[iList] = iKey;
-         mnm._data[iList].sort(function(cA, cB) {
+         var aList = iName === 'cl' ? mnm._data.cl[1] : mnm._data[iName];
+         mnm._data.sort[iName] = iKey;
+         aList.sort(function(cA, cB) {
             if (iKey === 'Date')
                aTmp = cA, cA = cB, cB = aTmp;
             if (cA[iKey] <= cB[iKey])
@@ -90,6 +92,9 @@
       <mnm-subject v-if="msgSubjects.length > 1"
                    :list="msgSubjects"/>
       <div class="uk-float-right">
+         <span uk-icon="social" class="dropdown-icon">{{cl[1].length}}</span>
+         <mnm-cc @ccadd="ccAdd" @ccdrop="ccDrop"
+                 ref="cl" :tid="ml.length ? ml[ml.length-1].Id : 'none'"/>
          <span uk-icon="location" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
          <mnm-attach ref="al"/>
          &nbsp;
@@ -123,7 +128,11 @@
                   :class="{'message-title-edit': aMsg.From === '' && !aMsg.Queued,
                            'message-title-seen': aMsg.Seen !== ''}">
                <mnm-date :iso="aMsg.Date" ymd="md" hms="hm"/>
-               <b>{{ aMsg.Alias || aMsg.From }}</b>
+               <b>{{ aMsg.Alias || aMsg.From }}
+                  <span v-if="aMsg.ForwardBy"
+                        :title="'Forward by: '+aMsg.ForwardBy">
+                     {{/failed$/.test(aMsg.ForwardBy) ? '[possibly forged]' : '[unverified]'}}</span>
+               </b>
             </span>
             <div v-if="aMsg.Queued"
                  title="Awaiting link to server"
@@ -132,19 +141,15 @@
                <div v-if="!('msg_data' in mo[aMsg.Id])"
                     class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
                <template v-else-if="aMsg.From === '' && !aMsg.Queued">
-                  <button @click="mnm.ThreadSend(aMsg.Id)"
-                          title="Send draft"
-                          class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
                   <button @click="mnm.ThreadDiscard(aMsg.Id)"
                           title="Discard draft"
                           class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
                   <div @keypress="keyAction('pv_'+aMsg.Id, $event)">
                      <div style="position:relative; padding:1px;">
-                        <mnm-adrsbkinput @keyup.enter.native="ccAdd(aMsg.Id, $event.target)"
-                                         :type="3" placeholder="+To" size="25"/>
+                        <button @click="mnm.ThreadSend(aMsg.Id)"
+                                title="Send draft"
+                                class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
                         <div style="height:100%; position:absolute; left:13em; right:42px; top:0;">
-                           <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Cc"
-                                          :msgid="aMsg.Id" :drop="ccDrop"/>
                            <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Attach"
                                           :msgid="aMsg.Id" :drop="atcDrop"
                                           :getname="atcGetName" :getkey="atcGetKey"
@@ -182,20 +187,15 @@
                              title="New reply draft"
                              class="btn-icon"><span uk-icon="comment"></span></button>
                   </div>
-                  <div v-if="mo[aMsg.Id].SubHead.For.length !== 1
-                          || mo[aMsg.Id].SubHead.For[0].Id !== cf.Uid">
-                     Cc:
-                     <span v-for="(aTo, aI) in mo[aMsg.Id].SubHead.For"
-                           v-if="aTo.Id !== cf.Uid"
-                           style="margin-right:1em">
-                        {{ mo[aMsg.Id].SubHead.Cc[aI] }}</span>
-                  </div>
                   <div v-if="aMsg.Subject">
                      Subject: {{ aMsg.Subject }}</div>
                   <div v-if="mo[aMsg.Id].SubHead.Attach">
                      Attached ({{ mo[aMsg.Id].SubHead.Attach.length }}):
                      <template v-for="aAtc in mo[aMsg.Id].SubHead.Attach">
-                        <span v-if="aAtc.Name.charAt(0) === 'r'"
+                        <span v-if="'ForwardBy' in aMsg && !/failed$/.test(aMsg.ForwardBy)"
+                              :title="'Awaiting receipt from '+ aMsg.ForwardBy">
+                              class="">{{ aAtc.Name.substr(2) }}</span>
+                        <span v-else-if="aAtc.Name.charAt(0) === 'r'"
                               @click="tabSearch('ffn:'+ aAtc.Ffn +
                                            (aMsg.From === cf.Uid ? '_sent' : '_recv'), cs.SvcTabs)"
                               class="uk-link">{{ aAtc.Name.substr(2) }}</span>
@@ -418,6 +418,88 @@
       template: '#mnm-subject',
       props: {list:Array},
       computed: { mnm: function() { return mnm } },
+   });
+</script>
+
+<script type="text/x-template" id="mnm-cc">
+   <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3 dropdown-scroll">
+      <button @click="mnm.ForwardSend(tid, mnm._data.cl[0][0].Qid)"
+              :style="{visibility: ccSet ? 'hidden' : 'visible'}"
+              :disabled="ccSet || !mnm._data.cl[ccSet].length"
+              title="Forward thread to new recipients"
+              style="float:left; margin:0 0.5em 1em 0"
+              class="btn-icon"><span uk-icon="forward"></span></button>
+      <input v-model="note" placeholder="Note" size="57" maxlength="1024" type="text">
+      <div style="position:relative; padding:1px;">
+         <mnm-adrsbkinput @keyup.enter.native="addUser"
+                          :type="3" placeholder="+To" size="25"/>
+         <div style="height:100%; position:absolute; left:13em; right:0; top:0;">
+            <mnm-draftmenu ref="menu" :list="menu" :drop="dropUser"/></div>
+      </div>
+      <ul uk-tab>
+         <li v-for="aKey in ['Who','By','Date']"
+             :class="{'uk-active': aKey === mnm._data.sort.cl}">
+            <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
+         </li></ul>
+      <ul class="uk-list uk-list-divider dropdown-scroll-list">
+         <li v-for="aUser in mnm._data.cl[1]" :key="aUser.WhoUid">
+            <div style="float:left; width:40%">
+               <span :title="aUser.Note">{{aUser.Who}}</span>
+               <span v-show="aUser.Queued"
+                     title="Awaiting link to server"
+                     uk-icon="bolt"></span>
+            </div>
+            {{aUser.By}}
+            <div style="float:right"><mnm-date :iso="ccSet ? now().toISO() : aUser.Date"/></div>
+         </li></ul>
+   </div>
+</script><script>
+   Vue.component('mnm-cc', {
+      template: '#mnm-cc',
+      props: {tid:String},
+      data: function() { return {note:'', lastMenu:[]} },
+      watch: {
+         tid: function() { this.note = this.ccSet ? 'initial recipient' : '' },
+      },
+      computed: {
+         ccSet: function() { return this.tid.charAt(0) === '_' ? 1 : 0 },
+         menu: function() {
+            var aCc = mnm._data.cl[this.ccSet];
+            function fChanged(c) {
+               var aLen = 0;
+               for (var a=0; a < aCc.length; ++a)
+                  if (aCc[a].WhoUid !== aCc[a].ByUid) {
+                     if (c.lastMenu.indexOf(aCc[a].Who) < 0)
+                        return true;
+                     ++aLen;
+                  }
+               return aLen !== c.lastMenu.length;
+            }
+            var aMenu = fChanged(this) ? [] : this.lastMenu;
+            for (var a=0, aN=0; a < aCc.length; ++a)
+               if (aCc[a].WhoUid !== aCc[a].ByUid)
+                  aMenu[aN++] = aCc[a].Who;
+            if ('menu' in this.$refs)
+               this.$refs['menu'].$forceUpdate();
+            return this.lastMenu = aMenu;
+         },
+         mnm: function() { return mnm }
+      },
+      methods: {
+         now: function() { return luxon.DateTime.local() },
+         addUser: function(iEvt) {
+            this.$emit('ccadd', this.tid, this.ccSet, iEvt.target.value, this.note);
+            iEvt.target.value = '';
+         },
+         dropUser: function(iJunk, iItem) {
+            var aCc = mnm._data.cl[this.ccSet];
+            for (var a=0; a <= iItem; ++a)
+               if (aCc[a].WhoUid === aCc[a].ByUid)
+                  ++iItem;
+            this.$emit('ccdrop', this.tid, this.ccSet, iItem);
+         },
+         listSort: function(i) { return mnm._listSort('cl', i) },
+      },
    });
 </script>
 
@@ -946,7 +1028,7 @@
    <span v-if="response.Type">
       <a v-if="response.Tid"
          onclick="mnm.NavigateLink(this.href); return false"
-         :href="'#'+ response.Tid +'&'+ response.MsgId"><span uk-icon="mail"></span></a>
+         :href="'#'+ response.Tid"><span uk-icon="mail"></span></a>
       <template v-else>
          ping</template>
       <mnm-date :iso="response.Date"/>
@@ -1105,7 +1187,7 @@
                <mnm-adrsbkinput oninput="this.form.elements[1].disabled = !this.value"
                                 :type="1" placeholder="To" size="40"
                                 name="resets" autocomplete="off"/>
-               <button onclick="mnm.OhiAdd(this.form.elements[0].value)"
+               <button onclick="mnm.OhiAdd(null, mnm._adrsbkmenuId[this.form.elements[0].value])"
                        disabled
                        title="Notify contact when you're online"
                        class="btn-icontxt">o/</button>
@@ -1294,17 +1376,8 @@
                mnm._lastPreview = iId;
          },
          getReplyTemplate: function(iIdxEl) {
-            var aObj = {alias: mnm._data.cf.Alias, cc: null, data: '',
-                        subject: iIdxEl === mnm._data.ml[mnm._data.ml.length-1] ? '' : iIdxEl.Subject};
-            var aMo = mnm._data.mo[iIdxEl.Id];
-            if (aMo.From === mnm._data.cf.Uid) {
-               aObj.cc = aMo.SubHead.Cc;
-            } else {
-               var aN = aMo.SubHead.For.findIndex(function(c){ return c.Id === mnm._data.cf.Uid });
-               aObj.cc = aMo.SubHead.Cc.slice(0, aN).concat(aMo.SubHead.Cc.slice(aN+1),
-                                                            aMo.SubHead.Alias);
-            }
-            return aObj;
+            return {alias: mnm._data.cf.Alias, data: '',
+                    subject: iIdxEl === mnm._data.ml[mnm._data.ml.length-1] ? '' : iIdxEl.Subject};
          },
          draft_tosave: function(iId, iNoTimer) {
             if (!(iId in mnm._data.toSave))
@@ -1330,8 +1403,8 @@
             }
             mnm.ThreadSave({
                Id:       iId,
+               Cc:       iCc     || mnm._data.cl[1],
                Alias:               iMo.SubHead.Alias,
-               Cc:       iCc     || iMo.SubHead.Cc,
                Attach:   iAttach || iMo.SubHead.Attach,
                FormFill: iToSave.form_fill,
                Data:     iToSave.msg_data,
@@ -1339,17 +1412,27 @@
             });
             iToSave.suUpdt = iToSave.mdUpdt = iToSave.ffUpdt = false;
          },
-         ccAdd: function(iId, iWidget) {
-            if (iWidget.value.length === 0)
+         ccAdd: function(iTid, iCcSet, iAlias, iNote) {
+            if (!iAlias.length || !(iAlias in mnm._adrsbkmenuId))
                return;
-            var aCc = mnm._data.mo[iId].SubHead.Cc;
-            aCc = aCc ? aCc.slice() : [];
-            aCc.unshift(iWidget.value);
-            var aPrev = aCc.lastIndexOf(iWidget.value);
-            if (aPrev !== 0)
-               aCc.splice(aPrev, 1);
-            iWidget.value = '';
-            this.draft_save(iId, aCc, null);
+            var aCc = mnm._data.cl[iCcSet].slice();
+            var aPrev = aCc.findIndex(function(c) { return c.Who === iAlias });
+            var aEl = aPrev >= 0 ? aCc.splice(aPrev, 1)[0]
+                                 : {Who:iAlias, WhoUid:mnm._adrsbkmenuId[iAlias]};
+            aEl.Note = iNote;
+            aCc.unshift(aEl);
+            if (iCcSet)
+               this.draft_save(iTid, aCc, null);
+            else
+               mnm.ForwardSave(iTid, aCc);
+         },
+         ccDrop:  function(iTid, iCcSet, iN) {
+            var aCc = mnm._data.cl[iCcSet];
+            aCc = aCc.slice(0, iN).concat(aCc.slice(iN+1));
+            if (iCcSet)
+               this.draft_save(iTid, aCc, null);
+            else
+               mnm.ForwardSave(iTid, aCc);
          },
          atcAdd: function(iId, iPath) {
             var aAtc = mnm._data.mo[iId].SubHead.Attach;
@@ -1361,10 +1444,6 @@
                aAtc.splice(aPrev, 1);
             aAtc.unshift({Name:iPath});
             this.draft_save(iId, null, aAtc);
-         },
-         ccDrop:  function(iId, iN) {
-            var aCc = mnm._data.mo[iId].SubHead.Cc;
-            this.draft_save(iId, aCc.slice(0, iN).concat(aCc.slice(iN+1)), null);
          },
          atcDrop: function(iId, iN) {
             var aAtc = mnm._data.mo[iId].SubHead.Attach;
@@ -1500,14 +1579,14 @@
       }
 
       switch (i) {
-      case 'cs': case 'cf': case 'nl': case 'al': case 'ml':
+      case 'cs': case 'cf': case 'nl': case 'cl': case 'al': case 'ml':
       case 'ps': case 'pt': case 'pf': case 'it': case 'if': case 'gl': case 'ot': case 'of':
       case 't' : case 'f' : case 'v' : case 'nlo':
          if (i === 'f' && iEtc) {
             mnm._data.fo = iData;
          } else {
             mnm._data[i] = JSON.parse(iData);
-            if (i === 'al' || i === 't' || i === 'f')
+            if (i === 'cl' || i === 'al' || i === 't' || i === 'f')
                sApp.$refs[i].listSort(mnm._data.sort[i]);
          }
          break;
@@ -1536,10 +1615,9 @@
                Vue.set(mnm._data.mo, aK, iEtc[aK]);
          break;
       case 'mn':
-         // avoid opening Cc & Attach menus if not changed
+         // avoid opening Attach menu if not changed
          var aOrig = mnm._data.mo[iEtc.Id] && mnm._data.mo[iEtc.Id].SubHead;
          if (aOrig) {
-            if (!fDiff('Cc'    )) iEtc.SubHead.Cc     = aOrig.Cc;
             if (!fDiff('Attach')) iEtc.SubHead.Attach = aOrig.Attach;
          }
          Vue.set(mnm._data.mo, iEtc.Id, iEtc); //todo set ml Date
@@ -1548,9 +1626,7 @@
             if (!aOrig[c]         || !iEtc.SubHead[c])         return true;
             if ( aOrig[c].length  !== iEtc.SubHead[c].length)  return true;
             if ( aOrig[c].length  === 0)                       return false;
-            if (c === 'Cc'
-               ? aOrig[c][0]      === iEtc.SubHead[c][0]
-               : aOrig[c][0].Name === iEtc.SubHead[c][0].Name) return false; //todo full comparison?
+            if ( aOrig[c][0].Name === iEtc.SubHead[c][0].Name) return false; //todo full comparison?
             return true;
          }
          var aOrig = mnm._data.toSave[iEtc.Id];
@@ -1569,7 +1645,13 @@
          }
          break;
       case 'nameset':
-         mnm._adrsbkmenu.results(iEtc);
+         mnm._adrsbkmenuId = {};
+         var aList = [];
+         for (var a=0; a < iEtc.length; a+=2) {
+            mnm._adrsbkmenuId[iEtc[a]] = iEtc[a+1];
+            aList.push(iEtc[a]);
+         }
+         mnm._adrsbkmenu.results(aList);
          break;
       }
    };
