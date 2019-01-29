@@ -80,7 +80,7 @@ type tService struct {
    adrsbk tAdrsbk
    sync.RWMutex // protects the following
    config tSvcConfig
-   sendQ []tQueueEl
+   sendQ []*tQueueEl
    sendQPost func(...*SendRecord)
    notice []tNoticeEl
    fromOhi tOhi

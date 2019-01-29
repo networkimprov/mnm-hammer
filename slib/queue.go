@@ -21,13 +21,10 @@ func GetQueue(iSvc string, iPostFn func(...*SendRecord)) []*SendRecord {
    // assume we're called once during synchronous Init()
    aSvc := getService(iSvc)
    aSvc.sendQPost = iPostFn // do not call during Init()
-   aSort := make([]*tQueueEl, len(aSvc.sendQ))
-   for a, _ := range aSvc.sendQ {
-      aSort[a] = &aSvc.sendQ[a]
-   }
+   aSort := append([]*tQueueEl{}, aSvc.sendQ...)
    sort.Slice(aSort, func(cA, cB int) bool { return aSort[cA].Date < aSort[cB].Date })
    aQ := make([]*SendRecord, len(aSort))
-   for a, _ := range aSort {
+   for a := range aSort {
       aQ[a] = &aSort[a].Srec
    }
    return aQ
@@ -49,7 +46,7 @@ func addQueue(iSvc string, iType byte, iId string) {
    if aEl < len(aSvc.sendQ) && aSvc.sendQ[aEl].Srec.Id == aId {
       return
    }
-   aSvc.sendQ = append(aSvc.sendQ, tQueueEl{})
+   aSvc.sendQ = append(aSvc.sendQ, &tQueueEl{})
    if aEl < len(aSvc.sendQ) {
       copy(aSvc.sendQ[aEl+1:], aSvc.sendQ[aEl:])
    }
@@ -69,7 +66,7 @@ func addListQueue(iSvc string, iType byte, iIds []string, iNoPost string) []*Sen
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    sort.Strings(iIds)
-   aNewQ := make([]tQueueEl, len(aSvc.sendQ) + len(iIds))
+   aNewQ := make([]*tQueueEl, len(aSvc.sendQ) + len(iIds))
    aDate := dateRFC3339()
    aRecs := make([]*SendRecord, len(iIds))
    var a, aPrevN, aN int
@@ -81,8 +78,7 @@ func addListQueue(iSvc string, iType byte, iIds []string, iNoPost string) []*Sen
       }
       copy(aNewQ[aPrevN+a:], aSvc.sendQ[aPrevN:aN])
       aPrevN = aN
-      aNewQ[aN+a].Srec = SendRecord{aId}
-      aNewQ[aN+a].Date = aDate
+      aNewQ[aN+a] = &tQueueEl{Srec:SendRecord{aId}, Date:aDate}
       aRecs[a] = &aNewQ[aN+a].Srec
    }
    copy(aNewQ[aN+a+1:], aSvc.sendQ[aN:])
