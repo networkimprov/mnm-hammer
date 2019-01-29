@@ -264,6 +264,11 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()
+   fClean := func() {
+      cEr := os.Remove(aTemp)
+      if cEr != nil { quit(cEr) }
+      removeReceivedAttach(iSvc, iHead)
+   }
    if aCid != "" {
       aTempOk = ftmpSc(iSvc, aThreadId, aCid)
       aHead := *iHead; iHead = &aHead
@@ -279,7 +284,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
       err = tempReceivedAttach(iSvc, iHead, iR)
    }
    if err != nil {
-      os.Remove(aTemp)
+      fClean()
       return "", err
    }
    if aThreadId == aMsgId {
@@ -294,7 +299,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil {
          fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s not found\n", iSvc, aThreadId)
-         os.Remove(aTemp)
+         fClean()
          return "", nil
       }
       defer aFd.Close()
@@ -307,7 +312,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
          if aIdx[aIdxN].Id != aCid || aIdx[aIdxN].ForwardBy == "" {
             aMsg := "already confirmed"; if aIdx[aIdxN].Id != aCid { aMsg = "not found" }
             fmt.Fprintf(os.Stderr, "storeReceivedThread %s: confirm id %s %s\n", iSvc, aCid, aMsg)
-            os.Remove(aTemp)
+            fClean()
             return "", nil
          }
          if aIdx[aIdxN].Size == aEl.Size && aIdx[aIdxN].Checksum == aEl.Checksum {
@@ -321,7 +326,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
             if aIdx[a].Id <  aMsgId || aIdx[a].Offset < 0 { continue }
             if aIdx[a].Id == aMsgId {
                fmt.Fprintf(os.Stderr, "storeReceivedThread %s: msg %s already stored\n", iSvc, aMsgId)
-               os.Remove(aTemp)
+               fClean()
                return "", nil
             }
             if aCopyLen == 0 {

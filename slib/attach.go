@@ -113,44 +113,47 @@ func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
       fmt.Fprintf(os.Stderr, "tempReceivedAttach %s: %s %s\n", iSvc, iHead.Posted, err.Error())
    }
    aDoSync := false
-   aPath := make([]string, len(iHead.SubHead.Attach))
-   for a, aFile := range iHead.SubHead.Attach {
+   var aPath string
+   for _, aFile := range iHead.SubHead.Attach {
       aDoSync = true
-      aPath[a] = ftmpAttach(iSvc, iHead.Id, aFile.Name) //todo escape '/' in .Name
+      aPath = ftmpAttach(iSvc, iHead.Id, aFile.Name) //todo escape '/' in .Name
       if _isFormFill(aFile.Name) {
          aTid := iHead.SubHead.ThreadId; if aTid == "" { aTid = iHead.Id }
          err = tempFilledForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iR)
          if err != nil {
-            break
+            return err
          }
          continue
       }
       var aFd *os.File
-      aFd, err = os.OpenFile(aPath[a], os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+      aFd, err = os.OpenFile(aPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
       if err != nil { quit(err) }
       defer aFd.Close()
       _, err = io.CopyN(aFd, iR, aFile.Size)
       if err != nil {
-         break
+         return err //todo only network errors
       }
       if !aMtime.IsZero() {
-         err = os.Chtimes(aPath[a], time.Now(), aMtime)
+         err = os.Chtimes(aPath, time.Now(), aMtime)
          if err != nil { quit(err) }
       }
       err = aFd.Sync()
       if err != nil { quit(err) }
-   }
-   if err != nil {
-      for _, aP := range aPath {
-         if aP != "" { os.Remove(aP) }
-      }
-      return err
    }
    if aDoSync {
       err = syncDir(dirTemp(iSvc))
       if err != nil { quit(err) }
    }
    return nil
+}
+
+func removeReceivedAttach(iSvc string, iHead *Header) {
+   var err error
+   for _, aFile := range iHead.SubHead.Attach {
+      if _isFormFill(aFile.Name) { continue }
+      err = os.Remove(ftmpAttach(iSvc, iHead.Id, aFile.Name)) //todo escape '/' in .Name
+      if err != nil && !os.IsNotExist(err) { quit(err) }
+   }
 }
 
 func storeReceivedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
