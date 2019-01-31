@@ -144,7 +144,7 @@
                   <button @click="mnm.ThreadDiscard(aMsg.Id)"
                           title="Discard draft"
                           class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
-                  <div @keypress="keyAction('pv_'+aMsg.Id, $event)">
+                  <div @keydown="keyAction('pv_'+aMsg.Id, $event)">
                      <div style="position:relative; padding:1px;">
                         <button @click="mnm.ThreadSend(aMsg.Id)"
                                 title="Send draft"
@@ -548,10 +548,10 @@
       <input @focus="menu.placeEl($el, type, $event.target.value)"
              @blur ="menu.hideEl()"
              @input="menu.search(type, $event.target.value)"
-             @keypress.down ="menu.selectItem($event.target,  1)"
-             @keypress.up   ="menu.selectItem($event.target, -1)"
-             @keypress.esc  ="menu.selectNone($event.target)"
-             @keyup.enter   ="menu.clear()"
+             @keydown.down ="menu.selectItem($event.target,  1)"
+             @keydown.up   ="menu.selectItem($event.target, -1)"
+             @keydown.esc  ="menu.selectNone($event.target)"
+             @keyup.enter  ="menu.clear()"
              v-bind="$attrs" type="text">
       <!--menu appended here-->
    </div>
@@ -1128,7 +1128,7 @@
                   <input v-model="draft.gid" placeholder="(Group)" size="25" type="text">
                   <br>
                   <mnm-adrsbkinput @keyup.enter.native="setGid($event.target)"
-                                   @keypress.enter.native.prevent=""
+                                   @keydown.enter.native.prevent=""
                                    :type="2" placeholder="Search groups" size="25"/>
                </div>
                <button @click="startPing()"
@@ -1661,7 +1661,7 @@
       mnm._lastPreview = '';
    };
 
-   window.addEventListener('keypress', function(iEvent) {
+   window.addEventListener('keydown', function(iEvent) {
       if (iEvent.ctrlKey && iEvent.key === 'j') {
          iEvent.preventDefault();
          if (mnm._lastPreview) {
