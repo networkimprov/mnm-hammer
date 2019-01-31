@@ -160,9 +160,10 @@
                         <span uk-icon="push"      :id="'t'+aMsg.Id" class="dropdown-icon"></span
                        ><span uk-icon="file-edit" :id="'f'+aMsg.Id" class="dropdown-icon"></span>
                         <span :id="'pv_'+aMsg.Id"></span>
-                        <div uk-dropdown="mode:click; pos:right-top" class="uk-width-2-5"
-                             style="overflow:auto; max-height:75vh;
-                                    border-top:1em solid white; border-bottom:1em solid white;">
+                        <div uk-dropdown="mode:click; pos:right-top"
+                             class="uk-width-2-5 message-edit"
+                             style="overflow:auto; max-height:75vh; padding: 0.5em 1em;
+                                    border-width: 1em 0; border-color:transparent; border-style:solid;">
                            <mnm-markdown @formfill="ffAdd(aMsg.Id, arguments[0], arguments[1])"
                                          @toggle="atcToggleFf(aMsg.Id, arguments[0], arguments[1])"
                                          :src=     "(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
