@@ -21,10 +21,10 @@ body {
 .message-list {
    background-color: #fff7cf;
 }
-.message-list ul {
+.message-list > ul {
    border-bottom: 4px double lightgray;
 }
-.message-list ul li {
+.message-list > ul > li {
    padding: 0 0.2em 0 0.5em;
 }
 
@@ -111,14 +111,40 @@ input[type=text], textarea {
    overflow-x: auto;
    overflow-wrap: break-word;
 }
-
+.message img {
+   max-width: 100%;
+}
 .message pre, .message code {
    white-space: pre-wrap;
    word-break: break-all;
 }
-
-.message img {
-   max-width: 100%;
+/* some of the following fix odd UIKit settings */
+.message em, .message code,
+.message h1, .message h2, .message h3, .message h4, .message h5, .message h6,
+.message blockquote {
+   color: inherit;
+}
+.message pre {
+   background-color: inherit;
+   border: none;
+   padding: 0 2em;
+}
+.message blockquote {
+   font-style: initial;
+   font-size: inherit;
+   margin-left: 1em;
+   border-left: solid 2px;
+   padding-left: 0.5em;
+}
+.message ul {
+   list-style: initial;
+   margin: 0 0 20px 0;
+}
+.message table {
+   margin: 0 0 20px 1.5em;
+}
+.message th, .message td {
+   padding: 0.1em 0.5em;
 }
 
 .adrsbkmenu {
