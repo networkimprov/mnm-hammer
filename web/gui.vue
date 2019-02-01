@@ -71,6 +71,13 @@
       mnm._secondsToString = function(iNum) {
          return luxon.Duration.fromMillis(iNum * 1000).toFormat('d:hh:mm:ss');
       };
+      mnm._canScroll = function(iEl, iDeltaY) {
+         if (iDeltaY < 0)
+            return iEl.scrollTop > 0;
+         if (iDeltaY > 0)
+            return iEl.scrollTop < iEl.scrollHeight - iEl.clientHeight;
+         return false;
+      };
    </script>
 </head><body>
 <base target="_blank">
@@ -163,7 +170,8 @@
                         <div uk-dropdown="mode:click; pos:right-top"
                              class="uk-width-2-5 message-edit"
                              style="overflow:auto; max-height:75vh; padding: 0.5em 1em;
-                                    border-width: 1em 0; border-color:transparent; border-style:solid;">
+                                    border-width: 1em 0; border-color:transparent; border-style:solid;"
+                             onwheel="return mnm._canScroll(this, event.deltaY)">
                            <mnm-markdown @formfill="ffAdd(aMsg.Id, arguments[0], arguments[1])"
                                          @toggle="atcToggleFf(aMsg.Id, arguments[0], arguments[1])"
                                          :src=     "(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
