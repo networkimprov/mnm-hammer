@@ -182,9 +182,11 @@
                                          :atchasff="atcHasFf" :msgid="aMsg.Id"/></div>
                      </div>
                      <input @input="subjAdd(aMsg.Id, $event.target.value)"
+                            @click.stop="clickPreview('pv_'+aMsg.Id)"
                             :value="(toSave[aMsg.Id] || mo[aMsg.Id].SubHead).Subject"
                             placeholder="Subject" type="text" style="width:100%">
                      <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
+                                     @click.native.stop="clickPreview('pv_'+aMsg.Id)"
                                      :src="(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
                                      placeholder="Ctrl-J to Preview" style="width:100%"/>
                   </div>
@@ -680,7 +682,7 @@
 </script>
 
 <script type="text/x-template" id="mnm-textresize">
-   <textarea @input="resize" @click.stop :value="src" class="text-resize"></textarea>
+   <textarea @input="resize" :value="src" class="text-resize"></textarea>
 </script><script>
    Vue.component('mnm-textresize', {
       template: '#mnm-textresize',
@@ -1386,6 +1388,9 @@
          keyAction: function(iId, iEvent) {
             if (iEvent.ctrlKey && iEvent.key === 'j')
                mnm._lastPreview = iId;
+         },
+         clickPreview: function(iId) {
+            document.getElementById(iId).nextElementSibling.click();
          },
          getReplyTemplate: function(iIdxEl) {
             return {alias: mnm._data.cf.Alias, data: '',
