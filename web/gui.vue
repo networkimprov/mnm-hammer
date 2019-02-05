@@ -911,7 +911,7 @@
                        title="Attach form"
                        class="btn-icon"><span uk-icon="location"></span></button>
                <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.target)"
-                  :id="'bf_'+aSet.Name+'.'+aFile.Id" href="#">
+                  :ref="aSet.Name+'.'+aFile.Id" href="#">
                   <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
                <form v-if="!toggle"
                      :action="'/f/-' + encodeURIComponent(aSet.Name+'.'+aFile.Id)" method="POST"
@@ -1022,13 +1022,13 @@
          },
       },
       watch: {
-         data: function() {
+         '$root.f': function() {
             if (!this.dupShow)
                return;
             this.$nextTick(function() {
-               var aEl = document.getElementById('bf_'+this.setName+'.'+this.dupShow);
+               var aEl = this.$refs[this.setName+'.'+this.dupShow];
                if (aEl) {
-                  this.revOpen(this.setName, this.dupShow, aEl);
+                  this.revOpen(this.setName, this.dupShow, aEl[0]);
                   this.dupShow = '';
                }
             });
