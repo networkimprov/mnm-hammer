@@ -910,7 +910,7 @@
                        @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
                        title="Attach form"
                        class="btn-icon"><span uk-icon="location"></span></button>
-               <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.target)"
+               <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.currentTarget)"
                   :ref="aSet.Name+'.'+aFile.Id" href="#">
                   <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
                <form v-if="!toggle"
@@ -923,7 +923,8 @@
             </li></template></ul>
          <div v-show="setName"
               class="uk-card uk-card-default uk-card-small uk-card-body uk-width-1-1"
-              style="position:absolute; right:20em;" :style="{top:revPos}" @click.stop>
+              style="position:absolute" :style="{top:editTop, right:editRight}"
+              @click.stop>
             <div class="uk-text-right uk-text-small">
                {{(setName+'.'+fileId).toUpperCase()}}</div>
             <div v-if="!mnm._data.fo"
@@ -966,7 +967,8 @@
       template: '#mnm-forms',
       props: {toggle:String},
       data: function() {
-         return {upname:'', dupname:'', setName:'', fileId:'', revPos:'', codeShow:false, dupShow:''};
+         return {upname:'', dupname:'', setName:'', fileId:'', codeShow:false, dupShow:'',
+                 editTop:'', editRight:''};
       },
       computed: {
          mnm: function() { return mnm },
@@ -1014,7 +1016,9 @@
             mnm._data.fo = this.dupname = '';
             this.setName = iSet;
             this.fileId = iRev;
-            this.revPos = iEl.offsetTop + 'px';
+            this.editTop = iEl.offsetTop + 'px';
+            var aParentWidth = iEl.parentNode.parentNode.parentNode.offsetWidth;
+            this.editRight = (aParentWidth - iEl.offsetLeft) +'px';
             this.codeShow = false;
          },
          revClose: function() {
