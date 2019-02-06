@@ -935,7 +935,7 @@
                   method="POST" enctype="multipart/form-data"
                   onsubmit="mnm.Upload(this); return false;"
                   style="margin-top:-1.5em" class="pane-clip">
-               <span @click="codeShow = !codeShow"
+               <span @click="showCode"
                      class="uk-link">{...}</span>
                <button :disabled="!!parseError"
                        title="Save form"
@@ -947,6 +947,7 @@
                   <div class="pane-scroller">
                      <mnm-textresize @input.native="mnm._data.fo=$event.target.value"
                                      :src="mnm._data.fo"
+                                     ref="code"
                                      name="filename" style="width:100%"/></div>
                </div>
             </form>
@@ -1023,6 +1024,11 @@
          },
          revClose: function() {
             this.setName = this.fileId = '';
+         },
+         showCode: function() {
+            this.codeShow = !this.codeShow;
+            if (this.codeShow)
+               this.$refs.code.$el.focus();
          },
       },
       watch: {
