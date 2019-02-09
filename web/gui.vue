@@ -917,7 +917,8 @@
                      :action="'/f/-' + encodeURIComponent(aSet.Name+'.'+aFile.Id)" method="POST"
                      onsubmit="mnm.Upload(this); return false;"
                      style="float:right">
-                  <button title="Erase form"
+                  <button @click="revDelete(aSet.Name,aFile.Id)"
+                          title="Erase form"
                           class="btn-iconred"><span uk-icon="trash"></span></button>
                </form>
             </li></template></ul>
@@ -927,30 +928,26 @@
               @click.stop>
             <div class="uk-text-right uk-text-small">
                {{(setName+'.'+fileId).toUpperCase()}}</div>
-            <div v-if="!mnm._data.fo"
+            <div v-show="!mnm._data.fo"
                  class="uk-text-center" style="padding:0.5em">
                <span uk-icon="future"></span></div>
-            <form v-else
-                  :action="'/f/+' + encodeURIComponent(setName+'.'+fileId)"
-                  method="POST" enctype="multipart/form-data"
-                  onsubmit="mnm.Upload(this); return false;"
-                  style="margin-top:-1.5em" class="pane-clip">
+            <div v-show="mnm._data.fo"
+                 class="pane-clip" style="margin-top:-1.5em">
                <span @click="showCode"
-                     class="uk-link">{...}</span>
-               <button :disabled="!!parseError"
-                       title="Save form"
-                       class="btn-icon"><span uk-icon="file-edit"></span></button>
+                     class="uk-link"><tt>{...}</tt></span>
                <div style="font-size:smaller; text-align:right">&nbsp;{{parseError}}</div>
                <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
                   <div class="pane-scroller" style="min-height:1px">
                      <plugin-vfg :schema="formDef" :model="{}" :options="{}"/></div>
                   <div class="pane-scroller">
-                     <mnm-textresize @input.native="mnm._data.fo=$event.target.value"
+                     <mnm-textresize @input.native="editCode"
                                      :src="mnm._data.fo"
                                      ref="code"
-                                     name="filename" style="width:100%"/></div>
+                                     style="width:100%"/></div>
                </div>
-            </form>
+            </div>
+            <form action="/f/?" method="POST" enctype="multipart/form-data">
+               <input ref="save" name="filename" value="" type="hidden"></form>
             <form :action="'/f/*' + encodeURIComponent(setName+'.'+fileId) +
                               '+' + encodeURIComponent(dupname)" method="POST"
                   onsubmit="mnm.Upload(this); return false;">
@@ -969,19 +966,10 @@
       props: {toggle:String},
       data: function() {
          return {upname:'', dupname:'', setName:'', fileId:'', codeShow:false, dupShow:'',
-                 editTop:'', editRight:''};
+                 editTop:'', editRight:'', formDef:null, parseError:'', toSave:{}};
       },
       computed: {
          mnm: function() { return mnm },
-         formDef: function() {
-            try { return JSON.parse(mnm._data.fo) }
-            catch(a) { return {fields:[ {type:"label", label:"code incorrect"} ]} }
-         },
-         parseError: function() {
-            try { JSON.parse(mnm._data.fo) }
-            catch(aErr) { return aErr.message.slice(12,-17) }
-            return '';
-         },
       },
       methods: {
          validName: function(iPair) {
@@ -1013,22 +1001,52 @@
             });
          },
          revOpen: function(iSet, iRev, iEl) {
-            mnm.FormOpen(iSet+'.'+iRev);
-            mnm._data.fo = this.dupname = '';
+            var aKey = iSet+'.'+iRev;
+            if (aKey in this.toSave) {
+               mnm._data.fo = this.toSave[aKey].data;
+            } else {
+               mnm._data.fo = '';
+               mnm.FormOpen(aKey);
+            }
             this.setName = iSet;
             this.fileId = iRev;
             this.editTop = iEl.offsetTop + 'px';
             var aParentWidth = iEl.parentNode.parentNode.parentNode.offsetWidth;
             this.editRight = (aParentWidth - iEl.offsetLeft) +'px';
             this.codeShow = false;
+            this.dupname = '';
          },
          revClose: function() {
             this.setName = this.fileId = '';
+         },
+         revDelete: function(iSet, iRev) {
+            var aKey = iSet+'.'+iRev;
+            if (aKey in this.toSave) {
+               clearTimeout(this.toSave[aKey].timer);
+               delete this.toSave[aKey];
+            }
          },
          showCode: function() {
             this.codeShow = !this.codeShow;
             if (this.codeShow)
                this.$refs.code.$el.focus();
+         },
+         editCode: function(iEvt) {
+            mnm._data.fo = iEvt.target.value || '{}';
+            this.$nextTick(function() {
+               if (this.parseError !== '')
+                  return;
+               var aKey = this.setName+'.'+this.fileId;
+               if (!(aKey in this.toSave))
+                  this.toSave[aKey] = {timer:setTimeout(fDing, 2000, this), data:''};
+               this.toSave[aKey].data = mnm._data.fo;
+               function fDing(that) {
+                  that.$refs.save.value = that.toSave[aKey].data;
+                  that.$refs.save.form.action = '/f/+' + encodeURIComponent(aKey);
+                  mnm.Upload(that.$refs.save.form); // assume save.value can be changed after this
+                  delete that.toSave[aKey];
+               }
+            });
          },
       },
       watch: {
@@ -1042,6 +1060,15 @@
                   this.dupShow = '';
                }
             });
+         },
+         '$root.fo': function() { //todo fires 3x, per alert(); fix?
+            try {
+               this.formDef = JSON.parse(mnm._data.fo);
+               this.parseError = '';
+            } catch(aErr) {
+               this.formDef = {fields:[ {type:"label", label:"code incorrect"} ]};
+               this.parseError = aErr.message.slice(12, -17);
+            }
          },
       },
       components: { 'plugin-vfg': VueFormGenerator.component },

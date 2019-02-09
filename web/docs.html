@@ -429,12 +429,11 @@ in the <span uk-icon="pencil"></span> form.
 </p>
 
 <p>To edit a new or existing form, open the <span uk-icon="file-edit"></span> menu 
-and click the <span uk-icon="triangle-left"></span>formname hyperlink to open the form editor. 
-Next click the {...} button to switch to code view, and begin editing. 
-Click {...} again to preview changes. 
-Click the <span uk-icon="file-edit"></span> button to save changes. 
-(The form editor doesn't auto-save, to avoid storing mistakes.) 
-Closing the editor or switching to a different form drops any unsaved changes. 
+and click its <span uk-icon="triangle-left"></span>formname hyperlink to open the form editor. 
+Next click the <tt>{...}</tt> hyperlink to switch to code view, and begin editing. 
+Click <tt>{...}</tt> again to preview changes. 
+Edits are automatically saved, except when the code is not valid JSON. 
+Closing the editor or switching to a different form drops the latest invalid changes, if any. 
 </p>
 
 <p>To copy an existing form to a new revision, open the form editor for the source form 
