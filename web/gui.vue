@@ -18,67 +18,6 @@
 
    <link  href="/web/service.css" rel="stylesheet"/>
    <script src="/web/socket.js"></script>
-   <script>
-      mnm._mdi = markdownit();
-      mnm._adrsbkmenu = null;
-      mnm._adrsbkmenuId = null;
-      mnm._lastPreview = '';
-      mnm._data = {
-      // global
-         v:[], t:[], f:[], fo:'', nlo:[], // fo populated by f requests
-      // per client
-         cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}},
-         sort:{cl:'Who', al:'Date', t:'Date', f:'Date'}, //todo move to cs
-         ohiFrom:true, //todo move to cs
-      // per service
-         cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
-         ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:null,
-      // per thread
-         cl:[[],[]], al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
-         toSave:{}, // populated locally
-      };
-      mnm._listSort = function(iName, iKey) {
-         var aTmp;
-         var aList = iName === 'cl' ? mnm._data.cl[1] : mnm._data[iName];
-         mnm._data.sort[iName] = iKey;
-         aList.sort(function(cA, cB) {
-            if (iKey === 'Date')
-               aTmp = cA, cA = cB, cB = aTmp;
-            if (cA[iKey] <= cB[iKey])
-               return -1;
-            return 1;
-         });
-      };
-      mnm._toClipboard = function(iRef) {
-         var aEl = document.getElementById('toclipboard');
-         aEl.value = iRef;
-         aEl.style.display = 'inline';
-         aEl.select();
-         document.execCommand('copy');
-         aEl.style.display = 'none';
-      };
-      mnm._stringToSeconds = function(iStr) {
-         var aNum = iStr.split(':', 5);
-         if (aNum.length > 4)
-            return NaN;
-         var aSec = null;
-         if (aNum.length > 0 && aNum[0] !== '') aSec += aNum[0]*24*60*60;
-         if (aNum.length > 1 && aNum[1] !== '') aSec += aNum[1]*60*60;
-         if (aNum.length > 2 && aNum[2] !== '') aSec += aNum[2]*60;
-         if (aNum.length > 3 && aNum[3] !== '') aSec += aNum[3]*1;
-         return aSec;
-      };
-      mnm._secondsToString = function(iNum) {
-         return luxon.Duration.fromMillis(iNum * 1000).toFormat('d:hh:mm:ss');
-      };
-      mnm._canScroll = function(iEl, iDeltaY) {
-         if (iDeltaY < 0)
-            return iEl.scrollTop > 0;
-         if (iDeltaY > 0)
-            return iEl.scrollTop < iEl.scrollHeight - iEl.clientHeight;
-         return false;
-      };
-   </script>
 </head><body>
 <base target="_blank">
 
@@ -1397,6 +1336,25 @@
    var sChange = 0;
    var sTemp = {ml:null, mo:null};
 
+   mnm._mdi = markdownit();
+   mnm._adrsbkmenu = null;
+   mnm._adrsbkmenuId = null;
+   mnm._lastPreview = '';
+   mnm._data = {
+   // global
+      v:[], t:[], f:[], fo:'', nlo:[], // fo populated by f requests
+   // per client
+      cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}},
+      sort:{cl:'Who', al:'Date', t:'Date', f:'Date'}, //todo move to cs
+      ohiFrom:true, //todo move to cs
+   // per service
+      cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
+      ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:null,
+   // per thread
+      cl:[[],[]], al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
+      toSave:{}, // populated locally
+   };
+
    var sApp = new Vue({
       template: '#mnm-main',
       data: mnm._data,
@@ -1611,6 +1569,52 @@
       }
       aSrc[1] = '?an=' + encodeURIComponent(aParam);
       return sMdiRenderImg(iTokens, iIdx, iOptions, iEnv, iSelf);
+   };
+
+   mnm._listSort = function(iName, iKey) {
+      var aTmp;
+      var aList = iName === 'cl' ? mnm._data.cl[1] : mnm._data[iName];
+      mnm._data.sort[iName] = iKey;
+      aList.sort(function(cA, cB) {
+         if (iKey === 'Date')
+            aTmp = cA, cA = cB, cB = aTmp;
+         if (cA[iKey] <= cB[iKey])
+            return -1;
+         return 1;
+      });
+   };
+
+   mnm._toClipboard = function(iRef) {
+      var aEl = document.getElementById('toclipboard');
+      aEl.value = iRef;
+      aEl.style.display = 'inline';
+      aEl.select();
+      document.execCommand('copy');
+      aEl.style.display = 'none';
+   };
+
+   mnm._stringToSeconds = function(iStr) {
+      var aNum = iStr.split(':', 5);
+      if (aNum.length > 4)
+         return NaN;
+      var aSec = null;
+      if (aNum.length > 0 && aNum[0] !== '') aSec += aNum[0]*24*60*60;
+      if (aNum.length > 1 && aNum[1] !== '') aSec += aNum[1]*60*60;
+      if (aNum.length > 2 && aNum[2] !== '') aSec += aNum[2]*60;
+      if (aNum.length > 3 && aNum[3] !== '') aSec += aNum[3]*1;
+      return aSec;
+   };
+
+   mnm._secondsToString = function(iNum) {
+      return luxon.Duration.fromMillis(iNum * 1000).toFormat('d:hh:mm:ss');
+   };
+
+   mnm._canScroll = function(iEl, iDeltaY) {
+      if (iDeltaY < 0)
+         return iEl.scrollTop > 0;
+      if (iDeltaY > 0)
+         return iEl.scrollTop < iEl.scrollHeight - iEl.clientHeight;
+      return false;
    };
 
    mnm.Log = function(i) {
