@@ -28,6 +28,8 @@
 <script type="text/x-template" id="mnm-main">
 <div uk-grid class="uk-grid-small">
 
+<mnm-adrsbkmenu ref="adrsbkmenu"/>
+
 <div class="uk-width-2-5">
    <div class="uk-clearfix">
       <span style="padding-left:0.5em; display:inline-block">
@@ -170,7 +172,6 @@
                </template>
             </template>
          </li></ul>
-      <mnm-adrsbkmenu/>
    </div>
 </div>
 
@@ -513,7 +514,7 @@
       template: '#mnm-adrsbkinput',
       props: {type:Number},
       inheritAttrs: false,
-      computed: { menu: function() { return mnm._adrsbkmenu } },
+      computed: { menu: function() { return this.$root.$refs['adrsbkmenu'] } },
    });
 </script>
 
@@ -532,7 +533,6 @@
    Vue.component('mnm-adrsbkmenu', {
       template: '#mnm-adrsbkmenu',
       data: function() { return { query:'', list:[], select:-1 } },
-      created: function() { mnm._adrsbkmenu = this },
       methods: {
          clear: function() {
             this.query = '';
@@ -1337,7 +1337,6 @@
    var sTemp = {ml:null, mo:null};
 
    mnm._mdi = markdownit();
-   mnm._adrsbkmenu = null;
    mnm._adrsbkmenuId = null;
    mnm._lastPreview = '';
    mnm._data = {
@@ -1709,7 +1708,7 @@
             mnm._adrsbkmenuId[iEtc[a]] = iEtc[a+1];
             aList.push(iEtc[a]);
          }
-         mnm._adrsbkmenu.results(aList);
+         sApp.$refs['adrsbkmenu'].results(aList);
          break;
       }
    };
