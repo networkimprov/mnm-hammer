@@ -670,7 +670,7 @@
 </script>
 
 <script type="text/x-template" id="mnm-formview">
-   <div>
+   <div :id="'fv_'+ parent.msgid +'_'+ file">
       <div class="uk-clearfix">
          <label v-if="!parent.formreply">
             <input type="checkbox" @click="onFillAttach" :checked="atcHasFf"
@@ -740,17 +740,24 @@
       if (iKey in this.comp) {
          if (this.comp[iKey][0].formDef === this.env.parent.formDefBad)
             mnm.AttachOpen(iKey);
-         return;
+      } else {
+         mnm.AttachOpen(iKey);
+         this.comp[iKey] = [ new (Vue.component('mnm-formview'))({
+            propsData: { file:iKey, fillMap:this.env.fillMap, parent:this.env.parent },
+         }), null ];
       }
-      mnm.AttachOpen(iKey);
-      this.comp[iKey] = [ new (Vue.component('mnm-formview'))({
-         propsData: { file:iKey, fillMap:this.env.fillMap, parent:this.env.parent },
-      }), null ];
+      return 'fv_'+ this.env.parent.msgid +'_'+ iKey;
    };
    mnm._FormViews.prototype.remount = function() {
       for (var a in this.comp) {
-         var aEl = document.getElementById(a);
-         if (!aEl) continue;
+         var aEl = document.getElementById('fv_'+ this.env.parent.msgid +'_'+ a);
+         if (!aEl) {
+            this.comp[a][0].$destroy();
+            delete this.comp[a];
+            continue;
+         }
+         if (aEl.tagName === 'DIV')
+            continue;
          if (this.comp[a][1])
             aEl.parentNode.replaceChild(this.comp[a][1], aEl);
          else
@@ -1570,8 +1577,8 @@
       if (aAlt.charAt(0) === '?') {
          if (!iEnv.formview)
             iEnv.formview = new mnm._FormViews(iEnv);
-         iEnv.formview.make(aParam);
-         return '<component'+ iSelf.renderAttrs({attrs:[['id',aParam]]}) +'></component>';
+         var aId = iEnv.formview.make(aParam);
+         return '<component'+ iSelf.renderAttrs({attrs:[['id',aId]]}) +'></component>';
       }
       aSrc[1] = '?an=' + encodeURIComponent(aParam);
       return sMdiRenderImg(iTokens, iIdx, iOptions, iEnv, iSelf);
