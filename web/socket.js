@@ -7,12 +7,16 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See said License for details.
 
 ;var mnm = {};
+
 (function() {
+   var sUrl = 'ws://'+ location.host +'/s/'+ location.pathname.split('/')[1];
    var sWs = {};
    var sXhrPending = 0;
 
    // caller implements these
-   mnm.Log = mnm.Render = mnm.ThreadChange = function(){};
+   mnm.Log =
+   mnm.Render =
+   mnm.ThreadChange = function(){};
 
    mnm.ConfigUpdt = function(iObj) { // with addr, verify
       _wsSend({op:'config_update', config:iObj})
@@ -126,8 +130,7 @@
    };
 
    mnm.Connect = function() {
-      var aSvc = window.location.pathname.split('/')[1];
-      sWs = new WebSocket('ws://'+window.location.host+'/s/'+aSvc);
+      sWs = new WebSocket(sUrl);
       sWs.onopen = function() {
          sWs.send(JSON.stringify({op:'open'}));
       };
