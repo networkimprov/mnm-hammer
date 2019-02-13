@@ -134,8 +134,16 @@
       sWs.onopen = function() {
          sWs.send(JSON.stringify({op:'open'}));
       };
-      sWs.onmessage = function(iEvent) {
+      sWs.onmessage = function(iEvent, iMs) {
+         if (sXhrPending > 0) {
+            setTimeout(sWs.onmessage, 6, iEvent, iMs || Date.now());
+            mnm.Log('ws message deferred for pending xhr');
+            return;
+         }
+         if (iMs) //todo verify that deferred msgs are handled in order
+            mnm.Log('ws handle deferred from '+ iMs);
          mnm.Log('ws '+ iEvent.data);
+
          if (iEvent.data.charAt(0) !== '[')
             return;
          var aObj = JSON.parse(iEvent.data);
@@ -212,9 +220,6 @@
    function _wsSend(i) {
       if (sWs.readyState !== 1) {
          mnm.Log('ws op failed on closed socket');
-      } else if (sXhrPending > 0) {
-         setTimeout(_wsSend, 5, i);
-         mnm.Log('ws op deferred for pending xhr');
       } else {
          sWs.send(JSON.stringify(i));
       }
