@@ -94,7 +94,7 @@
                           class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
                   <div @keydown="keyAction('pv_'+aMsg.Id, $event)">
                      <div style="position:relative; padding:1px;">
-                        <button @click="mnm.ThreadSend(aMsg.Id)"
+                        <button @click="draft_send(aMsg.Id)"
                                 title="Send draft"
                                 class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
                         <div style="height:100%; position:absolute; left:13em; right:42px; top:0;">
@@ -1422,6 +1422,12 @@
                Subject:  iToSave.Subject,
             });
             iToSave.suUpdt = iToSave.mdUpdt = iToSave.ffUpdt = false;
+         },
+         draft_send: function(iId) {
+            var aToSave = mnm._data.toSave[iId];
+            if (aToSave && aToSave.timer)
+               this.draft_save(iId, null, null, aToSave, null);
+            mnm.ThreadSend(iId);
          },
          ccAdd: function(iTid, iCcSet, iAlias, iNote) {
             if (!iAlias.length || !(iAlias in mnm._adrsbkmenuId))
