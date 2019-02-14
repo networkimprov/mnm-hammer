@@ -434,7 +434,7 @@
                if (aCc[a].WhoUid !== aCc[a].ByUid)
                   aMenu[aN++] = aCc[a].Who;
             if ('menu' in this.$refs)
-               this.$refs['menu'].$forceUpdate();
+               this.$refs.menu.$forceUpdate();
             return this.lastMenu = aMenu;
          },
          mnm: function() { return mnm }
@@ -514,7 +514,7 @@
       template: '#mnm-adrsbkinput',
       props: {type:Number},
       inheritAttrs: false,
-      computed: { menu: function() { return this.$root.$refs['adrsbkmenu'] } },
+      computed: { menu: function() { return this.$root.$refs.adrsbkmenu } },
    });
 </script>
 
@@ -1714,7 +1714,7 @@
             mnm._adrsbkmenuId[iEtc[a]] = iEtc[a+1];
             aList.push(iEtc[a]);
          }
-         sApp.$refs['adrsbkmenu'].results(aList);
+         sApp.$refs.adrsbkmenu.results(aList);
          break;
       }
    };
