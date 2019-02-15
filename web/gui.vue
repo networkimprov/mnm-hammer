@@ -99,7 +99,7 @@
                                 class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
                         <div style="height:100%; position:absolute; left:13em; right:42px; top:0;">
                            <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Attach"
-                                          :msgid="aMsg.Id" :drop="atcDrop"
+                                          @drop="atcDrop" :msgid="aMsg.Id"
                                           :getname="atcGetName" :getkey="atcGetKey"
                                           :style="{float:'right'}"/>
                         </div>
@@ -388,7 +388,7 @@
          <mnm-adrsbkinput @keyup.enter.native="addUser"
                           :type="3" placeholder="+To" size="25"/>
          <div style="height:100%; position:absolute; left:13em; right:0; top:0;">
-            <mnm-draftmenu ref="menu" :list="menu" :drop="dropUser"/></div>
+            <mnm-draftmenu ref="menu" :list="menu" @drop="dropUser"/></div>
       </div>
       <ul uk-tab>
          <li v-for="aKey in ['Who','By','Date']"
@@ -590,7 +590,7 @@
          {{getname ? getname(aEl) : aEl}}
          <div v-if="aI === 0 && list.length > 1"
               class="draftmenu-v">&#x25BD;</div>
-         <div @click="drop(msgid, aI)"
+         <div @click="$emit('drop', msgid, aI)"
               class="draftmenu-x">&times;</div>
          <br>
       </span>
@@ -598,7 +598,7 @@
 </script><script>
    Vue.component('mnm-draftmenu', {
       template: '#mnm-draftmenu',
-      props: {msgid:String, list:Array, drop:Function, getname:Function, getkey:Function},
+      props: {msgid:String, list:Array, getname:Function, getkey:Function},
       watch: {
          list: function() {
             // show menu if changed by any client
