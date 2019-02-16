@@ -113,14 +113,15 @@
                              style="overflow:auto; max-height:75vh; padding: 0.5em 1em;
                                     border-width: 1em 0; border-color:transparent; border-style:solid;"
                              onwheel="return mnm._canScroll(this, event.deltaY)">
-                           <div v-if="!(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data">
+                           <div v-show="!(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data">
                               <p><span uk-icon="comment"></span></p></div>
-                           <mnm-markdown v-else
+                           <mnm-markdown v-show="(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
                                          @formfill="ffAdd(aMsg.Id, arguments[0], arguments[1])"
                                          @toggle="atcToggleFf(aMsg.Id, arguments[0], arguments[1])"
                                          :src=     "(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
                                          :formfill="(toSave[aMsg.Id] || mo[aMsg.Id]).form_fill"
-                                         :atchasff="atcHasFf" :msgid="aMsg.Id"/></div>
+                                         :atchasff="atcHasFf" :msgid="aMsg.Id"/>
+                        </div>
                      </div>
                      <input @input="subjAdd(aMsg.Id, $event.target.value)"
                             @click.stop="clickPreview('pv_'+aMsg.Id)"
