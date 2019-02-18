@@ -92,46 +92,7 @@
                   <button @click="mnm.ThreadDiscard(aMsg.Id)"
                           title="Discard draft"
                           class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
-                  <div @keydown="keyAction('pv_'+aMsg.Id, $event)">
-                     <div style="position:relative; padding:1px;">
-                        <button @click="draft_send(aMsg.Id)"
-                                title="Send draft"
-                                class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
-                        <div style="height:100%; position:absolute; left:13em; right:42px; top:0;">
-                           <mnm-draftmenu :list="mo[aMsg.Id].SubHead.Attach"
-                                          @drop="atcDrop" :msgid="aMsg.Id"
-                                          :getname="atcGetName" :getkey="atcGetKey"
-                                          :style="{float:'right'}"/>
-                        </div>
-                     </div>
-                     <div style="float:right; margin-top:-1.7em;">
-                        <span uk-icon="push"      :id="'t'+aMsg.Id" class="dropdown-icon"></span
-                       ><span uk-icon="file-edit" :id="'f'+aMsg.Id" class="dropdown-icon"></span>
-                        <span :id="'pv_'+aMsg.Id"></span>
-                        <div uk-dropdown="mode:click; pos:right-top"
-                             class="uk-width-2-5 message-edit"
-                             style="overflow:auto; max-height:75vh; padding: 0.5em 1em;
-                                    border-width: 1em 0; border-color:transparent; border-style:solid;"
-                             onwheel="return mnm._canScroll(this, event.deltaY)">
-                           <div v-show="!(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data">
-                              <p><span uk-icon="comment"></span></p></div>
-                           <mnm-markdown v-show="(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
-                                         @formfill="ffAdd(aMsg.Id, arguments[0], arguments[1])"
-                                         @toggle="atcToggleFf(aMsg.Id, arguments[0], arguments[1])"
-                                         :src=     "(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
-                                         :formfill="(toSave[aMsg.Id] || mo[aMsg.Id]).form_fill"
-                                         :atchasff="atcHasFf" :msgid="aMsg.Id"/>
-                        </div>
-                     </div>
-                     <input @input="subjAdd(aMsg.Id, $event.target.value)"
-                            @click.stop="clickPreview('pv_'+aMsg.Id)"
-                            :value="(toSave[aMsg.Id] || mo[aMsg.Id].SubHead).Subject"
-                            placeholder="Subject" type="text" style="width:100%">
-                     <mnm-textresize @input.native="textAdd(aMsg.Id, $event.target.value)"
-                                     @click.native.stop="clickPreview('pv_'+aMsg.Id)"
-                                     :src="(toSave[aMsg.Id] || mo[aMsg.Id]).msg_data"
-                                     placeholder="Ctrl-J to Preview" style="width:100%"/>
-                  </div>
+                  <mnm-draft :msgid="aMsg.Id"/>
                </template>
                <template v-else>
                   <div v-if="!aMsg.Queued"
@@ -177,12 +138,11 @@
 </div>
 
 <div class="uk-width-1-2">
-   <span v-for="aMsg in ml" :key="aMsg.Id"
-         v-if="mo[aMsg.Id] && mo[aMsg.Id].Posted === 'draft'">
-      <mnm-files @attach="atcAdd(aMsg.Id, arguments[0])"
-                 :toggle="'#t'+aMsg.Id" pos="right-top"/>
-      <mnm-forms @attach="atcAdd(aMsg.Id, arguments[0])"
-                 :toggle="'#f'+aMsg.Id" pos="right-top"/>
+   <span v-for="aCmp in draftRefs" :key="aCmp.msgid">
+      <mnm-files @attach="aCmp.atcAdd(arguments[0])"
+                 :toggle="'#t_'+aCmp.msgid" pos="right-top"/>
+      <mnm-forms @attach="aCmp.atcAdd(arguments[0])"
+                 :toggle="'#f_'+aCmp.msgid" pos="right-top"/>
    </span>
    <div class="uk-clearfix">
       <span class="uk-text-large">
@@ -446,7 +406,7 @@
             this.$emit('ccadd', this.tid, this.ccSet, iEvt.target.value, this.note);
             iEvt.target.value = '';
          },
-         dropUser: function(iJunk, iItem) {
+         dropUser: function(iItem) {
             var aCc = mnm._data.cl[this.ccSet];
             for (var a=0; a <= iItem; ++a)
                if (aCc[a].WhoUid === aCc[a].ByUid)
@@ -495,6 +455,159 @@
       template: '#mnm-attach',
       computed: { mnm: function() { return mnm } },
       methods: { listSort: function(i) { return mnm._listSort('al', i) } },
+   });
+</script>
+
+<script type="text/x-template" id="mnm-draft">
+   <div @keydown="keyAction('pv_'+msgid, $event)">
+      <div style="position:relative; padding:1px;">
+         <button @click="send"
+                 title="Send draft"
+                 class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
+         <div style="height:100%; position:absolute; left:13em; right:42px; top:0;">
+            <mnm-draftmenu @drop="atcDrop"
+                           :list="mnm._data.mo[msgid].SubHead.Attach"
+                           :getname="atcGetName" :getkey="atcGetKey"
+                           :style="{float:'right'}"/>
+         </div>
+      </div>
+      <div style="float:right; margin-top:-1.7em;">
+         <span uk-icon="push"      :id="'t_'+msgid" class="dropdown-icon"></span
+        ><span uk-icon="file-edit" :id="'f_'+msgid" class="dropdown-icon"></span>
+         <span :id="'pv_'+msgid"></span>
+         <div uk-dropdown="mode:click; pos:right-top"
+              class="uk-width-2-5 message-edit"
+              style="overflow:auto; max-height:75vh; padding: 0.5em 1em;
+                     border-width: 1em 0; border-color:transparent; border-style:solid;"
+              onwheel="return mnm._canScroll(this, event.deltaY)">
+            <div v-show="!(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data">
+               <p><span uk-icon="comment"></span></p></div>
+            <mnm-markdown v-show="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
+                          @formfill="ffAdd"
+                          @toggle="atcToggleFf"
+                          :src=     "(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
+                          :formfill="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).form_fill"
+                          :atchasff="atcHasFf" :msgid="msgid"/>
+         </div>
+      </div>
+      <input @input="subjAdd"
+             @click.stop="clickPreview('pv_'+msgid)"
+             :value="(mnm._data.toSave[msgid] || mnm._data.mo[msgid].SubHead).Subject"
+             placeholder="Subject" type="text" style="width:100%">
+      <mnm-textresize @input.native="textAdd"
+                      @click.native.stop="clickPreview('pv_'+msgid)"
+                      :src="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
+                      placeholder="Ctrl-J to Preview" style="width:100%"/>
+   </div>
+</script><script>
+   Vue.component('mnm-draft', {
+      template: '#mnm-draft',
+      props: {msgid:String},
+      computed: { mnm: function() { return mnm } },
+      created: function() { Vue.set(mnm._data.draftRefs, this.msgid, this) }, // $refs not reactive
+      beforeDestroy: function() { Vue.delete(mnm._data.draftRefs, this.msgid) },
+      methods: {
+         keyAction: function(iId, iEvent) {
+            if (iEvent.ctrlKey && iEvent.key === 'j')
+               mnm._lastPreview = iId;
+         },
+         clickPreview: function(iId) {
+            document.getElementById(iId).nextElementSibling.click();
+         },
+         getToSave: function(iNoTimer) {
+            var aMo = mnm._data.mo[this.msgid];
+            if (!(this.msgid in mnm._data.toSave))
+               Vue.set(mnm._data.toSave, this.msgid,
+                       {timer:null, form_fill:aMo.form_fill,       ffUpdt:false,
+                                    msg_data: aMo.msg_data,        mdUpdt:false,
+                                    Subject:  aMo.SubHead.Subject, suUpdt:false});
+            var aToSave = mnm._data.toSave[this.msgid];
+            if (!iNoTimer && !aToSave.timer)
+               aToSave.timer = setTimeout(fDing, 2000, this);
+            return aToSave;
+            function fDing(that) {
+               aToSave.timer = null;
+               that.save(null, null, aToSave, aMo);
+            }
+         },
+         save: function(iCc, iAttach, iToSave, iMo) {
+            if (!iToSave) iToSave = this.getToSave(true);
+            if (!iMo)     iMo = mnm._data.mo[this.msgid];
+            if (iToSave.timer) {
+               clearTimeout(iToSave.timer);
+               iToSave.timer = null;
+            }
+            mnm.ThreadSave({
+               Id:       this.msgid,
+               Alias:               iMo.SubHead.Alias,
+               Attach:   iAttach || iMo.SubHead.Attach,
+               Cc:       iCc     || mnm._data.cl[1],
+               FormFill: iToSave.form_fill,
+               Data:     iToSave.msg_data,
+               Subject:  iToSave.Subject,
+            });
+            iToSave.suUpdt = iToSave.mdUpdt = iToSave.ffUpdt = false;
+         },
+         send: function() {
+            var aToSave = mnm._data.toSave[this.msgid];
+            if (aToSave && aToSave.timer)
+               this.save(null, null, aToSave, null);
+            mnm.ThreadSend(this.msgid);
+         },
+         atcGetName: function(iEl) { return iEl.Name },
+         atcGetKey:  function(iEl) { return iEl.FfKey || iEl.Name },
+         atcAdd: function(iPath) {
+            var aAtc = mnm._data.mo[this.msgid].SubHead.Attach;
+            aAtc = aAtc ? aAtc.slice() : [];
+            var aPrefix = /^upload/.test(iPath) ? 'u:' : /^form_fill/.test(iPath) ? 'r:' : 'f:';
+            var aStoredName = iPath.replace(/^[^/]*\//, aPrefix);
+            var aPrev = aAtc.findIndex(function(c) { return c.Name === aStoredName });
+            if (aPrev >= 0)
+               aAtc.splice(aPrev, 1);
+            aAtc.unshift({Name:iPath});
+            this.save(null, aAtc);
+         },
+         atcDrop: function(iN) {
+            var aAtc = mnm._data.mo[this.msgid].SubHead.Attach;
+            this.save(null, aAtc.slice(0, iN).concat(aAtc.slice(iN+1)));
+         },
+         atcHasFf: function(iId, iFfKey) { // called by formview
+            var aAtc = mnm._data.mo[iId].SubHead.Attach;
+            return !! (aAtc && aAtc.find(function(c) { return c.FfKey === iFfKey }));
+         },
+         atcToggleFf: function(iFfKey, iPath) {
+            var aAtc = mnm._data.mo[this.msgid].SubHead.Attach || [];
+            var aN = aAtc.findIndex(function(c) { return c.FfKey === iFfKey });
+            if (aN < 0)
+               this.ffAdd(iFfKey);
+            this.save(null, aN < 0 ? [ {Name:iPath, FfKey:iFfKey} ].concat(aAtc)
+                                   : aAtc.slice(0, aN).concat(aAtc.slice(aN+1)));
+         },
+         ffAdd: function(iFfKey, iText) {
+            var aToSave = this.getToSave(!iText);
+            if (!iText) {
+               if (aToSave.form_fill && iFfKey in aToSave.form_fill)
+                  return;
+               iText = '{}';
+            }
+            if (!aToSave.ffUpdt)
+               aToSave.ffUpdt = {};
+            if (!aToSave.form_fill)
+               aToSave.form_fill = {};
+            Vue.set(aToSave.form_fill, iFfKey, iText);
+            aToSave.ffUpdt[iFfKey] = true;
+         },
+         textAdd: function(iEvent) {
+            var aToSave = this.getToSave(false);
+            aToSave.msg_data = iEvent.target.value;
+            aToSave.mdUpdt = true;
+         },
+         subjAdd: function(iEvent) {
+            var aToSave = this.getToSave(false);
+            aToSave.Subject = iEvent.target.value;
+            aToSave.suUpdt = true;
+         },
+      },
    });
 </script>
 
@@ -591,7 +704,7 @@
          {{getname ? getname(aEl) : aEl}}
          <div v-if="aI === 0 && list.length > 1"
               class="draftmenu-v">&#x25BD;</div>
-         <div @click="$emit('drop', msgid, aI)"
+         <div @click="$emit('drop', aI)"
               class="draftmenu-x">&times;</div>
          <br>
       </span>
@@ -599,7 +712,7 @@
 </script><script>
    Vue.component('mnm-draftmenu', {
       template: '#mnm-draftmenu',
-      props: {msgid:String, list:Array, getname:Function, getkey:Function},
+      props: {list:Array, getname:Function, getkey:Function},
       watch: {
          list: function() {
             // show menu if changed by any client
@@ -1359,7 +1472,7 @@
       ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:null,
    // per thread
       cl:[[],[]], al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
-      toSave:{}, // populated locally
+      toSave:{}, draftRefs:{}, // populated locally
    };
 
    var sApp = new Vue({
@@ -1387,55 +1500,9 @@
                Vue.delete(mnm._data.mo, iId);
             }
          },
-         keyAction: function(iId, iEvent) {
-            if (iEvent.ctrlKey && iEvent.key === 'j')
-               mnm._lastPreview = iId;
-         },
-         clickPreview: function(iId) {
-            document.getElementById(iId).nextElementSibling.click();
-         },
          getReplyTemplate: function(iIdxEl) {
             return {alias: mnm._data.cf.Alias, data: '',
                     subject: iIdxEl === mnm._data.ml[mnm._data.ml.length-1] ? '' : iIdxEl.Subject};
-         },
-         draft_tosave: function(iId, iNoTimer) {
-            if (!(iId in mnm._data.toSave))
-               Vue.set(mnm._data.toSave, iId, {timer:null,
-                       form_fill:mnm._data.mo[iId].form_fill,       ffUpdt:false,
-                       msg_data: mnm._data.mo[iId].msg_data,        mdUpdt:false,
-                       Subject:  mnm._data.mo[iId].SubHead.Subject, suUpdt:false});
-            if (!iNoTimer && !mnm._data.toSave[iId].timer)
-               mnm._data.toSave[iId].timer =
-                  setTimeout(fDing, 2000, this, mnm._data.toSave[iId], mnm._data.mo[iId]);
-            return mnm._data.toSave[iId];
-            function fDing(cThis, cToSave, cMo) {
-               cToSave.timer = null;
-               cThis.draft_save(iId, null, null, cToSave, cMo);
-            }
-         },
-         draft_save: function(iId, iCc, iAttach, iToSave, iMo) {
-            if (!iToSave) iToSave = this.draft_tosave(iId, true);
-            if (!iMo)     iMo = mnm._data.mo[iId];
-            if (iToSave.timer) {
-               clearTimeout(iToSave.timer);
-               iToSave.timer = null;
-            }
-            mnm.ThreadSave({
-               Id:       iId,
-               Cc:       iCc     || mnm._data.cl[1],
-               Alias:               iMo.SubHead.Alias,
-               Attach:   iAttach || iMo.SubHead.Attach,
-               FormFill: iToSave.form_fill,
-               Data:     iToSave.msg_data,
-               Subject:  iToSave.Subject,
-            });
-            iToSave.suUpdt = iToSave.mdUpdt = iToSave.ffUpdt = false;
-         },
-         draft_send: function(iId) {
-            var aToSave = mnm._data.toSave[iId];
-            if (aToSave && aToSave.timer)
-               this.draft_save(iId, null, null, aToSave, null);
-            mnm.ThreadSend(iId);
          },
          ccAdd: function(iTid, iCcSet, iAlias, iNote) {
             if (!iAlias.length || !(iAlias in mnm._adrsbkmenuId))
@@ -1447,7 +1514,7 @@
             aEl.Note = iNote;
             aCc.unshift(aEl);
             if (iCcSet)
-               this.draft_save(iTid, aCc, null);
+               mnm._data.draftRefs[iTid].save(aCc, null);
             else
                mnm.ForwardSave(iTid, aCc);
          },
@@ -1455,64 +1522,10 @@
             var aCc = mnm._data.cl[iCcSet];
             aCc = aCc.slice(0, iN).concat(aCc.slice(iN+1));
             if (iCcSet)
-               this.draft_save(iTid, aCc, null);
+               mnm._data.draftRefs[iTid].save(aCc, null);
             else
                mnm.ForwardSave(iTid, aCc);
          },
-         atcAdd: function(iId, iPath) {
-            var aAtc = mnm._data.mo[iId].SubHead.Attach;
-            aAtc = aAtc ? aAtc.slice() : [];
-            var aPrefix = /^upload/.test(iPath) ? 'u:' : /^form_fill/.test(iPath) ? 'r:' : 'f:';
-            var aStoredName = iPath.replace(/^[^/]*\//, aPrefix);
-            var aPrev = aAtc.findIndex(function(c) { return c.Name === aStoredName });
-            if (aPrev >= 0)
-               aAtc.splice(aPrev, 1);
-            aAtc.unshift({Name:iPath});
-            this.draft_save(iId, null, aAtc);
-         },
-         atcDrop: function(iId, iN) {
-            var aAtc = mnm._data.mo[iId].SubHead.Attach;
-            this.draft_save(iId, null, aAtc.slice(0, iN).concat(aAtc.slice(iN+1)));
-         },
-         atcHasFf: function(iId, iFfKey) {
-            var aAtc = mnm._data.mo[iId].SubHead.Attach;
-            return !! (aAtc && aAtc.find(function(c) { return c.FfKey === iFfKey }));
-         },
-         atcToggleFf: function(iId, iFfKey, iPath) {
-            var aAtc = mnm._data.mo[iId].SubHead.Attach || [];
-            var aN = aAtc.findIndex(function(c) { return c.FfKey === iFfKey });
-            if (aN < 0)
-               this.ffAdd(iId, iFfKey);
-            this.draft_save(iId, null, aN < 0
-                                       ? [ {Name:iPath, FfKey:iFfKey} ].concat(aAtc)
-                                       : aAtc.slice(0, aN).concat(aAtc.slice(aN+1)));
-         },
-         ffAdd: function(iId, iFfKey, iText) {
-            var aToSave = this.draft_tosave(iId, !iText);
-            if (!iText) {
-               if (aToSave.form_fill && iFfKey in aToSave.form_fill)
-                  return;
-               iText = '{}';
-            }
-            if (!aToSave.ffUpdt)
-               aToSave.ffUpdt = {};
-            if (!aToSave.form_fill)
-               aToSave.form_fill = {};
-            Vue.set(aToSave.form_fill, iFfKey, iText);
-            aToSave.ffUpdt[iFfKey] = true;
-         },
-         textAdd: function(iId, iText) {
-            var aToSave = this.draft_tosave(iId, false);
-            aToSave.msg_data = iText;
-            aToSave.mdUpdt = true;
-         },
-         subjAdd: function(iId, iText) {
-            var aToSave = this.draft_tosave(iId, false);
-            aToSave.Subject = iText;
-            aToSave.suUpdt = true;
-         },
-         atcGetName: function(iEl) { return iEl.Name },
-         atcGetKey:  function(iEl) { return iEl.FfKey || iEl.Name },
       },
       computed: {
          mnm:       function() { return mnm },
