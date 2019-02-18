@@ -41,8 +41,8 @@
                    :list="msgSubjects"/>
       <div class="uk-float-right">
          <span uk-icon="social" class="dropdown-icon">{{cl[1].length}}</span>
-         <mnm-cc @ccadd="ccAdd" @ccdrop="ccDrop"
-                 ref="cl" :tid="ml.length ? ml[ml.length-1].Id : 'none'"/>
+         <mnm-cc ref="cl"
+                 :tid="ml.length ? ml[ml.length-1].Id : 'none'"/>
          <span uk-icon="location" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
          <mnm-attach ref="al"/>
          &nbsp;
@@ -403,15 +403,31 @@
       methods: {
          now: function() { return luxon.DateTime.local() },
          addUser: function(iEvt) {
-            this.$emit('ccadd', this.tid, this.ccSet, iEvt.target.value, this.note);
+            var aAlias = iEvt.target.value;
             iEvt.target.value = '';
+            if (!aAlias.length || !(aAlias in mnm._adrsbkmenuId))
+               return;
+            var aCc = mnm._data.cl[this.ccSet].slice();
+            var aPrev = aCc.findIndex(function(c) { return c.Who === aAlias });
+            var aEl = aPrev >= 0 ? aCc.splice(aPrev, 1)[0]
+                                 : {Who:aAlias, WhoUid:mnm._adrsbkmenuId[aAlias]};
+            aEl.Note = this.note;
+            aCc.unshift(aEl);
+            if (this.ccSet)
+               mnm._data.draftRefs[this.tid].save(aCc, null);
+            else
+               mnm.ForwardSave(this.tid, aCc);
          },
          dropUser: function(iItem) {
             var aCc = mnm._data.cl[this.ccSet];
             for (var a=0; a <= iItem; ++a)
                if (aCc[a].WhoUid === aCc[a].ByUid)
                   ++iItem;
-            this.$emit('ccdrop', this.tid, this.ccSet, iItem);
+            aCc = aCc.slice(0, iItem).concat(aCc.slice(iItem+1));
+            if (this.ccSet)
+               mnm._data.draftRefs[this.tid].save(aCc, null);
+            else
+               mnm.ForwardSave(this.tid, aCc);
          },
          listSort: function(i) { return mnm._listSort('cl', i) },
       },
@@ -1505,28 +1521,6 @@
          getReplyTemplate: function(iIdxEl) {
             return {alias: mnm._data.cf.Alias, data: '',
                     subject: iIdxEl === mnm._data.ml[mnm._data.ml.length-1] ? '' : iIdxEl.Subject};
-         },
-         ccAdd: function(iTid, iCcSet, iAlias, iNote) {
-            if (!iAlias.length || !(iAlias in mnm._adrsbkmenuId))
-               return;
-            var aCc = mnm._data.cl[iCcSet].slice();
-            var aPrev = aCc.findIndex(function(c) { return c.Who === iAlias });
-            var aEl = aPrev >= 0 ? aCc.splice(aPrev, 1)[0]
-                                 : {Who:iAlias, WhoUid:mnm._adrsbkmenuId[iAlias]};
-            aEl.Note = iNote;
-            aCc.unshift(aEl);
-            if (iCcSet)
-               mnm._data.draftRefs[iTid].save(aCc, null);
-            else
-               mnm.ForwardSave(iTid, aCc);
-         },
-         ccDrop:  function(iTid, iCcSet, iN) {
-            var aCc = mnm._data.cl[iCcSet];
-            aCc = aCc.slice(0, iN).concat(aCc.slice(iN+1));
-            if (iCcSet)
-               mnm._data.draftRefs[iTid].save(aCc, null);
-            else
-               mnm.ForwardSave(iTid, aCc);
          },
       },
       computed: {
