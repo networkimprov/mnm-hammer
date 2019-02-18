@@ -993,8 +993,10 @@
                <span uk-icon="future"></span></div>
             <div v-show="mnm._data.fo"
                  class="pane-clip" style="margin-top:-1.5em">
-               <span @click="showCode"
+               <span v-if="!toggle"
+                     @click="showCode"
                      class="uk-link"><tt>{...}</tt></span>
+               &nbsp;
                <div style="font-size:smaller; text-align:right">&nbsp;{{parseError}}</div>
                <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
                   <div class="pane-scroller" style="min-height:1px">
