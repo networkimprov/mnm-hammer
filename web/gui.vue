@@ -18,6 +18,8 @@
 
    <link  href="/web/service.css" rel="stylesheet"/>
    <script src="/web/socket.js"></script>
+
+   <!-- generated id attributes require 'x[y]_' prefix -->
 </head><body>
 <base target="_blank">
 
@@ -283,14 +285,14 @@
                {{aSvc}}
             </template>
             <template v-else>
-               <span uk-icon="reply" :id="'n'+aSvc" class="dropdown-icon">0{{aSvc.todo}} </span>
+               <span uk-icon="reply" :id="'n_'+aSvc" class="dropdown-icon">0{{aSvc.todo}} </span>
                <a :href="'/'+encodeURIComponent(aSvc)" :target="'mnm_'+aSvc">{{aSvc}}</a>
             </template>
          </li></ul>
    </div>
    <!--todo create notice menus dynamically-->
    <mnm-notice v-for="aSvc in v" :key="aSvc"
-               :svc="aSvc" offset="-4" pos="left-top" :toggle="'#n'+aSvc"
+               :svc="aSvc" offset="-4" pos="left-top" :toggle="'#n_'+aSvc"
                @beforeshow.native="mnm.NoticeOpen(aSvc)"/>
 </div>
 
