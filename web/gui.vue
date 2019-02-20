@@ -824,11 +824,21 @@
       },
       computed: {
          formDef: function() {
+            if (!(this.file in mnm._data.ao))
+               return {};
             try {
-               return this.file in mnm._data.ao ? JSON.parse(mnm._data.ao[this.file]) : {};
-            } catch(a) {
+               var aDef = JSON.parse(mnm._data.ao[this.file]);
+            } catch(e) {
                return this.parent.formDefBad;
             }
+            if (this.parent.formreply) { //todo update if VFG adds .disabled at top level
+               if ('fields' in aDef)
+                  aDef = {groups:[aDef]};
+               for (var a in aDef.groups)
+                  for (var a1 in aDef.groups[a].fields)
+                     aDef.groups[a].fields[a1].disabled = true;
+            }
+            return aDef;
          },
          atcHasFf: function() {
             return this.parent.atchasff(this.parent.msgid, this.file);

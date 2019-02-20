@@ -147,6 +147,14 @@ input[type=text], textarea {
    padding: 0.1em 0.5em;
 }
 
+.vue-form-generator input:disabled {
+   background-color: #ffffdc; /* from .message-edit */
+   pointer-events: none;
+}
+.vue-form-generator label {
+   font-style: inherit !important; /* fix disabled italics */
+}
+
 .adrsbkmenu {
    box-sizing: border-box;
    background-color: gainsboro;
