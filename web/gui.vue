@@ -781,6 +781,9 @@
       watch: {
          formfill: { deep: true, handler:
             function(iMap) {
+               for (var a in this.env.fillMap)
+                  if (!iMap || !(a in iMap))
+                     Vue.delete(this.env.fillMap, a);
                for (var a in iMap)
                   Vue.set(this.env.fillMap, a, iMap[a]);
             }
