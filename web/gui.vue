@@ -12,9 +12,9 @@
 
    <script src="/web/vue-25.js"></script>
    <script src="/web/markdown-it-84.js"></script>
-   <script src="/web/luxon-13.js"></script>
-   <link  href="/web/vue-formgen-22.css" rel="stylesheet"/>
-   <script src="/web/vue-formgen-22.js"></script>
+   <script src="/web/luxon-111.js"></script>
+   <link  href="/web/vue-formgen-23.css" rel="stylesheet"/>
+   <script src="/web/vue-formgen-23.js"></script>
 
    <link  href="/web/service.css" rel="stylesheet"/>
    <script src="/web/socket.js"></script>
