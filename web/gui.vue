@@ -822,10 +822,10 @@
    Vue.component('mnm-formview', {
       template: '#mnm-formview',
       props: {file:String, fillMap:Object, parent:Object},
-      data: function() {
-         return { formState: JSON.parse(this.fillMap[this.file] || '{}') };
-      },
       computed: {
+         formState: function() {
+            return JSON.parse(this.fillMap[this.file] || '{}');
+         },
          formDef: function() {
             if (!(this.file in mnm._data.ao))
                return {};
@@ -848,7 +848,9 @@
          },
       },
       methods: {
-         onInput: function() {
+         onInput: function(iVal, iField) {
+            if (iVal !== true && !_.isFinite(iVal) && _.isEmpty(iVal)) //todo replace
+               delete this.formState[iField];
             this.parent.$emit('formfill', this.file, JSON.stringify(this.formState));
          },
          onFillAttach: function(iEvent) {
@@ -864,13 +866,6 @@
          },
          fill_name: function() {
             return 'form_fill/'+ this.file.substr(this.file.indexOf('_')+3);
-         },
-      },
-      watch: {
-         fillMap: { deep: true, handler:
-            function() {
-               this.formState = JSON.parse(this.fillMap[this.file]);
-            }
          },
       },
       components: { 'plugin-vfg': VueFormGenerator.component },
