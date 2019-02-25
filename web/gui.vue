@@ -816,7 +816,8 @@
                  class="btn-icon btn-floatr"><span uk-icon="commenting"></span></button>
       </div>
       <plugin-vfg @model-updated="onInput"
-                  :schema="formDef" :model="formState" :options="{}"/>
+                  :schema="formDef" :model="formState"
+                  :options="{fieldIdPrefix: 'fv_'+ parent.msgid +'_'+ file +'_'}"/>
    </div>
 </script><script>
    Vue.component('mnm-formview', {
