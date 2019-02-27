@@ -536,7 +536,7 @@
             var aMo = mnm._data.mo[this.msgid];
             if (!(this.msgid in mnm._data.toSave))
                Vue.set(mnm._data.toSave, this.msgid,
-                       {timer:null, form_fill:aMo.form_fill,       ffUpdt:false,
+                       {timer:null, form_fill:aMo.form_fill,       ffUpdt:{},
                                     msg_data: aMo.msg_data,        mdUpdt:false,
                                     Subject:  aMo.SubHead.Subject, suUpdt:false});
             var aToSave = mnm._data.toSave[this.msgid];
@@ -564,7 +564,10 @@
                Data:     iToSave.msg_data,
                Subject:  iToSave.Subject,
             });
-            iToSave.suUpdt = iToSave.mdUpdt = iToSave.ffUpdt = false;
+            iToSave.suUpdt = iToSave.mdUpdt = false;
+            for (var a in iToSave.ffUpdt)
+               if (iToSave.ffUpdt[a] === 'save')
+                  iToSave.ffUpdt[a] = null;
          },
          send: function() {
             var aToSave = mnm._data.toSave[this.msgid];
@@ -596,24 +599,27 @@
          atcToggleFf: function(iFfKey, iPath) {
             var aAtc = mnm._data.mo[this.msgid].SubHead.Attach || [];
             var aN = aAtc.findIndex(function(c) { return c.FfKey === iFfKey });
-            if (aN < 0)
-               this.ffAdd(iFfKey);
+            this.ffAdd(iFfKey, null, aN < 0);
             this.save(null, aN < 0 ? [ {Name:iPath, FfKey:iFfKey} ].concat(aAtc)
                                    : aAtc.slice(0, aN).concat(aAtc.slice(aN+1)));
          },
-         ffAdd: function(iFfKey, iText) {
+         ffAdd: function(iFfKey, iText, iToggle) {
             var aToSave = this.getToSave(!iText);
             if (!iText) {
-               if (aToSave.form_fill && iFfKey in aToSave.form_fill)
+               if (aToSave.form_fill && iFfKey in aToSave.form_fill) {
+                  aToSave.ffUpdt[iFfKey] = iToggle ? 'save'
+                                                   : aToSave.form_fill[iFfKey] !== '{}' ? 'keep' : null;
                   return;
+               }
                iText = '{}';
+            } else {
+               iToggle = this.atcHasFf(this.msgid, iFfKey);
             }
-            if (!aToSave.ffUpdt)
-               aToSave.ffUpdt = {};
             if (!aToSave.form_fill)
                aToSave.form_fill = {};
             Vue.set(aToSave.form_fill, iFfKey, iText);
-            aToSave.ffUpdt[iFfKey] = true;
+            aToSave.ffUpdt[iFfKey] = iToggle ? 'save'
+                                             : iText !== '{}' ? 'keep' : null;
          },
          textAdd: function(iEvent) {
             var aToSave = this.getToSave(false);
@@ -1726,13 +1732,16 @@
                aOrig.Subject = iEtc.SubHead.Subject;
             if (!aOrig.mdUpdt)
                aOrig.msg_data = iEtc.msg_data;
-            if (!aOrig.ffUpdt) {
-               aOrig.form_fill = iEtc.form_fill;
-            } else if (iEtc.form_fill) {
-               for (var aK in iEtc.form_fill)
-                  if (!aOrig.ffUpdt[aK])
-                     Vue.set(aOrig.form_fill, aK, iEtc.form_fill[aK]);
+            for (var a in aOrig.ffUpdt) {
+               if (aOrig.ffUpdt[a] === 'keep' && iEtc.form_fill && a in iEtc.form_fill) {
+                  aOrig.ffUpdt[a] = null;
+               } else if (aOrig.ffUpdt[a] === 'save' || aOrig.ffUpdt[a] === 'keep') {
+                  if (!iEtc.form_fill)
+                     iEtc.form_fill = {};
+                  iEtc.form_fill[a] = aOrig.form_fill[a];
+               }
             }
+            aOrig.form_fill = iEtc.form_fill;
          }
          break;
       case 'nameset':
