@@ -33,7 +33,7 @@ import (
    "os"
    "path"
    pSl "github.com/networkimprov/mnm-hammer/slib"
-   pWs "github.com/gorilla/websocket-1.2.0"
+   pWs "github.com/gorilla/websocket"
    "strconv"
    "strings"
    "sync"
