@@ -73,7 +73,8 @@ func init() {
 }
 
 func test() {
-   fmt.Printf("start test pass\n")
+   aDir := "test-run/" + sTestDate[1:]
+   fmt.Printf("start test pass in %s\n", aDir)
 
    var err error
    var aClients []tTestClient
@@ -84,7 +85,6 @@ func test() {
    err = json.NewDecoder(aFd).Decode(&aClients)
    if err != nil { quit(err) }
 
-   aDir := "test-run/" + sTestDate[1:]
    err = os.MkdirAll(aDir, 0700)
    if err != nil { quit(err) }
    err = os.Chdir(aDir)
