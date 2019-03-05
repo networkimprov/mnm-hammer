@@ -70,12 +70,15 @@ var sServices = make(map[string]tService)
 var sServiceTmpl *template.Template
 
 
-func main() {
+func init() {
    flag.StringVar(&sHttpSrvr.Addr, "http", sHttpSrvr.Addr, "[host]:port of http server")
+}
+
+func main() {
    aVersionQuit := flag.Bool("version", false, "print version and quit")
    flag.Parse() // may os.Exit(2)
+   fmt.Printf("mnm-hammer tmtp client v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
    if *aVersionQuit {
-      fmt.Printf("%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
       os.Exit(0)
    }
    os.Exit(mainResult())
@@ -84,8 +87,6 @@ func main() {
 func mainResult() int {
    // return 2 reserved for use by Go internals
    var err error
-
-   fmt.Printf("mnm-hammer tmtp client v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
 
    sServices["local"] = tService{ccs: newClientConns()}
 
@@ -117,7 +118,7 @@ func mainResult() int {
    http.HandleFunc("/s/", runWebsocket)
    http.HandleFunc("/web/", runFile)
    err = sHttpSrvr.ListenAndServe()
-   fmt.Fprintf(os.Stderr, "http server stopped %s\n", err.Error())
+   fmt.Fprintf(os.Stderr, "%s\n", err)
 
    return 0
 }

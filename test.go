@@ -28,6 +28,7 @@ var sTestState []tTestStateEl // used by main.go
 var sTestNow = time.Now().Truncate(time.Second)
 var sTestDate = sTestNow.Format(" 0102150405")
 var sTestBase32 = base32.NewEncoding("%+123456789BCDFGHJKLMNPQRSTVWXYZ")
+var sTestExit = false
 
 type tTestStateEl struct {
    svcId, name string
@@ -150,6 +151,10 @@ func test() {
    go func() {
       aWg.Wait()
       fmt.Printf("end test pass\n")
+      if sTestExit {
+         err = sHttpSrvr.Close()
+         if err != nil { quit(err) }
+      }
    }()
 }
 
