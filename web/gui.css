@@ -92,6 +92,15 @@ input[type=text], textarea {
    margin: 0; /* override uk-list default */
 }
 
+.thread-row {
+   margin: 0 !important; /* override uk-grid */
+   padding: 0.25em 0;
+   cursor: pointer;
+}
+.thread-row-thread {
+   background-color: wheat;
+}
+
 .message-title {
    cursor: pointer;
    display: inline-block;

@@ -211,28 +211,28 @@
                   </td>
                </tr>
             </table></template>
-         <template v-else>
-            <div v-for="aRow in tl"
-                 onclick="this.lastChild.click()"
-                 uk-grid class="uk-grid-small" style="margin:0; padding:0.25em 0; cursor:pointer"
-                 :style="{'background-color': aRow.Id === cs.Thread ? 'wheat' : 'inherit'}">
+         <template v-else-if="cs.SvcTabs.PosFor === 0 && cs.SvcTabs.Default[cs.SvcTabs.Pos] === 'FFT'">
+            <div v-for="aRow in tl" :key="aRow.Id"
+                 @click="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)"
+                 uk-grid class="uk-grid-small thread-row">
                <div class="uk-width-auto" style="padding:0">
                   <mnm-date :iso="aRow.Date" ymd="md"/></div>
-               <div v-if="aRow.Id.indexOf('/') < 0"
-                    class="uk-width-1-6">{{'Last Author'}}</div>
-               <div class="uk-width-expand">
-                  {{'Something'}} {{aRow.Id}}
-               </div>
+               <div class="uk-width-expand">{{aRow.Id}}</div>
                <div class="uk-width-auto">
                   <mnm-date :iso="'2018-01-17T04:16:57Z'"/></div>
-               <div v-if="aRow.Id.indexOf('/') < 0"
-                    class="uk-width-1-6">{{'Orig Author'}}</div>
-               <span v-if="aRow.Id.indexOf('/') >= 0"
-                     @click="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)"
-                     style="padding:0"></span>
-               <span v-else
-                     @click="mnm.NavigateThread(aRow.Id)"
-                     style="padding:0"></span>
+            </div></template>
+         <template v-else>
+            <div v-for="aRow in tl" :key="aRow.Id"
+                 @click="mnm.NavigateThread(aRow.Id)"
+                 uk-grid class="uk-grid-small thread-row"
+                 :style="{'background-color': aRow.Id === cs.Thread ? 'wheat' : null}"><!--todo class thread-row-thread-->
+               <div class="uk-width-auto" style="padding:0">
+                  <mnm-date :iso="aRow.Date" ymd="md"/></div>
+               <div class="uk-width-1-6">{{'Last Author'}}</div>
+               <div class="uk-width-expand">{{aRow.Id}}</div>
+               <div class="uk-width-auto">
+                  <mnm-date :iso="'2018-01-17T04:16:57Z'"/></div>
+               <div class="uk-width-1-6">{{'Orig Author'}}</div>
             </div></template>
          <div style="margin-top:1em">
             <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
