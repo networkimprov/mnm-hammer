@@ -47,14 +47,44 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       if err != nil { quit(err) }
       sort.Slice(aDir, func(cA, cB int) bool { return aDir[cA].ModTime().After(aDir[cB].ModTime()) })
    }
-   type tSearchEl struct { Id, Date string }
+   type tSearchEl struct {
+      Id string
+      Subject string
+      OrigDate, LastDate string
+      OrigAuthor, LastAuthor string
+   }
    aList := make([]tSearchEl, 0, len(aDir))
+
+   var aIdx, aFidx []tIndexElCore
+   fReadIndex := func(cTid string) []tIndexElCore {
+      cDoor := _getThreadDoor(iSvc, cTid)
+      cDoor.RLock(); defer cDoor.RUnlock()
+      if cDoor.renamed { return nil }
+
+      cFd, err := os.Open(dirThread(iSvc) + cTid)
+      if err != nil { quit(err) }
+      defer cFd.Close()
+      _ = _readIndex(cFd, &aIdx, nil)
+      return aIdx
+   }
    for _, aFi := range aDir {
-      aDate := aFi.ModTime().UTC().Format(time.RFC3339)
       if aTabVal == "FFT" {
-         aList = append(aList, tSearchEl{Date:aDate, Id: strings.Replace(aFi.Name(), "@", "/", -1)})
+         aList = append(aList, tSearchEl{LastDate: aFi.ModTime().UTC().Format(time.RFC3339),
+                                         Id: strings.Replace(aFi.Name(), "@", "/", -1)})
       } else if !strings.ContainsRune(aFi.Name()[1:], '_') {
-         aList = append(aList, tSearchEl{Date:aDate, Id: aFi.Name()})
+         aFidx = fReadIndex(aFi.Name())
+         if aFidx != nil {
+            aEl := tSearchEl{Id: aFi.Name(), OrigDate: aFidx[0].Date, OrigAuthor: aFidx[0].Alias}
+            for a := range aFidx {
+               if aFidx[a].Subject != "" {
+                  aEl.Subject = aFidx[a].Subject
+               }
+               if aFidx[a].From != "" || a == 0 {
+                  aEl.LastDate, aEl.LastAuthor = aFidx[a].Date, aFidx[a].Alias
+               }
+            }
+            aList = append(aList, aEl)
+         }
       }
    }
    err = json.NewEncoder(iW).Encode(aList)
