@@ -96,6 +96,9 @@ input[type=text], textarea {
    margin: 0 !important; /* override uk-grid */
    padding: 0.25em 0;
    cursor: pointer;
+   overflow-x: hidden;
+   white-space: pre;
+   word-break: keep-all;
 }
 .thread-row-thread {
    background-color: wheat;

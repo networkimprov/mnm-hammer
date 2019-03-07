@@ -216,10 +216,9 @@
                  @click="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)"
                  uk-grid class="uk-grid-small thread-row">
                <div class="uk-width-auto" style="padding:0">
-                  <mnm-date :iso="aRow.Date" ymd="md"/></div>
+                  <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
                <div class="uk-width-expand">{{aRow.Id}}</div>
-               <div class="uk-width-auto">
-                  <mnm-date :iso="'2018-01-17T04:16:57Z'"/></div>
+               <!--todo more fields-->
             </div></template>
          <template v-else>
             <div v-for="aRow in tl" :key="aRow.Id"
@@ -227,12 +226,13 @@
                  uk-grid class="uk-grid-small thread-row"
                  :style="{'background-color': aRow.Id === cs.Thread ? 'wheat' : null}"><!--todo class thread-row-thread-->
                <div class="uk-width-auto" style="padding:0">
-                  <mnm-date :iso="aRow.Date" ymd="md"/></div>
-               <div class="uk-width-1-6">{{'Last Author'}}</div>
-               <div class="uk-width-expand">{{aRow.Id}}</div>
+                  <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
+               <div class="uk-width-1-6">{{aRow.LastAuthor}}</div>
+               <div class="uk-width-expand"
+                    :title="aRow.Id">{{aRow.Subject}}</div>
                <div class="uk-width-auto">
-                  <mnm-date :iso="'2018-01-17T04:16:57Z'"/></div>
-               <div class="uk-width-1-6">{{'Orig Author'}}</div>
+                  <mnm-date :iso="aRow.OrigDate"/></div>
+               <div class="uk-width-1-6">{{aRow.OrigAuthor}}</div>
             </div></template>
          <div style="margin-top:1em">
             <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
