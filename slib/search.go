@@ -20,9 +20,9 @@ import (
 
 func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    var err error
-   if iState.SvcTabs.PosFor == ePosForTerms &&
-      strings.HasPrefix(iState.SvcTabs.Terms[iState.SvcTabs.Pos], "ffn:") {
-      aFfn := iState.SvcTabs.Terms[iState.SvcTabs.Pos][4:]
+   aTabType, aTabVal := iState.getSvcTab()
+   if aTabType == ePosForTerms && strings.HasPrefix(aTabVal, "ffn:") {
+      aFfn := aTabVal[4:]
       _, err = iW.Write([]byte(`{"Ffn":`))
       if err != nil { return err }
       err = json.NewEncoder(iW).Encode(aFfn)
@@ -34,12 +34,12 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       _, err = iW.Write([]byte{'}'})
       return err
    }
-   if iState.SvcTabs.PosFor != ePosForDefault {
+   if aTabType != ePosForDefault {
       _, err = iW.Write([]byte(`[]`))
       return err
    }
    var aDir []os.FileInfo
-   if iState.SvcTabs.Pos == 3 {
+   if aTabVal == "FFT" {
       aDir, err = ioutil.ReadDir(dirForm(iSvc))
       if err != nil { quit(err) }
    } else {
@@ -51,7 +51,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    aList := make([]tSearchEl, 0, len(aDir))
    for _, aFi := range aDir {
       aDate := aFi.ModTime().UTC().Format(time.RFC3339)
-      if iState.SvcTabs.Pos == 3 {
+      if aTabVal == "FFT" {
          aList = append(aList, tSearchEl{Date:aDate, Id: strings.Replace(aFi.Name(), "@", "/", -1)})
       } else if !strings.ContainsRune(aFi.Name()[1:], '_') {
          aList = append(aList, tSearchEl{Date:aDate, Id: aFi.Name()})

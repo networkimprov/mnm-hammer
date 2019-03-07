@@ -156,6 +156,17 @@ func (o *ClientState) getThread() string {
    return o.History[o.Hpos]
 }
 
+func (o *ClientState) getSvcTab() (int8, string) {
+   o.RLock(); defer o.RUnlock()
+   var aSet []string
+   switch o.SvcTabs.PosFor {
+   case ePosForDefault: aSet = sSvcTabsDefault
+   case ePosForPinned:  aSet = getTabsService(o.svc)
+   case ePosForTerms:   aSet = o.SvcTabs.Terms
+   }
+   return o.SvcTabs.PosFor, aSet[o.SvcTabs.Pos]
+}
+
 func (o *ClientState) isOpen(iMsgId string) bool {
    o.RLock(); defer o.RUnlock()
    aT := o.Thread[o.History[o.Hpos]]
