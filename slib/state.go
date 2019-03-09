@@ -360,7 +360,7 @@ func (o *ClientState) dropTab(iType int8) {
 
 func (o *ClientState) goLink(iThreadId, iMsgId string) {
    o.Lock(); defer o.Unlock()
-   if iThreadId != o.History[o.Hpos] {
+   if o.Hpos < 0 || o.History[o.Hpos] != iThreadId {
       o._addThread(iThreadId)
    }
    aTabs := &o.Thread[o.History[o.Hpos]].Tabs
