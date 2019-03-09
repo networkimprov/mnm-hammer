@@ -156,6 +156,9 @@ func getService(iSvc string) *tService {
 }
 
 func GetConfigService(iSvc string) *tSvcConfig {
+   if iSvc == "local" {
+      return &tSvcConfig{Name:"local"}
+   }
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    aCfg := aSvc.config
