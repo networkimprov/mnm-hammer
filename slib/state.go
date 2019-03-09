@@ -16,8 +16,6 @@ import (
    "sync"
 )
 
-const kHistoryLen = 4
-
 var sSvcTabsDefault = []string{"All","Unread","Todo","FFT"}
 var sThreadTabsDefault = []string{"Open","All"}
 
@@ -54,8 +52,10 @@ func OpenState(iClientId, iSvc string) *ClientState {
       sStates[iClientId] = true
    }
    sStateDoor.Unlock()
-   aState := &ClientState{Hpos: -1, Thread: make(map[string]*tThreadState),
+   aState := &ClientState{Hpos: -1,
+                          Thread: make(map[string]*tThreadState),
                           SvcTabs: tTabs{Terms:[]string{}},
+                          historyMax: GetConfigService(iSvc).HistoryLen,
                           svc: iSvc, filePath: kStateDir + iClientId + "/" + iSvc}
    aFd, err := os.Open(aState.filePath)
    if err != nil {
@@ -77,6 +77,7 @@ type ClientState struct {
    sync.RWMutex
    svc string
    filePath string
+   historyMax int
    Hpos int // indexes History
    History []string // thread id
    Thread map[string]*tThreadState // key thread id
@@ -148,6 +149,12 @@ func (o *ClientState) GetSummary() interface{} {
    return aS
 }
 
+func (o *ClientState) setHistoryMax(iLen int) {
+   o.RLock(); defer o.RUnlock()
+   o.historyMax = iLen
+   // if max < len(o.History), o.History shrinks on back+add
+}
+
 func (o *ClientState) getThread() string {
    o.RLock(); defer o.RUnlock()
    if o.Hpos < 0 {
@@ -207,19 +214,19 @@ func (o *ClientState) _addThread(iId string) {
    } else {
       o.Hpos++
    }
-   if o.Hpos > len(o.History)-1 {
+   if o.Hpos >= len(o.History) {
       o.History = append(o.History, iId)
-      if o.Hpos >= kHistoryLen {
-         fDropRef(0)
-         o.History = o.History[1:]
-         o.Hpos--
-      }
    } else {
       for a := o.Hpos; a < len(o.History); a++ {
          fDropRef(a)
       }
       o.History[o.Hpos] = iId
       o.History = o.History[:o.Hpos+1]
+   }
+   if o.Hpos >= o.historyMax {
+      fDropRef(0)
+      o.History = o.History[1:]
+      o.Hpos--
    }
 }
 

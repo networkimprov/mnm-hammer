@@ -27,6 +27,7 @@ var sServiceStartFn func(string)
 type tSvcConfig struct {
    Name string
    Description string
+   HistoryLen int
    LoginPeriod int // seconds
    Addr string // for tls.Dial()
    Verify bool // for tls.Config
@@ -114,7 +115,7 @@ func (tGlobalService) GetPath(string) string {
 
 func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    var err error
-   var aCfg tSvcConfig
+   aCfg := tSvcConfig{HistoryLen:128}
    err = json.NewDecoder(iR).Decode(&aCfg)
    if err != nil { return err } // todo only network errors
 
@@ -449,6 +450,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       }
    case "config_update":
       aNewCfg := GetConfigService(iSvc)
+      if iUpdt.Config.HistoryLen >= 4 && iUpdt.Config.HistoryLen <= 1024 {
+         aNewCfg.HistoryLen = iUpdt.Config.HistoryLen
+         iState.setHistoryMax(aNewCfg.HistoryLen)
+      }
       if iUpdt.Config.Addr != "" { aNewCfg.Addr = iUpdt.Config.Addr }
       if iUpdt.Config.LoginPeriod >= 0 { aNewCfg.LoginPeriod = iUpdt.Config.LoginPeriod }
       if iUpdt.Config.Verify { aNewCfg.Verify = !aNewCfg.Verify }

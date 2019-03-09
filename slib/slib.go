@@ -161,6 +161,7 @@ const ( _ int8 = iota; eForUser; eForGroupAll; eForGroupExcl; eForSelf )
 type Update struct {
    Op string
    Config *struct {
+      HistoryLen int
       Addr string
       LoginPeriod int
       Verify bool
