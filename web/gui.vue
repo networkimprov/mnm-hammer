@@ -1430,15 +1430,22 @@
       <div class="uk-float-right uk-text-small">SETTINGS</div>
       <form onsubmit="return false">
          <button @click="sendUpdate"
-                 :disabled="!(addr || verify || loginperiod >= 0) || isNaN(loginperiod)"
+                 :disabled="!(addr || verify || historylen >= 0 || loginperiod >= 0)
+                            || isNaN(historylen) || isNaN(loginperiod)"
                  title="Update settings"
                  class="btn-icon"><span uk-icon="forward"></span></button>
          <table class="svccfg">
+            <tr><td>Thread History </td><td>{{mnm._data.cf.HistoryLen}}<br>
+               <input v-model="hlin"
+                      @input="historylen = parseInt($event.target.value || '-1')"
+                      placeholder="4 to 1024"         size="25" type="text"></td></tr>
             <tr><td>Net Address    </td><td>{{mnm._data.cf.Addr  }}<br>
-               <input v-model="addr" placeholder="New host:port"     size="25" type="text"></td></tr>
+               <input v-model="addr"
+                      placeholder="New host:port"     size="25" type="text"></td></tr>
             <tr><td>Login Period   </td><td>{{mnm._secondsToString(mnm._data.cf.LoginPeriod)}}<br>
-               <input v-model="lpin" placeholder="New days:hh:mm:ss" size="25" type="text"
-                      @input="loginperiod = toSeconds($event.target.value)"></td></tr>
+               <input v-model="lpin"
+                      @input="loginperiod = toSeconds($event.target.value)"
+                      placeholder="New days:hh:mm:ss" size="25" type="text"></td></tr>
             <tr><td>Verify identity</td><td>{{mnm._data.cf.Verify}}<br>
                <label><input v-model="verify" type="checkbox"><tt>Toggle</tt></label></td></tr>
             <tr><td>Title          </td><td>{{mnm._data.cf.Name  }}</td></tr>
@@ -1451,7 +1458,8 @@
 </script><script>
    Vue.component('mnm-svccfg', {
       template: '#mnm-svccfg',
-      data: function() { return {addr:null, lpin:null, loginperiod:-1, verify:false} },
+      data: function() { return {hlin:null, addr:null, lpin:null, verify:false,
+                                 historylen:-1, loginperiod:-1} },
       computed: { mnm: function() { return mnm } },
       methods: {
          toSeconds: function(i) {
@@ -1460,8 +1468,9 @@
          },
          sendUpdate: function() {
             mnm.ConfigUpdt(this.$data);
-            this.verify = !!(this.addr = this.lpin = null);
-            this.loginperiod = -1;
+            this.hlin = this.addr = this.lpin = null;
+            this.verify = false;
+            this.historylen = this.loginperiod = -1;
          },
       },
    });
