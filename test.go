@@ -17,6 +17,7 @@ import (
    "encoding/json"
    "os"
    pSl "github.com/networkimprov/mnm-hammer/slib"
+   "sort"
    "strconv"
    "strings"
    "sync"
@@ -378,6 +379,7 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    case "/t": aResult = pSl.Upload.GetIdx()
    case "/f": aResult = pSl.BlankForm.GetIdx()
    case "/v": aResult = pSl.Service.GetIdx()
+              sort.Strings(aResult.([]string))
    case "cs": aResult = iCtx.state.GetSummary()
    case "cf": aResult = pSl.GetConfigService(iCtx.svcId)
    case "nl": aResult = pSl.GetIdxNotice(iCtx.svcId)
