@@ -67,7 +67,6 @@ func (tGlobalBlankForm) GetIdx() interface{} {
    for _, aV := range sBlankForms {
       aList = append(aList, aV)
    }
-   sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Revs[0].Date > aList[cB].Revs[0].Date })
    return aList
 }
 

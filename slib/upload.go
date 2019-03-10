@@ -12,7 +12,6 @@ import (
    "io"
    "io/ioutil"
    "os"
-   "sort"
    "strings"
    "time"
 )
@@ -44,7 +43,6 @@ func (tGlobalUpload) GetIdx() interface{} {
       aList = append(aList, tUploadEl{Name:aFi.Name(), Size:aFi.Size(),
                                       Date:aFi.ModTime().UTC().Format(time.RFC3339)})
    }
-   sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Date > aList[cB].Date })
    return aList
 }
 
