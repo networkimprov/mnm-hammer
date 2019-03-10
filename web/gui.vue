@@ -1694,6 +1694,8 @@
             mnm._data[i] = JSON.parse(iData);
             if (i === 'cl' || i === 'al' || i === 't' || i === 'f')
                sApp.$refs[i].listSort(mnm._data.sort[i]);
+            else if (i === 'v')
+               mnm._data.v.sort();
          }
          break;
       case 'tl':
