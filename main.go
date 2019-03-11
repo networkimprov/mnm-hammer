@@ -530,6 +530,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "tl":
       err = pSl.WriteResultSearch(iResp, aSvcId, aState)
    case "mo":
+      iResp.Header().Set("Content-Type", "text/plain; charset=utf-8")
       err = pSl.WriteMessagesThread(iResp, aSvcId, aState, "")
    case "mn":
       if aOp_Id[1] == "" {
