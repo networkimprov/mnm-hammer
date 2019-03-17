@@ -541,9 +541,11 @@ func _hasExpected(iName string, iExpect, iGot interface{}) (string, interface{})
       for a := range aGot {
          if _, ok = aExpect[a]; !ok { return iName +"+"+ a, aGot[a] }
       }
-      var aName string
+      var aVal, aName string
       for a := range aExpect {
-         if _, ok = aGot[a]; !ok { return iName +"-"+ a, aExpect[a] }
+         if aVal, _ = aExpect[a].(string); aVal != "**" {
+            if _, ok = aGot[a]; !ok { return iName +"-"+ a, aExpect[a] }
+         }
          aName, iGot = _hasExpected(iName +"."+ a, aExpect[a], aGot[a])
          if aName != "" { return aName, iGot }
       }
