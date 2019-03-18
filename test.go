@@ -177,6 +177,9 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    for a := range sTestState {
       if sTestState[a].name == iTc.Name { aCtx.state = sTestState[a].state }
    }
+   for iTc.SvcId != "local" && pSl.GetConfigService(iTc.SvcId).Uid == "" {
+      time.Sleep(100 * time.Millisecond)
+   }
 
    for a := range iTc.Orders {
       aUpdt := &iTc.Orders[a].Updt
