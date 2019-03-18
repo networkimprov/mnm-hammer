@@ -291,9 +291,9 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    aBuf := make([]byte, iHead.DataLen)
    _, err = iR.Read(aBuf)
    if err != nil { return err }
-   aType := eAbPingFrom; if iHead.Op == "invite" { aType = eAbInviteFrom }
-   aEl := tAdrsbkEl{Type:aType, Date:iHead.Posted, Gid:iHead.Gid, Text:string(aBuf),
+   aEl := tAdrsbkEl{Date:iHead.Posted, Gid:iHead.Gid, Text:string(aBuf),
                     Alias:iHead.SubHead.Alias, Uid:iHead.From, MyAlias:iHead.To, MsgId:iHead.Id}
+   aEl.Type = eAbPingFrom; if iHead.Op == "invite" { aEl.Type = eAbInviteFrom }
    if aEl.Type == eAbInviteFrom {
       aEl.Qid = makeLocalId(iHead.Gid)
       aEl2 := aEl
@@ -318,10 +318,10 @@ func storeSentAdrsbk(iSvc string, iKey string, iDate string) {
       fmt.Fprintf(os.Stderr, "storeSentAdrsbk %s: draft ping was cleared %s\n", iSvc, iKey)
       return
    }
+   aEl.Type = eAbPingTo; if aEl.Gid != "" { aEl.Type = eAbInviteTo }
+   aEl.Date, aEl.Qid = iDate, ""
    aSvc.Lock(); defer aSvc.Unlock()
    aLog := aSvc.pingToIdx[aEl.Alias]
-   aEl.Type = eAbPingTo; if aEl.Gid != "" { aEl.Type = eAbInviteTo }
-   aEl.Date = iDate
    if aEl.Type == eAbInviteTo {
       aEl2 := *aEl
       aSvc.inviteToIdx[iKey] = _appendLog(aSvc.inviteToIdx[iKey], &aEl2)

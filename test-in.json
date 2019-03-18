@@ -336,7 +336,7 @@
       "of": [{"Uid":"*uid", "Date":"*d"}] ,
       "ot": [] ,
       "ps": [] ,
-      "pt": [{"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
+      "pt": [{"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
               "Response":{"Type":6, "Date":"*d", "Tid":"*mid"}}] ,
       "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
               "Gid":"Gold-G#td", "Uid":"*uid", "MsgId":"*mid", "Response":{"Type":3, "Date":"*d"}}] ,
