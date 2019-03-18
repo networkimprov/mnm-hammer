@@ -519,8 +519,6 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "ps": aResult = pSl.GetDraftAdrsbk(aSvcId)
    case "pt": aResult = pSl.GetSentAdrsbk(aSvcId)
    case "pf": aResult = pSl.GetReceivedAdrsbk(aSvcId)
-   case "it": aResult = pSl.GetInviteToAdrsbk(aSvcId)
-   case "if": aResult = pSl.GetInviteFromAdrsbk(aSvcId)
    case "gl": aResult = pSl.GetGroupAdrsbk(aSvcId)
    case "of": aResult = pSl.GetFromOhi(aSvcId)
    case "ot": aResult = pSl.GetIdxOhi(aSvcId)

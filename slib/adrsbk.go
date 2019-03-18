@@ -46,9 +46,8 @@ type tAdrsbkEl struct {
    MsgId string        `json:",omitempty"`
    Tid string          `json:",omitempty"`
    Gid string          `json:",omitempty"`
-   Response *tAdrsbkEl `json:",omitempty"` // not stored
    Qid string          `json:",omitempty"`
-   Queued bool         `json:",omitempty"` // not stored
+   Response *tAdrsbkEl `json:",omitempty"` // not stored
 }
 
 const (
@@ -168,46 +167,56 @@ func GetGroupAdrsbk(iSvc string) []tGroupEl {
    return aList
 }
 
-func GetReceivedAdrsbk(iSvc string) []tAdrsbkEl {
-   aSvc := _loadAdrsbk(iSvc)
-   return _listLogs(aSvc, aSvc.pingFromIdx)
+func GetReceivedAdrsbk(iSvc string) interface{} {
+   return _listLogs(iSvc, false)
 }
 
-func GetSentAdrsbk(iSvc string) []tAdrsbkEl {
-   aSvc := _loadAdrsbk(iSvc)
-   return _listLogs(aSvc, aSvc.pingToIdx)
+func GetSentAdrsbk(iSvc string) interface{} {
+   return _listLogs(iSvc, true)
 }
 
-func GetInviteFromAdrsbk(iSvc string) []tAdrsbkEl {
-   aSvc := _loadAdrsbk(iSvc)
-   aLog := _listLogs(aSvc, aSvc.inviteFromIdx)
-   for a, _ := range aLog {
-      aLog[a].Queued = hasQueue(iSvc, eSrecAccept, aLog[a].Qid)
+func _listLogs(iSvc string, iTo bool) interface{} {
+   type tAdrsbkElOut struct {
+      // assume Response pointers are safe to read outside lock
+      tAdrsbkEl
+      ResponseInvt *tAdrsbkEl `json:",omitempty"`
+      Queued bool             `json:",omitempty"`
    }
-   return aLog
-}
-
-func GetInviteToAdrsbk(iSvc string) []tAdrsbkEl {
    aSvc := _loadAdrsbk(iSvc)
-   return _listLogs(aSvc, aSvc.inviteToIdx)
-}
+   aIdx := aSvc.pingFromIdx; if iTo { aIdx = aSvc.pingToIdx }
+   aLog := make([]tAdrsbkElOut, 0, len(aIdx)) // min number of items
+   var aEl *tAdrsbkEl
+   var aOut tAdrsbkElOut
+   var aInvt tAdrsbkLog
+   var a int
 
-func _listLogs(iSvc *tAdrsbk, iIdx map[string]tAdrsbkLog) []tAdrsbkEl {
-   iSvc.RLock()
-   aLog := make([]tAdrsbkEl, 0, len(iIdx))
-   for _, aSet := range iIdx {
-      for _, aEl := range aSet {
-         aEl2 := *aEl
-         if aEl.Response == nil {
-            aEl2.Response = &tAdrsbkEl{}
-         } else {
-            aEl2.Response = &tAdrsbkEl{Type: aEl.Response.Type, Date:  aEl.Response.Date,
-                                       Tid:  aEl.Response.Tid}
+   aSvc.RLock()
+   for _, aSet := range aIdx {
+      for _, aEl = range aSet {
+         aOut = tAdrsbkElOut{tAdrsbkEl: *aEl}
+         if aEl.Type == eAbInviteTo {
+            aInvt = aSvc.inviteToIdx[aEl.Alias + "\x00" + aEl.Gid]
+            aOut.ResponseInvt = aInvt[0].Response
+         } else if aEl.Type == eAbInviteFrom {
+            aInvt = aSvc.inviteFromIdx[aEl.Gid]
+            aOut.ResponseInvt = aInvt[0].Response
+            aOut.Qid = ""
+            if aInvt[0].Response == nil {
+               for a = range aInvt {
+                  if hasQueue(iSvc, eSrecAccept, aInvt[a].Qid) {
+                     aOut.Queued = true
+                     break
+                  }
+               }
+               if !aOut.Queued {
+                  aOut.Qid = aInvt[0].Qid
+               }
+            }
          }
-         aLog = append(aLog, aEl2)
+         aLog = append(aLog, aOut)
       }
    }
-   iSvc.RUnlock()
+   aSvc.RUnlock()
    sort.Slice(aLog, func(cA, cB int) bool { return aLog[cA].Date > aLog[cB].Date })
    return aLog
 }
@@ -471,21 +480,24 @@ func completeAdrsbk(iSvc string, iTmp string) {
    _completeAdrsbk(iSvc, iTmp, aEls)
 }
 
-func GetDraftAdrsbk(iSvc string) tAdrsbkLog {
+func GetDraftAdrsbk(iSvc string) interface{} {
+   type tAdrsbkElOut struct {
+      tAdrsbkEl
+      Queued bool `json:",omitempty"`
+   }
+   var aMap map[string]*tAdrsbkElOut
    aDoor := &getService(iSvc).adrsbk.draftDoor
-   var aMap map[string]*tAdrsbkEl
    aDoor.RLock()
    err := readJsonFile(&aMap, filePing(iSvc))
    aDoor.RUnlock()
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
-      return tAdrsbkLog{}
+      return []*tAdrsbkElOut{}
    }
-   aList := make(tAdrsbkLog, len(aMap))
-   a := 0
-   for _, aList[a] = range aMap {
-      aList[a].Queued = hasQueue(iSvc, eSrecPing, aList[a].Qid)
-      a++
+   aList := make([]*tAdrsbkElOut, 0, len(aMap))
+   for _, aEl := range aMap {
+      aEl.Queued = hasQueue(iSvc, eSrecPing, aEl.Qid)
+      aList = append(aList, aEl)
    }
    sort.Slice(aList, func(cA, cB int) bool {
       if aList[cA].Alias == aList[cB].Alias {

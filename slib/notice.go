@@ -43,8 +43,7 @@ func addPingNotice(iSvc string, iMsgId string, iAlias, iGid string, iBlurb strin
          return
       }
    }
-   aEl := tNoticeEl{MsgId:iMsgId, Date:dateRFC3339(), Alias:iAlias, Gid:iGid, Blurb:iBlurb}
-   aEl.Type = "ping"; if iGid != "" { aEl.Type = "invite" }
+   aEl := tNoticeEl{Type:"i", MsgId:iMsgId, Date:dateRFC3339(), Alias:iAlias, Gid:iGid, Blurb:iBlurb}
    aSvc.notice = append(aSvc.notice, aEl)
    err := storeFile(fileNotc(iSvc), aSvc.notice)
    if err != nil { quit(err) }

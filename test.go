@@ -172,7 +172,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    }
    aCtx := tTestContext{
       svcId: iTc.SvcId,
-      lastId: tTestLastId{"tl":{}, "al":{}, "ml":{}, "cl":{}, "mn":{}, "ps":{}, "if":{}, "pf":{}},
+      lastId: tTestLastId{"tl":{}, "al":{}, "ml":{}, "cl":{}, "mn":{}, "ps":{}, "pf":{}},
    }
    for a := range sTestState {
       if sTestState[a].name == iTc.Name { aCtx.state = sTestState[a].state }
@@ -303,7 +303,7 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
    case "ping_discard":
       iUpdt.Ping.To += sTestDate
    case "accept_send":
-      _applyLastId(&iUpdt.Accept.Qid,        &aApply, iCtx.lastId, "if")
+      _applyLastId(&iUpdt.Accept.Qid,        &aApply, iCtx.lastId, "pf")
    case "ohi_add", "ohi_drop":
       _applyLastId(&iUpdt.Ohi.Uid,           &aApply, iCtx.lastId, "pf")
    case "navigate_thread":
@@ -342,17 +342,18 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
 func _applyLastId(iField, iMsg *string, iLastId tTestLastId, iType string) {
    a := -1
    switch *iField {
-   case "last", "lastfile": a = 0
-   case "2ndlast":          a = 1
-   default:                 return
+   case "last", "lastfile", "lastqid": a = 0
+   case "2ndlast":                     a = 1
+   default:                            return
    }
    aSet := *iLastId[iType]
    switch iType {
-   case "tl", "ml":       *iField = aSet[a].Id
-   case "cl", "if", "ps": *iField = aSet[a].Qid
-   case "pf":             *iField = aSet[a].Uid
-   case "al":             *iField = aSet[a].File
-   default:               return
+   case "tl", "ml": *iField = aSet[a].Id
+   case "cl", "ps": *iField = aSet[a].Qid
+   case "al":       *iField = aSet[a].File
+   case "pf":       if *iField == "lastqid" { *iField = aSet[a].Qid
+                    } else                  { *iField = aSet[a].Uid }
+   default:         return
    }
    aAmp := ""; if *iMsg != "" { aAmp = " & " }
    *iMsg += aAmp + *iField
@@ -392,8 +393,6 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    case "ps": aResult = pSl.GetDraftAdrsbk(iCtx.svcId)
    case "pt": aResult = pSl.GetSentAdrsbk(iCtx.svcId)
    case "pf": aResult = pSl.GetReceivedAdrsbk(iCtx.svcId)
-   case "it": aResult = pSl.GetInviteToAdrsbk(iCtx.svcId)
-   case "if": aResult = pSl.GetInviteFromAdrsbk(iCtx.svcId)
    case "gl": aResult = pSl.GetGroupAdrsbk(iCtx.svcId)
    case "of": aResult = pSl.GetFromOhi(iCtx.svcId)
    case "ot": aResult = pSl.GetIdxOhi(iCtx.svcId)

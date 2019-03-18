@@ -309,11 +309,11 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: invite error %s\n", iSvc, err.Error())
          return fErr
       }
-      aFn, aResult = fAll, []string{"nl", "pf", "pt", "if"}
+      aFn, aResult = fAll, []string{"nl", "pf", "pt"}
    case "member":
       if iHead.Act == "join" {
          groupJoinedAdrsbk(iSvc, iHead)
-         aFn, aResult = fAll, []string{"it"}
+         aFn, aResult = fAll, []string{"pt"}
       }
    case "delivery":
       aGot := "thread"
@@ -357,14 +357,14 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
             break
          }
          storeSentAdrsbk(iSvc, aId.ping(), iHead.Posted)
-         aFn, aResult = fAll, []string{"ps", "pt", "pf", "it", "gl"}
+         aFn, aResult = fAll, []string{"ps", "pt", "pf", "gl"}
       case eSrecAccept:
          if iHead.Error != "" {
-            aFn, aResult = fAll, []string{"if", "_e", iHead.Error}
+            aFn, aResult = fAll, []string{"pf", "_e", iHead.Error}
             break
          }
          acceptInviteAdrsbk(iSvc, aId.gid(), iHead.Posted)
-         aFn, aResult = fAll, []string{"if", "gl"}
+         aFn, aResult = fAll, []string{"pf", "gl"}
       case eSrecThread:
          if iHead.Error != "" {
             aTid := aId.tid(); if aTid == "" { aTid = iHead.Id }
@@ -444,7 +444,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if iSvc == "local" {
          aFn, aResult = fOne, []string{"/v", "/t", "/f"}
       } else {
-         aFn, aResult = fOne, []string{"of", "ot", "ps", "pt", "pf", "if", "it", "gl",
+         aFn, aResult = fOne, []string{"of", "ot", "ps", "pt", "pf", "gl",
                                        "cf", "nl", "tl", "cs", "cl", "al", "_t", "ml", "mo",
                                        "/v", "/t", "/f"}
       }
@@ -474,7 +474,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aFn, aResult = fAll, []string{"ps"}
    case "accept_send":
       addQueue(iSvc, eSrecAccept, iUpdt.Accept.Qid)
-      aFn, aResult = fAll, []string{"if"}
+      aFn, aResult = fAll, []string{"pf"}
    case "adrsbk_search":
       if iUpdt.Adrsbk.Term == "" {
          err = tError("search term missing")

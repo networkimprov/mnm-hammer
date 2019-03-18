@@ -84,15 +84,15 @@
    "Result": {
       "ps": [{"Type":1, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*", "Queued":true}] }
 },{
-   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["if", "nl"]}},
+   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["pf", "nl"]}},
    "Result": {
-      "if": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
+      "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
               "Gid":"Gold-G#td", "Uid":"*uid", "MsgId":"*mid", "Response":"**"}] ,
-      "nl": [{"Type":"invite", "Alias":"Gold#td", "Gid":"Gold-G#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
+      "nl": [{"Type":"i", "Alias":"Gold#td", "Gid":"Gold-G#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
 },{
-   "Updt": {"Op":"accept_send", "Accept":{"Qid":"last"}},
+   "Updt": {"Op":"accept_send", "Accept":{"Qid":"lastqid"}},
    "Result": {
-      "if": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*", "Queued":true,
+      "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Queued":true,
               "Gid":"Gold-G#td", "Uid":"*uid", "MsgId":"*mid", "Response":"**"}] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{
@@ -337,14 +337,14 @@
       "ot": [] ,
       "ps": [] ,
       "pt": [{"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
-              "Response":{"Type":6, "Date":"*d", "Tid":"*mid"}}] ,
-      "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
-              "Gid":"Gold-G#td", "Uid":"*uid", "MsgId":"*mid", "Response":{"Type":3, "Date":"*d"}}] ,
-      "if": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
-              "Gid":"Gold-G#td", "Uid":"*uid", "MsgId":"*mid", "Response":{"Type":9, "Date":"*d"}}] ,
-      "it": [] ,
+              "Response":{"Type":8, "Date":"*d", "Uid":"*uid", "Alias":"Gold#td", "MyAlias":"Blue#td",
+                          "MsgId":"*mid", "Gid":"Gold-G#td", "Qid":"*", "Response":"**"}}] ,
+      "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
+              "Gid":"Gold-G#td", "Uid":"*uid", "MsgId":"*mid",
+              "Response":{"Type":5, "Date":"*d", "Uid":"*uid", "Tid":"*mid"},
+              "ResponseInvt":{"Type":9, "Date":"*d", "Gid":"Gold-G#td"}}] ,
       "gl": [{"Gid":"Gold-G#td", "Date":"*d", "Admin":false}] ,
-      "nl": [{"Type":"invite", "Alias":"Gold#td", "Gid":"Gold-G#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] ,
+      "nl": [{"Type":"i", "Alias":"Gold#td", "Gid":"Gold-G#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] ,
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"", "Queued":false},
@@ -383,22 +383,22 @@
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} }
 },{
    "Updt": {"Op":"test", "Test":{"Notice":[
-                 {"Type":"ping", "MsgId":"0", "Date":"-9", "Seen":1, "Alias":"discard"},
-                 {"Type":"ping", "MsgId":"1", "Date":"-8", "Seen":1, "Alias":"discard"},
-                 {"Type":"ping", "MsgId":"2", "Date":"-8", "Seen":2, "Alias":"keep"},
-                 {"Type":"ping", "MsgId":"3", "Date":"-7", "Seen":2, "Alias":"keep"},
-                 {"Type":"ping", "MsgId":"4", "Date":"-6", "Seen":3, "Alias":"keep"},
-                 {"Type":"ping", "MsgId":"5", "Date":"-1", "Seen":0, "Alias":"seen"},
-                 {"Type":"ping", "MsgId":"6", "Date":"-1", "Seen":0, "Alias":"seen"}] }},
+                 {"Type":"i", "MsgId":"0", "Date":"-9", "Seen":1, "Alias":"discard"},
+                 {"Type":"i", "MsgId":"1", "Date":"-8", "Seen":1, "Alias":"discard"},
+                 {"Type":"i", "MsgId":"2", "Date":"-8", "Seen":2, "Alias":"keep"},
+                 {"Type":"i", "MsgId":"3", "Date":"-7", "Seen":2, "Alias":"keep"},
+                 {"Type":"i", "MsgId":"4", "Date":"-6", "Seen":3, "Alias":"keep"},
+                 {"Type":"i", "MsgId":"5", "Date":"-1", "Seen":0, "Alias":"seen"},
+                 {"Type":"i", "MsgId":"6", "Date":"-1", "Seen":0, "Alias":"seen"}] }},
    "Result": null
 },{
    "Updt": {"Op":"notice_seen", "Notice":{"MsgId":"6"}},
    "Result": {
-      "nl": [{"Type":"ping", "MsgId":"6", "Date":"*dyo", "Seen":4, "Alias":"seen"},
-             {"Type":"ping", "MsgId":"5", "Date":"*dyo", "Seen":4, "Alias":"seen"},
-             {"Type":"ping", "MsgId":"4", "Date":"*dyo", "Seen":3, "Alias":"keep"},
-             {"Type":"ping", "MsgId":"3", "Date":"*dyo", "Seen":2, "Alias":"keep"},
-             {"Type":"ping", "MsgId":"2", "Date":"*dyo", "Seen":2, "Alias":"keep"}] }
+      "nl": [{"Type":"i", "MsgId":"6", "Date":"*dyo", "Seen":4, "Alias":"seen"},
+             {"Type":"i", "MsgId":"5", "Date":"*dyo", "Seen":4, "Alias":"seen"},
+             {"Type":"i", "MsgId":"4", "Date":"*dyo", "Seen":3, "Alias":"keep"},
+             {"Type":"i", "MsgId":"3", "Date":"*dyo", "Seen":2, "Alias":"keep"},
+             {"Type":"i", "MsgId":"2", "Date":"*dyo", "Seen":2, "Alias":"keep"}] }
 }]
 
 },{
@@ -430,7 +430,7 @@
    "Result": {
       "pf":[{"Type":4, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td", "Uid":"*uid", "MsgId":"*mid",
              "Response":"**"}] ,
-      "nl": [{"Type":"ping", "Alias":"Blue#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
+      "nl": [{"Type":"i", "Alias":"Blue#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
 },{
    "Updt": {"Op":"ohi_add", "Ohi":{"Uid":"last"}},
    "Result": {
