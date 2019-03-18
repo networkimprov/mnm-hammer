@@ -249,6 +249,10 @@ input[type=text], textarea {
    margin-top: 10px;
 }
 
+.pingresponse {
+   white-space: nowrap;
+}
+
 .svccfg tr td {
    vertical-align: top;
    padding: 0.5em 0;

@@ -1171,12 +1171,20 @@
 </script>
 
 <script type="text/x-template" id="mnm-pingresponse">
-   <span v-if="response.Type">
+   <span v-if="response.Type"
+         class="pingresponse">
       <a v-if="response.Tid"
          onclick="mnm.NavigateLink(this.href); return false"
          :href="'#'+ response.Tid"><span uk-icon="mail"></span></a>
-      <template v-else>
-         ping</template>
+      <span v-else-if="response.Type === 9"
+            title="Accepted invitation"
+            uk-icon="check"></span>
+      <span v-else-if="response.Type === 10"
+            title="Recipient joined group"
+            uk-icon="plus-circle"></span>
+      <span v-else
+            title="Ping response"
+            uk-icon="rss"></span>
       <mnm-date :iso="response.Date"/>
    </span>
 </script><script>
@@ -1253,15 +1261,15 @@
                <tr v-for="a in mnm._data.if">
                   <td><mnm-date :iso="a.Date"/></td>
                   <td>{{a.Gid}}
-                     <span v-if="mnm._data.gl.find(function(c){return c.Gid === a.Gid})"
-                           class="uk-badge">in</span>
-                     <span v-else-if="a.Queued"
-                           title="Awaiting link to server"
-                           uk-icon="bolt"></span>
-                     <button v-else
-                             @click="mnm.InviteAccept(a.Qid)"
-                             title="Accept group invite"
-                             class="btn-icon"><span uk-icon="forward"></span></button>
+                     <template v-if="!mnm._data.gl.find(function(c){return c.Gid === a.Gid})">
+                        <span v-if="a.Queued"
+                              title="Awaiting link to server"
+                              uk-icon="bolt"></span>
+                        <button v-else
+                                @click="mnm.InviteAccept(a.Qid)"
+                                title="Accept group invite"
+                                class="btn-icon"><span uk-icon="forward"></span></button>
+                     </template>
                   </td>
                   <td>{{a.Alias}}</td><td>{{a.Text}}</td>
                   <td><mnm-pingresponse :response="a.Response"/></td>
