@@ -1170,30 +1170,6 @@
    });
 </script>
 
-<script type="text/x-template" id="mnm-pingresponse">
-   <span v-if="response.Type"
-         class="pingresponse">
-      <a v-if="response.Tid"
-         onclick="mnm.NavigateLink(this.href); return false"
-         :href="'#'+ response.Tid"><span uk-icon="mail"></span></a>
-      <span v-else-if="response.Type === 9"
-            title="Accepted invitation"
-            uk-icon="check"></span>
-      <span v-else-if="response.Type === 10"
-            title="Recipient joined group"
-            uk-icon="plus-circle"></span>
-      <span v-else
-            title="Ping response"
-            uk-icon="rss"></span>
-      <mnm-date :iso="response.Date"/>
-   </span>
-</script><script>
-   Vue.component('mnm-pingresponse', {
-      template: '#mnm-pingresponse',
-      props: {response:Object},
-   });
-</script>
-
 <script type="text/x-template" id="mnm-notice">
    <div uk-dropdown="mode:click" :toggle="toggle" class="uk-width-1-4 dropdown-scroll">
       <button v-if="!svc"
@@ -1203,26 +1179,26 @@
               style="margin-right:1em"
               class="btn-icon btn-floatr"><span uk-icon="check"></span></button>
       <div style="min-height:2em; font-style:oblique;">
-         <span v-for="aType in ['ping', 'invite']"
-               @click="$data[aType] = !$data[aType]"
+         <span v-for="aType in [['i', 'invites']]"
+               @click="$data[aType[0]] = !$data[aType[0]]"
                class="uk-link" style="margin-right:0.5em">
-            <span :style="{visibility: $data[aType] ? 'visible' : 'hidden'}">&bull; </span>
-            {{ aType }}s</span>
+            <span :style="{visibility: $data[aType[0]] ? 'visible' : 'hidden'}">&bull; </span>
+            {{ aType[1] }}
+         </span>
       </div>
       <ul class="uk-list dropdown-scroll-list notice">
          <li v-if="!nl.length"
              style="text-align:center">No notices yet</li>
          <li v-for="aNote in nl" :key="aNote.MsgId"
-             v-if="$data[aNote.Type]"
+             v-show="$data[aNote.Type]"
              @click="$set(aNote, 'open', !aNote.open)"
              :class="{'notice-seen':aNote.Seen, 'notice-hasblurb':aNote.Blurb}">
-            <div style="float:left; font-style:oblique">{{aNote.Type.charAt(0)}}</div>
+            <div style="float:left; font-style:oblique">{{aNote.Type}}</div>
             <div style="margin-left:1em">
                <div style="float:right"><mnm-date :iso="aNote.Date" ymd="md" hms="hm"/></div>
-               <template v-if="aNote.Type === 'invite'">
-                  {{aNote.Alias}} - {{aNote.Gid}}</template>
-               <template v-else-if="aNote.Type === 'ping'">
-                  {{aNote.Alias}}</template>
+               {{aNote.Alias}}
+               <template v-if="aNote.Gid">
+                   - {{aNote.Gid}}</template>
                <span v-show="aNote.Blurb && !aNote.open">. . .</span>
                <div v-show="aNote.open">{{aNote.Blurb}}</div>
             </div>
@@ -1232,7 +1208,7 @@
    Vue.component('mnm-notice', {
       template: '#mnm-notice',
       props: {svc:String, toggle:String},
-      data: function() { return { ping:true, invite:true } },
+      data: function() { return { i:true } },
       computed: {
          nl: function() { return this.svc ? mnm._data.nlo : mnm._data.nl },
          mnm: function() { return mnm },
@@ -1242,37 +1218,32 @@
 
 <script type="text/x-template" id="mnm-adrsbk">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-2-5 dropdown-scroll">
-      <ul uk-tab class="uk-child-width-expand" style="margin-top:0; margin-right:20px">
-         <li v-for="aName in ['pings','invites','drafts','pinged','invited','groups','ohi to']">
-            <a @click.prevent="" href="#" style="cursor:default">{{aName}}</a>
-         </li></ul>
+      <ul uk-tab class="uk-child-width-expand" style="margin-top:0; margin-right:20px"
+          @click.prevent>
+         <li><a href="#">{{mnm._data.pf.length || null}} invites </a></li>
+         <li><a href="#">{{mnm._data.ps.length || null}} drafts  </a></li>
+         <li><a href="#">{{mnm._data.pt.length || null}} sent    </a></li>
+         <li><a href="#">{{mnm._data.gl.length || null}} groups  </a></li>
+         <li><a href="#">{{mnm._data.ot.length || null}} ohi to  </a></li>
+      </ul>
       <ul class="uk-switcher dropdown-scroll-list">
          <li>
             <table class="uk-table uk-table-small">
-               <tr><th>Date</th><th>From</th><th>Message</th><th>Response</th></tr>
-               <tr v-for="a in mnm._data.pf">
-                  <td><mnm-date :iso="a.Date"/></td>
-                  <td>{{a.Alias}}</td><td>{{a.Text}}</td>
-                  <td><mnm-pingresponse :response="a.Response"/></td>
-               </tr></table></li>
-         <li>
-            <table class="uk-table uk-table-small">
-               <tr><th>Date</th><th>Group</th><th>From</th><th>Msg</th><th>Response</th></tr>
-               <tr v-for="a in mnm._data.if">
-                  <td><mnm-date :iso="a.Date"/></td>
-                  <td>{{a.Gid}}
-                     <template v-if="!mnm._data.gl.find(function(c){return c.Gid === a.Gid})">
-                        <span v-if="a.Queued"
-                              title="Awaiting link to server"
-                              uk-icon="bolt"></span>
-                        <button v-else
-                                @click="mnm.InviteAccept(a.Qid)"
-                                title="Accept group invite"
-                                class="btn-icon"><span uk-icon="forward"></span></button>
-                     </template>
+               <tr><th>Date</th> <th>From</th> <th>Group</th> <th>Msg</th> <th>Response</th></tr>
+               <tr v-for="aPing in mnm._data.pf">
+                  <td><mnm-date :iso="aPing.Date" ymd="md"/></td>
+                  <td>{{aPing.Alias}}</td>
+                  <td>{{aPing.Gid}}
+                     <span v-if="aPing.Queued"
+                           title="Awaiting link to server"
+                           uk-icon="bolt"></span>
+                     <button v-else-if="aPing.Qid"
+                             @click="mnm.InviteAccept(aPing.Qid)"
+                             title="Accept group invite"
+                             class="btn-icon"><span uk-icon="forward"></span></button>
                   </td>
-                  <td>{{a.Alias}}</td><td>{{a.Text}}</td>
-                  <td><mnm-pingresponse :response="a.Response"/></td>
+                  <td>{{aPing.Text}}</td>
+                  <td><mnm-pingresponse :ping="aPing"/></td>
                </tr></table></li>
          <li>
             <form onsubmit="return false"
@@ -1287,11 +1258,11 @@
                </div>
                <button @click="startPing()"
                        :disabled="!validDraft"
-                       title="New ping draft"
+                       title="New draft invitation"
                        class="btn-icon"><span uk-icon="pencil"></span></button>
             </form>
             <table class="uk-table uk-table-small" style="margin:0">
-               <tr><th>To / (Group)</th><th></th><th>Message</th><th></th></tr>
+               <tr><th>To / (Group)</th> <th></th> <th>Message</th> <th></th></tr>
                <tr v-for="a in mnm._data.ps" :key="rowId(a)">
                   <td>{{a.Alias}}<br>{{a.Gid && '('+a.Gid+')'}}</td>
                   <td><span v-if="a.Queued"
@@ -1299,7 +1270,7 @@
                             uk-icon="bolt"></span>
                       <button v-else
                               @click="mnm.PingSend(a.Qid)"
-                              title="Send ping draft"
+                              title="Send invitation"
                               class="btn-icon"><span uk-icon="forward"></span></button></td>
                   <td><textarea @input="timer(a, $event.target.value)"
                                 :disabled="a.Queued"
@@ -1307,28 +1278,22 @@
                                 >{{toSave[rowId(a)] || a.Text}}</textarea></td>
                   <td><button v-if="!a.Queued"
                               @click="mnm.PingDiscard({to:a.Alias, gid:a.Gid})"
-                              title="Discard ping draft"
+                              title="Discard draft"
                               class="btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
-               <tr><th>Date</th><th>To</th><th>Message</th><th>Response</th></tr>
-               <tr v-for="a in mnm._data.pt">
-                  <td><mnm-date :iso="a.Date"/></td>
-                  <td>{{a.Alias}}</td><td>{{a.Text}}</td>
-                  <td><mnm-pingresponse :response="a.Response"/></td>
+               <tr><th>Date</th> <th>To</th> <th>Group</th> <th>Msg</th> <th>Response</th></tr>
+               <tr v-for="aPing in mnm._data.pt">
+                  <td><mnm-date :iso="aPing.Date" ymd="md"/></td>
+                  <td>{{aPing.Alias}}</td>
+                  <td>{{aPing.Gid}}</td>
+                  <td>{{aPing.Text}}</td>
+                  <td><mnm-pingresponse :ping="aPing"/></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
-               <tr><th>Date</th><th>Group</th><th>To</th><th>Message</th><th>Response</th></tr>
-               <tr v-for="a in mnm._data.it">
-                  <td><mnm-date :iso="a.Date"/></td>
-                  <td>{{a.Gid}}</td><td>{{a.Alias}}</td><td>{{a.Text}}</td>
-                  <td><mnm-pingresponse :response="a.Response"/></td>
-               </tr></table></li>
-         <li>
-            <table class="uk-table uk-table-small">
-               <tr><th>Date</th><th>Group</th></tr>
+               <tr><th>Date</th> <th>Group</th></tr>
                <tr v-for="a in mnm._data.gl">
                   <td><mnm-date :iso="a.Date"/></td>
                   <td>{{a.Gid}}
@@ -1347,7 +1312,7 @@
                        class="btn-icontxt">o/</button>
             </form>
             <table class="uk-table uk-table-small">
-               <tr><th>Date</th><th>To</th><th></th></tr>
+               <tr><th>Date</th> <th>To</th> <th></th></tr>
                <tr v-for="a in mnm._data.ot">
                   <td><mnm-date :iso="a.Date"/></td>
                   <td>{{a.Uid /*todo alias*/}}</td>
@@ -1399,6 +1364,34 @@
             }
          },
       },
+   });
+</script>
+
+<script type="text/x-template" id="mnm-pingresponse">
+   <div class="pingresponse">
+      <div v-if="ping.Response">
+         <a v-if="ping.Response.Tid"
+            onclick="mnm.NavigateLink(this.href); return false"
+            :href="'#'+ ping.Response.Tid"><span uk-icon="mail"></span></a>
+         <span v-else
+               title="Responded by invite"
+               uk-icon="rss"></span>
+         <mnm-date :iso="ping.Response.Date" ymd="md"/>
+      </div>
+      <div v-if="ping.ResponseInvt">
+         <span v-if="ping.ResponseInvt.Type === 9"
+               title="Accepted invitation"
+               uk-icon="check"></span>
+         <span v-else-if="ping.ResponseInvt.Type === 10"
+               title="Recipient joined group"
+               uk-icon="plus-circle"></span>
+         <mnm-date :iso="ping.ResponseInvt.Date" ymd="md"/>
+      </div>
+   </div>
+</script><script>
+   Vue.component('mnm-pingresponse', {
+      template: '#mnm-pingresponse',
+      props: {ping:Object},
    });
 </script>
 
@@ -1521,7 +1514,7 @@
       ohiFrom:true, //todo move to cs
    // per service
       cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
-      ps:[], pt:[], pf:[], it:[], if:[], gl:[], ot:[], of:null,
+      ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
    // per thread
       cl:[[],[]], al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
       toSave:{}, draftRefs:{}, // populated locally
@@ -1694,7 +1687,7 @@
 
       switch (i) {
       case 'cs': case 'cf': case 'nl': case 'cl': case 'al': case 'ml':
-      case 'ps': case 'pt': case 'pf': case 'it': case 'if': case 'gl': case 'ot': case 'of':
+      case 'ps': case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
       case 't' : case 'f' : case 'v' : case 'nlo':
          if (i === 'f' && iEtc) {
             mnm._data.fo = iData;
