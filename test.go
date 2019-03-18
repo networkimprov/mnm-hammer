@@ -87,6 +87,10 @@ func test() {
    err = json.NewDecoder(aFd).Decode(&aClients)
    if err != nil { quit(err) }
 
+   for a := range aClients {
+      sTestState = append(sTestState, tTestStateEl{aClients[a].SvcId, aClients[a].Name, nil})
+   }
+
    err = os.MkdirAll(aDir, 0700)
    if err != nil { quit(err) }
    err = os.Chdir(aDir)
@@ -103,7 +107,6 @@ func test() {
    aEnc := json.NewEncoder(&aBuf)
    for a := range aClients {
       aTc := &aClients[a]
-      sTestState = append(sTestState, tTestStateEl{aTc.SvcId, aTc.Name, nil})
       if aTc.Version != "" && aTc.Version != aAbout.Version {
          err = tError("version expect " + aTc.Version + ", got " + aAbout.Version)
          goto ReturnErr
@@ -116,6 +119,7 @@ func test() {
          err = pSl.Service.Add(aTc.SvcId, "", &aBuf)
          if err != nil { goto ReturnErr }
       }
+      sTestState[a].state = pSl.OpenState(aTc.Name, aTc.SvcId)
       for a1 := range aTc.Files {
          _, err = aBuf.WriteString(aTc.Files[a1].Data)
          if err != nil { quit(err) }
@@ -169,10 +173,9 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    aCtx := tTestContext{
       svcId: iTc.SvcId,
       lastId: tTestLastId{"tl":{}, "al":{}, "ml":{}, "cl":{}, "mn":{}, "ps":{}, "if":{}, "pf":{}},
-      state: pSl.OpenState(iTc.Name, iTc.SvcId),
    }
    for a := range sTestState {
-      if sTestState[a].name == iTc.Name { sTestState[a].state = aCtx.state }
+      if sTestState[a].name == iTc.Name { aCtx.state = sTestState[a].state }
    }
 
    for a := range iTc.Orders {
