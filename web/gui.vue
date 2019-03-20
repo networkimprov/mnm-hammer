@@ -1249,13 +1249,16 @@
          <li>
             <form onsubmit="return false"
                   style="margin: 0 auto; display:table">
-               <input v-model="draft.to" placeholder="To" size="25" type="text">
+               <input v-model="draft.to"
+                      placeholder="To ([{.aliasMin}]+ characters)" size="25" type="text">
                <div style="display:inline-block; vertical-align:top">
-                  <input v-model="draft.gid" placeholder="(Group)" size="25" type="text">
+                  <input v-model="draft.gid"
+                         placeholder="(Group)" size="25" type="text">
                   <br>
                   <mnm-adrsbkinput @keyup.enter.native="setGid($event.target)"
                                    @keydown.enter.native.prevent=""
-                                   :type="2" placeholder="Search groups" size="25"/>
+                                   :type="2"
+                                   placeholder="Search groups" size="25"/>
                </div>
                <button @click="startPing()"
                        :disabled="!validDraft"
@@ -1332,7 +1335,7 @@
       computed: {
          mnm: function() { return mnm },
          validDraft: function() {
-            if (!this.draft.to)
+            if (this.draft.to.length < [{.aliasMin}])
                return false;
             for (var a=0; a < mnm._data.ps.length; ++a)
                if (mnm._data.ps[a].Alias ===  this.draft.to &&
@@ -1412,14 +1415,20 @@
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); return false;">
          <input type="hidden" name="filename" :value="JSON.stringify($data)">
-         <button :disabled="!(addr && name && alias && alias.length >= 8 && !isNaN(loginperiod))"
+         <button :disabled="!(name  && name.length  >= [{.serviceMin}] &&
+                              alias && alias.length >= [{.aliasMin}] &&
+                              addr && !isNaN(loginperiod))"
                  title="Register new account at service"
                  class="btn-icon"><span uk-icon="forward"></span></button>
-         <input v-model="addr"  placeholder="Net Address (host:port)" size="33" type="text">
-         <input v-model="name"  placeholder="Title"                   size="33" type="text">
-         <input v-model="alias" placeholder="Alias (8+ characters)"   size="33" type="text">
-         <input v-model="lpin"  placeholder="(Pd days:hh:mm:ss)"      size="19" type="text"
-                @input="loginperiod = mnm._stringToSeconds($event.target.value)">
+         <input v-model="addr"
+                placeholder="Net Address (host:port)"             size="33" type="text">
+         <input v-model="name"
+                placeholder="Title ([{.serviceMin}]+ characters)" size="33" type="text">
+         <input v-model="alias"
+                placeholder="Alias ([{.aliasMin}]+ characters)"   size="33" type="text">
+         <input v-model="lpin"
+                @input="loginperiod = mnm._stringToSeconds($event.target.value)"
+                placeholder="(Pd days:hh:mm:ss)"                  size="19" type="text">
          <div v-show="loginperiod"
               style="float:right">{{loginperiod}} sec</div>
          <br>
