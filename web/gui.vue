@@ -349,7 +349,8 @@
       <input v-model="note" placeholder="Note" size="57" maxlength="1024" type="text">
       <div style="position:relative; padding:1px;">
          <mnm-adrsbkinput @keyup.enter.native="addUser"
-                          :type="3" placeholder="+To" size="25"/>
+                          :type="3"
+                          placeholder="To" size="25"/>
          <div style="height:100%; position:absolute; left:13em; right:0; top:0;">
             <mnm-draftmenu ref="menu" :list="menu" @drop="dropUser"/></div>
       </div>
@@ -406,9 +407,9 @@
          now: function() { return luxon.DateTime.local() },
          addUser: function(iEvt) {
             var aAlias = iEvt.target.value;
-            iEvt.target.value = '';
-            if (!aAlias.length || !(aAlias in mnm._adrsbkmenuId))
+            if (!(aAlias && aAlias in mnm._adrsbkmenuId))
                return;
+            iEvt.target.value = '';
             var aCc = mnm._data.cl[this.ccSet].slice();
             var aPrev = aCc.findIndex(function(c) { return c.Who === aAlias });
             var aEl = aPrev >= 0 ? aCc.splice(aPrev, 1)[0]
