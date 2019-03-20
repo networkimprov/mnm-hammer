@@ -1303,12 +1303,14 @@
          <li>
             <form onsubmit="this.reset(); return false;"
                   style="margin: 0 auto; display:table">
-               <mnm-adrsbkinput oninput="this.form.elements[1].disabled = !this.value"
-                                :type="1" placeholder="To" size="40"
-                                name="resets" autocomplete="off"/>
-               <button onclick="mnm.OhiAdd(null, mnm._adrsbkmenuId[this.form.elements[0].value])"
+               <mnm-adrsbkinput @keyup.enter.native="setOhiTo($event.target)"
+                                @keydown.enter.native.prevent
+                                :type="1"
+                                placeholder="To" size="30" name="resets" autocomplete="off"/>
+               <button onclick="mnm.OhiAdd(null, this.value)"
                        disabled
                        title="Notify contact when you're online"
+                       style="min-width:15em"
                        class="btn-icontxt">o/</button>
             </form>
             <table class="uk-table uk-table-small">
@@ -1362,6 +1364,12 @@
                mnm.PingSave(cMap[aKey]);
                delete cMap[aKey];
             }
+         },
+         setOhiTo: function(iInput) {
+            var aOk = iInput.value && iInput.value in mnm._adrsbkmenuId;
+            iInput.form.elements[1].disabled = !aOk;
+            iInput.form.elements[1].innerText = aOk ? 'o/ '+ iInput.value : 'o/';
+            iInput.form.elements[1].value = aOk ? mnm._adrsbkmenuId[iInput.value] : '';
          },
       },
    });
