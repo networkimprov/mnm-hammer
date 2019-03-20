@@ -17,6 +17,8 @@ import (
    "sync"
 )
 
+const kServiceNameMin = 2
+
 type tGlobalService struct{}
 var Service tGlobalService
 
@@ -122,7 +124,7 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    if iDup != "" {
       return tError("duplicate disallowed")
    }
-   if iName != aCfg.Name || len(iName) < 4 || strings.HasSuffix(iName, ".tmp") {
+   if iName != aCfg.Name || len(iName) < kServiceNameMin || strings.HasSuffix(iName, ".tmp") {
       return tError("name not valid: " + iName)
    }
    sServicesDoor.Lock()

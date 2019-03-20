@@ -512,7 +512,8 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          aClientId = &http.Cookie{Name: "clientid", Value: fmt.Sprint(time.Now().UTC().UnixNano())}
          http.SetCookie(iResp, aClientId)
       }
-      err = sServiceTmpl.Execute(iResp, tMsg{"Title":aSvcId, "Addr":sHttpSrvr.Addr})
+      aParams := pSl.GetConstants(tMsg{"Title":aSvcId, "Addr":sHttpSrvr.Addr})
+      err = sServiceTmpl.Execute(iResp, aParams)
    case "cs": aResult = aState.GetSummary()
    case "cf": aResult = pSl.GetConfigService(aSvcId)
    case "nl": aResult = pSl.GetIdxNotice(aSvcId)

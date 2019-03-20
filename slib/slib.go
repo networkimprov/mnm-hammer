@@ -245,6 +245,13 @@ func Init(iFn func(string)) {
    startAllService()
 }
 
+func GetConstants(iMap map[string]interface{}) map[string]interface{} {
+   // keys uncapitalized
+   iMap["serviceMin"] = kServiceNameMin
+   iMap["aliasMin"] = 8
+   return iMap
+}
+
 // utilities follow
 
 func writeHeaders(iW io.Writer, iHead, iSub []byte) error {
