@@ -351,7 +351,7 @@
          <mnm-adrsbkinput @keyup.enter.native="addUser"
                           :type="3"
                           placeholder="To" size="25"/>
-         <div style="height:100%; position:absolute; left:13em; right:0; top:0;">
+         <div style="height:100%; position:absolute; left:15em; right:0; top:0;">
             <mnm-draftmenu ref="menu" :list="menu" @drop="dropUser"/></div>
       </div>
       <ul uk-tab>
