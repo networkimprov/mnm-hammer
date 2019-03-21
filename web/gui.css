@@ -179,8 +179,10 @@ input[type=text], textarea {
    box-sizing: border-box;
    background-color: gainsboro;
    padding: 4px;
+   z-index: 3;
 }
-.adrsbkmenu div, .adrsbkmenu span {
+.adrsbkmenu div,
+.adrsbkmenu span {
    padding: 0 0.2em;
    white-space: pre;
    cursor: default;
