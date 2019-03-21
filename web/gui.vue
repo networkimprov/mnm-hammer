@@ -637,7 +637,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-adrsbkinput">
-   <div style="display:inline-block">
+   <div @click="menu.selectId($el.firstChild, $event.target.id)"
+        style="display:inline-block">
       <input @focus="menu.placeEl($el, type, $event.target.value)"
              @blur ="menu.hideEl()"
              @input="menu.search(type, $event.target.value)"
@@ -653,7 +654,9 @@
       template: '#mnm-adrsbkinput',
       props: {type:Number},
       inheritAttrs: false,
-      computed: { menu: function() { return this.$root.$refs.adrsbkmenu } },
+      computed: {
+         menu: function() { return this.$root.$refs.adrsbkmenu },
+      },
    });
 </script>
 
@@ -665,6 +668,7 @@
          <div v-show="!list.length"
               class="adrsbkmenu-none">[ no result ]</div>
          <div v-for="(aName, aI) in list"
+              :id="'am_'+ aI"
               :title="'Use \u2191\u2193 keys to select'"
               :class="{'adrsbkmenu-select': aI === select}">{{aName}}</div>
       </div></div>
@@ -707,6 +711,12 @@
          selectNone: function(iInput) {
             this.select = -1;
             iInput.value = this.query;
+         },
+         selectId: function(iInput, iId) {
+            if (!iId)
+               return;
+            this.select = parseInt(iId.substring(3), 10);
+            iInput.value = this.list[this.select];
          },
          selectItem: function(iInput, iDirection) {
             if (this.select === -1 && iDirection === -1)
