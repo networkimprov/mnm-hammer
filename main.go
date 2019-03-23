@@ -478,6 +478,10 @@ func (o *tTmtpInput) Read(iOut []byte) (int, error) {
    return len(iOut), nil
 }
 
+var sStateOp = map[string]bool{
+   "cs":true, "cl":true, "al":true, "ml":true, "tl":true, "mo":true, "mn":true, "an":true,
+}
+
 func runService(iResp http.ResponseWriter, iReq *http.Request) {
    // expects "/service[?op[=id]]"
    var err error
@@ -491,7 +495,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       aSvc := getService(aSvcId)
       if aSvc.ccs == nil {
          err = tError("service not found")
-      } else if aQuery != "" {
+      } else if len(aQuery) >= 2 && sStateOp[aQuery[:2]] {
          aCc := aSvc.ccs.Get(aCid)
          if aCc == nil {
             err = tError("no client connected to service")
