@@ -221,6 +221,18 @@ func _listLogs(iSvc string, iTo bool) interface{} {
    return aLog
 }
 
+//todo temporary until tmtp ohi includes alias
+func lookupUidAdrsbk(iSvc string, iUid string) string {
+   aSvc :=  _loadAdrsbk(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   for aAlias, aUid := range aSvc.aliasIdx {
+      if aUid == iUid {
+         return aAlias
+      }
+   }
+   return "? "+ iUid[:5]
+}
+
 func LookupAdrsbk(iSvc string, iAlias string) string {
    aSvc :=  _loadAdrsbk(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()

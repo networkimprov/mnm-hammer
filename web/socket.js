@@ -25,8 +25,8 @@
    mnm.OhiAdd = function(iAliasTo, iUid) {
       _wsSend({op:'ohi_add', ohi:{alias:iAliasTo, uid:iUid}})
    };
-   mnm.OhiDrop = function(iAliasTo, iUid) {
-      _wsSend({op:'ohi_drop', ohi:{alias:iAliasTo, uid:iUid}})
+   mnm.OhiDrop = function(iUid) {
+      _wsSend({op:'ohi_drop', ohi:{uid:iUid}})
    };
 
    mnm.PingSave = function(iObj) { // with alias, to, text, gid

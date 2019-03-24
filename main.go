@@ -526,7 +526,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "pf": aResult = pSl.GetReceivedAdrsbk(aSvcId)
    case "gl": aResult = pSl.GetGroupAdrsbk(aSvcId)
    case "of": aResult = pSl.GetFromOhi(aSvcId)
-   case "ot": aResult = pSl.GetIdxOhi(aSvcId)
+   case "ot": aResult = pSl.GetToOhi(aSvcId)
    case "cl": aResult = pSl.GetCcThread(aSvcId, aState)
    case "al": aResult = pSl.GetIdxAttach(aSvcId, aState)
    case "ml": aResult = pSl.GetIdxThread(aSvcId, aState)

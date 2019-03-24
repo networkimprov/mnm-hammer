@@ -305,6 +305,7 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
    case "accept_send":
       _applyLastId(&iUpdt.Accept.Qid,        &aApply, iCtx.lastId, "pf")
    case "ohi_add", "ohi_drop":
+      iUpdt.Ohi.Alias += sTestDate
       _applyLastId(&iUpdt.Ohi.Uid,           &aApply, iCtx.lastId, "pf")
    case "navigate_thread":
       _applyLastId(&iUpdt.Navigate.ThreadId, &aApply, iCtx.lastId, "tl")
@@ -395,7 +396,7 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    case "pf": aResult = pSl.GetReceivedAdrsbk(iCtx.svcId)
    case "gl": aResult = pSl.GetGroupAdrsbk(iCtx.svcId)
    case "of": aResult = pSl.GetFromOhi(iCtx.svcId)
-   case "ot": aResult = pSl.GetIdxOhi(iCtx.svcId)
+   case "ot": aResult = pSl.GetToOhi(iCtx.svcId)
    case "cl": aResult = pSl.GetCcThread(iCtx.svcId, iCtx.state)
    case "al": aResult = pSl.GetIdxAttach(iCtx.svcId, iCtx.state)
    case "ml": aResult = pSl.GetIdxThread(iCtx.svcId, iCtx.state)

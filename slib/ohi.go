@@ -16,19 +16,24 @@ import (
 )
 
 
-type tOhi map[string]string // key uid, value date
+type tOhi map[string]tOhiEl // key uid
 
 type tOhiEl struct {
-   Uid string
    Date string
+   Uid string `json:",omitempty"`
+   Alias string
 }
 
 type tForOhi []struct { Id string }
 
-func _listOhi(iMap tOhi) []tOhiEl {
+func _listOhi(iSvc string, iMap tOhi) []tOhiEl {
    aList := make([]tOhiEl, 0, len(iMap))
    for aK, aV := range iMap {
-      aList = append(aList, tOhiEl{Uid:aK, Date:aV})
+      aV.Uid = aK
+      if aV.Alias == "" {
+         aV.Alias = lookupUidAdrsbk(iSvc, aK) //todo temporary
+      }
+      aList = append(aList, aV)
    }
    sort.Slice(aList, func(cA, cB int) bool { return aList[cA].Date > aList[cB].Date })
    return aList
@@ -40,7 +45,7 @@ func GetFromOhi(iSvc string) []tOhiEl {
    if aSvc.fromOhi == nil {
       return nil
    }
-   return _listOhi(aSvc.fromOhi)
+   return _listOhi(iSvc, aSvc.fromOhi)
 }
 
 func setFromOhi(iSvc string, iHead *Header) {
@@ -49,7 +54,7 @@ func setFromOhi(iSvc string, iHead *Header) {
    aSvc.fromOhi = tOhi{}
    aDate := dateRFC3339()
    for _, aUid := range iHead.Ohi {
-      aSvc.fromOhi[aUid] = aDate
+      aSvc.fromOhi[aUid] = tOhiEl{Date:aDate}
    }
 }
 
@@ -57,7 +62,7 @@ func updateFromOhi(iSvc string, iHead *Header) {
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    if iHead.Status == 1 {
-      aSvc.fromOhi[iHead.From] = dateRFC3339()
+      aSvc.fromOhi[iHead.From] = tOhiEl{Date:dateRFC3339()}
    } else {
       delete(aSvc.fromOhi, iHead.From)
    }
@@ -69,7 +74,7 @@ func dropFromOhi(iSvc string) {
    aSvc.fromOhi = nil
 }
 
-func GetIdxOhi(iSvc string) []tOhiEl {
+func GetToOhi(iSvc string) []tOhiEl {
    var aMap tOhi
    aSvc := getService(iSvc)
    aSvc.RLock()
@@ -79,7 +84,7 @@ func GetIdxOhi(iSvc string) []tOhiEl {
       if !os.IsNotExist(err) { quit(err) }
       return []tOhiEl{}
    }
-   return _listOhi(aMap)
+   return _listOhi(iSvc, aMap)
 }
 
 func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
@@ -90,12 +95,12 @@ func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
    err = readJsonFile(&aMap, fileOhi(iSvc))
    aSvc.RUnlock()
    if err != nil && !os.IsNotExist(err) { quit(err) }
+   if len(aMap) == 0 {
+      return nil
+   }
    aFor := make(tForOhi, len(aMap))
    a := 0
    for aFor[a].Id, _ = range aMap { a++ }
-   if a == 0 {
-      return nil
-   }
    aHead, err := json.Marshal(Msg{"Op":4, "Id":iId, "For":aFor, "Type":"add"})
    if err != nil { quit(err) }
    err = writeHeaders(iW, aHead, nil)
@@ -112,7 +117,7 @@ func editOhi(iSvc string, iUpdt *Update) {
    var aOp string
    if iUpdt.Op == "ohi_add" {
       aOp = "+"
-      aMap[iUpdt.Ohi.Uid] = dateRFC3339()
+      aMap[iUpdt.Ohi.Uid] = tOhiEl{Alias:iUpdt.Ohi.Alias, Date:dateRFC3339()}
    } else {
       aOp = "-"
       delete(aMap, iUpdt.Ohi.Uid)

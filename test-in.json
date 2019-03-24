@@ -333,7 +333,7 @@
       "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
       "/v": ["Blue", "Gold"] ,
-      "of": [{"Uid":"*uid", "Date":"*d"}] ,
+      "of": [{"Alias":"Gold#td", "Uid":"*uid", "Date":"*d"}] ,
       "ot": [] ,
       "ps": [] ,
       "pt": [{"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
@@ -432,17 +432,17 @@
              "Response":"**"}] ,
       "nl": [{"Type":"i", "Alias":"Blue#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
 },{
-   "Updt": {"Op":"ohi_add", "Ohi":{"Uid":"last"}},
+   "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue", "Uid":"last"}},
    "Result": {
-      "ot": [{"Uid":"*uid", "Date":"*d"}] }
+      "ot": [{"Alias":"Blue#td", "Uid":"*uid", "Date":"*d"}] }
 },{
    "Updt": {"Op":"ohi_drop", "Ohi":{"Uid":"last"}},
    "Result": {
       "ot": [] }
 },{
-   "Updt": {"Op":"ohi_add", "Ohi":{"Uid":"last"}},
+   "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue", "Uid":"last"}},
    "Result": {
-      "ot": [{"Uid":"*uid", "Date":"*d"}] }
+      "ot": [{"Alias":"Blue#td", "Uid":"*uid", "Date":"*d"}] }
 },{
    "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
    "Result": {
