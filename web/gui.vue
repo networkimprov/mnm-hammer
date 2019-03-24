@@ -267,9 +267,9 @@
       <span uk-icon="plus-circle" class="dropdown-icon"></span>
       <mnm-svcadd/>
       <div style="float:right; margin:0 1em 1em 0">
-         <span uk-icon="cog" class="dropdown-icon">&nbsp;</span>
+         <!--todo span uk-icon="cog" class="dropdown-icon">&nbsp;</span>
          <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5">
-            <div class="uk-text-right uk-text-small">SETTINGS</div></div>
+            <div class="uk-text-right uk-text-small">SETTINGS</div></div -->
          <span uk-icon="info" class="dropdown-icon">&nbsp;</span>
          <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
               class="uk-width-3-5" style="height:75vh; padding:0.8em">
