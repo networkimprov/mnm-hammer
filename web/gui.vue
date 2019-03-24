@@ -152,7 +152,7 @@
          [{.Title}]
       </span>
       <div class="uk-float-right">
-         <span uk-icon="reply" class="dropdown-icon" style="font-weight:bold">{{nlNotSeen}}</span>
+         <span uk-icon="bell" class="dropdown-icon" style="font-weight:bold">{{nlNotSeen}}</span>
          <mnm-notice offset="2" pos="bottom-right"/>
          <span uk-icon="users" class="dropdown-icon">&nbsp;</span>
          <mnm-adrsbk/>
@@ -286,7 +286,7 @@
                {{aSvc}}
             </template>
             <template v-else>
-               <span uk-icon="reply" :id="'n_'+aSvc" class="dropdown-icon">0{{aSvc.todo}} </span>
+               <span uk-icon="bell" :id="'n_'+aSvc" class="dropdown-icon">0{{aSvc.todo}} </span>
                <a :href="'/'+encodeURIComponent(aSvc)" :target="'mnm_'+aSvc">{{aSvc}}</a>
             </template>
          </li></ul>
