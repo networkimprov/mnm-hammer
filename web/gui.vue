@@ -250,13 +250,14 @@
            style="padding:8px; position:absolute; bottom:10px; right:10px">
          <div v-if="!of"
               class="uk-text-danger">offline</div>
-         <div v-else-if="of.length === 0"
-              class="uk-text-warning">no o/</div>
-         <ul v-else
-             class="uk-list uk-text-success" style="margin-bottom:0">
-            <li v-for="aUser in of" :key="aUser.Uid">
-               {{aUser.Uid}}</li>
-         </ul>
+         <template v-else>
+            <div v-show="of.length === 0"
+                 class="uk-text-warning">no o/</div>
+            <ul class="uk-list uk-text-success" style="margin:0">
+               <li v-for="aUser in of" :key="aUser.Uid">
+                  {{aUser.Alias}}</li>
+            </ul>
+         </template>
       </div>
    </div>
 </div>
@@ -1321,7 +1322,7 @@
                                 @keydown.enter.native.prevent
                                 :type="1"
                                 placeholder="To" size="30" name="resets" autocomplete="off"/>
-               <button onclick="mnm.OhiAdd(null, this.value)"
+               <button onclick="mnm.OhiAdd(this.innerText.substring(3), this.value)"
                        disabled
                        title="Notify contact when you're online"
                        style="min-width:15em"
@@ -1329,10 +1330,10 @@
             </form>
             <table class="uk-table uk-table-small">
                <tr><th>Date</th> <th>To</th> <th></th></tr>
-               <tr v-for="a in mnm._data.ot">
-                  <td><mnm-date :iso="a.Date"/></td>
-                  <td>{{a.Uid /*todo alias*/}}</td>
-                  <td><button @click="mnm.OhiDrop(null,a.Uid)"
+               <tr v-for="aOhi in mnm._data.ot">
+                  <td><mnm-date :iso="aOhi.Date"/></td>
+                  <td>{{aOhi.Alias}}</td>
+                  <td><button @click="mnm.OhiDrop(aOhi.Uid)"
                               title="Stop notifying contact"
                               class="btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
