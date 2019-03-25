@@ -289,7 +289,7 @@ func runTmtpRecv(iSvcId string) {
    aSvc := getService(iSvcId)
    var err error
    var aConn net.Conn
-   var aJson []byte
+   var aLogoutMsg []string
 
    for {
       aCfg := pSl.GetConfigService(iSvcId)
@@ -332,23 +332,31 @@ func runTmtpRecv(iSvcId string) {
       }
       aConn.Write(packMsg(aMsg, nil))
 
-      _readLink(iSvcId, aConn, time.Duration(aCfg.LoginPeriod / kIdleTimeFraction) * time.Second)
+      err = _readLink(iSvcId, aConn, time.Duration(aCfg.LoginPeriod / kIdleTimeFraction) * time.Second)
       aConn.Close()
 
-      aJson, err = json.Marshal(pSl.LogoutService(iSvcId))
-      if err != nil { panic(err) }
+      aLogoutMsg = pSl.LogoutService(iSvcId)
       aSvc.ccs.Range(func(c *tWsConn) {
-         c.WriteMessage(pWs.TextMessage, aJson)
+         c.WriteJSON(aLogoutMsg)
       })
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "runTmtpRecv %s: %s\n", iSvcId, err)
+         time.Sleep(2 * time.Minute) // don't barrage server if error not transient
+      }
    }
 }
 
-func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
+func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) error {
    aSvc := getService(iSvcId)
    aBuf := make([]byte, kMsgHeaderMaxLen+4) //todo start smaller, realloc as needed
    aLogin := false
    var aHead *pSl.Header
    var aPos, aHeadEnd, aHeadStart int64 = 0, 0, 4
+
+   fErr := func(cS string) error {
+      if aLogin { <-aSvc.queue.connSrc }
+      return tError(cS)
+   }
 
    for {
       if iIdleMax > 0 {
@@ -358,8 +366,7 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
       if err != nil {
          //todo if recoverable continue
          if err == io.EOF {
-            fmt.Fprintf(os.Stderr, "_readLink %s: server close\n", iSvcId)
-            break
+            return fErr("server close")
          } else if err.(net.Error).Timeout() {
             select {
             case <-aSvc.queue.connSrc:
@@ -372,10 +379,9 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
                   continue
                }
             }
-            return
+            return nil
          } else {
-            fmt.Fprintf(os.Stderr, "_readLink %s: %s\n", iSvcId, err.Error())
-            break
+            return fErr(err.Error())
          }
       }
       aPos += int64(aLen)
@@ -387,8 +393,7 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
          aUi,_ := strconv.ParseUint(string(aBuf[:4]), 16, 0)
          aHeadEnd = int64(aUi)+4
          if aHeadEnd-4 < kMsgHeaderMinLen {
-            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header length\n", iSvcId)
-            break
+            return fErr("invalid header length")
          }
       }
       if aHeadEnd > aPos {
@@ -398,8 +403,7 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
          aHead = &pSl.Header{Op:""}
          err = json.Unmarshal(aBuf[4:aHeadEnd], aHead)
          if err != nil || !aHead.Check() {
-            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header\n", iSvcId)
-            break
+            return fErr("invalid header")
          }
          aHeadStart = aHeadEnd
          aHeadEnd += aHead.DataHead
@@ -411,8 +415,7 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
       if aHeadEnd > aHeadStart {
          err = json.Unmarshal(aBuf[aHeadStart:aHeadEnd], &aHead.SubHead)
          if err != nil || !aHead.CheckSub() {
-            fmt.Fprintf(os.Stderr, "_readLink %s: invalid header\n", iSvcId)
-            break
+            return fErr("invalid header")
          }
       }
       aData := aBuf[aHeadEnd:aHeadEnd] // ref aBuf even if DataLen==0
@@ -455,9 +458,6 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
          goto Parse
       }
       aPos, aHeadEnd, aHeadStart = 0, 0, 4
-   }
-   if aLogin {
-      <-aSvc.queue.connSrc
    }
 }
 
