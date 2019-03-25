@@ -368,7 +368,7 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) {
             default:
                if aLogin {
                   aSvc.queue.connSrc <- <-aSvc.queue.connSrc // wait for send to finish
-                  iIdleMax += 15 * time.Second // allow time for ack
+                  iIdleMax = 15 * time.Second // allow time for ack
                   continue
                }
             }
