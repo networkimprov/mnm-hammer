@@ -34,6 +34,7 @@ import (
    "path"
    pSl "github.com/networkimprov/mnm-hammer/slib"
    pWs "github.com/gorilla/websocket"
+   "math/rand"
    "strconv"
    "strings"
    "sync"
@@ -287,6 +288,7 @@ Closed:
 
 func runTmtpRecv(iSvcId string) {
    aSvc := getService(iSvcId)
+   aRng := rand.New(rand.NewSource(time.Now().UnixNano()))
    var err error
    var aConn net.Conn
    var aLogoutMsg []string
@@ -297,7 +299,7 @@ func runTmtpRecv(iSvcId string) {
       if aCfg.LoginPeriod > 0 && aCfg.Uid != "" {
          // add +/- 0-20% to aCfg.LoginPeriod
          aPercent := aCfg.LoginPeriod / 5
-         aRand := time.Now().Nanosecond() % (aPercent * 2 + 1) - aPercent
+         aRand := aRng.Intn(aPercent * 2 + 1) - aPercent
          aTmr := time.NewTimer(time.Duration(aCfg.LoginPeriod + aRand) * time.Second)
          select {
          case <-aTmr.C:
@@ -319,8 +321,7 @@ func runTmtpRecv(iSvcId string) {
          })
          fmt.Fprintf(os.Stderr, "runTmtpRecv %s: %s\n", iSvcId, err.Error())
          if aWait > kDialRetryDelayMax { aWait = kDialRetryDelayMax }
-         aVaries := time.Now().Nanosecond() % 1000
-         time.Sleep(time.Duration(aWait * 1000 + aVaries * aWait / 2) * time.Millisecond)
+         time.Sleep(time.Duration(aWait * 1000 + aRng.Intn(1000) * aWait / 2) * time.Millisecond)
       }
 
       aMsg := tMsg{"Op":eOpTmtpRev, "Id":"1"}
