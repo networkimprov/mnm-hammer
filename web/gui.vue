@@ -1431,17 +1431,17 @@
                               addr && !isNaN(loginperiod))"
                  title="Register new account at service"
                  class="btn-icon"><span uk-icon="forward"></span></button>
-         <input v-model="addr"
-                placeholder="Net Address (host:port)"             size="33" type="text">
          <input v-model="name"
                 placeholder="Title ([{.serviceMin}]+ characters)" size="33" type="text">
          <input v-model="alias"
                 placeholder="Alias ([{.aliasMin}]+ characters)"   size="33" type="text">
-         <input v-model="lpin"
+         <input v-model="addr"
+                placeholder="Net Address (host:port)"             size="33" type="text">
+         <!--todo input v-model="lpin"
                 @input="loginperiod = mnm._stringToSeconds($event.target.value)"
                 placeholder="(Pd days:hh:mm:ss)"                  size="19" type="text">
          <div v-show="loginperiod"
-              style="float:right">{{loginperiod}} sec</div>
+              style="float:right">{{loginperiod}} sec</div -->
          <br>
          <label><input v-model="verify" type="checkbox"> Verify identity (TLS certificate)</label>
       </form>
@@ -1472,10 +1472,10 @@
             <tr><td>Net Address    </td><td>{{mnm._data.cf.Addr  }}<br>
                <input v-model="addr"
                       placeholder="New host:port"     size="25" type="text"></td></tr>
-            <tr><td>Login Period   </td><td>{{mnm._secondsToString(mnm._data.cf.LoginPeriod)}}<br>
+            <!--todo tr><td>Login Period   </td><td>{{mnm._secondsToString(mnm._data.cf.LoginPeriod)}}<br>
                <input v-model="lpin"
                       @input="loginperiod = toSeconds($event.target.value)"
-                      placeholder="New days:hh:mm:ss" size="25" type="text"></td></tr>
+                      placeholder="New days:hh:mm:ss" size="25" type="text"></td></tr -->
             <tr><td>Verify identity</td><td>{{mnm._data.cf.Verify}}<br>
                <label><input v-model="verify" type="checkbox"><tt>Toggle</tt></label></td></tr>
             <tr><td>Title          </td><td>{{mnm._data.cf.Name  }}</td></tr>
