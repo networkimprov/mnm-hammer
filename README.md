@@ -45,12 +45,10 @@ b) ctrl-C to stop client
 
 ### License
 
-Copyright 2018 Liam Breck
+   Copyright 2018, 2019 Liam Breck  
+   Published at https://github.com/networkimprov/mnm-hammer
 
-This file is part of the "mnm" software. Anyone may redistribute mnm and/or modify
-it under the terms of the GNU Lesser General Public License version 3, as published
-by the Free Software Foundation. See https://www.gnu.org/licenses/
-
-Mnm is distributed WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See said License for details.
+   This Source Code Form is subject to the terms of the Mozilla Public  
+   License, v. 2.0. If a copy of the MPL was not distributed with this  
+   file, You can obtain one at http://mozilla.org/MPL/2.0/
 
