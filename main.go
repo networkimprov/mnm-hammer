@@ -116,7 +116,7 @@ func mainResult() int {
    http.HandleFunc("/f/", runGlobal)
    http.HandleFunc("/v/", runGlobal)
    http.HandleFunc("/s/", runWebsocket)
-   http.HandleFunc("/web/", runFile)
+   http.HandleFunc("/w/", runFile)
    err = sHttpSrvr.ListenAndServe()
    fmt.Fprintf(os.Stderr, "%s\n", err)
 
@@ -693,7 +693,7 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
 }
 
 func runFile(iResp http.ResponseWriter, iReq *http.Request) {
-   http.ServeFile(iResp, iReq, iReq.URL.Path[1:])
+   http.ServeFile(iResp, iReq, "web"+ iReq.URL.Path[2:])
 }
 
 
