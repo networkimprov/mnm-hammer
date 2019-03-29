@@ -9,23 +9,23 @@
 -->
 <html><head>
    <title>[{.Title}] - mnm</title>
-   <link rel="icon" href="/web/favicon.png"/>
+   <link rel="icon" href="/w/favicon.png"/>
 
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-   <link  href="/web/uikit-30.min.css" rel="stylesheet"/>
-   <script src="/web/uikit-30.min.js"></script>
-   <script src="/web/uikit-icons-30.min.js"></script>
+   <link  href="/w/uikit-30.min.css" rel="stylesheet"/>
+   <script src="/w/uikit-30.min.js"></script>
+   <script src="/w/uikit-icons-30.min.js"></script>
 
-   <script src="/web/vue-25.js"></script>
-   <script src="/web/markdown-it-84.js"></script>
-   <script src="/web/luxon-111.js"></script>
-   <link  href="/web/vue-formgen-23.css" rel="stylesheet"/>
-   <script src="/web/vue-formgen-23.js"></script>
+   <script src="/w/vue-25.js"></script>
+   <script src="/w/markdown-it-84.js"></script>
+   <script src="/w/luxon-111.js"></script>
+   <link  href="/w/vue-formgen-23.css" rel="stylesheet"/>
+   <script src="/w/vue-formgen-23.js"></script>
 
-   <link  href="/web/service.css" rel="stylesheet"/>
-   <script src="/web/socket.js"></script>
+   <link  href="/w/service.css" rel="stylesheet"/>
+   <script src="/w/socket.js"></script>
 
    <!-- generated id attributes require 'x[y]_' prefix -->
 </head><body>
@@ -281,7 +281,7 @@
          <span uk-icon="info" class="dropdown-icon">&nbsp;</span>
          <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
               class="uk-width-3-5" style="height:75vh; padding:0.8em">
-            <iframe src="/web/docs.html" style="width:100%; height:100%"></iframe></div>
+            <iframe src="/w/docs.html" style="width:100%; height:100%"></iframe></div>
       </div>
    </div>
    <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto uk-light">
