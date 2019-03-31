@@ -45,46 +45,51 @@
 
 <h3 id="what">1. What's mnm ?</h3>
 
+<p>Well first off, <i>Mnm is Not Mail.</i>
+</p>
+
 <p>mnm provides the benefits of email without the huge risks of allowing 
 anyone, anywhere, claiming any identity to send you any content, any number of times. 
 </p>
 
 <p>mnm also offers electronic correspondence features missing from traditional email, 
-including forms/surveys which may be filled out and returned, 
-charts via [Chart.js or Vega-Lite], hyperlinks to messages, and slide shows. 
-It creates HTML-formatted messages via Markdown, which enables 
-mouseless (i.e. rapid) composition of rich text with graphical elements. 
+including forms/surveys whose results are collected into tables, 
+charts via [a JS chart library TBD], 
+hyperlinks to messages &amp; other threads, 
+slide deck layouts, 
+and easy inclusion of additional recipients in existing threads. 
+mnm creates HTML-formatted messages via Markdown (aka CommonMark), 
+for rapid composition of rich text with graphical elements. 
 </p>
 
-<p>mnm is a client application that securely connects to 
-any number of TMTP relay services via separate accounts. 
-TMTP service accounts control who can send them correspondence. 
+<p>mnm is an app that securely connects to any number of TMTP relay services via separate accounts, 
+and stores all messages locally on your machine. 
+TMTP accounts control who can send them correspondence. 
 Organizations of any size can run TMTP services on public or private network sites, 
 and may limit who participates in them. 
-See also <a target="_blank" href="https://github.com/networkimprov/mnm/blob/master/Rationale.md"
->Why TMTP?</a> 
+See also 
+<a target="_blank" href="https://github.com/networkimprov/mnm/blob/master/Rationale.md">Why TMTP?</a> 
 </p>
 
-<p>This version of mnm is a localhost web app (i.e. it runs on personal devices and its UI runs 
-in a browser). 
-The source is <a target="_blank" href="https://github.com/networkimprov/mnm-hammer">on GitHub</a>. 
+<p>This version of mnm is a localhost web app, 
+i.e. it runs on personal devices and its UI runs in a browser. 
+It's open source, and published 
+<a target="_blank" href="https://github.com/networkimprov/mnm-hammer">on GitHub</a>. 
 </p>
-
-<p>mnm stands for <i>Mnm is Not Mail</i></p>
 
 
 <h4 id="cryp">1a. Encryption</h4>
 
-<p>mnm employs TLS (aka SSL) to secure connections between the client and each server it connects to. 
-mnm does not offer end-to-end encryption (where clients en/decrypt messages before/after transmission). 
+<p>mnm employs TLS (aka SSL) to secure connections between the app and each server it connects to. 
+mnm does not offer end-to-end encryption (where apps en/decrypt messages before/after transmission). 
 </p>
 
-<p>The author encourages corporations that transmit highly sensitive information 
+<p>The author encourages organizations that transmit highly sensitive information 
 via electronic messaging to propose enhancements to the mnm software for their needs. 
 </p>
 
 <p>For individuals who desire end-to-end email encryption, 
-the author recommends any of the secure, audited electronic mail offerings on the market. 
+the author suggests any of the secure, audited electronic mail offerings on the market. 
 </p>
 
 
@@ -97,8 +102,8 @@ Undo for edit, delete, etc. are [not yet implemented].
 
 <p><b>Browser Tabs</b>.
 Each TMTP account viewed appears in a separate browser tab. 
-Tabs may be closed and re-opened without impacting the client's connection to the service, 
-as the client runs outside the browser. 
+Tabs may be closed and re-opened without impacting the app's connection to the service, 
+as the app runs separately from the browser. 
 </p>
 
 <p><b>Panels</b>.
@@ -141,7 +146,7 @@ which carry variable contents show &#x25BD; when they contain multiple items.
 of aliases or groups matching the input text. 
 </p>
 
-<p>An mnm client optimized for small screens is ... 
+<p>An mnm app optimized for small screens is ... 
 [not yet implemented].
 </p>
 
@@ -179,7 +184,7 @@ The UID is revealed to other service members only by delivery of or reply to an 
 <p>To change the <i>Net Address</i> <!--todo i>(Pd days:hh:mm:ss),</i --> or <i>Verify identity</i> settings, 
 use the form in the <span uk-icon="settings"></span> menu on the accounts panel. 
 New settings take effect immediately if there is no connection to the service 
-(e.g. if the current address is invalid), otherwise they take effect when the mnm client is restarted. 
+(e.g. if the current address is invalid), otherwise they take effect when the mnm app is restarted. 
 </p>
 
 
@@ -204,7 +209,7 @@ but may be deactivated and reactivated.
 
 <h4 id="node">3b. Nodes</h4>
 
-<p>A user may replicate an account on other devices running the mnm client. 
+<p>A user may replicate an account on other devices running the mnm app. 
 Each copy of an account is referred to as a node, and has a unique, server-generated password. 
 All nodes receieve every message sent to the account. 
 Nodes provide automatic backup of account data, and access to it from any device running mnm. 
@@ -212,7 +217,7 @@ Nodes provide automatic backup of account data, and access to it from any device
 
 <p>To add a node, open the <span uk-icon="settings"></span> menu on the accounts panel, 
 and use the <i>+Node</i> form. 
-The client creating the node must contact an existing node to download the data for the account. 
+The client device creating the node must contact an existing node to download the data for the account. 
 [not yet implemented on client]
 </p>
 
@@ -753,9 +758,9 @@ The period for which seen notices are retained is configurable [not yet implemen
 
 <h3 id="cred">14. Credits</h3>
 
-<p>The mnm client and server are written in 
-<a target="_blank" href="https://golang.org/">Go</a> (without which they probably would not exist). 
-The client also depends on 
+<p>The mnm app and TMTP server are written in 
+<a target="_blank" href="https://golang.org/">Go</a> (without which they might not exist). 
+The app also depends on 
 <a target="_blank" href="https://github.com/gorilla/websocket">Gorilla Websocket</a>. 
 The server also depends on 
 <a target="_blank" href="https://github.com/beevik/ntp">Beevik Ntp</a>. 
