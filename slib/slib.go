@@ -68,6 +68,8 @@ func ftmpAdrsbk(iSvc, iPos string) string { return dirTemp(iSvc) +"adrsbk_"+   i
 
 var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
+var sCrashFn func(string, string)
+
 type GlobalSet interface {
    Add(string, string, io.Reader) error
    Drop(string) error
@@ -212,12 +214,14 @@ type Update struct {
       PosFor int8
       Pos int
    }
-   Test *struct {
-      Poll time.Duration // for use by test.go
-      Request []string
-      ThreadId string
-      Notice []tNoticeEl
-   }
+   Test *UpdateTest
+}
+
+type UpdateTest struct {
+   Poll time.Duration // for use by test.go
+   Request []string
+   ThreadId string
+   Notice []tNoticeEl
 }
 
 type SendRecord struct {
@@ -232,7 +236,8 @@ const (
 type Msg map[string]interface{}
 
 
-func Init(iFn func(string)) {
+func Init(iStart func(string), iCrash func(string, string)) {
+   sCrashFn = iCrash
    for _, aDir := range [...]string{kUploadTmp, kServiceDir, kStateDir, kFormDir} {
       err := os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
@@ -240,7 +245,7 @@ func Init(iFn func(string)) {
    initUpload()
    initForms()
    initStates()
-   initServices(iFn)
+   initServices(iStart)
    startAllService()
 }
 

@@ -77,7 +77,9 @@ func init() {
 func main() {
    aVersionQuit := flag.Bool("version", false, "print version and quit")
    flag.Parse() // may os.Exit(2)
-   fmt.Printf("mnm-hammer tmtp client v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
+   if sTestCrash == "" && sTestVerify == "" {
+      fmt.Printf("mnm-hammer tmtp client v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
+   }
    if *aVersionQuit {
       os.Exit(0)
    }
@@ -91,7 +93,9 @@ func mainResult() int {
    sServices["local"] = tService{ccs: newClientConns()}
 
    if sTestHost != "" {
-      test()
+      if aRes := test(); aRes >= 0 {
+         return aRes
+      }
    } else {
       _, err = os.Stat("web/service.html")
       if err != nil {
@@ -101,7 +105,7 @@ func mainResult() int {
             return 1
          }
       }
-      pSl.Init(startService)
+      pSl.Init(startService, crashTest)
    }
 
    sServiceTmpl, err = template.New("service.html").Delims("[{","}]").ParseFiles("web/service.html")
@@ -118,7 +122,9 @@ func mainResult() int {
    http.HandleFunc("/s/", runWebsocket)
    http.HandleFunc("/w/", runFile)
    err = sHttpSrvr.ListenAndServe()
-   fmt.Fprintf(os.Stderr, "%s\n", err)
+   if err != http.ErrServerClosed {
+      fmt.Fprintf(os.Stderr, "%s\n", err)
+   }
 
    return 0
 }

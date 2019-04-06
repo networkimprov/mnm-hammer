@@ -13,7 +13,9 @@ import (
 )
 
 func TestCoverage(i *testing.T) {
-   fmt.Printf("code coverage for v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
+   if sTestCrash == "" && sTestVerify == "" {
+      fmt.Printf("code coverage for v%d.%d.%d %s\n", kVersionA, kVersionB, kVersionC, kVersionDate)
+   }
    sTestExit = true
    if mainResult() != 0 {
       i.Fail()

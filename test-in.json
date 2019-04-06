@@ -87,13 +87,13 @@
    "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["pf", "nl"]}},
    "Result": {
       "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
-              "Gid":"Gold-G#td", "Uid":"*uid", "MsgId":"*mid", "Response":"**"}] ,
-      "nl": [{"Type":"i", "Alias":"Gold#td", "Gid":"Gold-G#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
+              "Gid":"Gold-G#tdg", "Uid":"*uid", "MsgId":"*mid", "Response":"**"}] ,
+      "nl": [{"Type":"i", "Alias":"Gold#td", "Gid":"Gold-G#tdg", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
 },{
    "Updt": {"Op":"accept_send", "Accept":{"Qid":"lastqid"}},
    "Result": {
       "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Queued":true,
-              "Gid":"Gold-G#td", "Uid":"*uid", "MsgId":"*mid", "Response":"**"}] }
+              "Gid":"Gold-G#tdg", "Uid":"*uid", "MsgId":"*mid", "Response":"**"}] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{
                  "New":1, "Alias":"Blue", "Subject":"ohi",
@@ -320,11 +320,11 @@
 },{
    "Updt": {"Op":"adrsbk_search", "Adrsbk":{"Type":3, "Term":"go"}},
    "Result": {
-      "_n": ["Gold#td", "*", "Gold-G#td", "Gold-G#td"] }
+      "_n": ["Gold#td", "*", "Gold-G#tdg", "Gold-G#tdg"] }
 },{
    "Updt": {"Op":"adrsbk_search", "Adrsbk":{"Type":3, "Term":"td"}},
    "Result": {
-      "_n": ["Blue#td", "*", "Gold#td", "*", "Gold-G#td", "Gold-G#td"] }
+      "_n": ["Blue#td", "*", "Gold#td", "*", "Gold-G#tdg", "Gold-G#tdg"] }
 },{
    "Updt": {"Op":"open"},
    "Result": {
@@ -338,13 +338,13 @@
       "ps": [] ,
       "pt": [{"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
               "Response":{"Type":8, "Date":"*d", "Uid":"*uid", "Alias":"Gold#td", "MyAlias":"Blue#td",
-                          "MsgId":"*mid", "Gid":"Gold-G#td", "Qid":"*", "Response":"**"}}] ,
+                          "MsgId":"*mid", "Gid":"Gold-G#tdg", "Qid":"*", "Response":"**"}}] ,
       "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
-              "Gid":"Gold-G#td", "Uid":"*uid", "MsgId":"*mid",
+              "Gid":"Gold-G#tdg", "Uid":"*uid", "MsgId":"*mid",
               "Response":{"Type":5, "Date":"*d", "Uid":"*uid", "Tid":"*mid"},
-              "ResponseInvt":{"Type":9, "Date":"*d", "Gid":"Gold-G#td"}}] ,
-      "gl": [{"Gid":"Gold-G#td", "Date":"*d", "Admin":false}] ,
-      "nl": [{"Type":"i", "Alias":"Gold#td", "Gid":"Gold-G#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] ,
+              "ResponseInvt":{"Type":9, "Date":"*d", "Gid":"Gold-G#tdg"}}] ,
+      "gl": [{"Gid":"Gold-G#tdg", "Date":"*d", "Admin":false}] ,
+      "nl": [{"Type":"i", "Alias":"Gold#td", "Gid":"Gold-G#tdg", "MsgId":"*mid", "Date":"*d", "Seen":0}] ,
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"", "Queued":false},
@@ -425,11 +425,11 @@
 },{
    "Updt": {"Op":"ping_save", "Ping":{"Alias":"Gold", "To":"Blue", "Gid":"Gold-G"}},
    "Result": {
-      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#td", "MyAlias":"Gold#td", "Qid":"*"}] }
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#tdg", "MyAlias":"Gold#td", "Qid":"*"}] }
 },{
    "Updt": {"Op":"ping_send", "Ping":{"Qid":"last"}},
    "Result": {
-      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#td", "MyAlias":"Gold#td", "Qid":"*", "Queued":true}] }
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#tdg", "MyAlias":"Gold#td", "Qid":"*", "Queued":true}] }
 },{
    "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue", "Uid":"last"}},
    "Result": {

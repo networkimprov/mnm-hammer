@@ -23,11 +23,22 @@ import (
    "time"
 )
 
+const kTestDateF = "0102150405"
+var sTestBase32 = base32.NewEncoding("%+123456789BCDFGHJKLMNPQRSTVWXYZ")
+
 var sTestHost = "" // used by main.go
+var sTestCrash = ""
+var sTestVerify = ""
+var sTestCrashOp = ""
+var sTestCrashSvc = ""
+var sTestOrderCrash uint64
+var sTestOrderN uint64
+
+var sTestOrderLast uint64    // atomic
+var sTestOrderPolling uint32 // atomic
 var sTestState []tTestStateEl // used by main.go
 var sTestNow = time.Now().Truncate(time.Second)
-var sTestDate = sTestNow.Format(" 0102150405")
-var sTestBase32 = base32.NewEncoding("%+123456789BCDFGHJKLMNPQRSTVWXYZ")
+var sTestDate = sTestNow.Format(" "+kTestDateF)
 var sTestExit = false
 
 type tTestStateEl struct {
@@ -70,13 +81,39 @@ type tTestAnyId []struct {
 }
 
 func init() {
-   flag.StringVar(&sTestHost, "test", sTestHost, "run test sequence using named service host:port")
+   flag.StringVar(&sTestHost, "test", sTestHost,
+                  "run test sequence using named service host:port")
+   flag.StringVar(&sTestCrash, "crash", sTestCrash,
+                  "exit transaction at dir:service:orderIdx:op, or setup & print dir with 'init'")
+   flag.StringVar(&sTestVerify, "verify", sTestVerify,
+                  "resume after crash and check result for dir:service:orderIdx:count")
 }
 
-func test() {
-   aDir := "test-run/" + sTestDate[1:]
-   fmt.Printf("start test pass in %s\n", aDir)
+func crashTest(iSvc string, iOp string) {
+   if iSvc != sTestCrashSvc || iOp != sTestCrashOp {
+      //if sTestCrash != "" { fmt.Printf("crash  --  %s %s\n", iSvc, iOp) }
+      return
+   }
+   // when called via pSl.HandleTmtpService(), wait for _runTestClient() to reach a .Test.Poll
+   a := 0
+   for atomic.LoadUint64(&sTestOrderLast) < sTestOrderCrash &&
+       atomic.LoadUint32(&sTestOrderPolling) == 0 {
+      time.Sleep(15 * time.Millisecond)
+      a++
+   }
+   if a > 0 { fmt.Printf("crash wait %d for %s %d %s\n", a, iSvc, sTestOrderCrash, iOp) }
+   if atomic.LoadUint64(&sTestOrderLast) != sTestOrderCrash {
+      return
+   }
+   fmt.Printf("crash test %s %d %s\n", iSvc, sTestOrderCrash, iOp)
+   err := sHttpSrvr.Close()
+   if err != nil { quit(err) }
+   time.Sleep(15 * time.Second)
+   quit(tError("failed to exit"))
+}
 
+func test() int {
+   aDir := "test-run/" + sTestDate[1:]
    var err error
    var aClients []tTestClient
 
@@ -86,30 +123,95 @@ func test() {
    err = json.NewDecoder(aFd).Decode(&aClients)
    if err != nil { quit(err) }
 
+   aAbout := getAbout()
    for a := range aClients {
+      if aClients[a].Version != "" && aClients[a].Version != aAbout.Version {
+         fmt.Fprintf(os.Stderr, "test-in expects v%s, app is v%s\n", aClients[a].Version, aAbout.Version)
+         return 33
+      }
       sTestState = append(sTestState, tTestStateEl{aClients[a].SvcId, aClients[a].Name, nil})
    }
 
-   err = os.MkdirAll(aDir, 0700)
+   if sTestVerify != "" {
+      aDir, err = _setupTestVerify(aClients)
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "invalid -verify parameter '%s': %v\n", sTestVerify, err)
+         return 33
+      }
+      time.Sleep(600 * time.Millisecond) // receive any msgs pending from -crash run
+      a := -1
+      for a = range sTestState {
+         if sTestState[a].svcId == sTestCrashSvc {
+            sTestState[a].state = pSl.OpenState(sTestState[a].name, sTestState[a].svcId)
+            break
+         }
+      }
+      _runTestClient(&aClients[a], nil)
+      return 0
+   }
+   if sTestCrash == "init" {
+      if !_setupTestDir(aDir, aClients) {
+         return 33
+      }
+      fmt.Printf("%s\n", aDir)
+      return 0
+   }
+   if sTestCrash != "" {
+      aDir, err = _setupTestCrash(aClients)
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "invalid -crash parameter '%s': %v\n", sTestCrash, err)
+         return 33
+      }
+   } else {
+      fmt.Printf("start test pass in %s\n", aDir)
+      if !_setupTestDir(aDir, aClients) {
+         fmt.Printf("end test pass\n")
+         return -1
+      }
+   }
+   for a := range sTestState {
+      sTestState[a].state = pSl.OpenState(sTestState[a].name, sTestState[a].svcId)
+   }
+   var aWg sync.WaitGroup
+   for a := range aClients {
+      aWg.Add(1)
+      go _runTestClient(&aClients[a], &aWg)
+   }
+   go func() {
+      aWg.Wait()
+      if sTestCrash != "" {
+         fmt.Printf("crash not triggered\n")
+         sTestExit = true
+      } else {
+         fmt.Printf("end test pass\n")
+      }
+      if sTestExit {
+         err = sHttpSrvr.Close()
+         if err != nil { quit(err) }
+      }
+   }()
+   return -1
+}
+
+func _setupTestDir(iDir string, iClients []tTestClient) bool {
+   var err error
+
+   err = os.MkdirAll(iDir, 0700)
    if err != nil { quit(err) }
-   err = os.Chdir(aDir)
+   err = os.Chdir(iDir)
    if err != nil { quit(err) }
    err = os.Symlink("../../web", "web")
    if err != nil { quit(err) }
    err = os.Symlink("../../formspec", "formspec")
    if err != nil { quit(err) }
 
-   aAbout := getAbout()
-   pSl.Init(startService)
+   pSl.Init(startService, crashTest)
 
+   var aTc *tTestClient
    var aBuf bytes.Buffer
    aEnc := json.NewEncoder(&aBuf)
-   for a := range aClients {
-      aTc := &aClients[a]
-      if aTc.Version != "" && aTc.Version != aAbout.Version {
-         err = tError("version expect " + aTc.Version + ", got " + aAbout.Version)
-         goto ReturnErr
-      }
+   for a := range iClients {
+      aTc = &iClients[a]
       if aTc.Cfg.Name != "" {
          aTc.Cfg.Addr = sTestHost
          aTc.Cfg.Alias += sTestDate
@@ -118,7 +220,6 @@ func test() {
          err = pSl.Service.Add(aTc.SvcId, "", &aBuf)
          if err != nil { goto ReturnErr }
       }
-      sTestState[a].state = pSl.OpenState(aTc.Name, aTc.SvcId)
       for a1 := range aTc.Files {
          _, err = aBuf.WriteString(aTc.Files[a1].Data)
          if err != nil { quit(err) }
@@ -142,28 +243,118 @@ func test() {
             if err != nil { goto ReturnErr }
          }
       }
-      continue
-      ReturnErr:
-         fmt.Fprintf(os.Stderr, "%s %s %s\nend test pass\n", aTc.Name, aTc.SvcId, err)
-         return
-   }
-   var aWg sync.WaitGroup
-   for a := range aClients {
-      aWg.Add(1)
-      go _runTestClient(&aClients[a], &aWg)
-   }
-   go func() {
-      aWg.Wait()
-      fmt.Printf("end test pass\n")
-      if sTestExit {
-         err = sHttpSrvr.Close()
-         if err != nil { quit(err) }
+      if aTc.Cfg.Name == "" { continue }
+      for {
+         aCfg := pSl.GetConfigService(aTc.SvcId)
+         if aCfg.Error != "" {
+            err = tError(aCfg.Error)
+            goto ReturnErr
+         }
+         if aCfg.Uid != "" { break }
+         time.Sleep(50 * time.Millisecond)
       }
-   }()
+   }
+   return true
+   ReturnErr:
+      fmt.Fprintf(os.Stderr, "%s %s %s\n", aTc.Name, aTc.SvcId, err)
+      return false
+}
+
+func _setupTestCrash(iClients []tTestClient) (_ string, err error) {
+   aArg := []string{"","","",""}
+   copy(aArg, strings.Split(sTestCrash, ":"))
+   if !strings.HasPrefix(aArg[0], "test-run/") {
+      return "", tError("invalid dir")
+   }
+   if aArg[3] == "" {
+      return "", tError("missing op")
+   }
+   sTestOrderCrash, err = strconv.ParseUint(aArg[2], 10, 64)
+   if err != nil { return }
+   sTestNow, err = time.Parse(kTestDateF, aArg[0][9:]) // omit "test-run/"
+   if err != nil { return }
+   sTestNow = sTestNow.AddDate(time.Now().Year(), 0, 0)
+   sTestDate = sTestNow.Format(" "+kTestDateF)
+   sTestCrashSvc = aArg[1]
+   sTestCrashOp = aArg[3]
+
+   err = os.Chdir(aArg[0])
+   if err != nil { return }
+   err = os.RemoveAll("store/state")
+   if err != nil { return }
+   for a := range iClients {
+      if iClients[a].Cfg.Name == "" { continue }
+      aSvc := iClients[a].SvcId
+      err = os.Rename("store/svc/"+ aSvc +"/config", "store/svc-"+ aSvc +"-config")
+      if err != nil { return }
+      err = os.RemoveAll("store/svc/"+ aSvc)
+      if err != nil { return }
+      err = os.Mkdir("store/svc/"+ aSvc, 0700)
+      if err != nil { return }
+      err = os.Rename("store/svc-"+ aSvc +"-config", "store/svc/"+ aSvc +"/config")
+      if err != nil { return }
+   }
+   pSl.Init(startService, crashTest)
+   if sServices[aArg[1]].queue == nil {
+      return "", tError("invalid service")
+   }
+   return aArg[0], nil
+}
+
+func _setupTestVerify(iClients []tTestClient) (_ string, err error) {
+   aArg := []string{"","","",""}
+   copy(aArg, strings.Split(sTestVerify, ":"))
+   if !strings.HasPrefix(aArg[0], "test-run/") {
+      return "", tError("invalid dir")
+   }
+   sTestOrderCrash, err = strconv.ParseUint(aArg[2], 10, 64)
+   if err != nil { return }
+   sTestOrderN, err = strconv.ParseUint(aArg[3], 10, 64)
+   if err != nil { return }
+   sTestNow, err = time.Parse(kTestDateF, aArg[0][9:]) // omit "test-run/"
+   if err != nil { return }
+   sTestNow = sTestNow.AddDate(time.Now().Year(), 0, 0)
+   sTestDate = sTestNow.Format(" "+kTestDateF)
+   sTestCrashSvc = aArg[1]
+
+   err = os.Chdir(aArg[0])
+   if err != nil { return }
+   pSl.Init(startService, crashTest)
+   if sServices[aArg[1]].queue == nil {
+      return "", tError("invalid service")
+   }
+   var aTc *tTestClient
+   for a := range iClients {
+      if iClients[a].SvcId == aArg[1] {
+         aTc = &iClients[a]
+         break
+      }
+   }
+   if sTestOrderN == 0 || sTestOrderCrash+sTestOrderN > uint64(len(aTc.Orders)) {
+      return "", tError("invalid order range")
+   }
+   aTc.Orders = aTc.Orders[sTestOrderCrash : sTestOrderCrash+sTestOrderN]
+   aOrder := &aTc.Orders[0]
+   if aOrder.Updt.Op != "test" {
+      aOrder.Updt.Op = "test"
+      aOrder.Updt.Test = &pSl.UpdateTest{Request:make([]string, 0, len(aOrder.Result))}
+      for aK := range aOrder.Result {
+         aOrder.Updt.Test.Request = append(aOrder.Updt.Test.Request, aK)
+      }
+   }
+   for a := range aTc.Orders {
+      if aTc.Orders[a].Updt.Op != "test" {
+         return "", tError("Updt.Op not 'test': "+ aTc.Orders[a].Updt.Op)
+      }
+      aTc.Orders[a].Updt.Test.Poll = 0
+   }
+   return aArg[0], nil
 }
 
 func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
-   defer iWg.Done()
+   if iWg != nil {
+      defer iWg.Done()
+   }
    aSvc := getService(iTc.SvcId)
    if aSvc.ccs == nil {
       fmt.Fprintf(os.Stderr, "%s %s client quit; service unknown\n", iTc.Name, iTc.SvcId)
@@ -176,15 +367,15 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    for a := range sTestState {
       if sTestState[a].name == iTc.Name { aCtx.state = sTestState[a].state }
    }
-   for iTc.SvcId != "local" && pSl.GetConfigService(iTc.SvcId).Uid == "" {
-      time.Sleep(100 * time.Millisecond)
-   }
 
    for a := range iTc.Orders {
       aUpdt := &iTc.Orders[a].Updt
       aPrefix := fmt.Sprintf("%s %s %s", iTc.Name, iTc.SvcId, aUpdt.Op)
       if !_prepUpdt(aUpdt, &aCtx, aPrefix) {
          continue
+      }
+      if iTc.SvcId == sTestCrashSvc {
+         atomic.StoreUint64(&sTestOrderLast, uint64(a))
       }
       aFn := pSl.HandleUpdtService(iTc.SvcId, aCtx.state, aUpdt)
       var aOps []string
@@ -211,7 +402,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
             fmt.Fprintf(os.Stderr, "%s missing result\n  expect %s %v\n", aPrefix, aK, aV)
          }
       }
-      aSum := (*int32)(nil); if aUpdt.Test != nil && aUpdt.Test.Poll > 0 { aSum = new(int32) }
+      var aSum *int32 = nil; if aUpdt.Test != nil && aUpdt.Test.Poll > 0 { aSum = new(int32) }
       for aTryN := 1; true; aTryN++ {
          for a1 := 0; a1 < len(aOps); a1++ {
             aOp, aId := aOps[a1], ""
@@ -229,7 +420,13 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          }
          aCtx.wg.Wait()
          if aSum == nil || *aSum == int32(len(aOps)) {
+            if iTc.SvcId == sTestCrashSvc {
+               atomic.StoreUint32(&sTestOrderPolling, 0)
+            }
             break
+         }
+         if iTc.SvcId == sTestCrashSvc {
+            atomic.StoreUint32(&sTestOrderPolling, 1)
          }
          time.Sleep(aUpdt.Test.Poll * time.Millisecond)
          *aSum = 0
@@ -296,6 +493,9 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
       iUpdt.Ping.To    += sTestDate
       if iUpdt.Ping.Gid != "" {
          iUpdt.Ping.Gid += sTestDate
+         if sTestCrash != "" {
+            iUpdt.Ping.Gid += fmt.Sprintf(" %s:%d:%s", sTestCrashSvc, sTestOrderCrash, sTestCrashOp)
+         }
       }
    case "ping_send":
       _applyLastId(&iUpdt.Ping.Qid,          &aApply, iCtx.lastId, "ps")
@@ -511,6 +711,8 @@ func _hasExpected(iName string, iExpect, iGot interface{}) (string, interface{})
          if err != nil || aT.Before(sTestNow.AddDate(-1,0,0)) { return iName, iGot }
       } else if strings.HasSuffix(aExpect, "#td") {
          if aExpect[:len(aExpect)-3] + sTestDate != aGot { return iName, iGot }
+      } else if strings.HasSuffix(aExpect, "#tdg") {
+         if !strings.HasPrefix(aGot, aExpect[:len(aExpect)-4] + sTestDate) { return iName, iGot }
       } else if aExpect == "*mid" {
          _, err := strconv.ParseUint(aGot, 16, 64)
          if err != nil || len(aGot) != 16 { return iName, iGot }
