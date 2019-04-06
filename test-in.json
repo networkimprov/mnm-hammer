@@ -410,6 +410,11 @@
 }],
 "Orders":
 [{
+   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["pf", "nl"]}},
+   "Result": {
+      "pf":[{"Type":4, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td", "Uid":"*uid", "MsgId":"*mid"}] ,
+      "nl": [{"Type":"i", "Alias":"Blue#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
+},{
    "Updt": {"Op":"ping_save", "Ping":{"Alias":"Gold", "To":"Blue"}},
    "Result": {
       "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td", "Qid":"*"}] }
@@ -425,12 +430,6 @@
    "Updt": {"Op":"ping_send", "Ping":{"Qid":"last"}},
    "Result": {
       "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#td", "MyAlias":"Gold#td", "Qid":"*", "Queued":true}] }
-},{
-   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["pf", "nl"]}},
-   "Result": {
-      "pf":[{"Type":4, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td", "Uid":"*uid", "MsgId":"*mid",
-             "Response":"**"}] ,
-      "nl": [{"Type":"i", "Alias":"Blue#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
 },{
    "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue", "Uid":"last"}},
    "Result": {
