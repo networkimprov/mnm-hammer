@@ -215,7 +215,6 @@ func (o *tQueue) _waitForSrec() *pSl.SendRecord {
          aTmr.Reset(kPulsePeriod)
       }
    }
-   return nil
 }
 
 func runTmtpSend(o *tQueue) {
