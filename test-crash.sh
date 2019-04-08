@@ -17,6 +17,15 @@ host="$1"
 
 # Orders-index Order-count transaction-name
 list=(
+   'Blue  0 1 store-draft-thread'
+   'Blue  2 1 delete-draft-thread'
+   'Blue 10 1 store-sent-thread'
+   'Blue 13 2 store-fwd-received-thread'
+   'Blue 13 2 store-fwd-notify-thread'
+   'Blue 13 2 store-confirm-thread'
+   'Blue 16 1 seen-received-thread'
+   'Gold  8 1 store-received-thread'
+   'Gold 19 1 store-fwd-sent-thread'
 )
 
 if [ $# -eq 2 ]; then

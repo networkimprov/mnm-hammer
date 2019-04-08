@@ -364,6 +364,8 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
 }
 
 func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iIdx []tIndexEl) {
+   sCrashFn(iSvc, "store-confirm-thread")
+
    aRec := _parseFtmp(iTmp)
    aTempOk := dirTemp(iSvc) + iTmp
    var err error
@@ -394,6 +396,8 @@ func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *t
 }
 
 func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iCc []tCcEl) {
+   sCrashFn(iSvc, "store-received-thread")
+
    var err error
    aRec := _parseFtmp(iTmp)
    aTempOk := dirTemp(iSvc) + iTmp
@@ -457,6 +461,8 @@ func seenReceivedThread(iSvc string, iUpdt *Update) {
 }
 
 func _completeSeenReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
+   sCrashFn(iSvc, "seen-received-thread")
+
    var err error
    aTempOk := dirTemp(iSvc) + iTmp
 
@@ -537,6 +543,8 @@ func storeSentThread(iSvc string, iHead *Header) {
 }
 
 func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iCc []tCcEl) {
+   sCrashFn(iSvc, "store-sent-thread")
+
    aRec := _parseFtmp(iTmp)
 
    resolveReceivedAdrsbk(iSvc, iHead.Posted, iCc, aRec.tid())
@@ -624,6 +632,8 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
 }
 
 func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead) {
+   sCrashFn(iSvc, "store-draft-thread")
+
    var err error
    aRec := _parseFtmp(iTmp)
    aDraft := dirThread(iSvc) + aRec.tid() + "_" + aRec.lms()
@@ -705,6 +715,8 @@ func deleteDraftThread(iSvc string, iUpdt *Update) {
 }
 
 func _completeDeleteDraft(iSvc string, iTmp string, iFd, iTd *os.File) {
+   sCrashFn(iSvc, "delete-draft-thread")
+
    _completeStoreDraft(iSvc, iTmp, iFd, iTd, &tMsgHead{})
 }
 
@@ -881,6 +893,8 @@ func storeFwdReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
 }
 
 func _completeStoreFwdReceived(iSvc string, iTmp string) {
+   sCrashFn(iSvc, "store-fwd-received-thread")
+
    aRec := _parseFtmp(iTmp)
    aTempOk := dirTemp(iSvc) + iTmp
 
@@ -944,6 +958,8 @@ func storeFwdNotifyThread(iSvc string, iHead *Header, iR io.Reader) error {
 }
 
 func _completeStoreFwdNotify(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl) {
+   sCrashFn(iSvc, "store-fwd-notify-thread")
+
    aRec := _parseFtmp(iTmp)
    aUid := GetConfigService(iSvc).Uid
    var aCcRes []tCcEl
@@ -1013,6 +1029,8 @@ func storeFwdSentThread(iSvc string, iHead *Header) {
 }
 
 func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tCcEl, iFwdN int) {
+   sCrashFn(iSvc, "store-fwd-sent-thread")
+
    aRec := _parseFtmp(iTmp)
    aFwdOrig := fileFwd(iSvc, aRec.tid())
    aFwdTemp := ftmpFwdS(iSvc, aRec.tid())
