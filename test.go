@@ -165,7 +165,7 @@ func test() int {
    } else {
       fmt.Printf("start test pass in %s\n", aDir)
       if !_setupTestDir(aDir, aClients) {
-         fmt.Printf("end test pass\n")
+         fmt.Printf("end test pass. http on %s\n", sHttpSrvr.Addr)
          return -1
       }
    }
@@ -183,7 +183,7 @@ func test() int {
          fmt.Printf("crash not triggered\n")
          sTestExit = true
       } else {
-         fmt.Printf("end test pass\n")
+         fmt.Printf("end test pass. http on %s\n", sHttpSrvr.Addr)
       }
       if sTestExit {
          err = sHttpSrvr.Close()

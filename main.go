@@ -67,7 +67,7 @@ const (
    eOpEnd
 )
 
-var sHttpSrvr = http.Server{Addr: ":80"}
+var sHttpSrvr http.Server
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]tService)
 var sServiceTmpl *template.Template
@@ -96,6 +96,9 @@ func mainResult() int {
    sServices["local"] = tService{ccs: newClientConns()}
 
    if sTestHost != "" {
+      if sHttpSrvr.Addr == "" {
+         sHttpSrvr.Addr = ":8123"
+      }
       if aRes := test(); aRes >= 0 {
          return aRes
       }
