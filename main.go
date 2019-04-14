@@ -299,6 +299,7 @@ Closed:
 func runTmtpRecv(iSvcId string) {
    aSvc := getService(iSvcId)
    aRng := rand.New(rand.NewSource(time.Now().UnixNano()))
+   aDlr := net.Dialer{Timeout: 20*time.Second, KeepAlive: 5*time.Second} //todo drop keepalive
    var err error
    var aConn net.Conn
    var aLogoutMsg []string
@@ -321,7 +322,6 @@ func runTmtpRecv(iSvcId string) {
       for aWait := 4; true; aWait *= 2 {
          aCfg = pSl.GetConfigService(iSvcId)
          aCfgTls := tls.Config{InsecureSkipVerify: !aCfg.Verify}
-         aDlr := net.Dialer{Timeout: 3 * time.Second}
          aConn, err = tls.DialWithDialer(&aDlr, "tcp", aCfg.Addr, &aCfgTls)
          if err == nil {
             break
