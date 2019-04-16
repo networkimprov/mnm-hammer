@@ -364,12 +364,15 @@
               title="Forward thread to new recipients"
               style="float:left; margin:0 0.5em 1em 0"
               class="btn-icon"><span uk-icon="forward"></span></button>
-      <input v-model="note" placeholder="Note" size="57" maxlength="1024" type="text">
+      <input v-model="note"
+             placeholder="Note" maxlength="1024" type="text"
+             style="width:calc(100% - 4em)">
       <div style="position:relative; padding:1px;">
          <mnm-adrsbkinput @keyup.enter.native="addUser"
                           :type="3"
-                          placeholder="To" size="25"/>
-         <div style="height:100%; position:absolute; left:15em; right:0; top:0;">
+                          placeholder="To"
+                          style="width:calc(50% - 2em)"/>
+         <div style="height:100%; position:absolute; right:2em; top:0; width:calc(50% - 2.5em)">
             <mnm-draftmenu ref="menu" :list="menu" @drop="dropUser"/></div>
       </div>
       <ul uk-tab>
@@ -530,11 +533,13 @@
       <input @input="subjAdd"
              @click.stop="clickPreview('pv_'+msgid)"
              :value="(mnm._data.toSave[msgid] || mnm._data.mo[msgid].SubHead).Subject"
-             placeholder="Subject" type="text" style="width:100%">
+             placeholder="Subject" type="text"
+             class="width100">
       <mnm-textresize @input.native="textAdd"
                       @click.native.stop="clickPreview('pv_'+msgid)"
                       :src="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
-                      placeholder="Ctrl-J to Preview" style="width:100%"/>
+                      placeholder="Ctrl-J to Preview"
+                      class="width100"/>
    </div>
 </script><script>
    Vue.component('mnm-draft', {
@@ -656,7 +661,7 @@
 
 <script type="text/x-template" id="mnm-adrsbkinput">
    <div @click="menu.selectId($el.firstChild, $event.target.id)"
-        style="display:inline-block">
+        class="adrsbkinput">
       <input @focus="menu.placeEl($el, type, $event.target.value)"
              @blur ="menu.hideEl()"
              @input="menu.search(type, $event.target.value)"
@@ -664,7 +669,8 @@
              @keydown.up   ="menu.selectItem($event.target, -1)"
              @keydown.esc  ="menu.selectNone($event.target)"
              @keyup.enter  ="menu.clear()"
-             v-bind="$attrs" type="text">
+             v-bind="$attrs" type="text"
+             class="width100">
       <!--menu appended here-->
    </div>
 </script><script>
@@ -955,7 +961,9 @@
          <input @input="vis = !!(upname = $event.target.value.substr(12))" type="file"
                 name="filename" required>
          <div :style="{visibility: vis ? 'visible' : 'hidden'}" style="margin-top:0.5em">
-            <input v-model="upname" type="text" size="40" placeholder="Alt Name">
+            <input v-model="upname"
+                   placeholder="Alt Name" type="text"
+                   style="width:60%">
             <button @click="vis = false" type="submit"
                     :disabled="!upname"
                     title="Copy to attachable files"
@@ -1012,7 +1020,9 @@
          <div class="uk-float-right uk-text-small">BLANK FORMS</div>
          <input type="hidden" name="filename"
                 value='{"fields":[ {"label":"Untitled","model":"s","type":"input","inputType":"text"} ]}'>
-         <input v-model="upname" type="text" size="40" placeholder="New Type">
+         <input v-model="upname"
+                placeholder="New Type" type="text"
+                style="width:60%">
          <button @click="upname = ''"
                  :disabled="!validName(upname.split('.'))"
                  title="New form"
@@ -1067,7 +1077,7 @@
                      <mnm-textresize @input.native="editCode"
                                      :src="mnm._data.fo"
                                      ref="code"
-                                     style="width:100%"/></div>
+                                     class="width100"/></div>
                </div>
             </div>
             <form action="/f/?" method="POST" enctype="multipart/form-data">
@@ -1075,7 +1085,9 @@
             <form :action="'/f/*' + encodeURIComponent(setName+'.'+fileId) +
                               '+' + encodeURIComponent(dupname)" method="POST"
                   onsubmit="mnm.Upload(this); return false;">
-               <input v-model="dupname" type="text" size="40" placeholder="New Revision">
+               <input v-model="dupname"
+                      placeholder="New Revision" type="text"
+                      style="width:60%">
                <button @click="dupShow = dupname"
                        :disabled="!validName([].concat(setName,dupname.split('.')))"
                        title="Duplicate form"
@@ -1276,17 +1288,20 @@
                </tr></table></li>
          <li>
             <form onsubmit="return false"
-                  style="margin: 0 auto; display:table">
+                  style="width:70%; margin: 0 auto; display:table">
                <input v-model="draft.to"
-                      placeholder="To ([{.aliasMin}]+ characters)" size="25" type="text">
-               <div style="display:inline-block; vertical-align:top">
+                      placeholder="To ([{.aliasMin}]+ characters)" type="text"
+                      style="width:calc(50% - 1.5em)">
+               <div style="width:calc(50% - 1.5em); display:inline-block; vertical-align:top">
                   <input v-model="draft.gid"
-                         placeholder="(Group)" size="25" type="text">
+                         placeholder="(Group)" type="text"
+                         class="width100">
                   <br>
                   <mnm-adrsbkinput @keyup.enter.native="setGid($event.target)"
                                    @keydown.enter.native.prevent=""
                                    :type="2"
-                                   placeholder="Search groups" size="25"/>
+                                   placeholder="Search groups"
+                                   class="width100"/>
                </div>
                <button @click="startPing()"
                        :disabled="!validDraft"
@@ -1334,15 +1349,16 @@
                </tr></table></li>
          <li>
             <form onsubmit="this.reset(); return false;"
-                  style="margin: 0 auto; display:table">
+                  style="width:70%; margin: 0 auto; display:table">
                <mnm-adrsbkinput @keyup.enter.native="setOhiTo($event.target)"
                                 @keydown.enter.native.prevent
                                 :type="1"
-                                placeholder="To" size="30" name="resets" autocomplete="off"/>
+                                placeholder="To" name="resets" autocomplete="off"
+                                style="width:50%"/>
                <button onclick="mnm.OhiAdd(this.innerText.substring(3), this.value)"
                        disabled
                        title="Notify contact when you're online"
-                       style="min-width:15em"
+                       style="width:calc(50% - 0.5em)"
                        class="btn-icontxt">o/</button>
             </form>
             <table class="uk-table uk-table-small">
@@ -1449,11 +1465,14 @@
                  title="Register new account at service"
                  class="btn-icon"><span uk-icon="forward"></span></button>
          <input v-model="name"
-                placeholder="Title ([{.serviceMin}]+ characters)" size="33" type="text">
+                placeholder="Title ([{.serviceMin}]+ characters)" type="text"
+                class="width100">
          <input v-model="alias"
-                placeholder="Alias ([{.aliasMin}]+ characters)"   size="33" type="text">
+                placeholder="Alias ([{.aliasMin}]+ characters)"   type="text"
+                class="width100">
          <input v-model="addr"
-                placeholder="Net Address (host:port)"             size="33" type="text">
+                placeholder="Net Address (host:port)"             type="text"
+                class="width100">
          <!--todo input v-model="lpin"
                 @input="loginperiod = mnm._stringToSeconds($event.target.value)"
                 placeholder="(Pd days:hh:mm:ss)"                  size="19" type="text">
@@ -1485,10 +1504,12 @@
             <tr><td>Thread History </td><td>{{mnm._data.cf.HistoryLen}}<br>
                <input v-model="hlin"
                       @input="historylen = parseInt($event.target.value || '-1')"
-                      placeholder="4 to 1024"         size="25" type="text"></td></tr>
+                      placeholder="4 to 1024" type="text"
+                      class="width100"></td></tr>
             <tr><td>Net Address    </td><td>{{mnm._data.cf.Addr  }}<br>
                <input v-model="addr"
-                      placeholder="New host:port"     size="25" type="text"></td></tr>
+                      placeholder="New host:port" type="text"
+                      class="width100"></td></tr>
             <!--todo tr><td>Login Period   </td><td>{{mnm._secondsToString(mnm._data.cf.LoginPeriod)}}<br>
                <input v-model="lpin"
                       @input="loginperiod = toSeconds($event.target.value)"

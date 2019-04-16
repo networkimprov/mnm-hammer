@@ -59,6 +59,10 @@ body {
    text-align: center;
 }
 
+.width100 {
+   width: 100%;
+}
+
 input[type=text], textarea {
    font-family: Monaco, monospace;
    font-size: 82%;
@@ -190,6 +194,9 @@ input[type=text], textarea {
    font-style: inherit !important; /* fix disabled italics */
 }
 
+.adrsbkinput {
+   display: inline-block;
+}
 .adrsbkmenu {
    box-sizing: border-box;
    background-color: gainsboro;
