@@ -35,6 +35,15 @@
 
 <input id="toclipboard" style="display:none">
 
+<div id="app-quit" style="display:none">
+   <div class="app-alert">
+      <p>The mnm app has quit.</p>
+      When it's back up, reload this tab.<br>
+      <button onclick="location.reload()"
+              title="Reload this tab"
+              class="btn-icon"><span uk-icon="refresh"></span></button>
+   </div></div>
+
 <script type="text/x-template" id="mnm-main">
 <div uk-grid class="uk-grid-small">
 
@@ -1706,6 +1715,11 @@
    mnm.Log = function(i) {
       var aLog = document.getElementById('log').innerText;
       document.getElementById('log').innerText = (i.substr(-1) === '\n' ? i : i+'\n')+aLog;
+   };
+
+   mnm.Quit = function() {
+      document.body.click(); // close dropdowns
+      document.getElementById('app-quit').style.display = 'block';
    };
 
    mnm.Render = function(i, iData, iEtc) {

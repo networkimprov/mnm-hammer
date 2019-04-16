@@ -43,6 +43,22 @@ body {
    background-color: #003333;
 }
 
+#app-quit {
+   position: absolute;
+   top:0; left:0; bottom:0; right:0;
+   background-color: rgba(130, 130, 130, 0.2);
+}
+.app-alert {
+   position: absolute;
+   bottom:0; right:0;
+   width: 20vw;
+   border: 3px double #909090;
+   padding: 1em;
+   background-color: pink;
+   color: black;
+   text-align: center;
+}
+
 input[type=text], textarea {
    font-family: Monaco, monospace;
    font-size: 82%;

@@ -14,6 +14,7 @@
 
    // caller implements these
    mnm.Log =
+   mnm.Quit =
    mnm.Render =
    mnm.ThreadChange = function(){};
 
@@ -161,8 +162,13 @@
                _xhr(aObj[a]);
          }
       };
-      sWs.onclose = function(iEvent) { mnm.Log('ws closed') };
-      sWs.onerror = function(iEvent) { mnm.Log('ws error: ' + iEvent.data) };
+      sWs.onclose = function(iEvent) {
+         mnm.Log('ws closed');
+         mnm.Quit();
+      };
+      sWs.onerror = function(iEvent) {
+         mnm.Log('ws error: ' + iEvent.data);
+      };
    };
 
    function _xhr(i, iId, iOpen) {
