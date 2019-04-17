@@ -1451,7 +1451,7 @@
          <div v-show="loginperiod"
               style="float:right">{{loginperiod}} sec</div -->
          <br>
-         <label><input v-model="verify" type="checkbox"> Verify identity (TLS certificate)</label>
+         <label><input v-model="verify" type="checkbox"> Verify host (TLS certificate)</label>
       </form>
    </div>
 </script><script>
@@ -1484,7 +1484,7 @@
                <input v-model="lpin"
                       @input="loginperiod = toSeconds($event.target.value)"
                       placeholder="New days:hh:mm:ss" size="25" type="text"></td></tr -->
-            <tr><td>Verify identity</td><td>{{mnm._data.cf.Verify}}<br>
+            <tr><td>Verify<br>host </td><td>{{mnm._data.cf.Verify}}<br>
                <label><input v-model="verify" type="checkbox"><tt>Toggle</tt></label></td></tr>
             <tr><td>Title          </td><td>{{mnm._data.cf.Name  }}</td></tr>
             <tr><td>Alias          </td><td>{{mnm._data.cf.Alias ||
