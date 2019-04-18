@@ -149,9 +149,12 @@ func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
 func removeReceivedAttach(iSvc string, iHead *Header) {
    var err error
    for _, aFile := range iHead.SubHead.Attach {
-      if _isFormFill(aFile.Name) { continue }
-      err = os.Remove(ftmpAttach(iSvc, iHead.Id, aFile.Name)) //todo escape '/' in .Name
-      if err != nil && !os.IsNotExist(err) { quit(err) }
+      if _isFormFill(aFile.Name) {
+         removeFilledForm(iSvc, iHead.Id, &aFile)
+      } else {
+         err = os.Remove(ftmpAttach(iSvc, iHead.Id, aFile.Name)) //todo escape '/' in .Name
+         if err != nil && !os.IsNotExist(err) { quit(err) }
+      }
    }
 }
 

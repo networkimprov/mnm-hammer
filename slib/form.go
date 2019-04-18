@@ -398,6 +398,11 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    return nil
 }
 
+func removeFilledForm(iSvc string, iMsgId string, iFile *tHeader2Attach) {
+   err := os.Remove(ftmpAttach(iSvc, iMsgId, iFile.Name))
+   if err != nil && !os.IsNotExist(err) { quit(err) }
+}
+
 func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach) bool {
    var err error
    aDoor := _getFormDoor(iSvc, iFile.Ffn + iSuffix)
@@ -433,6 +438,8 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
    if err != nil { quit(err) }
    err = aFd.Sync()
    if err != nil { quit(err) }
+   err = os.Remove(aFn)
+   if err != nil && !os.IsNotExist(err) { quit(err) }
    return aDoSync
 }
 
