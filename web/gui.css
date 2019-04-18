@@ -59,6 +59,9 @@ body {
    text-align: center;
 }
 
+.overxhide {
+   overflow-x: hidden;
+}
 .width100 {
    width: 100%;
 }

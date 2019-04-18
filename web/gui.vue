@@ -244,12 +244,12 @@
                  :style="{'background-color': aRow.Id === cs.Thread ? 'wheat' : null}"><!--todo class thread-row-thread-->
                <div class="uk-width-auto" style="padding:0">
                   <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
-               <div class="uk-width-1-6">{{aRow.LastAuthor}}</div>
-               <div class="uk-width-expand"
+               <div class="uk-width-1-6 overxhide">{{aRow.LastAuthor}}</div>
+               <div class="uk-width-expand overxhide"
                     :title="aRow.Id">{{aRow.Subject}}</div>
                <div class="uk-width-auto">
                   <mnm-date :iso="aRow.OrigDate"/></div>
-               <div class="uk-width-1-6">{{aRow.OrigAuthor}}</div>
+               <div class="uk-width-1-6 overxhide">{{aRow.OrigAuthor}}</div>
             </div></template>
          <div style="margin-top:1em">
             <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
