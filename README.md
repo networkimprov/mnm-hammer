@@ -37,9 +37,9 @@ See directions to install the server at https://github.com/networkimprov/mnm
 
 1. Download latest preview  
 |
-[**MacOS**](https://github.com/networkimprov/mnm-hammer/releases/latest/download/mnm-app-macos-v0.1.0.tgz)
+[**MacOS**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.1.0/mnm-app-macos-v0.1.0.tgz)
 ||
-[**Linux**](https://github.com/networkimprov/mnm-hammer/releases/latest/download/mnm-app-linux-amd64-v0.1.0.tgz)
+[**Linux**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.1.0/mnm-app-linux-amd64-v0.1.0.tgz)
 |  
 [Release details](https://github.com/networkimprov/mnm-hammer/releases/latest)
 
