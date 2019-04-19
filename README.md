@@ -27,25 +27,88 @@ Complete documentation is provided within the app.
 
 ### Status
 
-A first release is in progress.
+_19 April 2019_ -
+v0.1 is released. It has only been tested on Linux & MacOS, with Firefox.
 
 ### Quick start
 
-1. Follow steps to install & start TCP server at https://github.com/networkimprov/mnm
+If you haven't received an invitation to join a TMTP service, you can set up your own.
+See directions to install the server at https://github.com/networkimprov/mnm
 
-1. Build client  
-a) go get github.com/networkimprov/mnm-hammer  
-b) cd $GOPATH/src/github.com/networkimprov/mnm-hammer  
-c) ./webdeps.sh # download browser modules  
-d) go build mnm-hammer
+1. Download latest preview  
+|
+[**MacOS**](https://github.com/networkimprov/mnm-hammer/releases/latest/download/mnm-app-macos-v0.1.0.tgz)
+||
+[**Linux**](https://github.com/networkimprov/mnm-hammer/releases/latest/download/mnm-app-linux-amd64-v0.1.0.tgz)
+|  
+[Release details](https://github.com/networkimprov/mnm-hammer/releases/latest)
 
-1. Start client  
-a) ./mnm-hammer --test server_host:port [--http [host]:port] # http default ":80" may require sudo  
-b) ctrl-C to stop client
+1. Unpack download  
+MacOS  
+a) Open the browser downloads menu, find "mnm-app-macos-v0.1.0.tgz" and click "Open File"  
+b) Open a Terminal window  
+c) `cd ~/Downloads/mnm-hammer-v0.1.0`  
+Linux  
+a) `cd the_right_directory` # use appropriate name  
+b) `tar xzf mnm-app-linux-amd64-v0.1.0.tgz`  
+c) `cd mnm-hammer-v0.1.0`
 
-1. Point FireFox to http://localhost/Blue # not yet tested in other browsers
+1. Start app  
+a) `sudo ./mnm-hammer` # starts http on port 80  
+or  
+a) `./mnm-hammer --http [host]:port`  
+To stop the app, Ctrl-C  
+Note: the preview currently logs much of its traffic with the browser to the terminal window.
 
-1. See docs in the &#9432; menu
+1. Connect Firefox  
+Open a browser tab, go to `localhost` (or `host:port` if specified above).  
+See docs in the &#9432; menu.
+
+### Version Numbering
+
+Production releases: 1+ . 0 . 0+
+
+Preview releases: _pp_ . 1+ . _pp_ (first & last from prior production release)
+
+The second number is only used for previews. 
+Most (hopefully all) preview features & changes appear in the following production release. 
+
+### Build & Package
+
+a) `go get github.com/networkimprov/mnm-hammer`  
+b) `cd $GOPATH/src/github.com/networkimprov/mnm-hammer`  
+c) `./webdeps.sh` # download browser modules  
+d) `ln $GOPATH/bin/mnm-hammer mnm-hammer` # hard link necessary for packaging  
+e) `./pkg.sh` # make distribution downloads
+
+### Testing
+
+An automated test sequence is defined in test-in.json. 
+It creates accounts Blue and Gold, which then exchange messages. 
+It yields occasional false positives due to loose synchronization between the two accounts. 
+After a test pass completes, the app provides http on port 8123 (unless --http is given):  
+`./mnm-hammer --test server:port` # server:port is a TMTP service  
+To access a previous test pass:  
+`(cd test-run/TPD/ && ../../mnm-hammer --http :8123)` # TPD is a directory name
+
+Crash testing  
+a) `./mnm-hammer --test server:port --crash  init` # make test directory  
+b) `./mnm-hammer --test server:port --crash  dir:service:orderIdx:op` # crash here in test sequence  
+c) `./mnm-hammer --test server:port --verify dir:service:orderIdx:count` # recover and verify result
+
+`./test-crash.sh server:port [ item_index ]` # collection of crash/verify runs in single directory
+
+#### Code Coverage
+
+a) `go test -c -covermode=count -coverpkg ./...`  
+b) `go build`  
+c) `./mnm-hammer.test --test localhost:443 -test.coverprofile mnm-hammer.cov`  
+. . . \# this test pass directory is TPD below  
+d) `go tool cover -html=test-run/TPD/mnm-hammer.cov -o web/coverage.html`  
+e) `(cd test-run/TPD/ && ../../mnm-hammer --http :8123)`  
+f) Open a browser tab, go to `localhost:8123/w/coverage.html`
+
+Ref: https://www.elastic.co/blog/code-coverage-for-your-golang-system-tests
 
 ### License
 
