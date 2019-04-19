@@ -419,7 +419,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
             go _runTestService(&aCtx, aOp, aId, iTc.Orders[a].Result[aOp], aPrefix, aSum, aTryN)
          }
          aCtx.wg.Wait()
-         if aSum == nil || *aSum == int32(len(aOps)) {
+         if aTryN == 5 || aSum == nil || *aSum == int32(len(aOps)) {
             if iTc.SvcId == sTestCrashSvc {
                atomic.StoreUint32(&sTestOrderPolling, 0)
             }
