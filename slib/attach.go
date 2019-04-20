@@ -150,7 +150,7 @@ func removeReceivedAttach(iSvc string, iHead *Header) {
    var err error
    for _, aFile := range iHead.SubHead.Attach {
       if _isFormFill(aFile.Name) {
-         removeFilledForm(iSvc, iHead.Id, &aFile)
+         removeTempFilledForm(iSvc, iHead.Id, &aFile)
       } else {
          err = os.Remove(ftmpAttach(iSvc, iHead.Id, aFile.Name)) //todo escape '/' in .Name
          if err != nil && !os.IsNotExist(err) { quit(err) }
@@ -277,6 +277,10 @@ func _storeFormAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
    if aDoSync {
       err := syncDir(dirForm(iSvc))
       if err != nil { quit(err) }
+   }
+   for _, aFile := range iSubHead.Attach {
+      if !_isFormFill(aFile.Name) { continue }
+      removeTempFilledForm(iSvc, iRec.mid(), &aFile)
    }
 }
 

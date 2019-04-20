@@ -398,7 +398,7 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    return nil
 }
 
-func removeFilledForm(iSvc string, iMsgId string, iFile *tHeader2Attach) {
+func removeTempFilledForm(iSvc string, iMsgId string, iFile *tHeader2Attach) {
    err := os.Remove(ftmpAttach(iSvc, iMsgId, iFile.Name))
    if err != nil && !os.IsNotExist(err) { quit(err) }
 }
@@ -409,7 +409,12 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
    aDoor.Lock(); defer aDoor.Unlock()
    aFn := ftmpAttach(iSvc, iMsgId, iFile.Name)
    aTd, err := os.Open(aFn)
-   if err != nil { quit(err) }
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+      fmt.Fprintf(os.Stderr, "storeFilledForm %s: missing %s, assume it was appended to %s\n",
+                             iSvc, iFile.Name, _ffnFileName(iFile.Ffn) + iSuffix)
+      return false
+   }
    defer aTd.Close()
    aBuf := make([]byte, 32)
    _, err = aTd.Read(aBuf)
@@ -438,8 +443,6 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
    if err != nil { quit(err) }
    err = aFd.Sync()
    if err != nil { quit(err) }
-   err = os.Remove(aFn)
-   if err != nil && !os.IsNotExist(err) { quit(err) }
    return aDoSync
 }
 
