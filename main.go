@@ -7,19 +7,6 @@
 
 package main
 
-//todo
-// secure link to clients
-// handle client msgs
-//   addnode, dropnode
-//   addservice
-//   addalias, dropalias
-//   groupinvite, etc
-//   addohi, dropohi
-//   savemsg, sendmsg
-//   addform, revform
-//   getservices, getthreads, getmsgs, getopenmsgs
-// track form subscribers (clients with form in msg-editor) to send update on rev
-
 import (
    "runtime/debug"
    "flag"

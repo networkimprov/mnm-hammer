@@ -18,16 +18,18 @@ thread_savetext message for subject & body?
 loadThread return set of msgids
 ClientState keeps form-table; send "tl" op if changed
   keeps msg panel scroll position
+  drop old states
 tService.tabs carry names for pinned terms
 tThreadState keep tOpenState for each .Terms item
 blankform update msg to all clients, include ID
+  flag update in msg editor if form is attached
 attach size set on save
 config file: path for store/, http host & port, ...
 test-in: add op open to Gold
 test: Orders[n].Note == "print this // hide this"
-  trigger completeThread()
-state: fix failure on navigate from FFT to msgid when no history
-search: complete column data
+main: TLS1.3, call api correctly
+  secure link to clients
+  revise disconnected ClientState files on rename/discard
 clean
   slib: add fileThread, fileAttach, fileState ...?
   use file.readat where offset known
@@ -38,17 +40,22 @@ clean
   thread: mv t*El to read/write section, mv completeThread to top
   test: _prepUpdt closures
 gui
-  adrsbkmenu: mouse events
+  mo: drop draft object after send/discard
   formview: default field values in form-def "defaults" object
     create component with parent param?
     handle multiple form instances
+  fix draft edit position reset for long text
   fix update draft editors when shown in other message list tabs
   blankform listsort only when edit pane closed
   attachment links to forms open form editor
   use v-show instead of v-if/else where both elements appear frequently
   use ref/$refs instead of id/getElementById
-  rename mnm._data.t/f/v
   hrefs meaningful, or change element to button/span
+
+server try-back-later msg
+  gives: reconnect time in tenths of second, reason eg max-idle/shutdown/etc
+  reconnect to send
+  disconnect when send queue empty
 
 forwarding
   CC menu: forward form + button, unsubscribe button, CC list
@@ -362,29 +369,12 @@ elembe features
   plugins for data object view/edit
 
 storage
-  state directory
-    directory per client
-      file per service
   service directory, subdirectory per service
-    config file
-    address-book file
-    ohi file
-    groups file
-    aliases file
-    index tabs file
     styling directory: css & image files
-    temp directory
     icalendar directory: year & json index per file
-    outbound msg directory
     attachment directory: link file if checksum matches
-    form-table directory
-    thread tabs directory
     thread directory
-      file per thread, checksum each msg
-        order msgs by server msg ID
-        metadata at end of file: tags
       push old threads into zip
-      store reply in separate file until ack'd
     msg index with thread id, msg offset count, msg metadata
       keep backup db copy
       rebuild database from files to recover from db corruption & backup failure
@@ -392,8 +382,6 @@ storage
     flag unsent items with name_
     drop items sent and untouched for >N days
     can pin items in place?
-  forms directory
-    file per form with all revs
   index directory
     attachment index: checksum, filename
     msg index here?
