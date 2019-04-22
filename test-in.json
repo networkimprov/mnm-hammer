@@ -372,14 +372,14 @@
              "SvcTabs":{"Pos":0, "PosFor":0, "Terms":["ffn:networkimprov.github.io/mnm-registry/first_recv"],
                         "Default":["All", "Unread", "Todo", "FFT"], "Pinned":["ohi"], "Type":1}} }
 },{
-   "Updt": {"Op":"config_update", "Config":{"HistoryLen":88, "LoginPeriod":99, "Addr":"new", "Verify":true}},
+   "Updt": {"Op":"config_update", "Config":{"HistoryLen":88, "LoginPeriod":99}},
    "Result": {
-      "cf": {"Name":"Blue", "Description":"", "HistoryLen":88, "LoginPeriod":99, "Addr":"new", "Verify":true,
+      "cf": {"Name":"Blue", "Description":"", "HistoryLen":88, "LoginPeriod":99, "Addr":"*", "Verify":"**",
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} }
 },{
-   "Updt": {"Op":"config_update", "Config":{"LoginPeriod":0, "Addr":"new", "Verify":true}},
+   "Updt": {"Op":"config_update", "Config":{"LoginPeriod":0}},
    "Result": {
-      "cf": {"Name":"Blue", "Description":"", "HistoryLen":88, "LoginPeriod":0, "Addr":"*", "Verify":false,
+      "cf": {"Name":"Blue", "Description":"", "HistoryLen":88, "LoginPeriod":0, "Addr":"*", "Verify":"**",
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} }
 },{
    "Updt": {"Op":"test", "Test":{"Notice":[
