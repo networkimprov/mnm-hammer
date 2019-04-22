@@ -130,24 +130,24 @@ func test() int {
          fmt.Fprintf(os.Stderr, "test-in expects v%s, app is v%s\n", aClients[a].Version, aAbout.Version)
          return 33
       }
-      sTestState = append(sTestState, tTestStateEl{aClients[a].SvcId, aClients[a].Name, nil})
    }
 
    if sTestVerify != "" {
-      aDir, err = _setupTestVerify(aClients)
+      aDir, err = _setupTestVerify(aClients) // triggers receipt of msgs pending from -crash run
       if err != nil {
          fmt.Fprintf(os.Stderr, "invalid -verify parameter '%s': %v\n", sTestVerify, err)
          return 33
       }
-      time.Sleep(600 * time.Millisecond) // receive any msgs pending from -crash run
-      a := -1
-      for a = range sTestState {
-         if sTestState[a].svcId == sTestCrashSvc {
-            sTestState[a].state = pSl.OpenState(sTestState[a].name, sTestState[a].svcId)
-            break
+      time.Sleep(600 * time.Millisecond) // handle msgs pending from -crash run
+      var aTc *tTestClient
+      for a := range aClients {
+         sTestState = append(sTestState, tTestStateEl{aClients[a].SvcId, aClients[a].Name,
+                                                      pSl.OpenState(aClients[a].Name, aClients[a].SvcId)})
+         if aClients[a].SvcId == sTestCrashSvc {
+            aTc = &aClients[a]
          }
       }
-      _runTestClient(&aClients[a], nil)
+      _runTestClient(aTc, nil)
       return 0
    }
    if sTestCrash == "init" {
@@ -170,8 +170,9 @@ func test() int {
          return -1
       }
    }
-   for a := range sTestState {
-      sTestState[a].state = pSl.OpenState(sTestState[a].name, sTestState[a].svcId)
+   for a := range aClients {
+      sTestState = append(sTestState, tTestStateEl{aClients[a].SvcId, aClients[a].Name,
+                                                   pSl.OpenState(aClients[a].Name, aClients[a].SvcId)})
    }
    var aWg sync.WaitGroup
    for a := range aClients {
