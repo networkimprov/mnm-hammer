@@ -39,6 +39,7 @@ var sTestOrderPolling uint32 // atomic
 var sTestState []tTestStateEl // used by main.go
 var sTestNow = time.Now().Truncate(time.Second)
 var sTestDate = sTestNow.Format(" "+kTestDateF)
+var sTestDateGid = time.Now().Format(":"+kTestDateF+".000")
 var sTestExit = false
 
 type tTestStateEl struct {
@@ -494,7 +495,7 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
       if iUpdt.Ping.Gid != "" {
          iUpdt.Ping.Gid += sTestDate
          if sTestCrash != "" {
-            iUpdt.Ping.Gid += fmt.Sprintf(" %s:%d:%s", sTestCrashSvc, sTestOrderCrash, sTestCrashOp)
+            iUpdt.Ping.Gid += sTestDateGid
          }
       }
    case "ping_send":
