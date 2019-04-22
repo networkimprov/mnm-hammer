@@ -75,9 +75,12 @@ func GetIdxThread(iSvc string, iState *ClientState) interface{} {
       if cDoor.renamed { return }
 
       cFd, err := os.Open(dirThread(iSvc) + aTid)
-      if err != nil { quit(err) }
-      defer cFd.Close()
-      _ = _readIndex(cFd, &aIdx, nil)
+      if err != nil {
+         if !os.IsNotExist(err) { quit(err) }
+         return
+      }
+      _readIndex(cFd, &aIdx, nil)
+      cFd.Close()
    }()
    for a, _ := range aIdx {
       if aIdx[a].From == "" {
@@ -101,18 +104,23 @@ func GetCcThread(iSvc string, iState *ClientState) interface{} {
    aTid := iState.getThread()
    if aTid == "" { return aCc }
 
-   aDoor := _getThreadDoor(iSvc, aTid)
-   aDoor.RLock()
-   if aDoor.renamed {
-      aDoor.RUnlock()
-      return aCc
-   }
-   aFd, err := os.Open(dirThread(iSvc) + aTid)
-   if err != nil { quit(err) }
-   _readCc(aFd, &aCc[kSet])
-   aFd.Close(); aDoor.RUnlock()
+   fReadCc := func() bool {
+      cDoor := _getThreadDoor(iSvc, aTid)
+      cDoor.RLock(); defer cDoor.RUnlock()
+      if cDoor.renamed { return false }
 
-   aDoor = _getThreadDoor(iSvc, aTid + "_forward")
+      cFd, err := os.Open(dirThread(iSvc) + aTid)
+      if err != nil {
+         if !os.IsNotExist(err) { quit(err) }
+         return false
+      }
+      _readCc(cFd, &aCc[kSet])
+      cFd.Close()
+      return true
+   }
+   if !fReadCc() { return aCc }
+
+   aDoor := _getThreadDoor(iSvc, aTid + "_forward")
    aDoor.RLock()
    aFwd := _getFwd(iSvc, aTid, "")
    aDoor.RUnlock()
@@ -137,7 +145,10 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    if aDoor.renamed { return tError("thread name changed") }
 
    aFd, err := os.Open(dirThread(iSvc) + aTid)
-   if err != nil { quit(err) }
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+      return tError("thread not found")
+   }
    defer aFd.Close()
    var aIdx []tIndexEl
    _ = _readIndex(aFd, &aIdx, nil)
