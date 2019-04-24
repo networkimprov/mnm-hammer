@@ -355,16 +355,18 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       case eSrecPing:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"ps", "_e", iHead.Error}
+            dropQueue(iSvc, aQid)
             break
          }
-         storeSentAdrsbk(iSvc, aId.ping(), iHead.Posted)
+         storeSentAdrsbk(iSvc, aId.ping(), iHead.Posted, aQid)
          aFn, aResult = fAll, []string{"ps", "pt", "pf", "gl"}
       case eSrecAccept:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"pf", "_e", iHead.Error}
+            dropQueue(iSvc, aQid)
             break
          }
-         acceptInviteAdrsbk(iSvc, aId.gid(), iHead.Posted)
+         acceptInviteAdrsbk(iSvc, aId.gid(), iHead.Posted, aQid)
          aFn, aResult = fAll, []string{"pf", "gl"}
       case eSrecThread:
          if iHead.Error != "" {
@@ -374,9 +376,10 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
                return aResult[1:]
             }
             aResult = []string{"ml", "_e", iHead.Error}
+            dropQueue(iSvc, aQid)
             break
          }
-         storeSentThread(iSvc, iHead)
+         storeSentThread(iSvc, iHead, aQid)
          if aId.tid() == "" {
             aFn = func(c *ClientState) interface{} {
                c.renameThread(iHead.Id, iHead.MsgId)
@@ -398,9 +401,10 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
                return aResult[1:]
             }
             aResult = []string{"cl", "_e", iHead.Error}
+            dropQueue(iSvc, aQid)
             break
          }
-         storeFwdSentThread(iSvc, iHead)
+         storeFwdSentThread(iSvc, iHead, aQid)
          aFn = func(c *ClientState) interface{} {
             if c.getThread() == aId.tid() { return aResult }
             return aResult[:1]
@@ -410,15 +414,15 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"_e", iHead.Error}
          }
+         dropQueue(iSvc, aQid)
       case eSrecOhi:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"_e", iHead.Error}
          }
-         return aFn // not queued
+         // not queued
       default:
          quit(tError("bad SendRecord " + aQid))
       }
-      dropQueue(iSvc, aQid)
    default:
       err = tError("unknown tmtp op")
       return fErr

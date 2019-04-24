@@ -63,8 +63,8 @@ func ftmpFwdD(iSvc, iTid string) string { return dirTemp(iSvc) +"forward_"+ iTid
 
 func ftmpAttach(iSvc, iMid, iFile string) string { return dirTemp(iSvc) + iMid +"_"+ iFile +"_atc.tmp" }
 
-func ftmpFfn   (iSvc, iTid string) string { return dirTemp(iSvc) +"ffnindex_"+ iTid }
-func ftmpAdrsbk(iSvc, iPos string) string { return dirTemp(iSvc) +"adrsbk_"+   iPos }
+func ftmpFfn   (iSvc, iTid       string) string { return dirTemp(iSvc) +"ffnindex_"+ iTid }
+func ftmpAdrsbk(iSvc, iPos, iQid string) string { return dirTemp(iSvc) +"adrsbk_"+ iPos +"_"+ iQid }
 
 var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 

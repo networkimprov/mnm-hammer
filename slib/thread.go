@@ -485,9 +485,12 @@ func _completeSeenReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
    if err != nil { quit(err) }
 }
 
-func storeSentThread(iSvc string, iHead *Header) {
+func storeSentThread(iSvc string, iHead *Header, iQid string) {
    var err error
    aId := parseLocalId(iHead.Id)
+   if iQid != _makeQid(eSrecThread, aId.tid(), aId.lms()) {
+      quit(tError("Qid mismatch"))
+   }
    aTid := aId.tid(); if aTid == "" { aTid = iHead.MsgId }
    aDraft := dirThread(iSvc) + iHead.Id
    aOrig := dirThread(iSvc) + aTid
@@ -564,6 +567,7 @@ func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsg
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
    err := os.Remove(dirThread(iSvc) + aTid + "_" + aRec.lms())
    if err != nil && !os.IsNotExist(err) { quit(err) }
+   dropQueue(iSvc, _makeQid(eSrecThread, aTid, aRec.lms()))
 
    _completeStoreReceived(iSvc, iTmp, iFd, iTd, &tMsgHead{}, nil)
 }
@@ -989,8 +993,11 @@ func _completeStoreFwdNotify(iSvc string, iTmp string, iFd, iTd *os.File, iCc []
    _finishStoreFwd(iSvc, iTmp, iFd, iTd, iCc)
 }
 
-func storeFwdSentThread(iSvc string, iHead *Header) {
+func storeFwdSentThread(iSvc string, iHead *Header, iQid string) {
    aId := parseLocalId(iHead.Id)
+   if iQid != _makeQid(eSrecFwd, aId.tid(), aId.lms()) {
+      quit(tError("Qid mismatch"))
+   }
    aOrig := dirThread(iSvc) + aId.tid()
    aTempOk := ftmpFs(iSvc, aId.tid(), aId.lms())
    aTemp := aTempOk + ".tmp"
@@ -1065,6 +1072,7 @@ func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tC
       err = syncDir(dirThread(iSvc))
       if err != nil { quit(err) }
    }
+   dropQueue(iSvc, _makeQid(eSrecFwd, aRec.tid(), aRec.lms()))
    _finishStoreFwd(iSvc, iTmp, iFd, iTd, iCc)
 }
 
@@ -1339,6 +1347,8 @@ func _writeMsg(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) (*tMsgH
    if err != nil { quit(err) }
    return &aHead, nil
 }
+
+func _makeQid(iType byte, iTid, iLms string) string { return string(iType) + iTid +"_"+ iLms }
 
 type tComplete []string
 

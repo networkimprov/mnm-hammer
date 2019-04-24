@@ -18,6 +18,7 @@ import (
    "strconv"
    "strings"
    "sync"
+   "net/url"
 )
 
 const kUidUnknown = "\x00unknown"
@@ -326,7 +327,7 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    return nil
 }
 
-func storeSentAdrsbk(iSvc string, iKey string, iDate string) {
+func storeSentAdrsbk(iSvc string, iKey string, iDate string, iQid string) {
    aSvc := _loadAdrsbk(iSvc)
    var aMap map[string]*tAdrsbkEl
    aSvc.draftDoor.RLock()
@@ -357,7 +358,7 @@ func storeSentAdrsbk(iSvc string, iKey string, iDate string) {
       _respondLog(aSvc.pingFromIdx[aUid], aEl)
    }
    aSvc.pingToIdx[aEl.Alias] = _appendLog(aLog, aEl)
-   _storeAdrsbk(iSvc, []tAdrsbkEl{*aEl})
+   _storeSentAdrsbk(iSvc, []tAdrsbkEl{*aEl}, iQid)
 }
 
 func resolveReceivedAdrsbk(iSvc string, iDate string, iCc []tCcEl, iTid string) {
@@ -400,14 +401,14 @@ func resolveSentAdrsbk(iSvc string, iDate string, iCc []tCcEl, iTid string) {
    }
 }
 
-func acceptInviteAdrsbk(iSvc string, iGid string, iDate string) {
+func acceptInviteAdrsbk(iSvc string, iGid string, iDate string, iQid string) {
    aSvc := _loadAdrsbk(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aEl := tAdrsbkEl{Type:eAbMsgAccept, Date:iDate, Gid:iGid}
    if _respondLog(aSvc.inviteFromIdx[iGid], &aEl) {
       aSvc.groupIdx[iGid] = tGroupEl{Gid:iGid, Date:aEl.Date}
       aSvc.aliasIdx[iGid] = iGid
-      _storeAdrsbk(iSvc, []tAdrsbkEl{aEl})
+      _storeSentAdrsbk(iSvc, []tAdrsbkEl{aEl}, iQid)
    }
 }
 
@@ -420,12 +421,14 @@ func groupJoinedAdrsbk(iSvc string, iHead *Header) {
    }
 }
 
-func _storeAdrsbk(iSvc string, iEls []tAdrsbkEl) {
+func _storeAdrsbk(iSvc string, iEls []tAdrsbkEl) { _storeSentAdrsbk(iSvc, iEls, "") }
+
+func _storeSentAdrsbk(iSvc string, iEls []tAdrsbkEl, iQid string) {
    var err error
    aFi, err := os.Lstat(fileAdrs(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos := int64(2); if err == nil { aPos = aFi.Size() }
-   aTempOk := ftmpAdrsbk(iSvc, fmt.Sprint(aPos))
+   aTempOk := ftmpAdrsbk(iSvc, fmt.Sprint(aPos), url.PathEscape(iQid))
    aTemp := aTempOk + ".tmp"
 
    for a, _ := range iEls {
@@ -448,7 +451,7 @@ func _completeAdrsbk(iSvc string, iTmp string, iEls []tAdrsbkEl) {
    case eAbPingFrom, eAbInviteFrom:
       addPingNotice(iSvc, iEls[0].MsgId, iEls[0].Alias, iEls[0].Gid, iEls[0].Text)
    }
-   aRec := strings.SplitN(iTmp, "_", 2)
+   aRec := strings.SplitN(iTmp, "_", 3)
    aFd, err := os.OpenFile(fileAdrs(iSvc), os.O_WRONLY|os.O_CREATE, 0600)
    if err != nil { quit(err) }
    defer aFd.Close()
@@ -474,6 +477,11 @@ func _completeAdrsbk(iSvc string, iTmp string, iEls []tAdrsbkEl) {
    if aPos == 2 {
       err = syncDir(dirSvc(iSvc))
       if err != nil { quit(err) }
+   }
+   if aRec[2] != "" {
+      aRec[2], err = url.PathUnescape(aRec[2])
+      if err != nil { quit(err) }
+      dropQueue(iSvc, aRec[2])
    }
    err = os.Remove(dirTemp(iSvc) + iTmp)
    if err != nil { quit(err) }
