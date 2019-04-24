@@ -399,7 +399,7 @@ func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *t
    if aEl.ForwardBy != "" {
       fmt.Fprintf(os.Stderr, "_completeStoreConfirm %s: saved confirm mismatch %s_%s\n",
                              iSvc, aRec.tid(), aRec.mid())
-      err = renameRemove(aTempOk, dirThread(iSvc) + aRec.tid() +"_"+ aRec.mid())
+      err = renameRemove(aTempOk, fileDraft(iSvc, aRec.tid(), aRec.mid())) //todo store diff
    } else {
       err = os.Remove(aTempOk)
    }
@@ -565,7 +565,7 @@ func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsg
    storeSentAttach(iSvc, &iHead.SubHead, aRec)
 
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
-   err := os.Remove(dirThread(iSvc) + aTid + "_" + aRec.lms())
+   err := os.Remove(fileDraft(iSvc, aTid, aRec.lms()))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    dropQueue(iSvc, _makeQid(eSrecThread, aTid, aRec.lms()))
 
@@ -574,7 +574,7 @@ func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsg
 
 func validateDraftThread(iSvc string, iUpdt *Update) error {
    aId := parseLocalId(iUpdt.Thread.Id)
-   aFd, err := os.Open(dirThread(iSvc) + aId.tid() + "_" + aId.lms())
+   aFd, err := os.Open(fileDraft(iSvc, aId.tid(), aId.lms()))
    if err != nil { quit(err) }
    defer aFd.Close()
    aMh := _readMsgHead(aFd)
@@ -651,7 +651,7 @@ func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMs
 
    var err error
    aRec := _parseFtmp(iTmp)
-   aDraft := dirThread(iSvc) + aRec.tid() + "_" + aRec.lms()
+   aDraft := fileDraft(iSvc, aRec.tid(), aRec.lms())
    aTempOk := dirTemp(iSvc) + iTmp
 
    var aSubHeadOld *tHeader2

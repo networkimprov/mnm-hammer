@@ -41,7 +41,8 @@ func fileTab  (iSvc string) string { return kServiceDir + iSvc + "/tabs" }
 func fileSendq(iSvc string) string { return kServiceDir + iSvc + "/sendq" }
 func fileNotc (iSvc string) string { return kServiceDir + iSvc + "/notice" }
 
-func fileFwd  (iSvc, iTid string) string { return dirThread(iSvc) + iTid + "_forward" }
+func fileDraft(iSvc, iTid, iLms string) string { return dirThread(iSvc) + iTid +"_"+ iLms }
+func fileFwd  (iSvc, iTid       string) string { return dirThread(iSvc) + iTid + "_forward" }
 
 func subAttach(iSvc, iSub string) string { return dirAttach(iSvc) + iSub + "/" }
 func fileFfn  (iSvc, iSub string) string { return subAttach(iSvc, iSub) + "ffnindex" }
