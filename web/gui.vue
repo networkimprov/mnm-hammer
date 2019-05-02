@@ -533,7 +533,7 @@
       <input @input="subjAdd"
              @click.stop="clickPreview('pv_'+msgid)"
              :value="(mnm._data.toSave[msgid] || mnm._data.mo[msgid].SubHead).Subject"
-             placeholder="Subject" type="text"
+             :placeholder="'Subject'+ (mnm._data.ml.length > 1 ? '' : ' (req.)')" type="text"
              class="width100">
       <mnm-textresize @input.native="textAdd"
                       @click.native.stop="clickPreview('pv_'+msgid)"
