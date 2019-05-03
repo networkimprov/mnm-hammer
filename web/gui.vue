@@ -1262,7 +1262,8 @@
       <ul uk-tab class="uk-child-width-expand" style="margin-top:0; margin-right:20px"
           @click.prevent>
          <li><a href="#">{{mnm._data.pf.length || null}} invites </a></li>
-         <li><a href="#">{{mnm._data.ps.length || null}} drafts  </a></li>
+         <li class="uk-active"
+            ><a href="#">{{mnm._data.ps.length || null}} drafts  </a></li>
          <li><a href="#">{{mnm._data.pt.length || null}} sent    </a></li>
          <li><a href="#">{{mnm._data.gl.length || null}} groups  </a></li>
          <li><a href="#">{{mnm._data.ot.length || null}} ohi to  </a></li>
