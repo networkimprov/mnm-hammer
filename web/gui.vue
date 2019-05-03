@@ -1294,7 +1294,7 @@
                       style="width:calc(50% - 1.5em)">
                <div style="width:calc(50% - 1.5em); display:inline-block; vertical-align:top">
                   <input v-model="draft.gid"
-                         placeholder="(Group)" type="text"
+                         placeholder="Group (opt. [{.aliasMin}]+)" type="text"
                          class="width100">
                   <br>
                   <mnm-adrsbkinput @keyup.enter.native="setGid($event.target)"
@@ -1379,7 +1379,8 @@
       computed: {
          mnm: function() { return mnm },
          validDraft: function() {
-            if (this.draft.to.length < [{.aliasMin}])
+            if (this.draft.to.length < [{.aliasMin}] ||
+                this.draft.gid && this.draft.gid.length < [{.aliasMin}])
                return false;
             for (var a=0; a < mnm._data.ps.length; ++a)
                if (mnm._data.ps[a].Alias ===  this.draft.to &&
