@@ -1580,7 +1580,7 @@
    // per client
       cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}},
       sort:{cl:'Who', al:'Date', t:'Date', f:'Date'}, //todo move to cs
-      ohiFrom:true, //todo move to cs
+      ohiFrom: '[{.Title}]' !== 'local', //todo move to cs
    // per service
       cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
       ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
