@@ -82,20 +82,32 @@ input[type=text], textarea {
    overflow-y: hidden;
 }
 
-.btn-icon    { padding: 0; }
-.btn-iconred { padding: 0; color: crimson; }
-.btn-icontxt { padding: 0 4px; }
-.btn-iconx   { padding: 0 4px; background: none; border: none; }
-
+.btn-icon {
+   padding: 0;
+}
+.btn-iconred {
+   padding: 0;
+   color: crimson;
+}
+.btn-iconsym {
+   padding: 0;
+   font-size: inherit;
+}
+.btn-icontxt {
+   padding: 0 4px;
+}
+.btn-iconx {
+   padding: 0 4px;
+   background: none;
+   border: none;
+}
 .btn-iconx:active:hover {
    background: silver;
 }
-
 .btn-floatr {
    display: inline-block;
    float: right;
 }
-
 .btn-alignt {
    display: inline-block;
    vertical-align: top;
@@ -195,6 +207,15 @@ input[type=text], textarea {
 }
 .vue-form-generator label {
    font-style: inherit !important; /* fix disabled italics */
+}
+
+.paperclip {
+   font-size: 120%;
+   vertical-align: sub;
+}
+button > .paperclip {
+   vertical-align: baseline;
+   line-height: 1em;
 }
 
 .adrsbkinput {

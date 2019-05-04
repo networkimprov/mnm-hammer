@@ -59,10 +59,10 @@
       <mnm-subject v-if="msgSubjects.length > 1"
                    :list="msgSubjects"/>
       <div class="uk-float-right">
-         <span uk-icon="social" class="dropdown-icon">{{cl[1].length}}</span>
+         <span uk-icon="social" class="dropdown-icon">{{cl[1].length}}</span>&nbsp;
          <mnm-cc ref="cl"
                  :tid="ml.length ? ml[ml.length-1].Id : 'none'"/>
-         <span uk-icon="location" class="dropdown-icon">{{al.length || '&nbsp;&nbsp;'}}</span>
+         <span class="dropdown-icon">{{al.length || '&nbsp;'}}<mnm-paperclip/></span>
          <mnm-attach ref="al"/>
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
@@ -983,7 +983,7 @@
             <button v-if="toggle"
                     @click="$emit('attach', 'upload/'+aFile.Name)"
                     title="Attach file"
-                    class="btn-icon"><span uk-icon="location"></span></button>
+                    class="btn-iconsym"><mnm-paperclip/></button>
             <a :href="'/t/!' + encodeURIComponent(aFile.Name)">
                <span uk-icon="download">&nbsp;</span></a>
             <a :href="'/t/' + encodeURIComponent(aFile.Name)" target="mnm_atc_[{.Title}]">
@@ -1041,7 +1041,7 @@
                <button v-if="toggle"
                        @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
                        title="Attach form"
-                       class="btn-icon"><span uk-icon="location"></span></button>
+                       class="btn-iconsym"><mnm-paperclip/></button>
                <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.currentTarget)"
                   :ref="aSet.Name+'.'+aFile.Id" href="#">
                   <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
@@ -1543,6 +1543,14 @@
             this.historylen = this.loginperiod = -1;
          },
       },
+   });
+</script>
+
+<script type="text/x-template" id="mnm-paperclip">
+   <span class="paperclip">&#128206;</span>
+</script><script>
+   Vue.component('mnm-paperclip', {
+      template: '#mnm-paperclip',
    });
 </script>
 
