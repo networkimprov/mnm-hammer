@@ -116,8 +116,8 @@
                <template v-else>
                   <div v-if="!aMsg.Queued"
                        style="float:right">
-                     <a @click.prevent="mnm._toClipboard('#'+ cs.Thread +'&'+ aMsg.Id)"
-                        title="Copy reference to clipboard"
+                     <a @click.prevent="mnm._toClipboard('[msg_link](#'+ cs.Thread +'&'+ aMsg.Id +')')"
+                        title="Copy markdown to clipboard"
                         :href="'#'+ cs.Thread +'&'+ aMsg.Id"><span uk-icon="link"></span></a>
                      <button @click="mnm.ThreadReply(getReplyTemplate(aMsg))"
                              title="New reply draft"
@@ -480,8 +480,8 @@
                     class="btn-icon">
                <span :uk-icon="aFile.File.charAt(17) === 'u' ? 'push' : 'file-edit'"></span></button>
             &nbsp;
-            <a @click.prevent="mnm._toClipboard(aFile.File)"
-               title="Copy reference to clipboard"
+            <a @click.prevent="markdown(aFile)"
+               title="Copy markdown to clipboard"
                :href="'#@'+ aFile.File"><span uk-icon="link"></span></a>
             <a :href="'?ad=' + encodeURIComponent(aFile.File)">
                <span uk-icon="download"></span></a>
@@ -494,7 +494,29 @@
    Vue.component('mnm-attach', {
       template: '#mnm-attach',
       computed: { mnm: function() { return mnm } },
-      methods: { listSort: function(i) { return mnm._listSort('al', i) } },
+      methods: {
+         listSort: function(i) { return mnm._listSort('al', i) },
+         markdown: function(iFile) {
+            var aPair = iFile.File.split('_', 2);
+            var aRef = aPair[0].length === 12 ? 'this_'+ aPair[1] : iFile.File;
+            //todo mnm-draft validate attachment & message refs
+            var aTxt;
+            if (aPair[1].charAt(0) === 'f') {
+               aTxt = '![?]('+ aRef +')';
+            } else {
+               var aDot = aPair[1].lastIndexOf('.');
+               var aExt = aDot < 0 ? '' : aPair[1].substring(++aDot);
+               switch (aExt.toLowerCase()) {
+               case 'jpg': case 'jpeg': case 'png': case 'gif': case 'svg':
+                  aTxt = '!['+ aExt +']('+ aRef +')';
+                  break;
+               default:
+                  aTxt = '['+ iFile.Name +']('+ aRef +')';
+               }
+            }
+            mnm._toClipboard(aTxt);
+         },
+      },
    });
 </script>
 

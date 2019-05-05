@@ -665,12 +665,12 @@ by the <span uk-icon="bolt"></span> icon to the right of the header.
 
 <h4 id="mark">10d. Markdown</h4>
 
-<p>The message Body is written in Markdown, a widely used plain-text shorthand 
+<p>The message Body supports Markdown, a widely used plain-text shorthand 
 for essential rich-text HTML features. 
-Markdown avoids the mouse reliance and inconsistent behavior of browser WYSIWYG editors. 
+Markdown avoids the unpredictable behavior of browser WYSIWYG editors. 
 Consult the <a target="_blank" href="http://commonmark.org/help/">CommonMark Reference</a> 
 for a description of its features. 
-mnm extends Markdown as follows: 
+mnm extends the CommonMark dialect as follows: 
 </p>
 
 <p><b>Images</b> must reference a file in the Attachment list, or one attached to a previous 
@@ -681,9 +681,9 @@ without the recipient's consent.
 
 <p>For a file in the Attachment list, write:          <tt>![<i>alt</i>](this_u:<i>file_name</i>)</tt>
 <br>For a file attached to a previous message, write: <tt>![<i>alt</i>](<i>file_ref</i>)</tt>
-<br>To obtain a <tt>file_ref</tt>, open the <span class="paperclip">&#128206;</span> menu, 
+<br>To obtain the code above, open the <span class="paperclip">&#128206;</span> menu, 
 click the <span uk-icon="link"></span> hyperlink for the target file, then paste the 
-string from the clipboard. 
+string into a message Body. 
 <tt>alt</tt> is any desired text. 
 </p>
 
@@ -693,9 +693,9 @@ message in the current thread.
 
 <p>For a form in the Attachment list, write:          <tt>![?](this_f:<i>form_name</i>)</tt>
 <br>For a form attached to a previous message, write: <tt>![?](<i>form_ref</i>)</tt>
-<br>To obtain a <tt>form_ref</tt>, open the <span class="paperclip">&#128206;</span> menu, 
+<br>To obtain the code above, open the <span class="paperclip">&#128206;</span> menu, 
 click the <span uk-icon="link"></span> hyperlink for the target form, then paste the 
-string from the clipboard. 
+string into a message Body. 
 </p>
 
 <p><b>Hyperlinks</b> may reference a remote site, or a file attached to a message 
@@ -707,9 +707,10 @@ References to relative URLs are disallowed.
 <br>For a file in the Attachment list, write:         <tt>[<i>text</i>](this_u:<i>file_name</i>)</tt>
 <br>For a file attached to a previous message, write: <tt>[<i>text</i>](<i>file_ref</i>)</tt>
 <br>For a previous message in any thread, write:      <tt>[<i>text</i>](<i>msg_ref</i>)</tt>
-<br>To obtain a <tt>file_ref</tt>, see Images, above. 
-To obtain a <tt>msg_ref</tt>, open the message, click the <span uk-icon="link"></span> hyperlink 
-to the right of the header, then paste the string from the clipboard. 
+<br>To obtain the attachment code above, use the <span class="paperclip">&#128206;</span> menu 
+as previously described. 
+To obtain the message code above, open the target message, click the <span uk-icon="link"></span> hyperlink 
+to the right of the header, then paste the string into a message Body. 
 <tt>text</tt> is any desired text. 
 </p>
 
