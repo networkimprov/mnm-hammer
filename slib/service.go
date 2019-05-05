@@ -332,9 +332,9 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       } else if aGot == "msg" {
          aFn = func(c *ClientState) interface{} {
             if c.getThread() == iHead.SubHead.ThreadId { return aResult }
-            return aResult[:2]
+            return aResult[:3]
          }
-         aResult = []string{"pt", "pf", "al", "ml"}
+         aResult = []string{"pt", "pf", "tl", "al", "ml"}
       }
    case "notify":
       err = storeFwdNotifyThread(iSvc, iHead, iR)
@@ -389,8 +389,8 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          } else {
             aFn = func(c *ClientState) interface{} {
                c.renameMsg(aId.tid(), iHead.Id, iHead.MsgId)
-               if c.getThread() == aId.tid() { return aResult[2:] }
-               return aResult[2:3]
+               if c.getThread() == aId.tid() { return aResult[1:] }
+               return aResult[1:3]
             }
          }
          aResult = []string{"cs", "tl", "pf", "cl", "al", "ml", "mn", iHead.MsgId}
