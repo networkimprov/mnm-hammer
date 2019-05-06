@@ -558,12 +558,16 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          return fErr
       }
       iState.openMsg(iUpdt.Thread.Id, true)
-      seenReceivedThread(iSvc, iUpdt)
+      aChg := seenReceivedThread(iSvc, iUpdt)
       aFn = func(c *ClientState) interface{} {
-         if c.getThread() == iUpdt.Thread.ThreadId { return aResult }
+         if c.getThread() == iUpdt.Thread.ThreadId {
+            if aChg { return aResult }
+            return aResult[1:]
+         }
+         if aChg { return aResult[:1] }
          return nil
       }
-      aResult = []string{"ml"}
+      aResult = []string{"tl", "ml"}
    case "thread_close":
       iState.openMsg(iUpdt.Thread.Id, false)
       // no result

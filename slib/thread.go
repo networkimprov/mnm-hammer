@@ -432,7 +432,7 @@ func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *
    if err != nil { quit(err) }
 }
 
-func seenReceivedThread(iSvc string, iUpdt *Update) {
+func seenReceivedThread(iSvc string, iUpdt *Update) bool {
    aOrig := dirThread(iSvc) + iUpdt.Thread.ThreadId
    aTempOk := ftmpNr(iSvc, iUpdt.Thread.ThreadId)
    aTemp := aTempOk + ".tmp"
@@ -440,7 +440,7 @@ func seenReceivedThread(iSvc string, iUpdt *Update) {
 
    aDoor := _getThreadDoor(iSvc, iUpdt.Thread.ThreadId)
    aDoor.Lock(); defer aDoor.Unlock()
-   if aDoor.renamed { return }
+   if aDoor.renamed { return false }
 
    var aTd, aFd *os.File
    aIdx, aCc := []tIndexEl{}, []tCcEl{}
@@ -455,7 +455,7 @@ func seenReceivedThread(iSvc string, iUpdt *Update) {
       if aIdx[aIdxN].Id == iUpdt.Thread.Id { break }
    }
    if aIdx[aIdxN].Seen != "" {
-      return
+      return false
    }
    aIdx[aIdxN].Seen = dateRFC3339()
    aTempOk += fmt.Sprint(aPos)
@@ -469,6 +469,7 @@ func seenReceivedThread(iSvc string, iUpdt *Update) {
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    _completeSeenReceived(iSvc, path.Base(aTempOk), aFd, aTd)
+   return true
 }
 
 func _completeSeenReceived(iSvc string, iTmp string, iFd, iTd *os.File) {

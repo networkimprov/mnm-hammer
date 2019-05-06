@@ -50,6 +50,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       Subject string
       OrigDate, LastDate string
       OrigAuthor, LastAuthor string
+      Unread bool `json:",omitempty"`
    }
    aList := make([]tSearchEl, 0, len(aDir))
 
@@ -79,6 +80,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
                }
                if aFidx[a].From != "" || a == 0 {
                   aEl.LastDate, aEl.LastAuthor = aFidx[a].Date, aFidx[a].Alias
+                  aEl.Unread = aEl.Unread || aFidx[a].Seen == ""
                }
             }
             aList = append(aList, aEl)

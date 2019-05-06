@@ -180,8 +180,10 @@
 },{
    "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
    "Result": {
-      "tl": [{"Id":"*mid", "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td", "Subject":"to forward"},
-             {"Id":"*mid", "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td", "Subject":"ohi"}] }
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
+             {"Id":"*mid", "Unread":true, "Subject":"ohi",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] }
 },{
    "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["ml"], "ThreadId":"last"}},
    "Result": {
@@ -214,6 +216,10 @@
 },{
    "Updt": {"Op":"thread_open", "Thread":{"ThreadId":"last", "Id":"last"}},
    "Result": {
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
+             {"Id":"*mid", "Unread":true, "Subject":"ohi",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"*d", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
               "Queued":false}] }
@@ -310,8 +316,10 @@
 },{
    "Updt": {"Op":"tab_select", "Tab":{"Type":1, "PosFor":0, "Pos":0}},
    "Result": {
-      "tl": [{"Id":"*mid", "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td", "Subject":"to forward"},
-             {"Id":"*mid", "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td", "Subject":"ohi"}] ,
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
+             {"Id":"*mid", "Unread":true, "Subject":"ohi",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
              "History":{"Prev":false, "Next":true},
@@ -364,8 +372,10 @@
                                    {"Name":"r:Blue.original", "Size":33,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
               "msg_data":"" }] ,
-      "tl": [{"Id":"*mid", "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td", "Subject":"to forward"},
-             {"Id":"*mid", "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td", "Subject":"ohi"}] ,
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
+             {"Id":"*mid", "Unread":true, "Subject":"ohi",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
              "History":{"Prev":false, "Next":true},
@@ -445,7 +455,8 @@
 },{
    "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
    "Result": {
-      "tl": [{"Id":"*mid", "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td", "Subject":"ohi"}] }
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"ohi",
+              "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] }
 },{
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
@@ -505,8 +516,10 @@
                          "Cc":[{"Who":"Gold#td", "WhoUid":"*uid", "By":"Gold#td", "ByUid":"*uid",
                                 "Date":".", "Note":"author", "Subscribe":true}] },
               "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
-      "tl": [{"Id":"*midt", "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":"", "Subject":"to forward"},
-             {"Id":"*mid", "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td", "Subject":"ohi"}] ,
+      "tl": [{"Id":"*midt", "Subject":"to forward",
+              "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":""},
+             {"Id":"*mid", "Unread":true, "Subject":"ohi",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] ,
       "cs": {"Thread":"*midt",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
@@ -524,8 +537,10 @@
 },{
    "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
    "Result": {
-      "tl": [{"Id":"*mid", "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td", "Subject":"to forward"},
-             {"Id":"*mid", "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td", "Subject":"ohi"}] }
+      "tl": [{"Id":"*mid", "Subject":"to forward",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
+             {"Id":"*mid", "Unread":true, "Subject":"ohi",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Gold"}},
    "Result": {
