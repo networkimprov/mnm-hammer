@@ -93,13 +93,12 @@
             <span @click="msgToggle(aMsg.Id)"
                   class="message-title"
                   :class="{'message-title-edit': aMsg.From === '' && !aMsg.Queued,
-                           'message-title-seen': aMsg.Seen !== ''}">
+                           'message-title-unread': aMsg.Seen === ''}">
                <mnm-date :iso="aMsg.Date" ymd="md" hms="hm"/>
-               <b>{{ aMsg.Alias || aMsg.From }}
-                  <span v-if="aMsg.ForwardBy"
-                        :title="'Forward by: '+aMsg.ForwardBy">
-                     {{/failed$/.test(aMsg.ForwardBy) ? '[possibly forged]' : '[unverified]'}}</span>
-               </b>
+               {{ aMsg.Alias || aMsg.From }}
+               <span v-if="aMsg.ForwardBy"
+                     :title="'Forward by: '+aMsg.ForwardBy"
+                     >{{/failed$/.test(aMsg.ForwardBy) ? '[possibly forged]' : '[unverified]'}}</span>
             </span>
             <div v-if="aMsg.Queued"
                  title="Awaiting link to server"
@@ -242,9 +241,11 @@
                  @click="mnm.NavigateThread(aRow.Id)"
                  uk-grid class="uk-grid-small thread-row"
                  :style="{'background-color': aRow.Id === cs.Thread ? 'wheat' : null}"><!--todo class thread-row-thread-->
-               <div class="uk-width-auto" style="padding:0">
+               <div class="uk-width-auto" style="padding:0"
+                    :class="{'thread-unread': aRow.Unread}">
                   <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
-               <div class="uk-width-1-6 overxhide">{{aRow.LastAuthor}}</div>
+               <div class="uk-width-1-6 overxhide"
+                    :class="{'thread-unread': aRow.Unread}">{{aRow.LastAuthor}}</div>
                <div class="uk-width-expand overxhide"
                     :title="aRow.Id">{{aRow.Subject}}</div>
                <div class="uk-width-auto">
