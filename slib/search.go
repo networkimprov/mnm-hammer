@@ -44,7 +44,6 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    } else {
       aDir, err = ioutil.ReadDir(dirThread(iSvc))
       if err != nil { quit(err) }
-      sort.Slice(aDir, func(cA, cB int) bool { return aDir[cA].ModTime().After(aDir[cB].ModTime()) })
    }
    type tSearchEl struct {
       Id string
@@ -85,6 +84,9 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
             aList = append(aList, aEl)
          }
       }
+   }
+   if aTabVal != "FFT" {
+      sort.Slice(aList, func(cA, cB int) bool { return aList[cA].LastDate > aList[cB].LastDate })
    }
    err = json.NewEncoder(iW).Encode(aList)
    return err
