@@ -27,6 +27,10 @@ Complete documentation is provided within the app.
 
 ### Status
 
+_07 May 2019_ -
+v0.2 is released. It has only been tested on Linux & MacOS, with Firefox.  
+_New:_ a tour with cartoons covering essential features.
+
 _19 April 2019_ -
 v0.1 is released. It has only been tested on Linux & MacOS, with Firefox.
 
@@ -37,21 +41,28 @@ See directions to install the server at https://github.com/networkimprov/mnm
 
 1. Download latest preview  
 |
-[**MacOS**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.1.0/mnm-app-macos-v0.1.0.tgz)
+[**MacOS**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.2.0/mnm-app-macos-v0.2.0.tgz)
 ||
-[**Linux**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.1.0/mnm-app-linux-amd64-v0.1.0.tgz)
+[**Linux**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.2.0/mnm-app-linux-amd64-v0.2.0.tgz)
 |  
 [Release details](https://github.com/networkimprov/mnm-hammer/releases/latest)
 
 1. Unpack download  
 MacOS  
-a) Open the browser downloads menu, find "mnm-app-macos-v0.1.0.tgz" and click "Open File"  
+a) Open the browser downloads menu, find "mnm-app-macos-v0.2.0.tgz" and click "Open File"  
 b) Open a Terminal window  
-c) `cd ~/Downloads/mnm-hammer-v0.1.0`  
+c) `cd ~/Downloads/mnm-hammer-v0.2.0`  
 Linux  
 a) `cd the_right_directory` # use appropriate name  
-b) `tar xzf mnm-app-linux-amd64-v0.1.0.tgz`  
-c) `cd mnm-hammer-v0.1.0`
+b) `tar xzf mnm-app-linux-amd64-v0.2.0.tgz`  
+c) `cd mnm-hammer-v0.2.0`
+
+1. Upgrade a prior release, if applicable  
+a) Stop the prior app if it's running.  
+MacOS  
+b) `sudo ditto ../mnm-hammer-vX.Y.Z/store ./store` # use prior version  
+Linux  
+b) `sudo cp -a ../mnm-hammer-vX.Y.Z/store .` # use prior version
 
 1. Start app  
 a) `sudo ./mnm-hammer` # starts http on port 80  
@@ -61,8 +72,7 @@ To stop the app, Ctrl-C
 Note: the preview currently logs much of its traffic with the browser to the terminal window.
 
 1. Connect Firefox  
-Open a browser tab, go to `localhost` (or `host:port` if specified above).  
-See docs in the &#9432; menu.
+Open a browser tab, go to `localhost` (or `host:port` if specified above).
 
 ### Version Numbering
 
