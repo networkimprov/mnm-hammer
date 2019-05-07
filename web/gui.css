@@ -318,3 +318,45 @@ button > .paperclip {
    word-break: break-all;
 }
 
+.tour-heading {
+   font-size: 120%;
+   margin-bottom: 1em;
+}
+.tour-slide {
+   white-space: nowrap;
+}
+.tour-slide > div:first-child {
+   margin-bottom: 0.5em;
+   padding: 0.5em;
+   border-radius: 12px;
+   background-color: white;
+}
+.tour-slide > div:first-child > img {
+   display: block;
+   margin: 0 auto;
+}
+.tour-slide > span {
+   float: left;
+   margin-top: 0.3em;
+   padding: 2px;
+}
+.tour-slide > span:hover {
+   border: 1px solid ;
+   border-radius: 4px;
+   padding: 1px;
+}
+.tour-slide > span + div {
+   margin-left: 2em;
+}
+.tour-slide button {
+   pointer-events: none;
+}
+.tour-inset {
+   float: right;
+   width: 40%;
+}
+.tour-inset > div {
+   margin-bottom: 0.5em;
+   text-align: center;
+   font-style: italic;
+}

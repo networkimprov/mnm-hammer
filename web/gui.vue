@@ -169,9 +169,10 @@
       </span>
       <div class="uk-float-right">
          <span uk-icon="bell" class="dropdown-icon" style="font-weight:bold">{{nlNotSeen}}</span>
-         <mnm-notice offset="2" pos="bottom-right"/>
+         <mnm-notice ref="notice"
+                     offset="2" pos="bottom-right"/>
          <span uk-icon="users" class="dropdown-icon">&nbsp;</span>
-         <mnm-adrsbk/>
+         <mnm-adrsbk ref="adrsbk"/>
          <span @mousedown="ohiFrom = !ohiFrom" class="dropdown-icon">&nbsp;o/</span>
          &nbsp;
          <span uk-icon="push" class="dropdown-icon">&nbsp;</span>
@@ -197,8 +198,6 @@
    <div class="uk-position-relative"><!-- context for ohi card -->
       <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto"
            :class="{'uk-background-muted':ffn}">
-         <div v-if="!cf.Uid">
-            <br>Welcome to mnm. See docs in the <span uk-icon="info"></span> menu at top right.</div>
          <template v-if="ffn">
             <table class="uk-table uk-table-small uk-table-hover uk-text-small">
                <tr>
@@ -262,6 +261,7 @@
                <span class="uk-link">+/- log</span></div
            ><div style="display:none" id="log"></div>
          </div>
+         <mnm-tour v-if="'[{.Title}]' === 'local' || location.hash === '#tour'"/>
       </div>
       <div v-show="ohiFrom"
            class="uk-card uk-card-secondary uk-text-small uk-border-rounded"
@@ -283,13 +283,14 @@
 <div class="uk-width-expand service-panel">
    <div class="uk-clearfix uk-light">
       <span uk-icon="plus-circle" class="dropdown-icon"></span>
-      <mnm-svcadd/>
+      <mnm-svcadd ref="svcadd"/>
       <div style="float:right; margin:0 1em 1em 0">
          <!--todo span uk-icon="cog" class="dropdown-icon">&nbsp;</span>
          <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5">
             <div class="uk-text-right uk-text-small">SETTINGS</div></div -->
          <span uk-icon="info" class="dropdown-icon">&nbsp;</span>
-         <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
+         <div ref="doc"
+              uk-dropdown="mode:click; offset:2; pos:bottom-right"
               class="uk-width-3-5" style="height:75vh; padding:0.8em">
             <iframe src="/w/docs.html" style="width:100%; height:100%"></iframe></div>
       </div>
@@ -316,6 +317,206 @@
 </div>
 
 </div>
+</script>
+
+<script type="text/x-template" id="mnm-tour">
+   <div style="width:86%; margin:0 auto 3em">
+      <div style="float:right; margin-top:0.75em">
+         <button @click="--count"
+                 :disabled="count === 0"
+                 class="uk-button uk-button-link">
+            <span uk-icon="icon:triangle-left; ratio:1.6"></span></button>&nbsp;
+         <button @click="++count"
+                 :disabled="count === last"
+                 title="Next slide"
+                 class="uk-button uk-button-link">
+            <span uk-icon="icon:triangle-right; ratio:1.6"></span></button>
+      </div>
+      <template v-if="isLocal">
+         <div v-show="count < 4"
+              class="tour-heading">
+            How mnm works</div>
+         <div v-show="count === 0"
+              class="tour-slide">
+            <div><img src="/w/img/tour-orgs.png"></div>
+            You're a member of many organizations and Internet sites.</div>
+         <div v-show="count === 1"
+              class="tour-slide">
+            <div><img src="/w/img/tour-identity.png"></div>
+            mnm gives you a separate identity in each place.</div>
+         <div v-show="count === 2"
+              class="tour-slide">
+            <div><img src="/w/img/tour-contact.png"></div>
+            Only other place members can contact you by that identity.</div>
+         <div v-show="count === 3"
+              class="tour-slide">
+            <div><img src="/w/img/tour-invite.png"></div>
+            You invite a member to connect before exchanging messages.</div>
+         <div v-show="count === 4"
+              class="tour-heading">
+            Get Started</div>
+         <div v-show="count === 4"
+              class="tour-slide">
+            <div class="tour-inset">
+               <div>Linking mnm to a place</div>
+               <img src="/w/img/tour-link.png">
+            </div>
+            <b>1.</b> Click the add account icon, then<br>
+            <span @click.stop="UIkit.dropdown($root.$refs.svcadd.$el).show()"
+                  uk-icon="plus-circle" title="Add account"></span>
+            <div>
+               a) Fill out the form:<div style="margin-left: 1.1em">
+                  <i>Title</i> is your private name for the account,<br>
+                  <i>Alias</i> is how other members know you,<br>
+                  uncheck <i>Verify host</i> if it's a preview server.</div>
+               b) To submit, click
+                  <button class="btn-icon"><span uk-icon="forward"></span></button>
+            </div>
+            <div style="margin: 0.5em 0">
+               <b>2.</b> Inform others of your <i>Alias</i> by phone, etc.</div>
+            <b>3.</b> Click the account to open its tab (and continue the tour).<br>
+            <div class="service-panel uk-light"
+                 style="width:20%; margin-top:0.5em; padding:1em; overflow:hidden">
+               <span v-if="$root.v.length === 0">
+                  awaiting link. . .</span>
+               <div v-else>
+                  <span uk-icon="bell" class="dropdown-icon">0 </span>
+                  <a :href="'/'+ encodeURIComponent($root.v[0]) +'#tour'"
+                     :target="'mnm_'+$root.v[0]"
+                     title="Continue tour">{{$root.v[0]}}</a>
+               </div>
+            </div>
+         </div>
+      </template>
+      <template v-else>
+         <div class="tour-heading">
+            Basic Usage</div>
+         <div v-show="count === 0"
+              class="tour-slide">
+            <div class="tour-inset">
+               <div>Sending an invite</div>
+               <img src="/w/img/tour-sendinvite.png">
+            </div>
+            Click the address book icon, then<br>
+            <span @click.stop="UIkit.dropdown($root.$refs.adrsbk.$el).show()"
+                  uk-icon="users" title="Address book"></span>
+            <div>
+               a) Enter the contact's alias, click
+                  <button class="btn-icon"><span uk-icon="pencil"></span></button><br>
+               b) Add a message to the draft.<br>
+               c) To send, click
+                  <button class="btn-icon"><span uk-icon="forward"></span></button><br>
+            </div>
+         </div>
+         <div v-show="count === 1"
+              class="tour-slide">
+            <div class="tour-inset">
+               <div>Acquiring contacts</div>
+               <img src="/w/img/tour-contacts.png">
+            </div>
+            New contacts land in your address book when:<br>
+            <span @click.stop="UIkit.dropdown($root.$refs.notice.$el).show()"
+                  uk-icon="bell" title="Notices"></span>
+            <div>
+               - an invite arrives,<br>
+               - a thread arrives from someone you invited.<br>
+               Invites appear in the notices menu.<br>
+            </div>
+         </div>
+         <div v-show="count === 2"
+              class="tour-slide">
+            <div class="tour-inset">
+               <div>Sending a thread</div>
+               <img src="/w/img/tour-sendthread.png">
+            </div>
+            <div><b>1.</b> To start a thread, click
+               <button class="btn-icon"><span uk-icon="pencil"></span></button>
+               (next to <span uk-icon="icon:arrow-left; ratio:1.6"></span
+                       ><span uk-icon="icon:arrow-right; ratio:1.6"></span>)</div>
+            <b>2.</b> Click the recipients icon, then<br>
+            <span @click.stop="UIkit.dropdown($root.$refs.cl.$el).show()"
+                  uk-icon="social" title="Recipients"></span>
+            <div>
+               a) Enter a contact's alias in the <i>To</i> field.<br>
+               b) Select the contact in the menu, hit enter.<br>
+            </div>
+            <b>3.</b> In the new thread<br>
+            <span></span>
+            <div>
+               a) Fill in the <i>Subject</i> field.<br>
+               b) Write a message (Markdown is allowed).<br>
+               c) To send, click
+               <button class="btn-icon"><span uk-icon="forward"></span></button>
+               (above <i>Subject</i>)<br>
+            </div>
+         </div>
+         <div v-show="count === 3"
+              class="tour-slide">
+            <div class="tour-inset">
+               <div>Sending a reply</div>
+               <img src="/w/img/tour-sendreply.png">
+            </div>
+            Select a message to reply to, click
+            <button class="btn-icon"><span uk-icon="comment"></span></button>, then<br>
+            <span></span>
+            <div>
+               a) Write a message (<i>Subject</i> is optional).<br>
+               b) To send, click
+                  <button class="btn-icon"><span uk-icon="forward"></span></button><br>
+            </div>
+         </div>
+         <div v-show="count === 4"
+              class="tour-slide">
+            <div class="tour-inset">
+               <div>Forwarding a thread</div>
+               <img src="/w/img/tour-forward.png">
+            </div>
+            Click the recipients icon, then<br>
+            <span @click.stop="UIkit.dropdown($root.$refs.cl.$el).show()"
+                  uk-icon="social" title="Recipients"></span>
+            <div>
+               a) Enter a contact's alias in the <i>To</i> field.<br>
+               b) Select the contact in the menu, hit enter.<br>
+               c) To forward, click
+                  <button class="btn-icon"><span uk-icon="forward"></span></button><br>
+            </div>
+         </div>
+         <div v-show="count === 5"
+              class="tour-slide">
+            <div class="tour-inset">
+               <div>Signaling online presence</div>
+               <img src="/w/img/tour-sendohi.png">
+            </div>
+            Click the address book icon, then<br>
+            <span @click.stop="UIkit.dropdown($root.$refs.adrsbk.$el).show()"
+                  uk-icon="users" title="Address book"></span>
+            <div>
+               a) Select the <i>Ohi To</i> tab.<br>
+               b) Enter a contact's alias in the <i>To</i> field.<br>
+               c) Select the contact in the menu, hit enter.<br>
+               d) To signal this contact, click <button>o/ <i>Name</i></button><br>
+            </div>
+         </div>
+         <div v-show="count === 6"
+              class="tour-slide">
+            See also:<br>
+            <span @click.stop="UIkit.dropdown($root.$refs.doc).show()"
+                  uk-icon="info" title="Documentation"></span>
+            <div>the info menu for full docs.</div>
+         </div>
+      </template>
+   </div>
+</script><script>
+   Vue.component('mnm-tour', {
+      template: '#mnm-tour',
+      data: function() {
+         var aLoc = '[{.Title}]' === 'local';
+         return {isLocal:aLoc, last: aLoc ? 4 : 6, count:0};
+      },
+      computed: {
+         UIkit: function() { return UIkit },
+      },
+   });
 </script>
 
 <script type="text/x-template" id="mnm-date">
@@ -1652,6 +1853,7 @@
       },
       computed: {
          mnm:       function() { return mnm },
+         location:  function() { return location },
          svcTabset: function() {
             return [[], mnm._data.cs.SvcTabs.Pinned, mnm._data.cs.SvcTabs.Terms];
          },
