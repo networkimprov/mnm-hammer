@@ -8,6 +8,7 @@
 
 set -e
 
+GITHUB=https://github.com/networkimprov/mnm-hammer/releases/download/v0.2.0
 CDN_UIKIT=https://cdnjs.cloudflare.com/ajax/libs/uikit/3.0.0-beta.40
 CDN_VUE=https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.22
 CDN_MDI=https://cdnjs.cloudflare.com/ajax/libs/markdown-it/8.4.2
@@ -25,3 +26,5 @@ curl --silent --show-error --location \
      -o luxon-111.js          "$CDN_LUX/build/global/luxon.js" \
      -o vue-formgen-23.js     "$CDN_VFG/dist/vfg.js" \
      -o vue-formgen-23.css    "$CDN_VFG/dist/vfg.css"
+
+curl --silent --show-error --location "$GITHUB/mnm-webimg.tar" | tar x

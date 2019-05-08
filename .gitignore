@@ -2,6 +2,7 @@
 /store/
 /test-run/
 
+/web/img/
 /web/luxon-*
 /web/markdown-it-*
 /web/uikit-*

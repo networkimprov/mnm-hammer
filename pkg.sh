@@ -14,7 +14,7 @@ bins=(
 )
 
 app="$(basename "$PWD")"
-files=("$app" LICENSE formspec test-in.json web/*.*)
+files=("$app" LICENSE formspec test-in.json web/*.* web/img/*.*)
 
 go build
 ver=($("./$app" --version))
