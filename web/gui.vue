@@ -8,7 +8,7 @@
    file, You can obtain one at http://mozilla.org/MPL/2.0/
 -->
 <html><head>
-   <title>[{.Title}] - mnm</title>
+   <title><%html .Title%> - mnm</title>
    <link rel="icon" href="/w/favicon.png"/>
 
    <meta charset="utf-8">
@@ -138,7 +138,7 @@
                            <a :href="'?ad=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)">
                               <span uk-icon="download"></span></a
                           ><a :href="'?an=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)"
-                              target="mnm_atc_[{.Title}]">{{ aAtc.Name.substr(2) }}</a>
+                              :target="'mnm_atc_<%.TitleJs%>'">{{ aAtc.Name.substr(2) }}</a>
                         </template>
                         &#x25CA;
                      </template>
@@ -165,7 +165,7 @@
    <div class="uk-clearfix">
       <span class="uk-text-large">
          <span uk-icon="world"></span>
-         [{.Title}]
+         <%html .Title%>
       </span>
       <div class="uk-float-right">
          <span uk-icon="bell" class="dropdown-icon" style="font-weight:bold">{{nlNotSeen}}</span>
@@ -261,7 +261,7 @@
                <span class="uk-link">+/- log</span></div
            ><div style="display:none" id="log"></div>
          </div>
-         <mnm-tour v-if="'[{.Title}]' === 'local' || location.hash === '#tour'"/>
+         <mnm-tour v-if="'<%.Title%>' === 'local' || location.hash === '#tour'"/>
       </div>
       <div v-show="ohiFrom"
            class="uk-card uk-card-secondary uk-text-small uk-border-rounded"
@@ -298,7 +298,7 @@
    <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto uk-light">
       <ul class="uk-list uk-list-divider">
          <li v-for="aSvc in v" :key="aSvc">
-            <template v-if="aSvc === '[{.Title}]'">
+            <template v-if="aSvc === '<%.TitleJs%>'">
                <span style="visibility:hidden">1</span
               ><span uk-icon="settings" class="dropdown-icon">&nbsp;</span>
                <mnm-svccfg/>
@@ -510,7 +510,7 @@
    Vue.component('mnm-tour', {
       template: '#mnm-tour',
       data: function() {
-         var aLoc = '[{.Title}]' === 'local';
+         var aLoc = '<%.Title%>' === 'local';
          return {isLocal:aLoc, last: aLoc ? 4 : 6, count:0};
       },
       computed: {
@@ -687,8 +687,8 @@
                :href="'#@'+ aFile.File"><span uk-icon="link"></span></a>
             <a :href="'?ad=' + encodeURIComponent(aFile.File)">
                <span uk-icon="download"></span></a>
-            <a :href="'?an=' + encodeURIComponent(aFile.File)" target="mnm_atc_[{.Title}]">
-               {{aFile.Name}}</a>
+            <a :href="'?an=' + encodeURIComponent(aFile.File)"
+               :target="'mnm_atc_<%.TitleJs%>'">{{aFile.Name}}</a>
             <div class="uk-float-right">{{aFile.Size}}</div>
          </li></ul>
    </div>
@@ -1210,8 +1210,8 @@
                     class="btn-iconsym"><mnm-paperclip/></button>
             <a :href="'/t/!' + encodeURIComponent(aFile.Name)">
                <span uk-icon="download">&nbsp;</span></a>
-            <a :href="'/t/' + encodeURIComponent(aFile.Name)" target="mnm_atc_[{.Title}]">
-               {{aFile.Name}}</a>
+            <a :href="'/t/' + encodeURIComponent(aFile.Name)"
+               :target="'mnm_atc_<%.TitleJs%>'">{{aFile.Name}}</a>
             <div class="uk-float-right">
                {{aFile.Size}}
                <form v-if="!toggle"
@@ -1515,11 +1515,11 @@
             <form onsubmit="return false"
                   style="width:70%; margin: 0 auto; display:table">
                <input v-model="draft.to"
-                      placeholder="To ([{.aliasMin}]+ characters)" type="text"
+                      placeholder="To (<%.aliasMin%>+ characters)" type="text"
                       style="width:calc(50% - 1.5em)">
                <div style="width:calc(50% - 1.5em); display:inline-block; vertical-align:top">
                   <input v-model="draft.gid"
-                         placeholder="Group (opt. [{.aliasMin}]+)" type="text"
+                         placeholder="Group (opt. <%.aliasMin%>+)" type="text"
                          class="width100">
                   <br>
                   <mnm-adrsbkinput @keyup.enter.native="setGid($event.target)"
@@ -1604,8 +1604,8 @@
       computed: {
          mnm: function() { return mnm },
          validDraft: function() {
-            if (this.draft.to.length < [{.aliasMin}] ||
-                this.draft.gid && this.draft.gid.length < [{.aliasMin}])
+            if (this.draft.to.length < <%.aliasMin%> ||
+                this.draft.gid && this.draft.gid.length < <%.aliasMin%>)
                return false;
             for (var a=0; a < mnm._data.ps.length; ++a)
                if (mnm._data.ps[a].Alias ===  this.draft.to &&
@@ -1685,16 +1685,16 @@
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); return false;">
          <input type="hidden" name="filename" :value="JSON.stringify($data)">
-         <button :disabled="!(name  && name.length  >= [{.serviceMin}] &&
-                              alias && alias.length >= [{.aliasMin}] &&
+         <button :disabled="!(name  && name.length  >= <%.serviceMin%> &&
+                              alias && alias.length >= <%.aliasMin%> &&
                               addr && !isNaN(loginperiod))"
                  title="Register new account at service"
                  class="btn-icon"><span uk-icon="forward"></span></button>
          <input v-model="name"
-                placeholder="Title ([{.serviceMin}]+ characters)" type="text"
+                placeholder="Title (<%.serviceMin%>+ characters)" type="text"
                 class="width100">
          <input v-model="alias"
-                placeholder="Alias ([{.aliasMin}]+ characters)"   type="text"
+                placeholder="Alias (<%.aliasMin%>+ characters)"   type="text"
                 class="width100">
          <input v-model="addr"
                 placeholder="Net Address (host:port)"             type="text"
@@ -1812,7 +1812,7 @@
    // per client
       cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}},
       sort:{cl:'Who', al:'Date', t:'Date', f:'Date'}, //todo move to cs
-      ohiFrom: '[{.Title}]' !== 'local', //todo move to cs
+      ohiFrom: '<%.Title%>' !== 'local', //todo move to cs
    // per service
       cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
       ps:[], pt:[], pf:[], gl:[], ot:[], of:null,

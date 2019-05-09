@@ -24,7 +24,7 @@ import (
    "strconv"
    "strings"
    "sync"
-   "html/template"
+   "text/template"
    "time"
    "crypto/tls"
    "net/url"
@@ -101,7 +101,7 @@ func mainResult() int {
       pSl.Init(startService, crashTest)
    }
 
-   sServiceTmpl, err = template.New("service.html").Delims("[{","}]").ParseFiles("web/service.html")
+   sServiceTmpl, err = template.New("service.html").Delims(`<%`,`%>`).ParseFiles("web/service.html")
    if err != nil {
       fmt.Fprintf(os.Stderr, "template parse error %s\n", err.Error())
       return 1
@@ -514,7 +514,9 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          aClientId = &http.Cookie{Name: "clientid", Value: fmt.Sprint(time.Now().UTC().UnixNano())}
          http.SetCookie(iResp, aClientId)
       }
-      aParams := pSl.GetConstants(tMsg{"Title":aSvcId, "Addr":sHttpSrvr.Addr})
+      aParams := pSl.GetConstants(tMsg{"Title":aSvcId, "Addr":sHttpSrvr.Addr,
+                    // Vue chokes on v-*="...'\"'"
+                    "TitleJs": strings.ReplaceAll(template.JSEscapeString(aSvcId), `"`, `x22`)})
       err = sServiceTmpl.Execute(iResp, aParams)
    case "cs": aResult = aState.GetSummary()
    case "cf": aResult = pSl.GetConfigService(aSvcId)
