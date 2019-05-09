@@ -299,7 +299,7 @@
       <ul class="uk-list uk-list-divider">
          <li v-for="aSvc in v" :key="aSvc">
             <template v-if="aSvc === '<%.TitleJs%>'">
-               <span style="visibility:hidden">1</span
+               <span class="vishide">1</span
               ><span uk-icon="settings" class="dropdown-icon">&nbsp;</span>
                <mnm-svccfg/>
                {{aSvc}}
@@ -561,7 +561,7 @@
 <script type="text/x-template" id="mnm-cc">
    <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3 dropdown-scroll">
       <button @click="mnm.ForwardSend(tid, mnm._data.cl[0][0].Qid)"
-              :style="{visibility: ccSet ? 'hidden' : 'visible'}"
+              :class="{vishide: ccSet}"
               :disabled="ccSet || !mnm._data.cl[ccSet].length"
               title="Forward thread to new recipients"
               style="float:left; margin:0 0.5em 1em 0"
@@ -673,7 +673,7 @@
                onclick="mnm.NavigateLink(this.href); return false"
                :href="'#'+ mnm._data.cs.Thread +'&'+ aFile.MsgId"><span uk-icon="mail"></span></a>
             <span v-else
-                  uk-icon="mail" style="visibility:hidden"></span>
+                  uk-icon="mail" class="vishide"></span>
             <mnm-date :iso="aFile.Date" ymd="md" hms="hm"/>
             &nbsp;
             <button v-if="false"
@@ -1184,7 +1184,7 @@
          <div class="uk-float-right uk-text-small">ATTACHABLE FILES</div>
          <input @input="vis = !!(upname = $event.target.value.substr(12))" type="file"
                 name="filename" required>
-         <div :style="{visibility: vis ? 'visible' : 'hidden'}" style="margin-top:0.5em">
+         <div :class="{vishide: !vis}" style="margin-top:0.5em">
             <input v-model="upname"
                    placeholder="Alt Name" type="text"
                    style="width:60%">
@@ -1447,7 +1447,7 @@
          <span v-for="aType in [['i', 'invites']]"
                @click="$data[aType[0]] = !$data[aType[0]]"
                class="uk-link" style="margin-right:0.5em">
-            <span :style="{visibility: $data[aType[0]] ? 'visible' : 'hidden'}">&bull; </span>
+            <span :class="{vishide: !$data[aType[0]]}">&bull; </span>
             {{ aType[1] }}
          </span>
       </div>
@@ -1788,7 +1788,7 @@
                <span v-if="aI > 0 && aI === state.PosFor && aJ === state.Pos"
                      @click.prevent.stop="mnm.TabDrop(state.Type)">&times;</span>
                <span v-else-if="aI > 0"
-                     style="visibility:hidden">&times;</span>
+                     class="vishide">&times;</span>
             </a></li></template></ul>
 </script><script>
    Vue.component('mnm-tabs', {

@@ -59,6 +59,9 @@ body {
    text-align: center;
 }
 
+.vishide {
+   visibility: hidden;
+}
 .overxhide {
    overflow-x: hidden;
 }
