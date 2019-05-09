@@ -260,14 +260,19 @@ func searchAdrsbk(iSvc string, iUpdt *Update) []string {
          }
       }
    }
-   var aName, aId string
+   var aName, aUid string
    if iUpdt.Adrsbk.Type & 1 == 1 {
-      for aName, aId = range aSvc.aliasIdx {
-         if _, ok := aSvc.groupIdx[aName]; !ok { fMatch(aName, aId) }
+      for aName, aUid = range aSvc.aliasIdx {
+         if aUid == kUidUnknown { continue }
+         if _, ok := aSvc.groupIdx[aName]; !ok {
+            fMatch(aName, aUid)
+         }
       }
    }
    if iUpdt.Adrsbk.Type & 2 == 2 {
-      for aName, _ = range aSvc.groupIdx { fMatch(aName, aName) }
+      for aName, _ = range aSvc.groupIdx {
+         fMatch(aName, aName)
+      }
    }
    sort.Slice(aResult, func(cA, cB int) bool { return aResult[cA].name < aResult[cB].name })
    aList := make([]string, 0, 2*len(aResult))
