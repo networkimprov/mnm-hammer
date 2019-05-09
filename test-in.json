@@ -328,11 +328,11 @@
 },{
    "Updt": {"Op":"adrsbk_search", "Adrsbk":{"Type":3, "Term":"go"}},
    "Result": {
-      "_n": ["Gold#td", "*", "Gold-G#tdg", "Gold-G#tdg"] }
+      "_n": ["Gold#td", "*uid", "Gold-G#tdg", "Gold-G#tdg"] }
 },{
    "Updt": {"Op":"adrsbk_search", "Adrsbk":{"Type":3, "Term":"td"}},
    "Result": {
-      "_n": ["Blue#td", "*", "Gold#td", "*", "Gold-G#tdg", "Gold-G#tdg"] }
+      "_n": ["Blue#td", "*uid", "Gold#td", "*uid", "Gold-G#tdg", "Gold-G#tdg"] }
 },{
    "Updt": {"Op":"open"},
    "Result": {
