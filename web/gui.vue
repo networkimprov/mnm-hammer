@@ -261,7 +261,7 @@
                <span class="uk-link">+/- log</span></div
            ><div style="display:none" id="log"></div>
          </div>
-         <mnm-tour v-if="'<%.Title%>' === 'local' || location.hash === '#tour'"/>
+         <mnm-tour v-if="mnm._isLocal || location.hash === '#tour'"/>
       </div>
       <div v-show="ohiFrom"
            class="uk-card uk-card-secondary uk-text-small uk-border-rounded"
@@ -332,7 +332,7 @@
                  class="uk-button uk-button-link">
             <span uk-icon="icon:triangle-right; ratio:1.6"></span></button>
       </div>
-      <template v-if="isLocal">
+      <template v-if="mnm._isLocal">
          <div v-show="count < 4"
               class="tour-heading">
             How mnm works</div>
@@ -510,10 +510,10 @@
    Vue.component('mnm-tour', {
       template: '#mnm-tour',
       data: function() {
-         var aLoc = '<%.Title%>' === 'local';
-         return {isLocal:aLoc, last: aLoc ? 4 : 6, count:0};
+         return {last: mnm._isLocal ? 4 : 6, count:0};
       },
       computed: {
+         mnm:   function() { return mnm },
          UIkit: function() { return UIkit },
       },
    });
@@ -1803,6 +1803,7 @@
    var sChange = 0;
    var sTemp = {ml:null, mo:null};
 
+   mnm._isLocal = '<%.TitleJs%>' === 'local';
    mnm._mdi = markdownit();
    mnm._adrsbkmenuId = null;
    mnm._lastPreview = '';
@@ -1812,7 +1813,7 @@
    // per client
       cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}},
       sort:{cl:'Who', al:'Date', t:'Date', f:'Date'}, //todo move to cs
-      ohiFrom: '<%.Title%>' !== 'local', //todo move to cs
+      ohiFrom: !mnm._isLocal, //todo move to cs
    // per service
       cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
       ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
