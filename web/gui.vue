@@ -50,7 +50,8 @@
 <mnm-adrsbkmenu ref="adrsbkmenu"/>
 
 <div class="uk-width-2-5">
-   <div class="uk-clearfix">
+   <div :class="{vishide: mnm._isLocal}"
+        class="uk-clearfix">
       <span style="padding-left:0.5em; display:inline-block">
          {{ msgTitle }}
          <span v-show="msgSubjects.length > 1"
@@ -78,7 +79,8 @@
             <span uk-icon="icon:arrow-right; ratio:1.6"></span></button>
       </div>
    </div>
-   <div uk-grid class="uk-grid-collapse">
+   <div :class="{vishide: mnm._isLocal}"
+        uk-grid class="uk-grid-collapse">
       <mnm-tabs class="uk-width-expand"
                 :set="msgTabset" :state="cs.ThreadTabs"/>
       <input @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)"
@@ -162,7 +164,8 @@
       <mnm-forms @attach="aCmp.atcAdd(arguments[0])"
                  :toggle="'#f_'+aCmp.msgid" pos="right-top"/>
    </span>
-   <div class="uk-clearfix">
+   <div :class="{vishide: mnm._isLocal}"
+        class="uk-clearfix">
       <span class="uk-text-large">
          <span uk-icon="world"></span>
          <%html .Title%>
@@ -182,7 +185,8 @@
          &nbsp;
       </div>
    </div>
-   <div uk-grid class="uk-grid-collapse">
+   <div :class="{vishide: mnm._isLocal}"
+        uk-grid class="uk-grid-collapse">
       <ul uk-tab class="uk-width-expand"><li style="display:none"></li>
          <li v-for="(aTerm, aI) in cs.SvcTabs.Default"
              :class="{'uk-active': cs.SvcTabs.PosFor === 0 && cs.SvcTabs.Pos === aI}">
@@ -306,7 +310,8 @@
             </template>
             <template v-else>
                <span uk-icon="bell" :id="'n_'+aSvc" class="dropdown-icon">0{{aSvc.todo}} </span>
-               <a :href="'/'+encodeURIComponent(aSvc)" :target="'mnm_'+aSvc">{{aSvc}}</a>
+               <a :href="'/'+encodeURIComponent(aSvc)"
+                  :target="mnm._isLocal ? '_self' : 'mnm_'+aSvc">{{aSvc}}</a>
             </template>
          </li></ul>
    </div>
@@ -374,7 +379,7 @@
             </div>
             <div style="margin: 0.5em 0">
                <b>2.</b> Inform others of your <i>Alias</i> by phone, etc.</div>
-            <b>3.</b> Click the account to open its tab (and continue the tour).<br>
+            <b>3.</b> Click the account to open it (and continue the tour).<br>
             <div class="service-panel uk-light"
                  style="width:20%; margin-top:0.5em; padding:1em; overflow:hidden">
                <span v-if="$root.v.length === 0">
@@ -382,7 +387,7 @@
                <div v-else>
                   <span uk-icon="bell" class="dropdown-icon">0 </span>
                   <a :href="'/'+ encodeURIComponent($root.v[0]) +'#tour'"
-                     :target="'mnm_'+$root.v[0]"
+                     target="_self"
                      title="Continue tour">{{$root.v[0]}}</a>
                </div>
             </div>
