@@ -60,10 +60,12 @@
       <mnm-subject v-if="msgSubjects.length > 1"
                    :list="msgSubjects"/>
       <div class="uk-float-right">
-         <span uk-icon="social" class="dropdown-icon">{{cl[1].length}}</span>&nbsp;
+         <span uk-icon="social" class="dropdown-icon"
+               title="Recipients of thread">{{cl[1].length}}</span>&nbsp;
          <mnm-cc ref="cl"
                  :tid="ml.length ? ml[ml.length-1].Id : 'none'"/>
-         <span class="dropdown-icon">{{al.length || '&nbsp;'}}<mnm-paperclip/></span>
+         <span class="dropdown-icon"
+               title="Attachments to thread">{{al.length || '&nbsp;'}}<mnm-paperclip/></span>
          <mnm-attach ref="al"/>
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
@@ -171,16 +173,21 @@
          <%html .Title%>
       </span>
       <div class="uk-float-right">
-         <span uk-icon="bell" class="dropdown-icon" style="font-weight:bold">{{nlNotSeen}}</span>
+         <span uk-icon="bell" class="dropdown-icon" style="font-weight:bold"
+               :title="'Notices for <%.TitleJs%>'">{{nlNotSeen}}</span>
          <mnm-notice ref="notice"
                      offset="2" pos="bottom-right"/>
-         <span uk-icon="users" class="dropdown-icon">&nbsp;</span>
+         <span uk-icon="users" class="dropdown-icon"
+               :title="'Address book for <%.TitleJs%>'">&nbsp;</span>
          <mnm-adrsbk ref="adrsbk"/>
-         <span @mousedown="ohiFrom = !ohiFrom" class="dropdown-icon">&nbsp;o/</span>
+         <span @mousedown="ohiFrom = !ohiFrom" class="dropdown-icon"
+               title="Toggle ohi-from panel">&nbsp;o/</span>
          &nbsp;
-         <span uk-icon="push" class="dropdown-icon">&nbsp;</span>
+         <span uk-icon="push" class="dropdown-icon"
+               title="Attachable files">&nbsp;</span>
          <mnm-files ref="t" pos="bottom-right"/>
-         <span uk-icon="file-edit" class="dropdown-icon">&nbsp;</span>
+         <span uk-icon="file-edit" class="dropdown-icon"
+               title="Blank forms">&nbsp;</span>
          <mnm-forms ref="f" pos="bottom-right"/>
          &nbsp;
       </div>
@@ -286,13 +293,16 @@
 
 <div class="uk-width-expand service-panel">
    <div class="uk-clearfix uk-light">
-      <span uk-icon="plus-circle" class="dropdown-icon"></span>
+      <span uk-icon="plus-circle" class="dropdown-icon"
+            title="Add account"></span>
       <mnm-svcadd ref="svcadd"/>
       <div style="float:right; margin:0 1em 1em 0">
-         <!--todo span uk-icon="cog" class="dropdown-icon">&nbsp;</span>
+         <!--todo span uk-icon="cog" class="dropdown-icon"
+               title="">&nbsp;</span>
          <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5">
             <div class="uk-text-right uk-text-small">SETTINGS</div></div -->
-         <span uk-icon="info" class="dropdown-icon">&nbsp;</span>
+         <span uk-icon="info" class="dropdown-icon"
+               title="Documentation">&nbsp;</span>
          <div ref="doc"
               uk-dropdown="mode:click; offset:2; pos:bottom-right"
               class="uk-width-3-5" style="height:75vh; padding:0.8em">
@@ -304,12 +314,14 @@
          <li v-for="aSvc in v" :key="aSvc">
             <template v-if="aSvc === '<%.TitleJs%>'">
                <span class="vishide">1</span
-              ><span uk-icon="settings" class="dropdown-icon">&nbsp;</span>
+              ><span uk-icon="settings" class="dropdown-icon"
+                     :title="'Settings for <%.TitleJs%>'">&nbsp;</span>
                <mnm-svccfg/>
                {{aSvc}}
             </template>
             <template v-else>
-               <span uk-icon="bell" :id="'n_'+aSvc" class="dropdown-icon">0{{aSvc.todo}} </span>
+               <span uk-icon="bell" :id="'n_'+aSvc" class="dropdown-icon"
+                     :title="'Notices for '+ aSvc">0{{aSvc.todo}} </span>
                <a :href="'/'+encodeURIComponent(aSvc)"
                   :target="mnm._isLocal ? '_self' : 'mnm_'+aSvc">{{aSvc}}</a>
             </template>
@@ -745,8 +757,10 @@
          </div>
       </div>
       <div style="float:right; margin-top:-1.7em;">
-         <span uk-icon="push"      :id="'t_'+msgid" class="dropdown-icon"></span
-        ><span uk-icon="file-edit" :id="'f_'+msgid" class="dropdown-icon"></span>
+         <span uk-icon="push" class="dropdown-icon" :id="'t_'+msgid"
+               title="Attach files"></span
+        ><span uk-icon="file-edit" class="dropdown-icon" :id="'f_'+msgid"
+               title="Attach blank forms"></span>
          <span :id="'pv_'+msgid"></span>
          <div uk-dropdown="mode:click; pos:right-top"
               class="uk-width-2-5 message-edit"
