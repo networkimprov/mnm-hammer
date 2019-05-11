@@ -192,7 +192,10 @@ func (o *tQueue) postAck(iId string) {
    aMsg := pSl.Msg{"Op":eOpAck, "Id":iId, "Type":"ok"}
    aConn := <-o.connSrc
    _, err := aConn.Write(packMsg(tMsg(aMsg), nil))
-   if err != nil { panic(err) }
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "postAck %s: %s\n", o.service, err)
+      //todo maybe aConn.SetDeadline(time.Now()) if pending read doesn't fail
+   }
    o.connSrc <- aConn
 }
 
@@ -207,7 +210,10 @@ func (o *tQueue) _waitForSrec() *pSl.SendRecord {
          select {
          case aConn := <-o.connSrc:
             _, err := aConn.Write(packMsg(tMsg{"Op":eOpPulse}, nil))
-            if err != nil { panic(err) }
+            if err != nil {
+               fmt.Fprintf(os.Stderr, "_waitForSrec %s: %s\n", o.service, err)
+               //todo maybe aConn.SetDeadline(time.Now()) if pending read doesn't fail
+            }
             o.connSrc <- aConn
          default:
          }
@@ -328,7 +334,7 @@ func runTmtpRecv(iSvcId string) {
       } else {
          aMsg = tMsg{"Op":eOpLogin, "Uid":aCfg.Uid, "Node":aCfg.Node}
       }
-      aConn.Write(packMsg(aMsg, nil))
+      aConn.Write(packMsg(aMsg, nil)) // on error, assume aConn.Read() fails
 
       err = _readLink(iSvcId, aConn, time.Duration(aCfg.LoginPeriod / kIdleTimeFraction) * time.Second)
       aConn.Close()
