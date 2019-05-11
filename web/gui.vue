@@ -2092,6 +2092,7 @@
    });
 
    sApp.$mount('#app');
+   window.name = 'mnm_<%.TitleJs%>';
    window.onload = mnm.Connect;
 
 }).call(this);
