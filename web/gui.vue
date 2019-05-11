@@ -731,8 +731,12 @@
    <div @keydown="keyAction('pv_'+msgid, $event)">
       <div style="position:relative; padding:1px;">
          <button @click="send"
+                 :disabled="mnm._data.ml.length < 2 &&
+                            !(mnm._data.toSave[msgid] || mnm._data.mo[msgid].SubHead).Subject"
                  title="Send draft"
                  class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
+         <span v-if="mnm._data.cl[1].length < 2"
+               style="font-size:84%">no recipients</span>
          <div style="height:100%; position:absolute; left:13em; right:42px; top:0;">
             <mnm-draftmenu @drop="atcDrop"
                            :list="mnm._data.mo[msgid].SubHead.Attach"
