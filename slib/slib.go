@@ -17,6 +17,7 @@ import (
    "path"
    "sync"
    "time"
+   "net/url"
 )
 
 const kStorageDir = "store/"
@@ -27,19 +28,19 @@ const kUploadTmp  = kUploadDir  + "temp/"
 const kFormDir    = kStorageDir + "form/"
 const kFormRegDir = kStorageDir + "reg-cache/"
 
-func dirSvc   (iSvc string) string { return kServiceDir + iSvc + "/" }
-func dirTemp  (iSvc string) string { return kServiceDir + iSvc + "/temp/" }
-func dirThread(iSvc string) string { return kServiceDir + iSvc + "/thread/" }
-func dirAttach(iSvc string) string { return kServiceDir + iSvc + "/attach/" }
-func dirForm  (iSvc string) string { return kServiceDir + iSvc + "/form/" }
+func dirSvc   (iSvc string) string { return kServiceDir + url.PathEscape(iSvc) + "/" }
 
-func fileCfg  (iSvc string) string { return kServiceDir + iSvc + "/config" }
-func filePing (iSvc string) string { return kServiceDir + iSvc + "/ping-draft" }
-func fileAdrs (iSvc string) string { return kServiceDir + iSvc + "/adrsbk" }
-func fileOhi  (iSvc string) string { return kServiceDir + iSvc + "/ohi" }
-func fileTab  (iSvc string) string { return kServiceDir + iSvc + "/tabs" }
-func fileSendq(iSvc string) string { return kServiceDir + iSvc + "/sendq" }
-func fileNotc (iSvc string) string { return kServiceDir + iSvc + "/notice" }
+func dirTemp  (iSvc string) string { return dirSvc(iSvc) + "temp/" }
+func dirThread(iSvc string) string { return dirSvc(iSvc) + "thread/" }
+func dirAttach(iSvc string) string { return dirSvc(iSvc) + "attach/" }
+func dirForm  (iSvc string) string { return dirSvc(iSvc) + "form/" }
+func fileCfg  (iSvc string) string { return dirSvc(iSvc) + "config" }
+func filePing (iSvc string) string { return dirSvc(iSvc) + "ping-draft" }
+func fileAdrs (iSvc string) string { return dirSvc(iSvc) + "adrsbk" }
+func fileOhi  (iSvc string) string { return dirSvc(iSvc) + "ohi" }
+func fileTab  (iSvc string) string { return dirSvc(iSvc) + "tabs" }
+func fileSendq(iSvc string) string { return dirSvc(iSvc) + "sendq" }
+func fileNotc (iSvc string) string { return dirSvc(iSvc) + "notice" }
 
 func fileDraft(iSvc, iTid, iLms string) string { return dirThread(iSvc) + iTid +"_"+ iLms }
 func fileFwd  (iSvc, iTid       string) string { return dirThread(iSvc) + iTid + "_forward" }

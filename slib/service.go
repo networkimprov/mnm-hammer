@@ -14,6 +14,7 @@ import (
    "os"
    "strings"
    "sync"
+   "net/url"
 )
 
 const kServiceNameMin = 2
@@ -45,6 +46,8 @@ func initServices(iFn func(string)) {
    if err != nil { quit(err) }
 
    for _, aSvc := range aSvcs {
+      aSvc, err = url.PathUnescape(aSvc)
+      if err != nil { quit(err) }
       if strings.HasSuffix(aSvc, ".tmp") {
          err = os.RemoveAll(dirSvc(aSvc))
          if err != nil { quit(err) }

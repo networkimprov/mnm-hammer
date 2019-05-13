@@ -13,6 +13,7 @@ import (
    "os"
    "strings"
    "sync"
+   "net/url"
 )
 
 var sSvcTabsDefault = []string{"All","Unread","Todo","FFT"}
@@ -55,7 +56,7 @@ func OpenState(iClientId, iSvc string) *ClientState {
                           Thread: make(map[string]*tThreadState),
                           SvcTabs: tTabs{Terms:[]string{}},
                           historyMax: GetConfigService(iSvc).HistoryLen,
-                          svc: iSvc, filePath: kStateDir + iClientId + "/" + iSvc}
+                          svc: iSvc, filePath: kStateDir + iClientId + "/" + url.PathEscape(iSvc)}
    aFd, err := os.Open(aState.filePath)
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
