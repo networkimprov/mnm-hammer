@@ -359,14 +359,6 @@ func renameRemove(iA, iB string) error {
    return err
 }
 
-func syncDir(iPath string) error {
-   aFd, err := os.Open(iPath)
-   if err != nil { return err }
-   err = aFd.Sync()
-   aFd.Close()
-   return err
-}
-
 func dateRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
 
 func quit(err error) {
