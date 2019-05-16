@@ -85,9 +85,11 @@ func initServices(iFn func(string)) {
          if strings.HasPrefix(aTmp, "adrsbk_") {
             // handled above
          } else if strings.HasPrefix(aTmp, "forward_") {
-            renameRemove(dirTemp(aSvc) + aTmp, fileFwd(aSvc, aTmp[8:]))
+            err = renameRemove(dirTemp(aSvc) + aTmp, fileFwd(aSvc, aTmp[8:]))
+            if err != nil { quit(err) }
          } else if strings.HasPrefix(aTmp, "ffnindex_") {
-            renameRemove(dirTemp(aSvc) + aTmp, fileFfn(aSvc, aTmp[9:]))
+            err = renameRemove(dirTemp(aSvc) + aTmp, fileFfn(aSvc, aTmp[9:]))
+            if err != nil { quit(err) }
          } else if strings.HasSuffix(aTmp, ".tmp") {
             // could be a valid attachment or forward from thread transaction
             defer os.Remove(dirTemp(aSvc) + aTmp)

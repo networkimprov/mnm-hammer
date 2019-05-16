@@ -348,14 +348,12 @@ func resolveTmpFile(iPath string) error {
 }
 
 func renameRemove(iA, iB string) error {
-   err := os.Rename(iA, iB)
+   err := os.Link(iA, iB)
    if err != nil {
-      if os.IsNotExist(err) {
-         err = nil
-      } else if os.IsExist(err) {
-         err = os.Remove(iA)
-      }
+      if os.IsNotExist(err) { return nil }
+      if !os.IsExist(err) { return err }
    }
+   err = os.Remove(iA)
    return err
 }
 
