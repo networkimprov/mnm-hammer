@@ -343,6 +343,20 @@ func writeJsonFile(iPath string, iData interface{}) error {
    return err
 }
 
+func writeStreamFile(iPath string, iSrc io.Reader) error {
+   aFd, err := os.OpenFile(iPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+   if err != nil { quit(err) }
+   defer aFd.Close()
+   _, err = io.Copy(aFd, iSrc)
+   if err != nil { //todo only return network errors
+      os.Remove(iPath)
+      return err
+   }
+   err = aFd.Sync()
+   if err != nil { quit(err) }
+   return nil
+}
+
 func resolveTmpFile(iPath string) error {
    return renameRemove(iPath, iPath[:len(iPath)-4])
 }

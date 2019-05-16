@@ -109,14 +109,8 @@ func (tGlobalBlankForm) Add(iFileName, iDupeRev string, iR io.Reader) error {
    }
    _insertBlank(aName, aRev, dateRFC3339())
 
-   aFd, err := os.OpenFile(aTemp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-   if err != nil { quit(err) }
-   defer aFd.Close()
-   _, err = io.Copy(aFd, iR)
-   if err != nil { return err } //todo only network errors
-   err = aFd.Sync()
-   if err != nil { quit(err) }
-
+   err = writeStreamFile(aTemp, iR)
+   if err != nil { return err }
    err = os.Rename(aTemp, aTempOk)
    if err != nil { quit(err) }
    err = syncDir(kFormDir)

@@ -79,13 +79,8 @@ func (tGlobalUpload) Add(iId, iDup string, iR io.Reader) error {
       defer aDfd.Close()
       iR = aDfd
    }
-   aFd, err := os.OpenFile(aTemp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-   if err != nil { quit(err) }
-   defer aFd.Close()
-   _, err = io.Copy(aFd, iR)
-   if err != nil { return err } //todo only return network errors
-   err = aFd.Sync()
-   if err != nil { quit(err) }
+   err = writeStreamFile(aTemp, iR)
+   if err != nil { return err }
    err = syncDir(kUploadTmp)
    if err != nil { quit(err) }
    err = os.Remove(aOrig)
