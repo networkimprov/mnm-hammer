@@ -41,12 +41,10 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
       return []tAttachEl{}
    }
    aSend := make([]tAttachEl, 0, len(aDir))
-   var a int
-   var aPair []string
    for _, aFi := range aDir {
       if aFi.Name() == "ffnindex" { continue }
-      aPair = strings.SplitN(aFi.Name(), "_", 2)
-      a = len(aSend)
+      aPair := strings.SplitN(aFi.Name(), "_", 2)
+      a := len(aSend)
       aSend = append(aSend, tAttachEl{File: aFi.Name(), Size: aFi.Size(),
                                       Name: aPair[1][2:], // omit x: tag
                                       Date: aFi.ModTime().UTC().Format(time.RFC3339)})
@@ -69,7 +67,6 @@ func sizeDraftAttach(iSvc string, iSubHead *tHeader2, iId tLocalId) int64 {
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.lms() }
    aPrefix := subAttach(iSvc, aTid) + iId.lms() + "_"
    var aTotal int64
-
    for a, aFile := range iSubHead.Attach {
       if _isFormFill(aFile.Name) {
          iSubHead.Attach[a].FfKey = ""
@@ -88,16 +85,15 @@ func writeDraftAttach(iW io.Writer, iSvc string, iSubHead *tHeader2, iId tLocalI
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.lms() }
    aPrefix := subAttach(iSvc, aTid) + iId.lms() + "_"
    for _, aFile := range iSubHead.Attach {
-      var aXd, aFd *os.File = iFd, nil
-      var aFi os.FileInfo
+      aXd := iFd
       if !_isFormFill(aFile.Name) {
-         aFd, err = os.Open(aPrefix + aFile.Name)
+         aXd, err = os.Open(aPrefix + aFile.Name)
          if err != nil { quit(err) }
-         defer aFd.Close()
-         aFi, err = aFd.Stat()
+         defer aXd.Close()
+         var aFi os.FileInfo
+         aFi, err = aXd.Stat()
          if err != nil { quit(err) }
          if aFi.Size() != aFile.Size { quit(tError("file size mismatch")) }
-         aXd = aFd
       }
       _, err = io.CopyN(iW, aXd, aFile.Size)
       if err != nil { return err } //todo only return net errors
@@ -112,10 +108,8 @@ func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
       fmt.Fprintf(os.Stderr, "tempReceivedAttach %s: %s %s\n", iSvc, iHead.Posted, err.Error())
    }
    aDoSync := false
-   var aPath string
    for _, aFile := range iHead.SubHead.Attach {
       aDoSync = true
-      aPath = ftmpAttach(iSvc, iHead.Id, aFile.Name) //todo escape '/' in .Name
       if _isFormFill(aFile.Name) {
          aTid := iHead.SubHead.ThreadId; if aTid == "" { aTid = iHead.Id }
          err = tempFilledForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iR)
@@ -124,6 +118,7 @@ func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
          }
          continue
       }
+      aPath := ftmpAttach(iSvc, iHead.Id, aFile.Name) //todo escape '/' in .Name
       var aFd *os.File
       aFd, err = os.OpenFile(aPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
       if err != nil { quit(err) }
@@ -427,13 +422,13 @@ func updateDraftAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
 
 func writeStoredAttach(iW io.Writer, iSvc string, iSubHead *tHeader2) error {
    aPrefix := subAttach(iSvc, iSubHead.ThreadId) + iSubHead.ConfirmId + "_"
-   var aFd *os.File
    var aLen int64
    var err error
    for _, aFile := range iSubHead.Attach {
       if _isFormFill(aFile.Name) {
          aLen, err = writeRowFilledForm(iW, iSvc, aFile.Ffn+kSuffixSent, iSubHead.ConfirmId)
       } else {
+         var aFd *os.File
          aFd, err = os.Open(aPrefix + aFile.Name)
          if err != nil { quit(err) }
          aLen, err = io.Copy(iW, aFd)
