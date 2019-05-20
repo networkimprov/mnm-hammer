@@ -28,6 +28,9 @@ const kUploadTmp  = kUploadDir  + "temp/"
 const kFormDir    = kStorageDir + "form/"
 const kFormRegDir = kStorageDir + "reg-cache/"
 
+func fileUpload(iFil string) string { return kUploadDir + url.QueryEscape(iFil) }
+func fileUptmp (iFil string) string { return kUploadTmp + url.QueryEscape(iFil) }
+
 func dirSvc   (iSvc string) string { return kServiceDir + url.PathEscape(iSvc) + "/" }
 
 func dirTemp  (iSvc string) string { return dirSvc(iSvc) + "temp/" }
@@ -45,8 +48,9 @@ func fileNotc (iSvc string) string { return dirSvc(iSvc) + "notice" }
 func fileDraft(iSvc, iTid, iLms string) string { return dirThread(iSvc) + iTid +"_"+ iLms }
 func fileFwd  (iSvc, iTid       string) string { return dirThread(iSvc) + iTid + "_forward" }
 
-func subAttach(iSvc, iSub string) string { return dirAttach(iSvc) + iSub + "/" }
-func fileFfn  (iSvc, iSub string) string { return subAttach(iSvc, iSub) + "ffnindex" }
+func fileAtc(iSvc, iSub, iMid, iFil string) string { return dirAttach(iSvc) + iSub +"/"+
+                                                            iMid +"_"+ url.QueryEscape(iFil) }
+func fileFfn(iSvc, iSub             string) string { return dirAttach(iSvc) + iSub + "/ffnindex" }
 
 // these have either ".tmp" or a decimal string appended
 func ftmpSr(iSvc, iTid, iMid string) string { return dirTemp(iSvc) +"sr_"+ iTid +"_"+ iMid +"__" }
@@ -63,7 +67,8 @@ func ftmpFs(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"fs_"+ iTid 
 func ftmpFwdS(iSvc, iTid string) string { return dirTemp(iSvc) + iTid +"_fwd.tmp" }
 func ftmpFwdD(iSvc, iTid string) string { return dirTemp(iSvc) +"forward_"+ iTid }
 
-func ftmpAttach(iSvc, iMid, iFile string) string { return dirTemp(iSvc) + iMid +"_"+ iFile +"_atc.tmp" }
+func ftmpAtc(iSvc, iMid, iFil string) string { return dirTemp(iSvc) +
+                                                      iMid +"_"+ url.QueryEscape(iFil) +"_atc.tmp" }
 
 func ftmpFfn   (iSvc, iTid       string) string { return dirTemp(iSvc) +"ffnindex_"+ iTid }
 func ftmpAdrsbk(iSvc, iPos, iQid string) string { return dirTemp(iSvc) +"adrsbk_"+ iPos +"_"+ iQid }

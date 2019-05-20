@@ -6,7 +6,7 @@
    "Updt": {"Op":"open"},
    "Result": {
       "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"},
-             {"Name":"GoldFile", "Size":26, "Date":"*d"}] ,
+             {"Name":"Gold/File", "Size":26, "Date":"*d"}] ,
       "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
       "/v": ["Blue", "Gold"] }
@@ -195,7 +195,7 @@
    "Result": {
       "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Posted":"*d",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"to forward",
-                         "Attach":[{"Name":"u:GoldFile", "Size":26},
+                         "Attach":[{"Name":"u:Gold/File", "Size":26},
                                    {"Name":"r:Blue.original", "Size":33,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
               "msg_data":"" }] ,
@@ -212,7 +212,7 @@
                "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":false},
               {"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"GoldFile",      "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] }
+      "al": [{"Name":"Gold/File",      "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_open", "Thread":{"ThreadId":"last", "Id":"last"}},
    "Result": {
@@ -337,7 +337,7 @@
    "Updt": {"Op":"open"},
    "Result": {
       "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"},
-             {"Name":"GoldFile", "Size":26, "Date":"*d"}] ,
+             {"Name":"Gold/File", "Size":26, "Date":"*d"}] ,
       "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
       "/v": ["Blue", "Gold"] ,
@@ -416,7 +416,7 @@
 "Name": "Gold1", "SvcId": "Gold",
 "Cfg": {"Name":"Gold", "Alias":"Gold"},
 "Files": [{
-   "Name":"GoldFile", "Data":"abcdefghijklmnopqrstuvwxyz"
+   "Name":"Gold/File", "Data":"abcdefghijklmnopqrstuvwxyz"
 }],
 "Orders":
 [{
@@ -504,13 +504,13 @@
 },{
    "Updt": {"Op":"thread_save", "Thread":{
                  "New":1, "Alias":"Gold", "Subject":"to forward", "Cc":[],
-                 "Attach":[{"Name":"upload/GoldFile"},
+                 "Attach":[{"Name":"upload/Gold/File"},
                            {"Name":"form_fill/Blue.original", "FfKey":"0123456789ab_f:Blue.original"}],
                  "FormFill":{"0123456789ab_f:Blue.original":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
    "Result": {
       "mo": [{"From":"self", "Id":"*midt", "Len":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"", "Subject":"to forward",
-                         "Attach":[{"Name":"u:GoldFile"},
+                         "Attach":[{"Name":"u:Gold/File"},
                                    {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}],
                          "Cc":[{"Who":"Gold#td", "WhoUid":"*uid", "By":"Gold#td", "ByUid":"*uid",
@@ -529,7 +529,7 @@
       "cl": [[],
              [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":".", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"GoldFile",      "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] }
+      "al": [{"Name":"Gold/File",      "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {
@@ -549,7 +549,7 @@
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
-      "al": [{"Name":"GoldFile",      "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] }
+      "al": [{"Name":"Gold/File",      "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {

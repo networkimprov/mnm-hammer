@@ -346,7 +346,7 @@ func _validateType(iResult *[]byte, iParent string, iField interface{}, iEl *tSp
 func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHeader2Attach,
                     iR io.Reader) error {
    var err error
-   aFn := ftmpAttach(iSvc, iMsgId, iFile.Name)
+   aFn := ftmpAtc(iSvc, iMsgId, iFile.Name)
    aFd, err := os.OpenFile(aFn, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aFd.Close()
@@ -393,7 +393,7 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
 }
 
 func removeTempFilledForm(iSvc string, iMsgId string, iFile *tHeader2Attach) {
-   err := os.Remove(ftmpAttach(iSvc, iMsgId, iFile.Name))
+   err := os.Remove(ftmpAtc(iSvc, iMsgId, iFile.Name))
    if err != nil && !os.IsNotExist(err) { quit(err) }
 }
 
@@ -401,7 +401,7 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
    var err error
    aDoor := _getFormDoor(iSvc, iFile.Ffn + iSuffix)
    aDoor.Lock(); defer aDoor.Unlock()
-   aFn := ftmpAttach(iSvc, iMsgId, iFile.Name)
+   aFn := ftmpAtc(iSvc, iMsgId, iFile.Name)
    aTd, err := os.Open(aFn)
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }

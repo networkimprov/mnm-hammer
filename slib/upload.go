@@ -11,8 +11,8 @@ import (
    "io"
    "io/ioutil"
    "os"
-   "strings"
    "time"
+   "net/url"
 )
 
 type tGlobalUpload struct{} // implements GlobalSet
@@ -39,29 +39,28 @@ func (tGlobalUpload) GetIdx() interface{} {
    aList := make([]tUploadEl, 0, len(aDir)-1) // omit temp/
    for _, aFi := range aDir {
       if aFi.Name() == "temp" { continue }
-      aList = append(aList, tUploadEl{Name:aFi.Name(), Size:aFi.Size(),
+      var aFile string
+      aFile, err = url.QueryUnescape(aFi.Name())
+      if err != nil { quit(err) }
+      aList = append(aList, tUploadEl{Name:aFile, Size:aFi.Size(),
                                       Date:aFi.ModTime().UTC().Format(time.RFC3339)})
    }
    return aList
 }
 
 func (tGlobalUpload) GetPath(iId string) string {
-   return kUploadDir + iId
+   return fileUpload(iId)
 }
 
 func (tGlobalUpload) Add(iId, iDup string, iR io.Reader) error {
-   if iId == "" || strings.ContainsRune(iId, '/') {
-      return tError("missing or invalid filename")
+   if iId == "" {
+      return tError("missing filename")
    }
-   aOrig := kUploadDir + iId
-   aTemp := kUploadTmp + iId
-   if iDup != "" {
-      if strings.ContainsRune(iDup, '/') {
-         return tError("invalid dup revname")
-      }
-      aOrig += "." + iDup
-      aTemp += "." + iDup
+   if iDup != "" && iDup[0] != '.' {
+      iDup = "." + iDup
    }
+   aOrig := fileUpload(iId + iDup)
+   aTemp := fileUptmp(iId + iDup)
    err := os.Symlink("upload_aborted", aOrig)
    if err != nil {
       if !os.IsExist(err) { quit(err) }
@@ -71,7 +70,7 @@ func (tGlobalUpload) Add(iId, iDup string, iR io.Reader) error {
    }
    if iDup != "" {
       var aDfd *os.File
-      aDfd, err = os.Open(kUploadDir + iId)
+      aDfd, err = os.Open(fileUpload(iId))
       if err != nil {
          if !os.IsNotExist(err) { quit(err) }
          return err
@@ -91,10 +90,10 @@ func (tGlobalUpload) Add(iId, iDup string, iR io.Reader) error {
 }
 
 func (tGlobalUpload) Drop(iId string) error {
-   if iId == "" || strings.ContainsRune(iId, '/') {
-      return tError("missing or invalid filename")
+   if iId == "" {
+      return tError("missing filename")
    }
-   err := os.Remove(kUploadDir + iId)
+   err := os.Remove(fileUpload(iId))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    return err
 }
