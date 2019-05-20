@@ -433,7 +433,7 @@ func _storeSentAdrsbk(iSvc string, iEls []tAdrsbkEl, iQid string) {
    aFi, err := os.Lstat(fileAdrs(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos := int64(2); if err == nil { aPos = aFi.Size() }
-   aTempOk := ftmpAdrsbk(iSvc, fmt.Sprint(aPos), url.PathEscape(iQid))
+   aTempOk := ftmpAdrsbk(iSvc, fmt.Sprint(aPos), iQid)
    aTemp := aTempOk + ".tmp"
 
    for a, _ := range iEls {
@@ -484,7 +484,7 @@ func _completeAdrsbk(iSvc string, iTmp string, iEls []tAdrsbkEl) {
       if err != nil { quit(err) }
    }
    if aRec[2] != "" {
-      aRec[2], err = url.PathUnescape(aRec[2])
+      aRec[2], err = url.QueryUnescape(aRec[2])
       if err != nil { quit(err) }
       dropQueue(iSvc, aRec[2])
    }

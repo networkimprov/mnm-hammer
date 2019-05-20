@@ -28,10 +28,12 @@ const kUploadTmp  = kUploadDir  + "temp/"
 const kFormDir    = kStorageDir + "form/"
 const kFormRegDir = kStorageDir + "reg-cache/"
 
+func fileState(iCli, iSvc string) string { return kStateDir + iCli +"/"+ url.QueryEscape(iSvc) }
+
 func fileUpload(iFil string) string { return kUploadDir + url.QueryEscape(iFil) }
 func fileUptmp (iFil string) string { return kUploadTmp + url.QueryEscape(iFil) }
 
-func dirSvc   (iSvc string) string { return kServiceDir + url.PathEscape(iSvc) + "/" }
+func dirSvc(iSvc string) string { return kServiceDir + url.QueryEscape(iSvc) + "/" }
 
 func dirTemp  (iSvc string) string { return dirSvc(iSvc) + "temp/" }
 func dirThread(iSvc string) string { return dirSvc(iSvc) + "thread/" }
@@ -71,7 +73,8 @@ func ftmpAtc(iSvc, iMid, iFil string) string { return dirTemp(iSvc) +
                                                       iMid +"_"+ url.QueryEscape(iFil) +"_atc.tmp" }
 
 func ftmpFfn   (iSvc, iTid       string) string { return dirTemp(iSvc) +"ffnindex_"+ iTid }
-func ftmpAdrsbk(iSvc, iPos, iQid string) string { return dirTemp(iSvc) +"adrsbk_"+ iPos +"_"+ iQid }
+func ftmpAdrsbk(iSvc, iPos, iQid string) string { return dirTemp(iSvc) +"adrsbk_"+ iPos +"_"+
+                                                         url.QueryEscape(iQid) }
 
 var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
 

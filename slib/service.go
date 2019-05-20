@@ -46,7 +46,7 @@ func initServices(iFn func(string)) {
    if err != nil { quit(err) }
 
    for _, aSvc := range aSvcs {
-      aSvc, err = url.PathUnescape(aSvc)
+      aSvc, err = url.QueryUnescape(aSvc)
       if err != nil { quit(err) }
       if strings.HasSuffix(aSvc, ".tmp") {
          err = os.RemoveAll(dirSvc(aSvc))
@@ -639,7 +639,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
 
 // only for testing
 func WipeDataService(iSvc string) error {
-   aCfgTmp := kStorageDir +"svc-"+ url.PathEscape(iSvc) +"-config"
+   aCfgTmp := kStorageDir +"svc-"+ url.QueryEscape(iSvc) +"-config"
    var err error
    err = os.Rename(fileCfg(iSvc), aCfgTmp)
    if err != nil { return err }
