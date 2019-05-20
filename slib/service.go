@@ -637,3 +637,16 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    return aFn
 }
 
+// only for testing
+func WipeDataService(iSvc string) error {
+   aCfgTmp := kStorageDir +"svc-"+ url.PathEscape(iSvc) +"-config"
+   var err error
+   err = os.Rename(fileCfg(iSvc), aCfgTmp)
+   if err != nil { return err }
+   err = os.RemoveAll(dirSvc(iSvc))
+   if err != nil { return err }
+   err = os.Mkdir(dirSvc(iSvc), 0700)
+   if err != nil { return err }
+   err = os.Rename(aCfgTmp, fileCfg(iSvc))
+   return err
+}

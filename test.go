@@ -286,14 +286,7 @@ func _setupTestCrash(iClients []tTestClient) (_ string, err error) {
    if err != nil { return }
    for a := range iClients {
       if iClients[a].Cfg.Name == "" { continue }
-      aSvc := iClients[a].SvcId
-      err = os.Rename("store/svc/"+ aSvc +"/config", "store/svc-"+ aSvc +"-config")
-      if err != nil { return }
-      err = os.RemoveAll("store/svc/"+ aSvc)
-      if err != nil { return }
-      err = os.Mkdir("store/svc/"+ aSvc, 0700)
-      if err != nil { return }
-      err = os.Rename("store/svc-"+ aSvc +"-config", "store/svc/"+ aSvc +"/config")
+      err = pSl.WipeDataService(iClients[a].SvcId)
       if err != nil { return }
    }
    pSl.Init(startService, crashTest)
