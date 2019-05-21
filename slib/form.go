@@ -20,6 +20,7 @@ import (
    "strings"
    "sync"
    "time"
+   "net/url"
 )
 
 type tGlobalBlankForm struct{} // implements GlobalSet
@@ -77,12 +78,17 @@ func (tGlobalBlankForm) Add(iFileName, iDupeRev string, iR io.Reader) error {
    var err error
    aName, aRev := _parseFileName(iFileName)
    if iDupeRev != "" {
-      if aRev == "" { iFileName = aName + ".original" }
+      if iDupeRev != url.QueryEscape(iDupeRev) || strings.ContainsRune(iDupeRev, '.') {
+         return tError("invalid revision name")
+      }
+      if aRev == "" {
+         iFileName = aName + ".original"
+      }
       aRev = iDupeRev
-   } else {
-      if aRev == "" { aRev = "original" }
+   } else if aRev == "" {
+      aRev = "original"
    }
-   if strings.ContainsRune(iFileName, '/') || strings.ContainsRune(aRev, '.') ||
+   if iFileName != url.QueryEscape(iFileName) || strings.ContainsRune(aRev, '.') ||
       aRev == "tmp" || aRev == "tok" ||
       iDupeRev == "original" || iDupeRev == "spec" {
       return tError("invalid form name")
@@ -96,7 +102,7 @@ func (tGlobalBlankForm) Add(iFileName, iDupeRev string, iR io.Reader) error {
       aDd, err = os.Open(kFormDir + iFileName)
       if err != nil {
          if !os.IsNotExist(err) { quit(err) }
-         return tError("dupe source not found")
+         return tError("source not found")
       }
       defer aDd.Close()
       iR = aDd
