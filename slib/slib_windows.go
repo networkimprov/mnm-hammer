@@ -7,6 +7,13 @@
 
 package slib
 
+import "syscall"
+
+func init() {
+   // see README.md for required patch to go/src/syscall/syscall_windows.go
+   syscall.Open_FileShareDelete = true
+}
+
 // the NTFS journal logs file create, delete, rename
 // hopefully that is equivalent to fsync() of a directory in unix
 

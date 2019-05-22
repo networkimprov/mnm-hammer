@@ -95,6 +95,18 @@ c) `./webdeps.sh` # download browser modules
 d) `ln $GOPATH/bin/mnm-hammer mnm-hammer` # hard link necessary for packaging  
 e) `./pkg.sh` # make distribution downloads
 
+Building for Windows requires 2 additions to /usr/lib/go/src/syscall/syscall_windows.go:
+```
+var Open_FileShareDelete = false              // add 1 line
+func Open(...) (...) {
+	...
+	sharemode := ...
+	if Open_FileShareDelete {             // add 3 lines
+		sharemode |= FILE_SHARE_DELETE
+	}
+```
+See https://github.com/golang/go/issues/32088
+
 ### Testing
 
 An automated test sequence is defined in test-in.json. 
