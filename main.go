@@ -419,7 +419,7 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) error {
       if aHeadEnd > aHeadStart {
          err = json.Unmarshal(aBuf[aHeadStart:aHeadEnd], &aHead.SubHead)
          if err != nil || !aHead.CheckSub() {
-            return fErr("invalid header")
+            return fErr("invalid subheader")
          }
       }
       aData := aBuf[aHeadEnd:aHeadEnd] // ref aBuf even if DataLen==0
