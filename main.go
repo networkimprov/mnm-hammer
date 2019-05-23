@@ -465,21 +465,22 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) error {
    }
 }
 
-type tTmtpInput struct { Buf []byte; R io.Reader }
+type tTmtpInput struct {
+   Buf []byte
+   R io.Reader
+}
 
 func (o *tTmtpInput) Read(iOut []byte) (int, error) {
-   aLen := 0
-   if len(o.Buf) > 0 {
-      aLen = copy(iOut, o.Buf)
-      o.Buf = o.Buf[aLen:]
+   if len(o.Buf) == 0 {
+      return o.R.Read(iOut)
    }
-   if aLen < len(iOut) {
-      aLen2, err := o.R.Read(iOut[aLen:])
-      if err != nil {
-         return aLen+aLen2, err //todo only network errors
-      }
+   aLen := copy(iOut, o.Buf)
+   o.Buf = o.Buf[aLen:]
+   if aLen == len(iOut) {
+      return aLen, nil
    }
-   return len(iOut), nil
+   aLen2, err := o.R.Read(iOut[aLen:])
+   return aLen+aLen2, err
 }
 
 var sStateOp = map[string]bool{
