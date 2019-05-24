@@ -9,8 +9,9 @@
 set -e
 
 bins=(
-   'GOOS=linux  GOARCH=amd64'
-   'GOOS=darwin GOARCH=amd64'
+   'GOOS=linux   GOARCH=amd64'
+   'GOOS=darwin  GOARCH=amd64'
+   'GOOS=windows GOARCH=amd64'
 )
 
 app="$(basename "$PWD")"
@@ -22,16 +23,19 @@ ver=($("./$app" --version))
 echo "packaging ${ver[@]} with:"
 ls -sd "${files[@]}"
 
-ln -s "$app" "../$app-${ver[-2]}"
+ln -s "$app" "../$app-${ver[-2]}" || test -L "../$app-${ver[-2]}"
 files=($(printf "$app-${ver[-2]}/%s " "${files[@]}"))
+fileswin=("${files[@]}")
+fileswin[0]+=.exe
 
 for pf in "${bins[@]}"; do
    export $pf
    go build
    echo -n "$GOOS-$GOARCH built "
    dst="$app/mnm-app-$GOOS-$GOARCH-${ver[-2]}"
-   if [ $GOOS = none ]; then
-      (cd ..; zip -ryq "$dst.zip" "${files[@]}")
+   if [ $GOOS = windows ]; then
+      (cd ..; zip -rq "$dst.zip" "${fileswin[@]}")
+      rm "$app".exe
    else
       (cd ..; tar -czf "$dst.tgz" "${files[@]}")
    fi
