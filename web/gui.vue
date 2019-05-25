@@ -383,7 +383,7 @@
                   uk-icon="plus-circle" title="Add account"></span>
             <div>
                a) Fill out the form:<div style="margin-left: 1.1em">
-                  <i>Title</i> is your private name for the account,<br>
+                  <i>Title</i> is your private label for the account,<br>
                   <i>Alias</i> is how other members know you,<br>
                   uncheck <i>Verify host</i> if it's a preview server.</div>
                b) To submit, click
