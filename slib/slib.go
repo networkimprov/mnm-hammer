@@ -12,6 +12,7 @@ import (
    "hash/crc32"
    "fmt"
    "io"
+   "io/ioutil"
    "encoding/json"
    "os"
    "path"
@@ -267,6 +268,11 @@ func GetConstants(iMap map[string]interface{}) map[string]interface{} {
 }
 
 // utilities follow
+
+func discardTmtp(iHead *Header, iR io.Reader) error {
+   _, err := io.CopyN(ioutil.Discard, iR, iHead.DataLen) // .DataHead already subtracted
+   return err
+}
 
 func writeHeaders(iW io.Writer, iHead, iSub []byte) error {
    var err error

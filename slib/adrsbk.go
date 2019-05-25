@@ -10,7 +10,6 @@ package slib
 import (
    "fmt"
    "io"
-   "io/ioutil"
    "encoding/json"
    "os"
    "path"
@@ -303,16 +302,14 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    for a, _ := range aLog {
       if aLog[a].MsgId == iHead.Id {
          fmt.Fprintf(os.Stderr, "storeReceivedAdrsbk %s: ping %s already stored\n", iSvc, iHead.Id)
-         _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
-         return err
+         return discardTmtp(iHead, iR)
       }
    }
    aUid := aSvc.aliasIdx[iHead.SubHead.Alias]
    if aUid != "" && aUid != kUidUnknown && aUid != iHead.From {
       fmt.Fprintf(os.Stderr, "storeReceivedAdrsbk %s: blocked ping from %s aka %s\n",
                              iSvc, iHead.From, aUid)
-      _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
-      return err
+      return discardTmtp(iHead, iR)
    }
    aBuf := make([]byte, iHead.DataLen)
    _, err = iR.Read(aBuf)

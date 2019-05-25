@@ -11,7 +11,6 @@ import (
    "hash/crc32"
    "fmt"
    "io"
-   "io/ioutil"
    "encoding/json"
    "os"
    "path"
@@ -247,21 +246,19 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    aTempOk := ftmpSr(iSvc, aThreadId, aMsgId)
    aTemp := aTempOk + ".tmp"
 
-   fErr := func(cS string, cA ...interface{}) error {
-      fmt.Fprintf(os.Stderr, "storeReceivedThread "+ cS, cA...)
-      _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
-      return err
-   }
    if iHead.SubHead.ThreadId == "" {
       if iHead.SubHead.ConfirmId != "" {
-         return "", fErr("%s: missing thread id\n", iSvc)
+         fmt.Fprintf(os.Stderr, "storeReceivedThread %s: missing thread id\n", iSvc)
+         return "", discardTmtp(iHead, iR)
       }
       _, err = os.Lstat(aOrig)
       if err == nil {
-         return "", fErr("%s: thread %s already stored\n", iSvc, aThreadId)
+         fmt.Fprintf(os.Stderr, "storeReceivedThread %s: thread %s already stored\n", iSvc, aThreadId)
+         return "", discardTmtp(iHead, iR)
       }
    } else if iHead.SubHead.ThreadId[0] == '_' {
-      return "", fErr("%s: invalid thread id %s\n", iSvc, aThreadId)
+      fmt.Fprintf(os.Stderr, "storeReceivedThread %s: invalid thread id %s\n", iSvc, aThreadId)
+      return "", discardTmtp(iHead, iR)
    }
 
    var aTd, aFd *os.File
@@ -867,20 +864,20 @@ func storeFwdReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
    aTemp := aTempOk + ".tmp"
    var err error
 
-   fErr := func(cS string, cA ...interface{}) error {
-      fmt.Fprintf(os.Stderr, "storeFwdReceivedThread "+ cS, cA...)
-      _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
-      return err
-   }
    if iHead.SubHead.ThreadId == "" {
-      return fErr("%s: missing thread id\n", iSvc)
+      fmt.Fprintf(os.Stderr, "storeFwdReceivedThread %s: missing thread id\n", iSvc)
+      return discardTmtp(iHead, iR)
    }
    if iHead.SubHead.ThreadId[0] == '_' {
-      return fErr("%s: invalid thread id %s\n", iSvc, iHead.SubHead.ThreadId)
+      fmt.Fprintf(os.Stderr, "storeFwdReceivedThread %s: invalid thread id %s\n",
+                             iSvc, iHead.SubHead.ThreadId)
+      return discardTmtp(iHead, iR)
    }
    _, err = os.Lstat(aOrig)
    if err == nil {
-      return fErr("%s: thread %s already stored\n", iSvc, iHead.SubHead.ThreadId)
+      fmt.Fprintf(os.Stderr, "storeFwdReceivedThread %s: thread %s already stored\n",
+                             iSvc, iHead.SubHead.ThreadId)
+      return discardTmtp(iHead, iR)
    }
 
    aTd, err := os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
@@ -930,8 +927,7 @@ func storeFwdNotifyThread(iSvc string, iHead *Header, iR io.Reader) error {
 
    if iHead.DataLen > 0 {
       fmt.Fprintf(os.Stderr, "storeFwdNotifyThread %s: datalen too long, postid %s\n", iSvc, iHead.PostId)
-      _, err = io.CopyN(ioutil.Discard, iR, iHead.DataLen)
-      return err
+      return discardTmtp(iHead, iR)
    }
    if iHead.SubHead.ThreadId == "" {
       fmt.Fprintf(os.Stderr, "storeFwdNotifyThread %s: threadid missing, postid %s\n", iSvc, iHead.PostId)
