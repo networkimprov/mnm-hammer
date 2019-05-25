@@ -27,6 +27,10 @@ Complete documentation is provided within the app.
 
 ### Status
 
+_25 May 2019_ -
+v0.4 is released. It has been tested on Windows 7 & MacOS & Linux, but only with Firefox.  
+_New:_ Windows support. Fixes a crash-recovery failure, and a TMTP handling error.
+
 _13 May 2019_ -
 v0.3 is released. It has only been tested on Linux & MacOS, with Firefox.  
 _New:_ tooltips on menu icons. Fixes a crash, and a handful of UI flaws.
@@ -43,23 +47,33 @@ v0.1 is released. It has only been tested on Linux & MacOS, with Firefox.
 If you haven't received an invitation to join a TMTP service, you can set up your own.
 See directions to install the server at https://github.com/networkimprov/mnm
 
-1. Download latest preview  
+1. Download & save latest preview  
 |
-[**MacOS**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.3.0/mnm-app-macos-v0.3.0.tgz)
+[**Windows**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.4.0/mnm-app-windows-amd64-v0.4.0.zip)
 ||
-[**Linux**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.3.0/mnm-app-linux-amd64-v0.3.0.tgz)
+  [**MacOS**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.4.0/mnm-app-macos-v0.4.0.tgz)
+||
+  [**Linux**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.4.0/mnm-app-linux-amd64-v0.4.0.tgz)
 |  
 [Release details](https://github.com/networkimprov/mnm-hammer/releases/latest)
 
+   Also install Firefox if you don't have it: https://www.mozilla.org/en-US/firefox/
+
 1. Unpack download  
+Windows  
+a) Open the browser downloads menu, find "mnm-app-windows-amd64-v0.4.0.zip" and click "Open File".  
+b) Drag the item "mnm-hammer-v0.4.0" to the Downloads folder in the left-hand pane.  
+c) Open the Windows menu (bottom-left on screen), right-click "Command Prompt", and select "Run as administrator".  
+d) You'll see a warning "Do you want to allow the following program..."; click "Yes".  
+e) `cd %UserProfile%\Downloads\mnm-hammer-v0.4.0`  
 MacOS  
-a) Open the browser downloads menu, find "mnm-app-macos-v0.3.0.tgz" and click "Open File"  
-b) Open a Terminal window  
-c) `cd ~/Downloads/mnm-hammer-v0.3.0`  
+a) Open the browser downloads menu, find "mnm-app-macos-v0.4.0.tgz" and click "Open File".  
+b) Open a Terminal window.  
+c) `cd ~/Downloads/mnm-hammer-v0.4.0`  
 Linux  
 a) `cd the_right_directory` # use appropriate name  
-b) `tar xzf mnm-app-linux-amd64-v0.3.0.tgz`  
-c) `cd mnm-hammer-v0.3.0`
+b) `tar xzf mnm-app-linux-amd64-v0.4.0.tgz`  
+c) `cd mnm-hammer-v0.4.0`
 
 1. Upgrade a prior release, if applicable  
 a) Stop the prior app if it's running.  
@@ -69,6 +83,10 @@ Linux
 b) `sudo cp -a ../mnm-hammer-vX.Y.Z/store .` # use prior version
 
 1. Start app  
+Windows  
+a) `mnm-hammer.exe`  
+b) If you see a Windows Firewall warning, choose "Public networks...", then click "Allow access".  
+MacOS & Linux  
 a) `sudo ./mnm-hammer` # starts http on port 80  
 or  
 a) `./mnm-hammer --http [host]:port`  
@@ -90,10 +108,9 @@ Most (hopefully all) preview features & changes appear in the following producti
 ### Build & Package
 
 a) `go get github.com/networkimprov/mnm-hammer`  
-b) `cd $GOPATH/src/github.com/networkimprov/mnm-hammer`  
+b) `cd $GOPATH/src/github.com/networkimprov/mnm-hammer` # project directory can be moved out of $GOPATH  
 c) `./webdeps.sh` # download browser modules  
-d) `ln $GOPATH/bin/mnm-hammer mnm-hammer` # hard link necessary for packaging  
-e) `./pkg.sh` # make distribution downloads
+d) `./pkg.sh` # make release downloads for all platforms
 
 Building for Windows requires 2 additions to /usr/lib/go/src/syscall/syscall_windows.go:
 ```
