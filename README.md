@@ -27,13 +27,16 @@ Complete documentation is provided within the app.
 
 ### Status
 
+_29 May 2019_ -
+v0.5 is released. It fixes a panic on Windows, but is otherwise identical to v0.4.
+
 _25 May 2019_ -
 v0.4 is released. It has been tested on Windows 7 & MacOS & Linux, but only with Firefox.  
 _New:_ Windows support. Fixes a crash-recovery failure, and a TMTP handling error.
 
 _13 May 2019_ -
 v0.3 is released. It has only been tested on Linux & MacOS, with Firefox.  
-_New:_ tooltips on menu icons. Fixes a crash, and a handful of UI flaws.
+_New:_ tooltips on menu icons. Fixes a panic, and a handful of UI flaws.
 
 _07 May 2019_ -
 v0.2 is released. It has only been tested on Linux & MacOS, with Firefox.  
@@ -49,11 +52,11 @@ See directions to install the server at https://github.com/networkimprov/mnm
 
 1. Download & save latest preview  
 |
-[**Windows**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.4.0/mnm-app-windows-amd64-v0.4.0.zip)
+[**Windows**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.5.0/mnm-app-windows-amd64-v0.5.0.zip)
 ||
-  [**MacOS**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.4.0/mnm-app-macos-v0.4.0.tgz)
+  [**MacOS**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.5.0/mnm-app-macos-v0.5.0.tgz)
 ||
-  [**Linux**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.4.0/mnm-app-linux-amd64-v0.4.0.tgz)
+  [**Linux**](https://github.com/networkimprov/mnm-hammer/releases/download/v0.5.0/mnm-app-linux-amd64-v0.5.0.tgz)
 |  
 [Release details](https://github.com/networkimprov/mnm-hammer/releases/latest)
 
@@ -61,19 +64,19 @@ See directions to install the server at https://github.com/networkimprov/mnm
 
 1. Unpack download  
 Windows  
-a) Open the browser downloads menu, find "mnm-app-windows-amd64-v0.4.0.zip" and click "Open File".  
-b) Drag the item "mnm-hammer-v0.4.0" to the Downloads folder in the left-hand pane.  
+a) Open the browser downloads menu, find "mnm-app-windows-amd64-v0.5.0.zip" and click "Open File".  
+b) Drag the item "mnm-hammer-v0.5.0" to the Downloads folder in the left-hand pane.  
 c) Open the Windows menu (bottom-left on screen), right-click "Command Prompt", and select "Run as administrator".  
 d) You'll see a warning "Do you want to allow the following program..."; click "Yes".  
-e) `cd %UserProfile%\Downloads\mnm-hammer-v0.4.0`  
+e) `cd %UserProfile%\Downloads\mnm-hammer-v0.5.0`  
 MacOS  
-a) Open the browser downloads menu, find "mnm-app-macos-v0.4.0.tgz" and click "Open File".  
+a) Open the browser downloads menu, find "mnm-app-macos-v0.5.0.tgz" and click "Open File".  
 b) Open a Terminal window.  
-c) `cd ~/Downloads/mnm-hammer-v0.4.0`  
+c) `cd ~/Downloads/mnm-hammer-v0.5.0`  
 Linux  
 a) `cd the_right_directory` # use appropriate name  
-b) `tar xzf mnm-app-linux-amd64-v0.4.0.tgz`  
-c) `cd mnm-hammer-v0.4.0`
+b) `tar xzf mnm-app-linux-amd64-v0.5.0.tgz`  
+c) `cd mnm-hammer-v0.5.0`
 
 1. Upgrade a prior release, if applicable  
 a) Stop the prior app if it's running.  
