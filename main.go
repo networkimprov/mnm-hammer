@@ -33,7 +33,7 @@ import (
 // production releases: 1+ . 0  . 0+
 // preview releases:    pp . 1+ . pp (kVersionA & C from prior production release)
 // example sequence:    1.0.0, 1.0.1, 1.0.2, 1.1.2, 1.2.2, 2.0.0, 2.1.0, 2.0.1, 2.2.1
-const kVersionA, kVersionB, kVersionC = 0, 4, 0
+const kVersionA, kVersionB, kVersionC = 0, 5, 0
 const kVersionDate = "(unreleased)"
 
 const kDialRetryDelayMax = 6 * 60
