@@ -9,6 +9,8 @@ package slib
 
 import "syscall"
 
+const kENOTEMPTY = syscall.Errno(145) // missing in syscall
+
 func init() {
    // see README.md for required patch to go/src/syscall/syscall_windows.go
    syscall.Open_FileShareDelete = true

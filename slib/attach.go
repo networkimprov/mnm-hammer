@@ -14,7 +14,6 @@ import (
    "encoding/json"
    "os"
    "strings"
-   "syscall"
    "time"
    "net/url"
 )
@@ -390,7 +389,7 @@ func updateDraftAttach(iSvc string, iSubHeadOld, iSubHeadNew *tHeader2, iRec tCo
       if !aHasNew {
          err = os.Remove(dirAttach(iSvc) + aTid)
          if err != nil {
-            if !os.IsNotExist(err) && err.(*os.PathError).Err != syscall.ENOTEMPTY { quit(err) }
+            if !os.IsNotExist(err) && err.(*os.PathError).Err != kENOTEMPTY { quit(err) }
          } else {
             err = syncDir(dirAttach(iSvc))
             if err != nil { quit(err) }

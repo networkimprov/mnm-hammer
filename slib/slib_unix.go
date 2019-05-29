@@ -11,7 +11,10 @@ package slib
 
 import (
    "os"
+   "syscall"
 )
+
+const kENOTEMPTY = syscall.ENOTEMPTY
 
 func syncDir(iPath string) error {
    aFd, err := os.Open(iPath)
