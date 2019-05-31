@@ -594,10 +594,10 @@
          <div style="height:100%; position:absolute; right:2em; top:0; width:calc(50% - 2.5em)">
             <mnm-draftmenu ref="menu" :list="menu" @drop="dropUser"/></div>
       </div>
-      <ul uk-tab>
+      <ul uk-tab><li style="display:none"></li>
          <li v-for="aKey in ['Who','By','Date']"
-             :class="{'uk-active': aKey === mnm._data.sort.cl}">
-            <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
+             :class="{'uk-active': aKey === mnm._data.cs.Sort.cl}">
+            <a @click.prevent="mnm.SortSelect('cl', aKey)" href="#">{{aKey}}</a>
          </li></ul>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
          <li v-for="aUser in mnm._data.cl[1]" :key="aUser.WhoUid">
@@ -679,10 +679,10 @@
 
 <script type="text/x-template" id="mnm-attach">
    <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3 dropdown-scroll">
-      <ul uk-tab>
+      <ul uk-tab><li style="display:none"></li>
          <li v-for="aKey in ['Date','Name','Size']"
-             :class="{'uk-active': aKey === mnm._data.sort.al}">
-            <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
+             :class="{'uk-active': aKey === mnm._data.cs.Sort.al}">
+            <a @click.prevent="mnm.SortSelect('al', aKey)" href="#">{{aKey}}</a>
          </li></ul>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
          <li v-for="aFile in mnm._data.al" :key="aFile.File">
@@ -1219,10 +1219,10 @@
                     class="btn-iconx">&times;</button>
          </div>
       </form>
-      <ul uk-tab style="margin-top:0">
+      <ul uk-tab style="margin-top:0"><li style="display:none"></li>
          <li v-for="aKey in ['Date','Name']"
-             :class="{'uk-active': aKey === mnm._data.sort.t}">
-            <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
+             :class="{'uk-active': aKey === mnm._data.cs.Sort.t}">
+            <a @click.prevent="mnm.SortSelect('t', aKey)" href="#">{{aKey}}</a>
          </li></ul>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
          <li v-for="aFile in mnm._data.t" :key="aFile.Name">
@@ -1275,10 +1275,10 @@
                  title="New form"
                  class="btn-icon"><span uk-icon="pencil"></span></button>
       </form>
-      <ul uk-tab style="margin-top:0">
+      <ul uk-tab style="margin-top:0"><li style="display:none"></li>
          <li v-for="aKey in ['Date','Name']"
-             :class="{'uk-active': aKey === mnm._data.sort.f}">
-            <a @click.prevent="listSort(aKey)" href="#">{{aKey}}</a>
+             :class="{'uk-active': aKey === mnm._data.cs.Sort.f}">
+            <a @click.prevent="mnm.SortSelect('f', aKey)" href="#">{{aKey}}</a>
          </li></ul>
       <div style="position:relative"><!--context for rev card-->
          <ul class="uk-list uk-list-divider dropdown-scroll-list">
@@ -1374,7 +1374,7 @@
             return true;
          },
          listSort: function(i) {
-            mnm._data.sort.f = i;
+            mnm._data.cs.Sort.f = i;
             mnm._data.f.sort(function(cA, cB) {
                if (i === 'Name')
                   return cA.Name < cB.Name ? -1 : 1;
@@ -1834,8 +1834,7 @@
    // global
       v:[], t:[], f:[], fo:'', nlo:[], // fo populated by f requests
    // per client
-      cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}},
-      sort:{cl:'Who', al:'Date', t:'Date', f:'Date'}, //todo move to cs
+      cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
       ohiFrom: !mnm._isLocal, //todo move to cs
    // per service
       cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
@@ -1949,7 +1948,7 @@
    mnm._listSort = function(iName, iKey) {
       var aTmp;
       var aList = iName === 'cl' ? mnm._data.cl[1] : mnm._data[iName];
-      mnm._data.sort[iName] = iKey;
+      mnm._data.cs.Sort[iName] = iKey;
       aList.sort(function(cA, cB) {
          if (iKey === 'Date')
             aTmp = cA, cA = cB, cB = aTmp;
@@ -2017,18 +2016,25 @@
       }
 
       switch (i) {
-      case 'cs': case 'cf': case 'nl': case 'cl': case 'al': case 'ml':
+      case 'cf': case 'nl': case 'cl': case 'al': case 'ml':
       case 'ps': case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
       case 't' : case 'f' : case 'v' : case 'nlo':
          if (i === 'f' && iEtc) {
             mnm._data.fo = iData;
          } else {
             mnm._data[i] = JSON.parse(iData);
-            if (i === 'cl' || i === 'al' || i === 't' || i === 'f')
-               sApp.$refs[i].listSort(mnm._data.sort[i]);
+            if (mnm._data.cs.Sort[i])
+               sApp.$refs[i].listSort(mnm._data.cs.Sort[i]);
             else if (i === 'v')
                mnm._data.v.sort();
          }
+         break;
+      case 'cs':
+         var aData = JSON.parse(iData);
+         for (var a in aData.Sort)
+            if (aData.Sort[a] !== mnm._data.cs.Sort[a])
+               sApp.$refs[a].listSort(aData.Sort[a]);
+         mnm._data.cs = aData;
          break;
       case 'tl':
          var aData = JSON.parse(iData);
