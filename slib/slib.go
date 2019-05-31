@@ -225,6 +225,10 @@ type Update struct {
       PosFor int8
       Pos int
    }
+   Sort *struct {
+      Type string
+      Field string
+   }
    Test *UpdateTest
 }
 

@@ -111,6 +111,10 @@
       _wsSend({op:'tab_drop', tab:{type:iType}})
    };
 
+   mnm.SortSelect = function(iType, iField) {
+      _wsSend({op:'sort_select', sort:{type:iType, field:iField}})
+   };
+
    mnm.FormOpen = function(iId) {
       _xhr('/f', iId);
    };

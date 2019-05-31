@@ -509,6 +509,7 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
    case "navigate_history",
         "notice_seen",
         "tab_add", "tab_pin", "tab_drop", "tab_select",
+        "sort_select",
         "open":
       // nothing to do
    case "test":

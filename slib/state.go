@@ -15,6 +15,7 @@ import (
    "sync"
 )
 
+var sSortDefault = tSummarySort{Cc:"Who", Atc:"Date", Upload:"Date", Form:"Date"}
 var sSvcTabsDefault = []string{"All","Unread","Todo","FFT"}
 var sThreadTabsDefault = []string{"Open","All"}
 
@@ -81,9 +82,11 @@ type ClientState struct {
    History []string // thread id
    Thread map[string]*tThreadState // key thread id
    SvcTabs tTabs
+   UploadSort, FormSort string `json:",omitempty"`
 }
 
 type tThreadState struct {
+   CcSort, AtcSort string `json:",omitempty"`
    Open tOpenState
    Tabs tTabs
    Discard bool
@@ -116,10 +119,18 @@ func (o tOpenState) MarshalJSON() ([]byte, error) {
 }
 
 type tSummary struct {
+   Sort tSummarySort
    Thread string
    ThreadTabs *tSummaryTabs `json:",omitempty"`
    History struct{ Prev, Next bool }
    SvcTabs tSummaryTabs
+}
+
+type tSummarySort struct {
+   Cc     string `json:"cl"`
+   Atc    string `json:"al"`
+   Upload string `json:"t"`
+   Form   string `json:"f"`
 }
 
 type tSummaryTabs struct {
@@ -135,13 +146,19 @@ func (o *ClientState) GetSummary() interface{} {
    aPinned := getTabsService(o.svc)
 
    o.RLock(); defer o.RUnlock()
-   aS := &tSummary{ Thread: "none",
+   aS := &tSummary{ Sort: sSortDefault, Thread: "none",
                     SvcTabs: tSummaryTabs{ Type: eTabService, Default: sSvcTabsDefault,
                                            tTabs: *o.SvcTabs.copy(), Pinned: &aPinned }}
+   if o.UploadSort != "" { aS.Sort.Upload = o.UploadSort }
+   if o.FormSort   != "" { aS.Sort.Form   = o.FormSort }
+
    if o.Hpos >= 0 {
+      aTs := o.Thread[o.History[o.Hpos]]
+      if aTs.CcSort  != "" { aS.Sort.Cc  = aTs.CcSort }
+      if aTs.AtcSort != "" { aS.Sort.Atc = aTs.AtcSort }
       aS.Thread = o.History[o.Hpos]
       aS.ThreadTabs = &tSummaryTabs{ Type: eTabThread, Default: sThreadTabsDefault,
-                                     tTabs: *o.Thread[o.History[o.Hpos]].Tabs.copy() }
+                                     tTabs: *aTs.Tabs.copy() }
       aS.History.Prev = o.Hpos > 0
       aS.History.Next = o.Hpos < len(o.History)-1
    }
@@ -355,6 +372,20 @@ func (o *ClientState) dropTab(iType int8) {
    if aFor == ePosForPinned {
       dropTabService(o.svc, aOrig)
    }
+}
+
+func (o *ClientState) setSort(iType string, iField string) {
+   o.Lock(); defer o.Unlock()
+   switch iType {
+   case "t":  o.UploadSort                        = iField
+   case "f":  o.FormSort                          = iField
+   case "cl": o.Thread[o.History[o.Hpos]].CcSort  = iField
+   case "al": o.Thread[o.History[o.Hpos]].AtcSort = iField
+   default:
+      quit(tError("setSort got unknown type: "+ iType))
+   }
+   err := storeFile(o.filePath, o)
+   if err != nil { quit(err) }
 }
 
 func (o *ClientState) goLink(iThreadId, iMsgId string) {

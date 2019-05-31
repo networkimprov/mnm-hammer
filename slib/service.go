@@ -619,6 +619,9 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       iState.setTab(iUpdt.Tab.Type, iUpdt.Tab.PosFor, iUpdt.Tab.Pos)
       aAlt := "tl"; if iUpdt.Tab.Type == eTabThread { aAlt = "mo" }
       aFn, aResult = fOne, []string{"cs", aAlt}
+   case "sort_select":
+      iState.setSort(iUpdt.Sort.Type, iUpdt.Sort.Field)
+      aFn, aResult = fOne, []string{"cs"}
    case "test":
       if len(iUpdt.Test.Request) > 0 {
          if iUpdt.Test.ThreadId != "" {
