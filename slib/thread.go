@@ -98,7 +98,7 @@ func GetCcThread(iSvc string, iState *ClientState) interface{} {
       Queued bool
       Qid string `json:",omitempty"`
    }
-   const kDraft, kSet = 0, 1
+   const ( eFwd = iota; eCc )
    aCc := [2][]tCcElFwd{{},{}}
    aTid := iState.getThread()
    if aTid == "" { return aCc }
@@ -113,7 +113,7 @@ func GetCcThread(iSvc string, iState *ClientState) interface{} {
          if !os.IsNotExist(err) { quit(err) }
          return false
       }
-      _readCc(cFd, &aCc[kSet])
+      _readCc(cFd, &aCc[eCc])
       cFd.Close()
       return true
    }
@@ -124,14 +124,14 @@ func GetCcThread(iSvc string, iState *ClientState) interface{} {
    aFwd := _getFwd(iSvc, aTid, "")
    aDoor.RUnlock()
    for a := range aFwd {
-      aN := kDraft; if hasQueue(iSvc, eSrecFwd, aFwd[a].Id) { aN = kSet }
-      aQid := ""; if aN == kDraft { aQid = aFwd[a].Id }
+      aN := eFwd; if hasQueue(iSvc, eSrecFwd, aFwd[a].Id) { aN = eCc }
+      aQid := ""; if aN == eFwd { aQid = aFwd[a].Id }
       for a1 := range aFwd[a].Cc {
-         aCc[aN] = append(aCc[aN], tCcElFwd{tCcElCore:aFwd[a].Cc[a1].tCcElCore, Queued:aN==kSet, Qid:aQid})
+         aCc[aN] = append(aCc[aN], tCcElFwd{tCcElCore:aFwd[a].Cc[a1].tCcElCore, Queued:aN==eCc, Qid:aQid})
       }
    }
 
-   sort.Slice(aCc[kSet], func(cA, cB int) bool { return aCc[kSet][cA].Who < aCc[kSet][cB].Who })
+   sort.Slice(aCc[eFwd], func(cA, cB int) bool { return aCc[eFwd][cA].Who < aCc[eFwd][cB].Who })
    return aCc
 }
 
@@ -1196,10 +1196,11 @@ func _updateCc(iSvc string, iCc []tCcEl, iOmitSelf bool) []tCcEl {
       iCc[a].Subscribe = true
    }
    if !iOmitSelf {
-      iCc = append(iCc, tCcEl{tCcElCore:tCcElCore{
-                              Who: aCfg.Alias, WhoUid: aCfg.Uid,
-                              By:  aCfg.Alias, ByUid:  aCfg.Uid,
-                              Date: ".", Note: "author", Subscribe: true}})
+      iCc = append([]tCcEl{{tCcElCore:tCcElCore{
+                            Who: aCfg.Alias, WhoUid: aCfg.Uid,
+                            By:  aCfg.Alias, ByUid:  aCfg.Uid,
+                            Date: ".", Note: "author", Subscribe: true}}},
+                   iCc...)
    }
    return iCc
 }
