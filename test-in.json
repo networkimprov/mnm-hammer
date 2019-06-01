@@ -38,7 +38,7 @@
       "mo": [{"From":"self", "Id":"*midt", "Len":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
-                                "Date":".", "Note":"author", "Subscribe":true}] },
+                                "Date":"*d", "Note":"author", "Subscribe":true}] },
               "msg_data":"" }] ,
       "tl": [{"Id":"*midt", "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":"", "Subject":"ohi"}] ,
       "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
@@ -50,7 +50,7 @@
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} ,
       "cl": [[],
              [{"Who":"Blue#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
-               "Date":".", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
+               "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
       "al": [] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{
@@ -59,11 +59,11 @@
       "mn": [{"From":"self", "Id":"*midt", "Len":3, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi there",
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
-                                "Date":".", "Note":"author", "Subscribe":true}] },
+                                "Date":"*d", "Note":"author", "Subscribe":true}] },
               "msg_data":"one" }] ,
       "cl": [[],
              [{"Who":"Blue#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
-               "Date":".", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
+               "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
       "al": [] }
 },{
    "Updt": {"Op":"thread_discard", "Thread":{"Id":"last"}},
@@ -109,9 +109,9 @@
                                    {"Name":"f:Blue.original",
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}],
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
-                                "Date":".", "Note":"author", "Subscribe":true},
+                                "Date":"*d", "Note":"author", "Subscribe":true},
                                {"Who":"Gold#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
-                                "Date":".", "Note":"initial recipient", "Subscribe":true}] },
+                                "Date":"*d", "Note":"initial recipient", "Subscribe":true}] },
               "msg_data":"" }] ,
       "tl": [{"Id":"*midt", "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":"", "Subject":"ohi"}] ,
       "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
@@ -123,9 +123,9 @@
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} ,
       "cl": [[],
              [{"Who":"Blue#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
-               "Date":".", "Note":"author", "Subscribe":true, "Queued":false},
+               "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false},
               {"Who":"Gold#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
-               "Date":".", "Note":"initial recipient", "Subscribe":true, "Queued":false}] ] ,
+               "Date":"*d", "Note":"initial recipient", "Subscribe":true, "Queued":false}] ] ,
       "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*midt", "File":"*", "Date":"*d"},
              {"Name":"BlueFile",      "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] }
 },{
@@ -145,15 +145,15 @@
                                    {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}],
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
-                                "Date":".", "Note":"author", "Subscribe":true},
+                                "Date":"*d", "Note":"author", "Subscribe":true},
                                {"Who":"Gold#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
-                                "Date":".", "Note":"initial recipient", "Subscribe":true}] },
+                                "Date":"*d", "Note":"initial recipient", "Subscribe":true}] },
               "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
       "cl": [[],
              [{"Who":"Blue#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
-               "Date":".", "Note":"author", "Subscribe":true, "Queued":false},
+               "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false},
               {"Who":"Gold#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
-               "Date":".", "Note":"initial recipient", "Subscribe":true, "Queued":false}] ] ,
+               "Date":"*d", "Note":"initial recipient", "Subscribe":true, "Queued":false}] ] ,
       "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*midt", "File":"*", "Date":"*d"},
              {"Name":"BlueFile",      "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] }
 },{
@@ -536,7 +536,7 @@
                                    {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}],
                          "Cc":[{"Who":"Gold#td", "WhoUid":"*uid", "By":"Gold#td", "ByUid":"*uid",
-                                "Date":".", "Note":"author", "Subscribe":true}] },
+                                "Date":"*d", "Note":"author", "Subscribe":true}] },
               "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
       "tl": [{"Id":"*midt", "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":""},
@@ -551,7 +551,7 @@
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} ,
       "cl": [[],
              [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
-               "Date":".", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
+               "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
       "al": [{"Name":"Gold/File",      "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
@@ -589,7 +589,7 @@
                  "Cc":[{"Who":"Blue", "WhoUid":"lookup", "Note":"add Blue"}] }},
    "Result": {
       "cl": [[{"Who":"Blue#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
-               "Date":".", "Note":"add Blue", "Subscribe":true, "Queued":false, "Qid":"*"}],
+               "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":false, "Qid":"*"}],
              [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] }
 },{
@@ -599,7 +599,7 @@
              [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false},
               {"Who":"Blue#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
-               "Date":".", "Note":"add Blue", "Subscribe":true, "Queued":true}] ] }
+               "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":true}] ] }
 }]
 
 }]

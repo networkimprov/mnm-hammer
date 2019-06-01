@@ -1190,7 +1190,7 @@ func _updateCc(iSvc string, iCc []tCcEl, iOmitSelf bool) []tCcEl {
    for a := range iCc {
       iOmitSelf = iOmitSelf || iCc[a].WhoUid == aCfg.Uid
       if iCc[a].Date != "" { continue }
-      iCc[a].Date = "."
+      iCc[a].Date = dateRFC3339()
       iCc[a].ByUid = aCfg.Uid
       iCc[a].By = aCfg.Alias
       iCc[a].Subscribe = true
@@ -1199,7 +1199,7 @@ func _updateCc(iSvc string, iCc []tCcEl, iOmitSelf bool) []tCcEl {
       iCc = append([]tCcEl{{tCcElCore:tCcElCore{
                             Who: aCfg.Alias, WhoUid: aCfg.Uid,
                             By:  aCfg.Alias, ByUid:  aCfg.Uid,
-                            Date: ".", Note: "author", Subscribe: true}}},
+                            Date: dateRFC3339(), Note: "author", Subscribe: true}}},
                    iCc...)
    }
    return iCc
