@@ -61,9 +61,10 @@
                    :list="msgSubjects"/>
       <div class="uk-float-right">
          <span uk-icon="social" class="dropdown-icon"
-               title="Recipients of thread">{{cl[1].length}}</span>&nbsp;
+               title="Recipients of thread">{{ml.length === 1 && !ml[0].From ? '' : cl[1].length}}</span>
          <mnm-cc ref="cl"
                  :tid="ml.length ? ml[ml.length-1].Id : 'none'"/>
+         &nbsp;
          <span class="dropdown-icon"
                title="Attachments to thread">{{al.length || '&nbsp;'}}<mnm-paperclip/></span>
          <mnm-attach ref="al"/>
@@ -492,7 +493,7 @@
             <span @click.stop="UIkit.dropdown($root.$refs.cl.$el).show()"
                   uk-icon="social" title="Recipients"></span>
             <div>
-               a) Enter a contact's alias in the <i>To</i> field.<br>
+               a) Enter a contact's alias in the <i>Forward to</i> field.<br>
                b) Select the contact in the menu, hit enter.<br>
                c) To forward, click
                   <button class="btn-icon"><span uk-icon="forward"></span></button><br>
@@ -577,48 +578,52 @@
 
 <script type="text/x-template" id="mnm-cc">
    <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3 dropdown-scroll">
-      <button @click="mnm.ForwardSend(tid, mnm._data.cl[0][0].Qid)"
-              :class="{vishide: ccSet}"
+      <input v-model="note"
+             placeholder="Note (opt.)" maxlength="1024" type="text"
+             style="width:calc(50% - 1em)">
+      <mnm-adrsbkinput @keyup.enter.native="addUser"
+                       :type="3"
+                       :placeholder="ccSet ? 'To' : 'Forward to'"
+                       style="width:calc(50% - 0.5em); margin-bottom: 0.5em"/>
+      <br>
+      <button v-show="!ccSet"
+              @click="mnm.ForwardSend(tid, mnm._data.cl[0][0].Qid)"
               :disabled="ccSet || !mnm._data.cl[ccSet].length"
               title="Forward thread to new recipients"
-              style="float:left; margin:0 0.5em 1em 0"
+              style="margin-right:0.5em"
               class="btn-icon"><span uk-icon="forward"></span></button>
-      <input v-model="note"
-             placeholder="Note" maxlength="1024" type="text"
-             style="width:calc(100% - 4em)">
-      <div style="position:relative; padding:1px;">
-         <mnm-adrsbkinput @keyup.enter.native="addUser"
-                          :type="3"
-                          placeholder="To"
-                          style="width:calc(50% - 2em)"/>
-         <div style="height:100%; position:absolute; right:2em; top:0; width:calc(50% - 2.5em)">
-            <mnm-draftmenu ref="menu" :list="menu" @drop="dropUser"/></div>
+      <div v-for="(aUser, aI) in menu" :key="aUser.Who"
+           :title="aUser.Note"
+           class="cc-new">{{
+         aUser.Who
+       }}<button @click="dropUser(aI)"
+                 class="btn-iconx">&times;</button>
       </div>
-      <ul uk-tab><li style="display:none"></li>
-         <li v-for="aKey in ['Who','By','Date']"
-             :class="{'uk-active': aKey === mnm._data.cs.Sort.cl}">
-            <a @click.prevent="mnm.SortSelect('cl', aKey)" href="#">{{aKey}}</a>
-         </li></ul>
-      <ul class="uk-list uk-list-divider dropdown-scroll-list">
-         <li v-for="aUser in mnm._data.cl[1]" :key="aUser.WhoUid">
-            <div style="float:left; width:40%">
-               <span :title="aUser.Note">{{aUser.Who}}</span>
-               <span v-show="aUser.Queued"
-                     title="Awaiting link to server"
-                     uk-icon="bolt"></span>
-            </div>
-            {{aUser.By}}
-            <div style="float:right"><mnm-date :iso="ccSet ? now().toISO() : aUser.Date"/></div>
-         </li></ul>
+      <br>
+      <template v-if="!ccSet">
+         <ul uk-tab><li style="display:none"></li>
+            <li v-for="aKey in ['Who','By','Date']"
+                :class="{'uk-active': aKey === mnm._data.cs.Sort.cl}">
+               <a @click.prevent="mnm.SortSelect('cl', aKey)" href="#">{{aKey}}</a>
+            </li></ul>
+         <ul class="uk-list uk-list-divider dropdown-scroll-list">
+            <li v-for="aUser in mnm._data.cl[1]" :key="aUser.Who">
+               <div style="float:left; width:40%">
+                  <span :title="aUser.Note">{{aUser.Who}}</span>
+                  <span v-show="aUser.Queued"
+                        title="Awaiting link to server"
+                        uk-icon="bolt"></span>
+               </div>
+               {{aUser.By}}
+               <div style="float:right"><mnm-date :iso="aUser.Date"/></div>
+            </li></ul>
+      </template>
    </div>
 </script><script>
    Vue.component('mnm-cc', {
       template: '#mnm-cc',
       props: {tid:String},
       data: function() { return {note:'', lastMenu:[]} },
-      watch: {
-         tid: function() { this.note = this.ccSet ? 'initial recipient' : '' },
-      },
       computed: {
          ccSet: function() { return this.tid.charAt(0) === '_' ? 1 : 0 },
          menu: function() {
@@ -636,9 +641,7 @@
             var aMenu = fChanged(this) ? [] : this.lastMenu;
             for (var a=0, aN=0; a < aCc.length; ++a)
                if (aCc[a].WhoUid !== aCc[a].ByUid)
-                  aMenu[aN++] = aCc[a].Who;
-            if ('menu' in this.$refs)
-               this.$refs.menu.$forceUpdate();
+                  aMenu[aN++] = aCc[a];
             return this.lastMenu = aMenu;
          },
          mnm: function() { return mnm }
@@ -655,7 +658,7 @@
             var aEl = aPrev >= 0 ? aCc.splice(aPrev, 1)[0]
                                  : {Who:aAlias, WhoUid:mnm._adrsbkmenuId[aAlias]};
             aEl.Note = this.note;
-            aCc.unshift(aEl);
+            aCc.push(aEl);
             if (this.ccSet)
                mnm._data.draftRefs[this.tid].save(aCc, null);
             else
@@ -748,7 +751,11 @@
                  title="Send draft"
                  class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
          <span v-if="mnm._data.cl[1].length < 2"
-               style="font-size:84%">no recipients</span>
+               class="draft-recip">[self]</span>
+         <span v-else
+               class="draft-recip">{{firstCc}}</span>
+         <span v-if="mnm._data.cl[1].length > 2"
+               class="draft-recip">+{{mnm._data.cl[1].length - 2}}</span>
          <div style="height:100%; position:absolute; left:13em; right:42px; top:0;">
             <mnm-draftmenu @drop="atcDrop"
                            :list="mnm._data.mo[msgid].SubHead.Attach"
@@ -792,7 +799,17 @@
    Vue.component('mnm-draft', {
       template: '#mnm-draft',
       props: {msgid:String},
-      computed: { mnm: function() { return mnm } },
+      computed: {
+         mnm: function() { return mnm },
+         firstCc: function() {
+            var aUser;
+            mnm._data.cl[1].forEach(function(cUser) {
+               if (cUser.WhoUid !== mnm._data.cf.Uid && (!aUser || cUser.Date < aUser.Date))
+                  aUser = cUser;
+            });
+            return aUser.Who;
+         },
+      },
       created: function() { Vue.set(mnm._data.draftRefs, this.msgid, this) }, // $refs not reactive
       beforeDestroy: function() { Vue.delete(mnm._data.draftRefs, this.msgid) },
       methods: {

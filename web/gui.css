@@ -152,6 +152,14 @@ input[type=text], textarea {
    font-weight: bold;
 }
 
+.cc-new {
+   display: inline-block;
+   margin-right: 0.5em;
+   font-family: Monaco, monospace;
+   font-size: 82%;
+   color: black;
+}
+
 .message-title {
    cursor: pointer;
    display: inline-block;
@@ -203,6 +211,11 @@ input[type=text], textarea {
 }
 .message th, .message td {
    padding: 0.1em 0.5em;
+}
+
+.draft-recip {
+   font-family: Monaco, monospace;
+   font-size: 82%;
 }
 
 .vue-form-generator input:disabled {
