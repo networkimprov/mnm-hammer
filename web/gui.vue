@@ -127,8 +127,6 @@
                              title="New reply draft"
                              class="btn-icon"><span uk-icon="comment"></span></button>
                   </div>
-                  <div v-if="aMsg.Subject">
-                     Subject: {{ aMsg.Subject }}</div>
                   <div v-if="mo[aMsg.Id].SubHead.Attach">
                      Attached ({{ mo[aMsg.Id].SubHead.Attach.length }}):
                      <template v-for="aAtc in mo[aMsg.Id].SubHead.Attach">
@@ -148,7 +146,9 @@
                         &#x25CA;
                      </template>
                   </div>
-                  <br>
+                  <div v-if="aMsg.Subject">
+                     Re: {{ aMsg.Subject }}</div>
+                  <div style="margin-bottom:1em"></div>
                   <div v-if="!mo[aMsg.Id].msg_data">
                      <p><span uk-icon="comment"></span></p></div>
                   <mnm-markdown v-else
