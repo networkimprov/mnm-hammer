@@ -34,6 +34,8 @@ func fileState(iCli, iSvc string) string { return kStateDir + iCli +"/"+ url.Que
 func fileUpload(iFil string) string { return kUploadDir + url.QueryEscape(iFil) }
 func fileUptmp (iFil string) string { return kUploadTmp + url.QueryEscape(iFil) }
 
+func fileFormReg(iFfn string) string { return kFormRegDir + url.QueryEscape(iFfn) }
+
 func dirSvc(iSvc string) string { return kServiceDir + url.QueryEscape(iSvc) + "/" }
 
 func dirTemp  (iSvc string) string { return dirSvc(iSvc) + "temp/" }
@@ -253,7 +255,7 @@ type Msg map[string]interface{}
 
 func Init(iStart func(string), iCrash func(string, string)) {
    sCrashFn = iCrash
-   for _, aDir := range [...]string{kUploadTmp, kServiceDir, kStateDir, kFormDir} {
+   for _, aDir := range [...]string{kUploadTmp, kServiceDir, kStateDir, kFormDir, kFormRegDir} {
       err := os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }

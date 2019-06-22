@@ -14,7 +14,6 @@ import (
    "io/ioutil"
    "encoding/json"
    "os"
-   "path"
    "sort"
    "strconv"
    "strings"
@@ -275,7 +274,7 @@ func validateFilledForm(iSvc string, iBuf []byte, iFfn string) error {
    if strings.HasPrefix(iFfn, aLocalUri) {
       aPath = kFormDir + iFfn[len(aLocalUri):] + ".spec"
    } else {
-      aPath = kFormRegDir + iFfn
+      aPath = fileFormReg(iFfn)
       err = _retrieveSpec(iFfn)
       if err != nil { return err }
    }
@@ -301,9 +300,7 @@ func _retrieveSpec(iFfn string) error {
    //todo download from registry
    aTd, err := os.Open("./formspec")
    if err != nil { quit(err) }
-   err = os.MkdirAll(path.Dir(kFormRegDir + iFfn), 0700)
-   if err != nil { quit(err) }
-   aFd, err := os.OpenFile(kFormRegDir + iFfn, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+   aFd, err := os.OpenFile(fileFormReg(iFfn), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
    if err != nil { quit(err) }
    _, err = io.Copy(aFd, aTd)
    if err != nil { quit(err) }
