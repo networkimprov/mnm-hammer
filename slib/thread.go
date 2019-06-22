@@ -150,26 +150,26 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    }
    defer aFd.Close()
    var aIdx []tIndexEl
-   _ = _readIndex(aFd, &aIdx, nil)
-   for a, _ := range aIdx {
-      if iId != "" && aIdx[a].Id == iId || iId == "" && iState.isOpen(aIdx[a].Id) {
-         var aRd, aXd *os.File
-         if aIdx[a].Offset >= 0 {
-            _, err = aFd.Seek(aIdx[a].Offset, io.SeekStart)
-            if err != nil { quit(err) }
-            aXd = aFd
-         } else {
-            aRd, err = os.Open(dirThread(iSvc) + aIdx[a].Id)
-            if err != nil { quit(err) }
-            defer aRd.Close()
-            aXd = aRd
-         }
-         _, err = io.CopyN(iW, aXd, aIdx[a].Size)
-         if err != nil { return err } //todo only return network errors
-         if iId != "" {
-            break
-         }
+   _readIndex(aFd, &aIdx, nil)
+   for a := range aIdx {
+      if iId != "" {
+         if aIdx[a].Id != iId { continue }
+      } else if !iState.isOpen(aIdx[a].Id) { continue }
+      var aXd *os.File
+      if aIdx[a].Offset >= 0 {
+         _, err = aFd.Seek(aIdx[a].Offset, io.SeekStart)
+         if err != nil { quit(err) }
+         aXd = aFd
+      } else {
+         aXd, err = os.Open(dirThread(iSvc) + aIdx[a].Id)
+         if err != nil { quit(err) }
+         defer aXd.Close()
       }
+      _, err = io.CopyN(iW, aXd, aIdx[a].Size)
+      if err != nil {
+         return err //todo only return network errors
+      }
+      if iId != "" { break }
    }
    return nil
 }
