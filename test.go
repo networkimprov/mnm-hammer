@@ -382,7 +382,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          })
          aMsg := aFn(aCtx.state)
          aOps, _ = aMsg.([]string)
-         if aOps == nil {
+         if aOps == nil && aMsg != nil {
             fmt.Fprintf(os.Stderr, "%s update error %s\n", aPrefix, aMsg.(string))
             continue
          }
