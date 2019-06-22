@@ -293,7 +293,8 @@
 },{
    "Updt": {"Op":"tab_add", "Tab":{"Type":1, "Term":"ohi"}},
    "Result": {
-      "tl": [] ,
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"ohi",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
              "History":{"Prev":false, "Next":true},
@@ -321,6 +322,19 @@
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
              "History":{"Prev":false, "Next":true},
              "SvcTabs":{"Pos":0, "PosFor":2, "Terms":["ffn:networkimprov.github.io/mnm-registry/first_recv"],
+                        "Default":["All", "Unread", "Todo", "FFT"], "Pinned":["ohi"], "Type":1},
+             "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
+},{
+   "Updt": {"Op":"tab_select", "Tab":{"Type":1, "PosFor":0, "Pos":1}},
+   "Result": {
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
+             {"Id":"*mid", "Unread":true, "Subject":"ohi",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
+      "cs": {"Thread":"*mid",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "History":{"Prev":false, "Next":true},
+             "SvcTabs":{"Pos":1, "PosFor":0, "Terms":["ffn:networkimprov.github.io/mnm-registry/first_recv"],
                         "Default":["All", "Unread", "Todo", "FFT"], "Pinned":["ohi"], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{

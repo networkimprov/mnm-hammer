@@ -387,6 +387,7 @@ func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *t
    if err != nil { quit(err) }
    err = iFd.Sync()
    if err != nil { quit(err) }
+   _updateSearchDoc(iSvc, aRec.tid(), iFd, nil)
 
    var aEl *tIndexEl
    for a := range iIdx {
@@ -419,12 +420,16 @@ func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *
       if err != nil && !os.IsExist(err) { quit(err) }
       err = syncDir(dirThread(iSvc))
       if err != nil { quit(err) }
+      iFd, err = os.Open(dirThread(iSvc) + aRec.tid())
+      if err != nil { quit(err) }
+      defer iFd.Close()
    } else {
       _, err = io.Copy(iFd, iTd) // iFd has correct pos from _readIndex
       if err != nil { quit(err) }
       err = iFd.Sync()
       if err != nil { quit(err) }
    }
+   _updateSearchDoc(iSvc, aRec.tid(), iFd, nil)
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
 }
@@ -472,6 +477,8 @@ func seenReceivedThread(iSvc string, iUpdt *Update) bool {
 func _completeSeenReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
    sCrashFn(iSvc, "seen-received-thread")
 
+   aRec := _parseFtmp(iTmp)
+
    var err error
    aTempOk := dirTemp(iSvc) + iTmp
 
@@ -479,6 +486,7 @@ func _completeSeenReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
    if err != nil { quit(err) }
    err = iFd.Sync()
    if err != nil { quit(err) }
+   _updateSearchDoc(iSvc, aRec.tid(), iFd, nil) //todo _updateUnread()
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
 }
@@ -565,6 +573,9 @@ func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsg
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
    err := os.Remove(fileDraft(iSvc, aTid, aRec.lms()))
    if err != nil && !os.IsNotExist(err) { quit(err) }
+   if aTid == "" {
+      deleteThreadSearch(iSvc, "_"+ aRec.lms())
+   }
    dropQueue(iSvc, _makeQid(eSrecThread, aTid, aRec.lms()))
 
    _completeStoreReceived(iSvc, iTmp, iFd, iTd, &tMsgHead{}, nil)
@@ -679,6 +690,14 @@ func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMs
       if err != nil { quit(err) }
       err = iFd.Sync()
       if err != nil { quit(err) }
+   } else {
+      iFd = iTd
+   }
+   aTid := aRec.tid(); if aTid == "" { aTid = "_" + aRec.lms() }
+   if aRec.op() == "ws" || aRec.tid() != "" {
+      _updateSearchDoc(iSvc, aTid, iFd, nil)
+   } else {
+      deleteThreadSearch(iSvc, aTid)
    }
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
@@ -901,11 +920,11 @@ func storeFwdReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreFwdReceived(iSvc, path.Base(aTempOk))
+   _completeStoreFwdReceived(iSvc, path.Base(aTempOk), aTd)
    return nil
 }
 
-func _completeStoreFwdReceived(iSvc string, iTmp string) {
+func _completeStoreFwdReceived(iSvc string, iTmp string, iTd *os.File) {
    sCrashFn(iSvc, "store-fwd-received-thread")
 
    aRec := _parseFtmp(iTmp)
@@ -915,6 +934,7 @@ func _completeStoreFwdReceived(iSvc string, iTmp string) {
    if err != nil && !os.IsExist(err) { quit(err) }
    err = syncDir(dirThread(iSvc))
    if err != nil { quit(err) }
+   _updateSearchDoc(iSvc, aRec.tid(), iTd, nil)
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
 }
@@ -1219,6 +1239,107 @@ func _revCc(iCc []tCcEl, iHead *Header) {
    }
 }
 
+/*func _updateUnread(iSvc string, iTid string, iFd *os.File) {
+   var aIdx []tIndexEl
+   _readIndex(iFd, &aIdx, nil)
+   aUnread := false
+   for a := range aIdx {
+      aUnread = aUnread || aIdx[a].Seen == ""
+   }
+   updateUnreadSearch(iSvc, iTid, aUnread)
+}*/
+
+func _updateSearchDoc(iSvc string, iTid string, iFd *os.File, iI tIndexer) {
+   aSelf := GetConfigService(iSvc).Alias
+   var aIdx []tIndexEl
+   _readIndex(iFd, &aIdx, nil)
+   aDoc := &tSearchDoc{id: iTid, OrigDate: aIdx[0].Date, OrigAuthor: aIdx[0].Alias}
+   for a := range aIdx {
+      if aIdx[a].Alias != "" && aIdx[a].Alias != aSelf {
+         aDoc.Author.addUnique(aIdx[a].Alias)
+      }
+      if aIdx[a].Subject != "" || a == 0 {
+         aDoc.Subject.addUnique(aIdx[a].Subject)
+      }
+      if aIdx[a].From != "" || a == 0 {
+         aDoc.LastDate, aDoc.LastAuthor = aIdx[a].Date, aIdx[a].Alias
+      }
+      aDoc.Unread = aDoc.Unread || aIdx[a].Seen == ""
+   }
+   aDoc.bodyStream = _newThreadStream(iSvc, aIdx, iFd)
+   indexThreadSearch(iSvc, aDoc, iI)
+}
+
+type tThreadStream struct {
+   bufHead []byte
+   svc string
+   idx []tIndexEl
+   a int
+   fd *os.File
+   pos int64
+   draft *tThreadStream
+}
+
+func _newThreadStream(iSvc string, iIdx []tIndexEl, iFd *os.File) *tThreadStream {
+   o := &tThreadStream{svc: iSvc, idx: iIdx, fd: iFd, bufHead: make([]byte, 4)}
+   _, err := iFd.Seek(0, io.SeekStart)
+   if err != nil { quit(err) }
+   if len(iIdx) == 1 && iIdx[0].Offset < 0 {
+      iIdx[0].Offset = 0
+   }
+   for a := len(iIdx)-1; a >= 0; a-- { // move drafts to end to preserve file sequence
+      if iIdx[a].Offset >= 0 { continue }
+      aEl := iIdx[a]
+      iIdx = iIdx[:a + copy(iIdx[a:], iIdx[a+1:])]
+      o.idx[len(iIdx)] = aEl
+   }
+   return o
+}
+
+func (o *tThreadStream) Read(iBuf []byte) (int, error) { // for io.Reader
+   if o.a >= len(o.idx) {
+      return 0, io.EOF
+   }
+   var err error
+   var aLen int
+   if o.idx[o.a].Offset < 0 {
+      if o.draft == nil {
+         o.draft = &tThreadStream{bufHead: o.bufHead, idx: []tIndexEl{o.idx[o.a]}}
+         o.draft.idx[0].Offset = 0
+         o.draft.fd, err = os.Open(dirThread(o.svc) + o.idx[o.a].Id)
+         if err != nil { quit(err) }
+      }
+      aLen, err = o.draft.Read(iBuf)
+      if err != nil {
+         if err != io.EOF { quit(err) }
+         o.draft.fd.Close()
+         o.draft = nil
+         o.a++
+         return 0, nil
+      }
+      return aLen, nil
+   }
+   if o.pos == o.idx[o.a].Offset {
+      _, err = o.fd.Read(o.bufHead)
+      if err != nil { quit(err) }
+      aUi, _ := strconv.ParseUint(string(o.bufHead), 16, 0)
+      o.pos, err = o.fd.Seek(int64(aUi)+1, io.SeekCurrent)
+      if err != nil { quit(err) }
+   }
+   aMax := o.idx[o.a].Offset + o.idx[o.a].Size - o.pos
+   if aMax <= int64(len(iBuf)) {
+      iBuf = iBuf[:aMax]
+      o.a++
+   }
+   aLen, err = o.fd.Read(iBuf)
+   if err != nil { quit(err) }
+   if aLen < len(iBuf) {
+      quit(tError("read length short"))
+   }
+   o.pos += int64(aLen)
+   return aLen, nil
+}
+
 type tMsgHead struct {
    Id string
    Len int64
@@ -1423,7 +1544,7 @@ func completeThread(iSvc string, iTempOk string) {
    case "ss": _completeStoreSent       (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
    case "ws": _completeStoreDraft      (iSvc, iTempOk, aFd, aTd, fMsgHead())
    case "ds": _completeDeleteDraft     (iSvc, iTempOk, aFd, aTd)
-   case "fr": _completeStoreFwdReceived(iSvc, iTempOk)
+   case "fr": _completeStoreFwdReceived(iSvc, iTempOk,      aTd)
    case "fn": _completeStoreFwdNotify  (iSvc, iTempOk, aFd, aTd, fCc("fwd"))
    case "fs": _completeStoreFwdSent    (iSvc, iTempOk, aFd, aTd, fCc("fwd"), fFwdSent())
    default:

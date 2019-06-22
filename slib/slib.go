@@ -16,6 +16,7 @@ import (
    "encoding/json"
    "os"
    "path"
+   pBleve "github.com/blevesearch/bleve"
    "sync"
    "time"
    "net/url"
@@ -49,6 +50,7 @@ func fileOhi  (iSvc string) string { return dirSvc(iSvc) + "ohi" }
 func fileTab  (iSvc string) string { return dirSvc(iSvc) + "tabs" }
 func fileSendq(iSvc string) string { return dirSvc(iSvc) + "sendq" }
 func fileNotc (iSvc string) string { return dirSvc(iSvc) + "notice" }
+func fileIndex(iSvc string) string { return dirSvc(iSvc) + "index.bleve" }
 
 func fileDraft(iSvc, iTid, iLms string) string { return dirThread(iSvc) + iTid +"_"+ iLms }
 func fileFwd  (iSvc, iTid       string) string { return dirThread(iSvc) + iTid + "_forward" }
@@ -92,6 +94,7 @@ type GlobalSet interface {
 
 type tService struct {
    adrsbk tAdrsbk
+   index pBleve.Index
    sync.RWMutex // protects the following
    config tSvcConfig
    sendQ []*tQueueEl

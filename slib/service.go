@@ -12,6 +12,7 @@ import (
    "io"
    "encoding/json"
    "os"
+   pBleve "github.com/blevesearch/bleve"
    "strings"
    "sync"
    "net/url"
@@ -54,7 +55,7 @@ func initServices(iFn func(string)) {
          continue
       }
       _makeTree(aSvc)
-      aService := _newService(nil)
+      aService := _newService(nil, nil)
       aSvcFiles := [...]struct { name string; cache interface{}; reqd bool }{
          {fileCfg  (aSvc), &aService.config, true },
          {fileSendq(aSvc), &aService.sendQ,  false},
@@ -72,6 +73,7 @@ func initServices(iFn func(string)) {
          }
       }
       sServices[aSvc] = aService
+      aService.index = openIndexSearch(aSvc)
       var aTmps []string
       aTmps, err = readDirNames(dirTemp(aSvc))
       if err != nil { quit(err) }
@@ -136,7 +138,6 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
       sServicesDoor.Unlock()
       return tError("name already exists: " + iName)
    }
-   sServices[iName] = _newService(&aCfg)
    aTemp := iName + ".tmp"
    _makeTree(aTemp)
    err = writeJsonFile(fileCfg(aTemp), &aCfg)
@@ -145,6 +146,7 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    if err != nil { quit(err) }
    err = os.Rename(dirSvc(aTemp), dirSvc(iName))
    if err != nil { quit(err) }
+   sServices[iName] = _newService(&aCfg, openIndexSearch(iName))
    sServicesDoor.Unlock()
 
    if sServiceStartFn != nil {
@@ -189,8 +191,8 @@ func getDoorService(iSvc string, iId string, iMake func()tDoor) tDoor {
    return aDoor
 }
 
-func _newService(iCfg *tSvcConfig) *tService {
-   aSvc := &tService{tabs: []string{}, doors: make(map[string]tDoor)}
+func _newService(iCfg *tSvcConfig, iBi pBleve.Index) *tService {
+   aSvc := &tService{tabs: []string{}, doors: make(map[string]tDoor), index: iBi}
    if iCfg != nil { aSvc.config = *iCfg }
    return aSvc
 }
