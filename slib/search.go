@@ -21,6 +21,7 @@ import (
    pBleve     "github.com/blevesearch/bleve"
    pBquery    "github.com/blevesearch/bleve/search/query"
    pBscorch   "github.com/blevesearch/bleve/index/scorch"
+   pBsearch   "github.com/blevesearch/bleve/search"
 )
 
 var sSearchIndexRev = []byte("0.6b")
@@ -130,6 +131,40 @@ func _i2slice(i interface{}) []interface{} { // bleve stores string for input []
    case []interface{}: return aV
    default:            return []interface{}{aV}
    }
+}
+
+type tTermSites pBsearch.TermLocationMap
+
+var sTermSitesEmpty = tTermSites{}
+var sResultFieldsMsg = []string{"Body"}
+
+func messageSearch(iSvc string, iTid string, iTerm string) tTermSites {
+   aBi := getService(iSvc).index
+   aQ := pBleve.NewConjunctionQuery(pBleve.NewDocIDQuery([]string{iTid}),
+                                    pBleve.NewMatchPhraseQuery(iTerm))
+   aSr := pBleve.NewSearchRequest(aQ)
+   aSr.Fields = sResultFieldsMsg
+   aSet, err := aBi.Search(aSr)
+   if err != nil { quit(err) }
+   if len(aSet.Hits) > 1 {
+      quit(fmt.Errorf("search result got %d hits; expected 1", len(aSet.Hits)))
+   } else if len(aSet.Hits) == 0 {
+      return sTermSitesEmpty
+   }
+   return tTermSites(aSet.Hits[0].Locations["Body"])
+}
+
+func (o tTermSites) hasTermBefore(iPos int64) bool {
+   aFound := false
+   for aTerm, aLoc := range o {
+      a := -1
+      for a = 0; a < len(aLoc); a++ {
+         aFound = aFound || aLoc[a].End < uint64(iPos)
+         if aLoc[a].Start >= uint64(iPos) { break }
+      }
+      o[aTerm] = aLoc[a:]
+   }
+   return aFound
 }
 
 func indexThreadSearch(iSvc string, iDoc *tSearchDoc, iI tIndexer) {

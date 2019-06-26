@@ -139,6 +139,19 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    aTid := iState.getThread()
    if aTid == "" { return nil }
 
+   aBufHead := []byte{0,0,0,0}
+   var aBodyTotal int64
+   var aFound tTermSites
+   if iId == "" {
+      aTabType, aTabVal := iState.getThreadTab()
+      if aTabType == ePosForTerms {
+         if aTabVal[0] == '&' {
+            iId = aTabVal[1:]
+         } else {
+            aFound = messageSearch(iSvc, aTid, aTabVal)
+         }
+      }
+   }
    aDoor := _getThreadDoor(iSvc, aTid)
    aDoor.RLock(); defer aDoor.RUnlock()
    if aDoor.renamed { return tError("thread name changed") }
@@ -154,6 +167,15 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    for a := range aIdx {
       if iId != "" {
          if aIdx[a].Id != iId { continue }
+      } else if aFound != nil {
+         if aIdx[a].Offset < 0 { continue } //todo add draft support
+         _, err = aFd.Seek(aIdx[a].Offset, io.SeekStart)
+         if err != nil { quit(err) }
+         _, err = aFd.Read(aBufHead)
+         if err != nil { quit(err) }
+         aUi, _ := strconv.ParseUint(string(aBufHead), 16, 0)
+         aBodyTotal += aIdx[a].Size - int64(4+aUi+1)
+         if !aFound.hasTermBefore(aBodyTotal) { continue }
       } else if !iState.isOpen(aIdx[a].Id) { continue }
       var aXd *os.File
       if aIdx[a].Offset >= 0 {

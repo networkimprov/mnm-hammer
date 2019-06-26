@@ -190,14 +190,23 @@ func (o *ClientState) getSvcTab() (int8, string) {
    return o.SvcTabs.PosFor, aSet[o.SvcTabs.Pos]
 }
 
+func (o *ClientState) getThreadTab() (int8, string) {
+   o.RLock(); defer o.RUnlock()
+   aT := o.Thread[o.History[o.Hpos]]
+   var aSet []string
+   switch aT.Tabs.PosFor {
+   case ePosForDefault: aSet = sThreadTabsDefault
+   case ePosForTerms:   aSet = aT.Tabs.Terms
+   }
+   return aT.Tabs.PosFor, aSet[aT.Tabs.Pos]
+}
+
 func (o *ClientState) isOpen(iMsgId string) bool {
    o.RLock(); defer o.RUnlock()
    aT := o.Thread[o.History[o.Hpos]]
    if aT.Tabs.PosFor == ePosForDefault {
       return aT.Tabs.Pos == 1 || aT.Tabs.Pos == 0 && aT.Open[iMsgId]
-   } else if aT.Tabs.Terms[aT.Tabs.Pos][0] == '&' {
-      return aT.Tabs.Terms[aT.Tabs.Pos][1:] == iMsgId
-   }
+   } //todo ePosForTerms
    return false
 }
 
