@@ -94,7 +94,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    }
    var aQ pBquery.Query
    if aTabType != ePosForDefault {
-      aQ = pBleve.NewMatchPhraseQuery(aTabVal)
+      aQ = _makeWordsQuery(aTabVal)
    } else if aTabVal == "All" {
       aQ = pBleve.NewMatchAllQuery()
    } else if aTabVal == "Unread" {
@@ -103,6 +103,10 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       aQ = aQb
    } else if aTabVal == "Todo" {
       aQ = pBleve.NewMatchNoneQuery()
+   }
+   if aQ == nil {
+      _, err = iW.Write([]byte{'[',']'})
+      return err
    }
    aBi := getService(iSvc).index
    aSr := pBleve.NewSearchRequest(aQ)
@@ -124,6 +128,48 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    sort.Slice(aList, func(cA, cB int) bool { return aList[cA].LastDate > aList[cB].LastDate })
    err = json.NewEncoder(iW).Encode(aList)
    return err
+}
+
+func _makeWordsQuery(iWords string) pBquery.Query {
+   aWordSet := strings.Fields(iWords)
+   if len(aWordSet) == 0 {
+      return nil
+   }
+   aLast := aWordSet[len(aWordSet)-1]
+   if aWordSet[0][0] == '=' || aLast[len(aLast)-1] == '=' {
+      return pBleve.NewMatchPhraseQuery(iWords)
+   }
+   aOpSet := make([]byte, len(aWordSet))
+   for a := len(aWordSet)-1; a >= 0; a-- {
+      for len(aWordSet[a]) > 0 && (aWordSet[a][0] == '+' || aWordSet[a][0] == '-') {
+         aOpSet[a] = aWordSet[a][0]
+         aWordSet[a] = aWordSet[a][1:]
+      }
+      if len(aWordSet[a]) == 0 {
+         aWordSet = aWordSet[:a + copy(aWordSet[a:], aWordSet[a+1:])]
+         if a < len(aOpSet)-1 { // assign op to next word unless it has one
+            aA := a; if aOpSet[a+1] == 0 { aA++ }
+            aOpSet = aOpSet[:aA + copy(aOpSet[aA:], aOpSet[aA+1:])]
+         } else {
+            aOpSet = aOpSet[:a]
+         }
+      }
+   }
+   if len(aWordSet) == 1 && aOpSet[0] != '-' {
+      return pBquery.NewMatchQuery(aWordSet[0])
+   }
+   aMust := make([]pBquery.Query, 0, len(aWordSet))
+   aNot  := make([]pBquery.Query, 0, len(aWordSet))
+   aShld := make([]pBquery.Query, 0, len(aWordSet))
+   for a := range aWordSet {
+      aRef := &aShld
+      switch aOpSet[a] {
+      case '+': aRef = &aMust
+      case '-': aRef = &aNot
+      }
+      *aRef = append(*aRef, pBquery.NewMatchQuery(aWordSet[a]))
+   }
+   return pBquery.NewBooleanQuery(aMust, aShld, aNot)
 }
 
 func _i2slice(i interface{}) []interface{} { // bleve stores string for input []string{s}
