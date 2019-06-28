@@ -257,7 +257,11 @@ func (o *ClientState) _addThread(iId string) {
 
 func (o *ClientState) openMsg(iMsgId string, iBool bool) {
    o.Lock(); defer o.Unlock()
-   o.Thread[o.History[o.Hpos]].Open[iMsgId] = iBool
+   aT := o.Thread[o.History[o.Hpos]]
+   if aT.Tabs.PosFor != ePosForDefault || aT.Tabs.Pos != 0 {
+      return
+   }
+   aT.Open[iMsgId] = iBool
    err := storeFile(o.filePath, o)
    if err != nil { quit(err) }
 }
