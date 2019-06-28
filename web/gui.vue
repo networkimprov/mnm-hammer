@@ -88,6 +88,7 @@
                 :set="msgTabset" :state="cs.ThreadTabs"/>
       <input @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)"
              :placeholder="' \u2315'" type="text"
+             title="Find phrase in thread"
              class="uk-width-1-6 search-box">
    </div>
    <div uk-height-viewport="offset-top:true; offset-bottom:true"
@@ -203,6 +204,7 @@
          </li></ul>
       <input @keyup.enter="tabSearch($event.target.value, cs.SvcTabs)"
              :placeholder="' \u2315'" type="text"
+             title="Query all threads"
              class="uk-width-1-2 search-box">
    </div>
    <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"

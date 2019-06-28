@@ -477,11 +477,14 @@ Families remain grouped when sorted by date.
 and the account title, followed by a listing from the thread index controlled by 
 the tabs above the list. 
 <i>All</i> lists all threads. 
-<i>Unread</i> lists threads with messages that have not been opened [not yet implemented]. 
+<i>Unread</i> lists threads with messages that have not been opened. 
 <i>Todo</i> lists threads with messages flagged as todo items [not yet implemented]. 
 <i>FFT</i> lists filled-form tables. 
-The search box creates a tab listing threads that match the query. 
-[thread indexing &amp; search not yet implemented]
+The search box creates a tab listing threads that match the entered query. 
+To either require or disallow certain words in every thread of the result set, 
+prefix any words in the query with <tt>+</tt> or <tt>-</tt>.
+To require a phrase in every thread of the result set, 
+append or prepend <tt>=</tt> to the entire query.
 </p>
 
 <p>To sort the thread list by the date of the first message in each thread, click ... 
@@ -536,7 +539,7 @@ The tabs above the list control which messages are open (i.e. fully shown).
 <i>Open</i> displays messages which the user has directly opened (or in the case of sent 
 messages, not yet closed). 
 <i>All</i> displays all messages. 
-The search box creates a tab displaying any messages matching the query [not yet implemented]. 
+The search box creates a tab displaying any messages that contain the entered phrase. 
 Clicking a message hyperlink anywhere in the UI creates a tab displaying 
 only the referenced message (see <a href="#mark">Markdown</a>). 
 </p>
@@ -767,6 +770,7 @@ The period for which seen notices are retained is configurable [not yet implemen
 <p>The mnm app and TMTP server are written in 
 <a target="_blank" href="https://golang.org/">Go</a> (without which they might not exist). 
 The app also depends on 
+<a target="_blank" href="https://github.com/blevesearch/bleve">Couchbase-sponsored Bleve</a>, and
 <a target="_blank" href="https://github.com/gorilla/websocket">Gorilla Websocket</a>. 
 The server also depends on 
 <a target="_blank" href="https://github.com/beevik/ntp">Beevik Ntp</a>. 
