@@ -566,13 +566,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       }
       iState.openMsg(iUpdt.Thread.Id, true)
       aChg := seenReceivedThread(iSvc, iUpdt)
+      if !aChg { break }
       aFn = func(c *ClientState) interface{} {
-         if c.getThread() == iUpdt.Thread.ThreadId {
-            if aChg { return aResult }
-            return aResult[1:]
-         }
-         if aChg { return aResult[:1] }
-         return nil
+         if c.getThread() == iUpdt.Thread.ThreadId { return aResult }
+         return aResult[:1]
       }
       aResult = []string{"tl", "ml"}
    case "thread_close":
