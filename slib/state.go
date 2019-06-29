@@ -370,7 +370,10 @@ func (o *ClientState) pinTab(iType int8) {
 func (o *ClientState) dropTab(iType int8) {
    o.Lock(); defer o.Unlock()
    aTabs := &o.SvcTabs; if iType == eTabThread { aTabs = &o.Thread[o.History[o.Hpos]].Tabs }
-   if aTabs.PosFor == ePosForDefault { quit(tError("dropTab: cannot drop ePosForDefault")) }
+   if aTabs.PosFor == ePosForDefault { // possible on second drop before UI update
+      fmt.Fprintf(os.Stderr, "dropTab: cannot drop ePosForDefault\n")
+      return
+   }
 
    aOrig := aTabs.Pos
    aFor := aTabs.PosFor
