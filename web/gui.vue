@@ -387,13 +387,12 @@
             <div>
                a) Fill out the form:<div style="margin-left: 1.1em">
                   <i>Title</i> is your private label for the account,<br>
-                  <i>Alias</i> is how other members know you,<br>
-                  uncheck <i>Verify host</i> if it's a preview server.</div>
+                  <i>Name/Alias</i> is how other members know you.</div>
                b) To submit, click
                   <button class="btn-icon"><span uk-icon="forward"></span></button>
             </div>
             <div style="margin: 0.5em 0">
-               <b>2.</b> Inform others of your <i>Alias</i> by phone, etc.</div>
+               <b>2.</b> Inform others of your <i>Name/Alias</i> by phone, etc.</div>
             <b>3.</b> Click the account to open it (and continue the tour).<br>
             <div class="service-panel uk-light"
                  style="width:20%; margin-top:0.5em; padding:1em; overflow:hidden">
@@ -1721,7 +1720,7 @@
 
 <script type="text/x-template" id="mnm-svcadd">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5"
-        @hidden="verify = !(addr = name = alias = lpin = loginperiod = null)">
+        @hidden="addr = name = alias = lpin = loginperiod = null">
       <div class="uk-float-right uk-text-small">ADD ACCOUNT</div>
       <form :action="'/v/+' + encodeURIComponent(name)"
             method="POST" enctype="multipart/form-data"
@@ -1736,25 +1735,22 @@
                 placeholder="Title (<%.serviceMin%>+ characters)" type="text"
                 class="width100">
          <input v-model="alias"
-                placeholder="Alias (<%.aliasMin%>+ characters)"   type="text"
+                placeholder="Name/Alias (<%.aliasMin%>+ characters)" type="text"
                 class="width100">
          <input v-model="addr"
-                placeholder="Net Address (host:port)"             type="text"
+                placeholder="Net Address (+host:port)" type="text"
                 class="width100">
          <!--todo input v-model="lpin"
                 @input="loginperiod = mnm._stringToSeconds($event.target.value)"
                 placeholder="(Pd days:hh:mm:ss)"                  size="19" type="text">
          <div v-show="loginperiod"
               style="float:right">{{loginperiod}} sec</div -->
-         <br>
-         <label><input v-model="verify" type="checkbox"> Verify host (TLS certificate)</label>
       </form>
    </div>
 </script><script>
    Vue.component('mnm-svcadd', {
       template: '#mnm-svcadd',
-      data: function() { return {addr:null, name:null, alias:null, lpin:null, loginperiod:null,
-                                 verify:true} },
+      data: function() { return {addr:null, name:null, alias:null, lpin:null, loginperiod:null} },
       computed: { mnm: function() { return mnm } },
    });
 </script>
@@ -1764,7 +1760,7 @@
       <div class="uk-float-right uk-text-small">SETTINGS</div>
       <form onsubmit="return false">
          <button @click="sendUpdate"
-                 :disabled="!(addr || verify || historylen >= 0 || loginperiod >= 0)
+                 :disabled="!(addr || historylen >= 0 || loginperiod >= 0)
                             || isNaN(historylen) || isNaN(loginperiod)"
                  title="Update settings"
                  class="btn-icon"><span uk-icon="forward"></span></button>
@@ -1774,17 +1770,15 @@
                       @input="historylen = parseInt($event.target.value || '-1')"
                       placeholder="4 to 1024" type="text"
                       class="width100"></td></tr>
-            <tr><td>Net Address    </td><td>{{mnm._data.cf.Addr  }}<br>
+            <tr><td>Net<br>Address </td><td>{{mnm._data.cf.Addr  }}<br>
                <input v-model="addr"
-                      placeholder="New host:port" type="text"
+                      placeholder="+host:port" type="text"
                       class="width100"></td></tr>
             <!--todo tr><td>Login Period   </td><td>{{mnm._secondsToString(mnm._data.cf.LoginPeriod)}}<br>
                <input v-model="lpin"
                       @input="loginperiod = toSeconds($event.target.value)"
                       placeholder="New days:hh:mm:ss" size="25" type="text"></td></tr -->
-            <tr><td>Verify<br>host </td><td>{{mnm._data.cf.Verify}}<br>
-               <label><input v-model="verify" type="checkbox"><tt>Toggle</tt></label></td></tr>
-            <tr><td>Title          </td><td>{{mnm._data.cf.Name  }}</td></tr>
+            <tr><td>Verify host    </td><td>{{mnm._data.cf.Verify}}</td></tr>
             <tr><td>Alias          </td><td>{{mnm._data.cf.Alias ||
                                               mnm._data.cf.Error }}</td></tr>
             <tr><td>Uid            </td><td>{{mnm._data.cf.Uid   }}</td></tr>
@@ -1794,8 +1788,7 @@
 </script><script>
    Vue.component('mnm-svccfg', {
       template: '#mnm-svccfg',
-      data: function() { return {hlin:null, addr:null, lpin:null, verify:false,
-                                 historylen:-1, loginperiod:-1} },
+      data: function() { return {hlin:null, addr:null, lpin:null, historylen:-1, loginperiod:-1} },
       computed: { mnm: function() { return mnm } },
       methods: {
          toSeconds: function(i) {
@@ -1805,7 +1798,6 @@
          sendUpdate: function() {
             mnm.ConfigUpdt(this.$data);
             this.hlin = this.addr = this.lpin = null;
-            this.verify = false;
             this.historylen = this.loginperiod = -1;
          },
       },

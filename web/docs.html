@@ -163,12 +163,13 @@ therein [not yet implemented].
 <p>To create an account on a TMTP service, 
 use the form in the <span uk-icon="plus-circle"></span> menu. 
 The form needs 
-the <i>Title</i> to display in the accounts panel (e.g. the name of the service), 
-a personal or professional name (the <i>Alias</i>), and 
-the <i>Net Address</i> where the server is running (e.g. somebiz.net:443). 
+the <i>Title</i> to display in the accounts panel 
+(e.g. the name of the organization providing the service), 
+the <i>Name/Alias</i> by which other service members know you, and 
+the <i>Net Address</i> where the server is running, e.g. <tt>+somebiz.net:443</tt>. 
 <!--todo Connections to the service are periodic if <i>(Pd days:hh:mm:ss)</i> is set. -->
-If the service's TLS certificate is not registered with a certificate authority 
-(e.g. it's a testing server) uncheck <i>Verify host</i>. 
+The <i>Net Address</i> is prefixed by a <tt>+</tt> or <tt>=</tt> to indicate 
+whether the service's TLS certificate can be verified. 
 These settings can be amended later [partially implemented]. 
 </p>
 
@@ -181,7 +182,7 @@ the client device. Both are equally unguessable.
 The UID is revealed to other service members only by delivery of or reply to an invite. 
 </p>
 
-<p>To change the <i>Net Address</i> <!--todo i>(Pd days:hh:mm:ss),</i --> or <i>Verify host</i> settings, 
+<p>To change the <i>Net Address</i> <!--todo i>(Pd days:hh:mm:ss),</i --> setting, 
 use the form in the <span uk-icon="settings"></span> menu on the accounts panel. 
 New settings take effect immediately if there is no connection to the service 
 (e.g. if the current address is invalid), otherwise they take effect when the mnm app is restarted. 
