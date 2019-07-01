@@ -933,7 +933,7 @@
              @keydown.down ="menu.selectItem($event.target,  1)"
              @keydown.up   ="menu.selectItem($event.target, -1)"
              @keydown.esc  ="menu.selectNone($event.target)"
-             @keyup.enter  ="menu.clear()"
+             @keyup.enter  ="menu.selectOrClear($event)"
              v-bind="$attrs" type="text"
              class="width100">
       <!--menu appended here-->
@@ -1006,6 +1006,15 @@
                return;
             this.select = parseInt(iId.substring(3), 10);
             iInput.value = this.list[this.select];
+         },
+         selectOrClear: function(iEvent) {
+            if (this.select === -1 && this.list.length) {
+               iEvent.preventDefault();
+               iEvent.stopPropagation();
+               this.selectItem(iEvent.target, 1);
+            } else {
+               this.clear();
+            }
          },
          selectItem: function(iInput, iDirection) {
             if (this.select === -1 && iDirection === -1)
