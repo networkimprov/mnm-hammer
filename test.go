@@ -52,7 +52,8 @@ type tTestClient struct {
    Name string
    SvcId string
    Cfg struct {
-      Name, Addr, Alias string
+      Name, Alias string
+      Addr string // for internal use; json value ignored
    }
    Files []struct {
       Name, Data string
@@ -215,7 +216,7 @@ func _setupTestDir(iDir string, iClients []tTestClient) bool {
    for a := range iClients {
       aTc = &iClients[a]
       if aTc.Cfg.Name != "" {
-         aTc.Cfg.Addr = sTestHost
+         aTc.Cfg.Addr = "=" + sTestHost
          aTc.Cfg.Alias += sTestDate
          err = aEnc.Encode(aTc.Cfg)
          if err != nil { quit(err) }
@@ -438,7 +439,7 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
    switch iUpdt.Op {
    case "config_update":
       if iUpdt.Config.Addr == "orig" {
-         iUpdt.Config.Addr = sTestHost
+         iUpdt.Config.Addr = "=" + sTestHost
       }
    case "thread_save":
       if iUpdt.Thread.Alias != "" {

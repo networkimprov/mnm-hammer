@@ -526,7 +526,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
                     "TitleJs": strings.ReplaceAll(template.JSEscapeString(aSvcId), `"`, `x22`)})
       err = sServiceTmpl.Execute(iResp, aParams)
    case "cs": aResult = aState.GetSummary()
-   case "cf": aResult = pSl.GetConfigService(aSvcId)
+   case "cf": aResult = pSl.GetCfService(aSvcId)
    case "nl": aResult = pSl.GetIdxNotice(aSvcId)
    case "ps": aResult = pSl.GetDraftAdrsbk(aSvcId)
    case "pt": aResult = pSl.GetSentAdrsbk(aSvcId)

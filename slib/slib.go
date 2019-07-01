@@ -181,7 +181,6 @@ type Update struct {
       HistoryLen int
       Addr string
       LoginPeriod int
-      Verify bool
    }
    Thread *struct {
       Id string

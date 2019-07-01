@@ -458,7 +458,7 @@
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":88, "LoginPeriod":99, "Addr":"*", "Verify":"**",
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} }
 },{
-   "Updt": {"Op":"config_update", "Config":{"LoginPeriod":0}},
+   "Updt": {"Op":"config_update", "Config":{"Addr":"orig", "LoginPeriod":0}},
    "Result": {
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":88, "LoginPeriod":0, "Addr":"*", "Verify":"**",
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} }

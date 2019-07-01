@@ -133,6 +133,12 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    if iName != aCfg.Name || len(iName) < kServiceNameMin || strings.HasSuffix(iName, ".tmp") {
       return tError("name not valid: " + iName)
    }
+   if aCfg.Addr[0] != '+' && aCfg.Addr[0] != '=' {
+      return tError("address missing +/= prefix")
+   }
+   aCfg.Verify = aCfg.Addr[0] == '+'
+   aCfg.Addr = aCfg.Addr[1:]
+
    sServicesDoor.Lock()
    if sServices[iName] != nil {
       sServicesDoor.Unlock()
@@ -172,6 +178,13 @@ func GetConfigService(iSvc string) *tSvcConfig {
    aSvc.RLock(); defer aSvc.RUnlock()
    aCfg := aSvc.config
    return &aCfg
+}
+
+func GetCfService(iSvc string) interface{} {
+   aCfg := GetConfigService(iSvc)
+   aV := "="; if aCfg.Verify { aV = "+" }
+   aCfg.Addr = aV + aCfg.Addr
+   return aCfg
 }
 
 func getUriService(iSvc string) string {
@@ -466,9 +479,11 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          aNewCfg.HistoryLen = iUpdt.Config.HistoryLen
          iState.setHistoryMax(aNewCfg.HistoryLen)
       }
-      if iUpdt.Config.Addr != "" { aNewCfg.Addr = iUpdt.Config.Addr }
+      if iUpdt.Config.Addr != "" && (iUpdt.Config.Addr[0] == '+' || iUpdt.Config.Addr[0] == '=') {
+         aNewCfg.Verify = iUpdt.Config.Addr[0] == '+'
+         aNewCfg.Addr = iUpdt.Config.Addr[1:]
+      }
       if iUpdt.Config.LoginPeriod >= 0 { aNewCfg.LoginPeriod = iUpdt.Config.LoginPeriod }
-      if iUpdt.Config.Verify { aNewCfg.Verify = !aNewCfg.Verify }
       err = _updateConfig(aNewCfg)
       if err != nil { return fErr }
       aFn, aResult = fAll, []string{"cf"}
