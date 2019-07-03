@@ -66,7 +66,9 @@ type tTestClient struct {
    Orders []struct {
       Updt pSl.Update
       Result map[string]interface{}
+      Name string
    }
+   resultLib map[string]map[string]interface{} // keys order_name, result_op
 }
 
 type tTestContext struct {
@@ -363,6 +365,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    for a := range sTestState {
       if sTestState[a].name == iTc.Name { aCtx.state = sTestState[a].state }
    }
+   iTc.resultLib = make(map[string]map[string]interface{})
 
    for a := range iTc.Orders {
       aUpdt := &iTc.Orders[a].Updt
@@ -392,11 +395,18 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          iTc.Orders[a].Result = make(map[string]interface{})
       }
       for aK, aV := range iTc.Orders[a].Result {
+         if aPrior, _ := aV.(string); aPrior != "" {
+            aV = iTc.resultLib[aPrior][aK]
+            iTc.Orders[a].Result[aK] = aV
+         }
          a1 := 0
          for ; a1 < len(aOps) && aOps[a1] != aK; a1++ {}
          if a1 == len(aOps) {
             fmt.Fprintf(os.Stderr, "%s missing result\n  expect %s %v\n", aPrefix, aK, aV)
          }
+      }
+      if iTc.Orders[a].Name != "" {
+         iTc.resultLib[iTc.Orders[a].Name] = iTc.Orders[a].Result
       }
       var aSum *int32 = nil; if aUpdt.Test != nil && aUpdt.Test.Poll > 0 { aSum = new(int32) }
       for aTryN := 1; true; aTryN++ {
