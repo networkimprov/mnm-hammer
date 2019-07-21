@@ -9,6 +9,7 @@
 
 (function() {
    var sUrl = 'ws://'+ location.host +'/s/'+ location.pathname.split('/')[1];
+   var sTouchSeen = 's'.charCodeAt(0);
    var sWs = {};
    var sXhrPending = 0;
 
@@ -75,20 +76,18 @@
       delete iObj.new // just in case
       _wsSend({op:'thread_save', thread:iObj})
    };
-   mnm.ThreadRecv = function() {
-      _wsSend({op:'thread_recvtest', thread:{}})
-   };
-   mnm.ThreadOpen = function(iId) {
-      _xhr('mn', iId, true);
-   };
-   mnm.ThreadClose = function(iId) {
-      _wsSend({op:'thread_close', thread:{id:iId}})
-   };
    mnm.ThreadSend = function(iId) {
       _wsSend({op:'thread_send', thread:{id:iId}})
    };
    mnm.ThreadDiscard = function(iId) {
       _wsSend({op:'thread_discard', thread:{id:iId}})
+   };
+
+   mnm.ThreadOpen = function(iId) {
+      _xhr('mn', iId, true) // sends thread_open from onload
+   };
+   mnm.ThreadClose = function(iId) {
+      _wsSend({op:'thread_close', touch:{msgid:iId}})
    };
 
    mnm.ForwardSave = function(iId, iCc) {
@@ -209,8 +208,8 @@
             if (i === 'mn') {
                mnm.Render(i, aXhr.responseText, aHead);
                if (iOpen)
-                  _wsSend({op:'thread_open', thread:
-                              {id:aHead.Id, threadid:aHead.SubHead.ThreadId || aHead.Id}});
+                  _wsSend({op:'thread_open', touch:{act:sTouchSeen, msgid:aHead.Id,
+                                                    threadid:aHead.SubHead.ThreadId || aHead.Id}});
                return;
             }
             aMap[aHead.Id] = aHead;

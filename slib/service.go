@@ -575,20 +575,20 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aResult = []string{"ml"}
       addQueue(iSvc, eSrecThread, iUpdt.Thread.Id)
    case "thread_open":
-      if iUpdt.Thread.ThreadId != iState.getThread() {
+      if iUpdt.Touch.ThreadId != iState.getThread() {
          err = tError("thread id out of sync")
          return fErr
       }
-      iState.openMsg(iUpdt.Thread.Id, true)
-      aChg := seenReceivedThread(iSvc, iUpdt)
+      iState.openMsg(iUpdt.Touch.MsgId, true)
+      aChg := touchThread(iSvc, iUpdt)
       if !aChg { break }
       aFn = func(c *ClientState) interface{} {
-         if c.getThread() == iUpdt.Thread.ThreadId { return aResult }
+         if c.getThread() == iUpdt.Touch.ThreadId { return aResult }
          return aResult[:1]
       }
       aResult = []string{"tl", "ml"}
    case "thread_close":
-      iState.openMsg(iUpdt.Thread.Id, false)
+      iState.openMsg(iUpdt.Touch.MsgId, false)
       // no result
    case "forward_save":
       storeFwdDraftThread(iSvc, iUpdt)

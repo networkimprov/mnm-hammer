@@ -456,13 +456,13 @@ func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *
    if err != nil { quit(err) }
 }
 
-func seenReceivedThread(iSvc string, iUpdt *Update) bool {
-   aOrig := dirThread(iSvc) + iUpdt.Thread.ThreadId
-   aTempOk := ftmpNr(iSvc, iUpdt.Thread.ThreadId)
+func touchThread(iSvc string, iUpdt *Update) bool {
+   aOrig := dirThread(iSvc) + iUpdt.Touch.ThreadId
+   aTempOk := ftmpTc(iSvc, iUpdt.Touch.ThreadId)
    aTemp := aTempOk + ".tmp"
    var err error
 
-   aDoor := _getThreadDoor(iSvc, iUpdt.Thread.ThreadId)
+   aDoor := _getThreadDoor(iSvc, iUpdt.Touch.ThreadId)
    aDoor.Lock(); defer aDoor.Unlock()
    if aDoor.renamed { return false }
 
@@ -475,13 +475,18 @@ func seenReceivedThread(iSvc string, iUpdt *Update) bool {
    if err != nil { quit(err) }
    defer aFd.Close()
    aPos = _readIndex(aFd, &aIdx, &aCc)
-   for aIdxN, _ = range aIdx {
-      if aIdx[aIdxN].Id == iUpdt.Thread.Id { break }
+   for aIdxN = 0; aIdxN < len(aIdx); aIdxN++ {
+      if aIdx[aIdxN].Id == iUpdt.Touch.MsgId { break }
    }
-   if aIdx[aIdxN].Seen != "" {
-      return false
+   switch iUpdt.Touch.Act {
+   case 's':
+      if aIdx[aIdxN].Seen != "" {
+         return false
+      }
+      aIdx[aIdxN].Seen = dateRFC3339()
+   default:
+      quit(tError("unknown Update.Touch.Act: "+ string(iUpdt.Touch.Act)))
    }
-   aIdx[aIdxN].Seen = dateRFC3339()
    aTempOk += fmt.Sprint(aPos)
 
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
@@ -492,12 +497,12 @@ func seenReceivedThread(iSvc string, iUpdt *Update) bool {
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeSeenReceived(iSvc, path.Base(aTempOk), aFd, aTd)
+   _completeTouch(iSvc, path.Base(aTempOk), aFd, aTd)
    return true
 }
 
-func _completeSeenReceived(iSvc string, iTmp string, iFd, iTd *os.File) {
-   sCrashFn(iSvc, "seen-received-thread")
+func _completeTouch(iSvc string, iTmp string, iFd, iTd *os.File) {
+   sCrashFn(iSvc, "touch-thread")
 
    aRec := _parseFtmp(iTmp)
 
@@ -1562,7 +1567,7 @@ func completeThread(iSvc string, iTempOk string) {
    switch aRec.op() {
    case "sc": _completeStoreConfirm    (iSvc, iTempOk, aFd, aTd, fMsgHead(), fIdx())
    case "sr": _completeStoreReceived   (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
-   case "nr": _completeSeenReceived    (iSvc, iTempOk, aFd, aTd)
+   case "nr": _completeTouch           (iSvc, iTempOk, aFd, aTd)
    case "ss": _completeStoreSent       (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
    case "ws": _completeStoreDraft      (iSvc, iTempOk, aFd, aTd, fMsgHead())
    case "ds": _completeDeleteDraft     (iSvc, iTempOk, aFd, aTd)

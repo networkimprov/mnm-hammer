@@ -475,10 +475,11 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
          }
       }
       fallthrough
-   case "thread_send", "thread_discard",
-        "thread_open", "thread_close":
+   case "thread_send", "thread_discard":
       _applyLastId(&iUpdt.Thread.Id,         &aApply, iCtx.lastId, "ml")
-      _applyLastId(&iUpdt.Thread.ThreadId,   &aApply, iCtx.lastId, "tl")
+   case "thread_open", "thread_close":
+      _applyLastId(&iUpdt.Touch.MsgId,       &aApply, iCtx.lastId, "ml")
+      _applyLastId(&iUpdt.Touch.ThreadId,    &aApply, iCtx.lastId, "tl")
    case "forward_save":
       for a := range iUpdt.Forward.Cc {
          iUpdt.Forward.Cc[a].Who += sTestDate

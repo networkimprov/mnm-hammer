@@ -62,7 +62,7 @@ func fileFfn(iSvc, iSub             string) string { return dirAttach(iSvc) + iS
 // these have either ".tmp" or a decimal string appended
 func ftmpSr(iSvc, iTid, iMid string) string { return dirTemp(iSvc) +"sr_"+ iTid +"_"+ iMid +"__" }
 func ftmpSc(iSvc, iTid, iMid string) string { return dirTemp(iSvc) +"sc_"+ iTid +"_"+ iMid +"__" }
-func ftmpNr(iSvc, iTid       string) string { return dirTemp(iSvc) +"nr_"+ iTid +"___" }
+func ftmpTc(iSvc, iTid       string) string { return dirTemp(iSvc) +"nr_"+ iTid +"___" }
 func ftmpSs(iSvc, iTid, iMid,
                         iLms string) string { return dirTemp(iSvc) +"ss_"+ iTid +"_"+ iMid +"_"+ iLms +"_" }
 func ftmpSd(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"ws_"+ iTid +"__"+ iLms +"_" }
@@ -191,7 +191,10 @@ type Update struct {
       Attach []tHeader2Attach
       FormFill map[string]string
       New int8
-      ThreadId string //todo move to new struct
+   }
+   Touch *struct {
+      ThreadId, MsgId string
+      Act int8
    }
    Forward *struct {
       ThreadId string

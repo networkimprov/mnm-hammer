@@ -23,7 +23,7 @@ list=(
    'Blue 13 2 store-fwd-received-thread'
    'Blue 13 2 store-fwd-notify-thread'
    'Blue 13 2 store-confirm-thread'
-   'Blue 16 1 seen-received-thread'
+   'Blue 16 1 touch-thread'
    'Gold  8 1 store-received-thread'
    'Gold 19 1 store-fwd-sent-thread'
 )
