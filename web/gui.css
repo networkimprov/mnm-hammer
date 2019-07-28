@@ -217,6 +217,15 @@ input[type=text], textarea {
    font-family: Monaco, monospace;
    font-size: 82%;
 }
+.draft-preview {
+   width: 40vw; /*todo match to messages panel width */
+   max-height: 75vh;
+   border-width: 1em 0;
+   border-color: transparent;
+   border-style: solid;
+   padding: 0.5em 1em;
+   overflow: auto;
+}
 
 .vue-form-generator input:disabled {
    background-color: #ffffdc; /* from .message-edit */

@@ -167,6 +167,7 @@
                  :toggle="'#t_'+aCmp.msgid" pos="right-top"/>
       <mnm-forms @attach="aCmp.atcAdd(arguments[0])"
                  :toggle="'#f_'+aCmp.msgid" pos="right-top"/>
+      <mnm-draftpv :draft="aCmp"/>
    </span>
    <div :class="{vishide: mnm._isLocal}"
         class="uk-clearfix">
@@ -770,28 +771,14 @@
         ><span uk-icon="file-edit" class="dropdown-icon" :id="'f_'+msgid"
                title="Attach blank forms"></span>
          <span :id="'pv_'+msgid"></span>
-         <div uk-dropdown="mode:click; pos:right-top"
-              class="uk-width-2-5 message-edit"
-              style="overflow:auto; max-height:75vh; padding: 0.5em 1em;
-                     border-width: 1em 0; border-color:transparent; border-style:solid;"
-              onwheel="return mnm._canScroll(this, event.deltaY)">
-            <div v-show="!(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data">
-               <p><span uk-icon="comment"></span></p></div>
-            <mnm-markdown v-show="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
-                          @formfill="ffAdd"
-                          @toggle="atcToggleFf"
-                          :src=     "(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
-                          :formfill="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).form_fill"
-                          :atchasff="atcHasFf" :msgid="msgid"/>
-         </div>
       </div>
       <input @input="subjAdd"
-             @click.stop="clickPreview('pv_'+msgid)"
+             @click.stop="clickPreview"
              :value="(mnm._data.toSave[msgid] || mnm._data.mo[msgid].SubHead).Subject"
              :placeholder="'Subject'+ (mnm._data.ml.length > 1 ? '' : ' (req.)')" type="text"
              class="width100">
       <mnm-textresize @input.native="textAdd"
-                      @click.native.stop="clickPreview('pv_'+msgid)"
+                      @click.native.stop="clickPreview"
                       :src="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
                       placeholder="Ctrl-J to Preview"
                       class="width100"/>
@@ -818,8 +805,8 @@
             if (iEvent.ctrlKey && iEvent.key === 'j')
                mnm._lastPreview = iId;
          },
-         clickPreview: function(iId) {
-            document.getElementById(iId).nextElementSibling.click();
+         clickPreview: function() {
+            document.getElementById('pp_'+this.msgid).click();
          },
          getToSave: function(iNoTimer) {
             var aMo = mnm._data.mo[this.msgid];
@@ -920,6 +907,29 @@
             aToSave.Subject = iEvent.target.value;
             aToSave.suUpdt = true;
          },
+      },
+   });
+</script>
+
+<script type="text/x-template" id="mnm-draftpv">
+   <div uk-dropdown="mode:click; pos:right-top" :toggle="'#pv_'+draft.msgid"
+        :id="'pp_'+draft.msgid"
+        class="draft-preview message-edit"
+        onwheel="return mnm._canScroll(this, event.deltaY)">
+      <div v-show="!msg.msg_data">
+         <p><span uk-icon="comment"></span></p></div>
+      <mnm-markdown v-show="msg.msg_data"
+                    @formfill="draft.ffAdd.apply(draft, arguments)"
+                    @toggle="draft.atcToggleFf.apply(draft, arguments)"
+                    :src="msg.msg_data" :formfill="msg.form_fill"
+                    :atchasff="draft.atcHasFf" :msgid="draft.msgid"/>
+   </div>
+</script><script>
+   Vue.component('mnm-draftpv', {
+      template: '#mnm-draftpv',
+      props: {draft:Object},
+      computed: {
+         msg: function() { return mnm._data.toSave[this.draft.msgid] || mnm._data.mo[this.draft.msgid] },
       },
    });
 </script>
