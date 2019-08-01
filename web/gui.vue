@@ -53,7 +53,7 @@
    <div :class="{vishide: mnm._isLocal}"
         class="uk-clearfix">
       <span style="padding-left:0.5em; display:inline-block">
-         {{ msgTitle }}
+         <span class="uk-text-large" style="font-style:oblique">{{ msgTitle }}</span>
          <span v-show="msgSubjects.length > 1"
                class="dropdown-icon">&nbsp;&#x25BD;&nbsp;</span>
       </span>
