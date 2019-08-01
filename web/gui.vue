@@ -211,14 +211,14 @@
    <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"
              :set="svcTabset" :state="cs.SvcTabs"/>
    <div class="uk-position-relative"><!-- context for ohi card -->
-      <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto"
-           :class="{'uk-background-muted':ffn}">
+      <div uk-height-viewport="offset-top:true"
+           class="thread-list firefox-minheight-fix uk-overflow-auto">
          <template v-if="ffn">
             <table class="uk-table uk-table-small uk-table-hover uk-text-small">
                <tr>
                   <th v-for="(a, aKey) in ffnCol"
                       v-if="aKey.charAt(0) !== '$' || aKey === '$msgid'"
-                      style="position:sticky; top:0" class="uk-background-muted">
+                      style="position:sticky; top:0">
                      {{ aKey === '$msgid' ? 'source' : aKey }}</th>
                </tr>
                <tr v-for="aRow in tl">
@@ -254,7 +254,7 @@
             <div v-for="aRow in tl" :key="aRow.Id"
                  @click="mnm.NavigateThread(aRow.Id)"
                  uk-grid class="uk-grid-small thread-row"
-                 :style="{'background-color': aRow.Id === cs.Thread ? 'wheat' : null}"><!--todo class thread-row-thread-->
+                 :style="{'background-color': aRow.Id === cs.Thread ? '#fff7cf' : null}"><!--todo class thread-row-thread-->
                <div class="uk-width-auto" style="padding:0"
                     :class="{'thread-unread': aRow.Unread}">
                   <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
@@ -341,7 +341,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-tour">
-   <div style="width:86%; margin:0 auto 3em">
+   <div style="min-height:260px; width:85%; margin:0 auto 3em; padding:0.7em;
+               border-radius:12px; background-color:white">
       <div style="float:right; margin-top:0.75em">
          <button @click="--count"
                  :disabled="count === 0"

@@ -39,6 +39,12 @@ body {
    background-color: #ffffdc;
 }
 
+.thread-list {
+   background-color: wheat;
+   margin-left: -1em;
+   padding-left: 1em;
+}
+
 .service-panel {
    background-color: #003333;
 }
@@ -351,10 +357,7 @@ button > .paperclip {
    white-space: nowrap;
 }
 .tour-slide > div:first-child {
-   margin-bottom: 0.5em;
-   padding: 0.5em;
-   border-radius: 12px;
-   background-color: white;
+   margin-bottom: 1em;
 }
 .tour-slide > div:first-child > img {
    display: block;
