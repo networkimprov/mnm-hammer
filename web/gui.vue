@@ -309,7 +309,7 @@
                title="Documentation">&nbsp;</span>
          <div ref="doc"
               uk-dropdown="mode:click; offset:2; pos:bottom-right"
-              class="uk-width-3-5" style="height:75vh; padding:0.8em">
+              class="uk-width-3-5 menu-bg" style="height:75vh; padding:0.8em">
             <iframe src="/w/docs.html" style="width:100%; height:100%"></iframe></div>
       </div>
    </div>
@@ -565,7 +565,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-subject">
-   <div uk-dropdown="mode:click; offset:2" style="padding:0 0.5em 0.5em">
+   <div uk-dropdown="mode:click; offset:2"
+        class="menu-bg" style="padding:0 0.5em 0.5em">
       <template v-for="aSubject in list">
          <a onclick="mnm.NavigateLink(this.href); return false"
             :href="'#'+ mnm._data.cs.Thread +'&'+ aSubject.msgId">
@@ -580,7 +581,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-cc">
-   <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3 dropdown-scroll">
+   <div uk-dropdown="mode:click; offset:2"
+        class="uk-width-1-3 menu-bg dropdown-scroll">
       <input v-model="note"
              placeholder="Note (opt.)" maxlength="1024" type="text"
              style="width:calc(50% - 1em)">
@@ -684,7 +686,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-attach">
-   <div uk-dropdown="mode:click; offset:2" class="uk-width-1-3 dropdown-scroll">
+   <div uk-dropdown="mode:click; offset:2"
+        class="uk-width-1-3 menu-bg dropdown-scroll">
       <ul uk-tab><li style="display:none"></li>
          <li v-for="aKey in ['Date','Name','Size']"
              :class="{'uk-active': aKey === mnm._data.cs.Sort.al}">
@@ -1237,7 +1240,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-files">
-   <div uk-dropdown="mode:click; offset:2" :toggle="toggle" class="uk-width-1-3 dropdown-scroll">
+   <div uk-dropdown="mode:click; offset:2" :toggle="toggle"
+        class="uk-width-1-3 menu-bg dropdown-scroll">
       <form :action="'/t/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); this.reset(); return false;"
@@ -1296,7 +1300,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-forms">
-   <div uk-dropdown="mode:click; offset:2" :toggle="toggle" class="uk-width-1-3 dropdown-scroll"
+   <div uk-dropdown="mode:click; offset:2" :toggle="toggle"
+        class="uk-width-1-3 menu-bg dropdown-scroll"
         @hidden="revClose" @click="revClose">
       <form :action="'/f/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
@@ -1340,7 +1345,7 @@
                </form>
             </li></template></ul>
          <div v-show="setName"
-              class="uk-card uk-card-default uk-card-small uk-card-body uk-width-1-1"
+              class="uk-card uk-card-default uk-card-small uk-card-body uk-width-1-1 menu-bg"
               style="position:absolute" :style="{top:editTop, right:editRight}"
               @click.stop>
             <div class="uk-text-right uk-text-small">
@@ -1497,7 +1502,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-notice">
-   <div uk-dropdown="mode:click" :toggle="toggle" class="uk-width-1-4 dropdown-scroll">
+   <div uk-dropdown="mode:click" :toggle="toggle"
+        class="uk-width-1-4 menu-bg dropdown-scroll">
       <button v-if="!svc"
               @click="mnm.NoticeSeen(nl[0].MsgId)"
               :disabled="!nl.length || nl[0].Seen > 0"
@@ -1543,7 +1549,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-adrsbk">
-   <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-2-5 dropdown-scroll">
+   <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
+        class="uk-width-2-5 menu-bg dropdown-scroll">
       <ul uk-tab class="uk-child-width-expand" style="margin-top:0; margin-right:20px"
           @click.prevent>
          <li><a href="#">{{mnm._data.pf.length || null}} invites </a></li>
@@ -1739,7 +1746,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-svcadd">
-   <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5"
+   <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
+        class="uk-width-1-5 menu-bg"
         @hidden="addr = name = alias = lpin = loginperiod = null">
       <div class="uk-float-right uk-text-small">ADD ACCOUNT</div>
       <form :action="'/v/+' + encodeURIComponent(name)"
@@ -1776,7 +1784,8 @@
 </script>
 
 <script type="text/x-template" id="mnm-svccfg">
-   <div uk-dropdown="mode:click; offset:-4; pos:left-top" class="uk-width-1-5">
+   <div uk-dropdown="mode:click; offset:-4; pos:left-top"
+        class="uk-width-1-5 menu-bg">
       <div class="uk-float-right uk-text-small">SETTINGS</div>
       <form onsubmit="return false">
          <button @click="sendUpdate"

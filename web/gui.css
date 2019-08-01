@@ -25,6 +25,10 @@ body {
    background-color: #f0f8f5;
 }
 
+.menu-bg {
+   background-color: mintcream;
+}
+
 .message-list {
    background-color: #fff7cf;
 }
@@ -328,7 +332,7 @@ button > .paperclip {
 .notice > li.notice-seen {
    margin: 0;
    padding-top: 10px;
-   background-color: mintcream;
+   background-color: whitesmoke;
 }
 .notice > li:not(.notice-seen) + li.notice-seen,
 .notice > li:first-child.notice-seen {
