@@ -1345,13 +1345,13 @@
                </form>
             </li></template></ul>
          <div v-show="setName"
-              class="uk-card uk-card-default uk-card-small uk-card-body uk-width-1-1 menu-bg"
+              class="uk-card uk-card-default dropdown-scroll uk-width-1-1 menu-bg"
               style="position:absolute" :style="{top:editTop, right:editRight}"
               @click.stop>
-            <div class="uk-text-right uk-text-small">
+            <div class="uk-text-right uk-text-small dropdown-scroll-item">
                {{(setName+'.'+fileId).toUpperCase()}}</div>
             <div v-show="!mnm._data.fo"
-                 class="uk-text-center" style="padding:0.5em">
+                 class="uk-text-center dropdown-scroll-item" style="padding:0.5em">
                <span uk-icon="future"></span></div>
             <div v-show="mnm._data.fo"
                  class="pane-clip" style="margin-top:-1.5em">
@@ -1359,7 +1359,7 @@
                      @click="showCode"
                      class="uk-link"><tt>{...}</tt></span>
                &nbsp;
-               <div style="font-size:smaller; text-align:right">&nbsp;{{parseError}}</div>
+               <div class="uk-text-right uk-text-small dropdown-scroll-item">&nbsp;{{parseError}}</div>
                <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
                   <div class="pane-scroller" style="min-height:1px">
                      <plugin-vfg :schema="formDef" :model="{}" :options="{}"/></div>
@@ -1437,8 +1437,7 @@
             this.setName = iSet;
             this.fileId = iRev;
             this.editTop = iEl.offsetTop + 'px';
-            var aParentWidth = iEl.parentNode.parentNode.parentNode.offsetWidth;
-            this.editRight = (aParentWidth - iEl.offsetLeft) +'px';
+            this.editRight = (iEl.offsetParent.offsetWidth - iEl.offsetLeft) +'px';
             this.codeShow = false;
             this.dupname = '';
          },
