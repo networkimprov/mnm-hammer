@@ -309,7 +309,7 @@
                title="Documentation">&nbsp;</span>
          <div ref="doc"
               uk-dropdown="mode:click; offset:2; pos:bottom-right"
-              class="uk-width-3-5 menu-bg" style="height:75vh; padding:0.8em">
+              class="uk-width-3-5 menu-bg dropdown-scroll" style="height:75vh">
             <iframe src="/w/docs.html" style="width:100%; height:100%"></iframe></div>
       </div>
    </div>
