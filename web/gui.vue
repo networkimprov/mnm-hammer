@@ -567,6 +567,7 @@
 <script type="text/x-template" id="mnm-subject">
    <div uk-dropdown="mode:click; offset:2"
         class="menu-bg" style="padding:0 0.5em 0.5em">
+      <!--todo scrolling-->
       <template v-for="aSubject in list">
          <a onclick="mnm.NavigateLink(this.href); return false"
             :href="'#'+ mnm._data.cs.Thread +'&'+ aSubject.msgId">
@@ -583,30 +584,32 @@
 <script type="text/x-template" id="mnm-cc">
    <div uk-dropdown="mode:click; offset:2"
         class="uk-width-1-3 menu-bg dropdown-scroll">
-      <input v-model="note"
-             placeholder="Note (opt.)" maxlength="1024" type="text"
-             style="width:calc(50% - 1em)">
-      <mnm-adrsbkinput @keyup.enter.native="addUser"
-                       :type="3"
-                       :placeholder="ccSet ? 'To' : 'Forward to'"
-                       style="width:calc(50% - 0.5em); margin-bottom: 0.5em"/>
-      <br>
-      <button v-show="!ccSet"
-              @click="mnm.ForwardSend(tid, mnm._data.cl[0][0].Qid)"
-              :disabled="ccSet || !mnm._data.cl[ccSet].length"
-              title="Forward thread to new recipients"
-              style="margin-right:0.5em"
-              class="btn-icon"><span uk-icon="forward"></span></button>
-      <div v-for="(aUser, aI) in menu" :key="aUser.Who"
-           :title="aUser.Note"
-           class="cc-new">{{
-         aUser.Who
-       }}<button @click="dropUser(aI)"
-                 class="btn-iconx">&times;</button>
+      <div class="dropdown-scroll-item">
+         <input v-model="note"
+                placeholder="Note (opt.)" maxlength="1024" type="text"
+                style="width:calc(50% - 0.5em)">
+         <mnm-adrsbkinput @keyup.enter.native="addUser"
+                          :type="3"
+                          :placeholder="ccSet ? 'To' : 'Forward to'"
+                          style="width:50%; margin-bottom: 0.5em"/>
+         <br>
+         <button v-show="!ccSet"
+                 @click="mnm.ForwardSend(tid, mnm._data.cl[0][0].Qid)"
+                 :disabled="ccSet || !mnm._data.cl[ccSet].length"
+                 title="Forward thread to new recipients"
+                 style="margin-right:0.5em"
+                 class="btn-icon"><span uk-icon="forward"></span></button>
+         <div v-for="(aUser, aI) in menu" :key="aUser.Who"
+              :title="aUser.Note"
+              class="cc-new">{{
+            aUser.Who
+          }}<button @click="dropUser(aI)"
+                    class="btn-iconx">&times;</button>
+         </div>
+         <br v-show="!menu.length">
       </div>
-      <br>
       <template v-if="!ccSet">
-         <ul uk-tab><li style="display:none"></li>
+         <ul uk-tab class="dropdown-scroll-item"><li style="display:none"></li>
             <li v-for="aKey in ['Who','By','Date']"
                 :class="{'uk-active': aKey === mnm._data.cs.Sort.cl}">
                <a @click.prevent="mnm.SortSelect('cl', aKey)" href="#">{{aKey}}</a>
@@ -688,7 +691,7 @@
 <script type="text/x-template" id="mnm-attach">
    <div uk-dropdown="mode:click; offset:2"
         class="uk-width-1-3 menu-bg dropdown-scroll">
-      <ul uk-tab><li style="display:none"></li>
+      <ul uk-tab class="dropdown-scroll-item"><li style="display:none"></li>
          <li v-for="aKey in ['Date','Name','Size']"
              :class="{'uk-active': aKey === mnm._data.cs.Sort.al}">
             <a @click.prevent="mnm.SortSelect('al', aKey)" href="#">{{aKey}}</a>
@@ -1261,7 +1264,7 @@
                     class="btn-iconx">&times;</button>
          </div>
       </form>
-      <ul uk-tab style="margin-top:0"><li style="display:none"></li>
+      <ul uk-tab class="dropdown-scroll-item" style="margin-top:0"><li style="display:none"></li>
          <li v-for="aKey in ['Date','Name']"
              :class="{'uk-active': aKey === mnm._data.cs.Sort.t}">
             <a @click.prevent="mnm.SortSelect('t', aKey)" href="#">{{aKey}}</a>
@@ -1318,7 +1321,7 @@
                  title="New form"
                  class="btn-icon"><span uk-icon="pencil"></span></button>
       </form>
-      <ul uk-tab style="margin-top:0"><li style="display:none"></li>
+      <ul uk-tab class="dropdown-scroll-item" style="margin-top:0"><li style="display:none"></li>
          <li v-for="aKey in ['Date','Name']"
              :class="{'uk-active': aKey === mnm._data.cs.Sort.f}">
             <a @click.prevent="mnm.SortSelect('f', aKey)" href="#">{{aKey}}</a>
@@ -1507,8 +1510,7 @@
               @click="mnm.NoticeSeen(nl[0].MsgId)"
               :disabled="!nl.length || nl[0].Seen > 0"
               title="Mark all as seen"
-              style="margin-right:1em"
-              class="btn-icon btn-floatr"><span uk-icon="check"></span></button>
+              class="btn-icon btn-floatr dropdown-scroll-item"><span uk-icon="check"></span></button>
       <div style="min-height:2em; font-style:oblique;">
          <span v-for="aType in [['i', 'invites']]"
                @click="$data[aType[0]] = !$data[aType[0]]"
@@ -1550,7 +1552,7 @@
 <script type="text/x-template" id="mnm-adrsbk">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
         class="uk-width-2-5 menu-bg dropdown-scroll">
-      <ul uk-tab class="uk-child-width-expand" style="margin-top:0; margin-right:20px"
+      <ul uk-tab class="uk-child-width-expand dropdown-scroll-item" style="margin-top:0"
           @click.prevent>
          <li><a href="#">{{mnm._data.pf.length || null}} invites </a></li>
          <li class="uk-active"
@@ -1746,7 +1748,7 @@
 
 <script type="text/x-template" id="mnm-svcadd">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
-        class="uk-width-1-5 menu-bg"
+        class="uk-width-1-5 menu-bg dropdown-static"
         @hidden="addr = name = alias = lpin = loginperiod = null">
       <div class="uk-float-right uk-text-small">ADD ACCOUNT</div>
       <form :action="'/v/+' + encodeURIComponent(name)"
@@ -1784,7 +1786,7 @@
 
 <script type="text/x-template" id="mnm-svccfg">
    <div uk-dropdown="mode:click; offset:-4; pos:left-top"
-        class="uk-width-1-5 menu-bg">
+        class="uk-width-1-5 menu-bg dropdown-static">
       <div class="uk-float-right uk-text-small">SETTINGS</div>
       <form onsubmit="return false">
          <button @click="sendUpdate"
