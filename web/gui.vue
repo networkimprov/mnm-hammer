@@ -92,7 +92,7 @@
              class="uk-width-1-6 search-box">
    </div>
    <div uk-height-viewport="offset-top:true; offset-bottom:true"
-        class="firefox-minheight-fix uk-overflow-auto message-list">
+        class="firefox-minheight-fix uk-overflow-auto message-bg message-list">
       <ul class="uk-list uk-list-divider">
          <li v-for="aMsg in ml" :key="aMsg.Id"
              :class="{'message-edit': aMsg.From === '' && !aMsg.Queued}" style="margin:0">
@@ -921,7 +921,7 @@
 <script type="text/x-template" id="mnm-draftpv">
    <div uk-dropdown="mode:click; pos:right-top" :toggle="'#pv_'+draft.msgid"
         :id="'pp_'+draft.msgid"
-        class="draft-preview message-edit"
+        class="draft-preview message-bg"
         onwheel="return mnm._canScroll(this, event.deltaY)">
       <div v-show="!msg.msg_data">
          <p><span uk-icon="comment"></span></p></div>
@@ -1244,7 +1244,8 @@
 
 <script type="text/x-template" id="mnm-files">
    <div uk-dropdown="mode:click; offset:2" :toggle="toggle"
-        class="uk-width-1-3 menu-bg dropdown-scroll">
+        class="uk-width-1-3 menu-bg dropdown-scroll"
+        :class="{'message-bg':toggle}">
       <form :action="'/t/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); this.reset(); return false;"
@@ -1305,6 +1306,7 @@
 <script type="text/x-template" id="mnm-forms">
    <div uk-dropdown="mode:click; offset:2" :toggle="toggle"
         class="uk-width-1-3 menu-bg dropdown-scroll"
+        :class="{'message-bg':toggle}"
         @hidden="revClose" @click="revClose">
       <form :action="'/f/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
@@ -1349,6 +1351,7 @@
             </li></template></ul>
          <div v-show="setName"
               class="uk-card uk-card-default dropdown-scroll uk-width-1-1 menu-bg"
+              :class="{'message-bg':toggle}"
               style="position:absolute" :style="{top:editTop, right:editRight}"
               @click.stop>
             <div class="uk-text-right uk-text-small dropdown-scroll-item">
