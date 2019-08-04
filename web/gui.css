@@ -323,19 +323,21 @@ button > .paperclip {
    overflow-x: hidden;
 }
 .pane-slider {
-   width: 200%;
    position: relative;
+   white-space: nowrap;
 }
 .pane-slider-rhs {
    right: 100%;
 }
 .pane-scroller {
-   float: left;
+   display: inline-block;
+   vertical-align: top;
    box-sizing: border-box;
-   width: 50%;
+   width: 100%;
    max-height: 40vh;
    overflow-y: scroll;
    padding-right: 2px;
+   white-space: initial;
 }
 
 .notice {

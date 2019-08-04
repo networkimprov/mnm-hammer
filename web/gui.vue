@@ -1368,8 +1368,8 @@
                <div class="uk-text-right uk-text-small dropdown-scroll-item">&nbsp;{{parseError}}</div>
                <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
                   <div class="pane-scroller" style="min-height:1px">
-                     <plugin-vfg :schema="formDef" :model="{}" :options="{}"/></div>
-                  <div class="pane-scroller">
+                     <plugin-vfg :schema="formDef" :model="{}" :options="{}"/></div
+                 ><div class="pane-scroller">
                      <mnm-textresize @input.native="editCode"
                                      :src="mnm._data.fo"
                                      ref="code"
