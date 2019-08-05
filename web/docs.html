@@ -31,6 +31,10 @@
          aXhr.open('GET', '/a');
          aXhr.send();
       };
+      var mnm_lastScroll = 0;
+      window.mnm_resetScroll = function() {
+         document.getElementById('main').scrollTop = mnm_lastScroll
+      };
    </script>
 </head><body>
 
@@ -38,7 +42,9 @@
      class="menu-bg firefox-minheight-fix">
 
 <div uk-grid class="uk-grid-small uk-height-1-1">
-<div class="uk-width-expand uk-overflow-auto uk-height-1-1">
+<div class="uk-width-expand uk-overflow-auto uk-height-1-1"
+     onscroll="mnm_lastScroll = this.scrollTop"
+     id="main">
 
 <div style="padding: 0 0.5em 80vh 0.2em; background-color:whitesmoke">
 

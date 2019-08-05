@@ -309,6 +309,7 @@
                title="Documentation">&nbsp;</span>
          <div ref="doc"
               uk-dropdown="mode:click; offset:2; pos:bottom-right"
+              onshow="this.firstElementChild.contentWindow.mnm_resetScroll()"
               class="uk-width-3-5 menu-bg dropdown-scroll" style="height:75vh">
             <iframe src="/w/docs.html" style="width:100%; height:100%"></iframe></div>
       </div>
