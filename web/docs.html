@@ -35,6 +35,10 @@
       window.mnm_resetScroll = function() {
          document.getElementById('main').scrollTop = mnm_lastScroll
       };
+      document.onclick = function(iEv) {
+         if (iEv.target.href && !iEv.target.target)
+            history.replaceState(null, null, iEv.target.href);
+      };
    </script>
 </head><body>
 
