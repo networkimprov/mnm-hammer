@@ -215,10 +215,11 @@
                "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":false}] ] ,
       "al": [{"Name":"Gold/File",      "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] }
 },{
-   "Updt": {"Op":"thread_open", "Touch":{"Act":0x73, "ThreadId":"last", "MsgId":"last"}},
+   "Updt": {"Op":"thread_open", "Touch":{"Act":115, "ThreadId":"last", "MsgId":"last"}},
    "Result": {
       "tl": "test.a" ,
-      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"*d", "Queued":false},
+      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"*d",
+              "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
               "Queued":false}] }
 },{
