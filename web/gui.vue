@@ -86,20 +86,31 @@
         uk-grid class="uk-grid-collapse">
       <mnm-tabs class="uk-width-expand"
                 :set="msgTabset" :state="cs.ThreadTabs"/>
+      <span v-show="msgTags.length">
+         <span title="Tags within thread"
+               uk-icon="hashtag" class="dropdown-icon"></span> &nbsp;
+         <div uk-dropdown="mode:click; offset:2; pos:left-top"
+              class="menu-bg dropdown-scroll">
+            <div class="dropdown-scroll-list">
+               <div v-for="aTag in msgTags" :key="aTag.Id">
+                  <a @click.prevent="tabSearch('#'+aTag.Name, cs.ThreadTabs)" href="#">{{aTag.Name}}</a>
+               </div></div>
+         </div>
+      </span>
       <input @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)"
              :placeholder="' \u2315'" type="text"
              title="Find phrase in thread"
              class="uk-width-1-6 search-box">
    </div>
    <div uk-height-viewport="offset-top:true; offset-bottom:true"
-        class="firefox-minheight-fix uk-overflow-auto message-bg message-list">
-      <ul class="uk-list uk-list-divider">
+        class="firefox-minheight-fix uk-overflow-auto message-bg message-list"
+        style="position:relative">
+      <mnm-tagset ref="tagset"/>
+      <ul class="uk-list uk-list-divider" style="margin:0">
          <li v-for="aMsg in ml" :key="aMsg.Id"
              :class="{'message-edit': aMsg.From === '' && !aMsg.Queued}" style="margin:0">
             <span @click="msgToggle(aMsg.Id)"
-                  class="message-title"
-                  :class="{'message-title-edit': aMsg.From === '' && !aMsg.Queued,
-                           'message-title-unread': aMsg.Seen === ''}">
+                  class="message-title" :class="{'message-title-unread': aMsg.Seen === ''}">
                <mnm-date :iso="aMsg.Date" ymd="md" hms="hm"/>
                {{ aMsg.Alias || aMsg.From }}
                <span v-if="aMsg.ForwardBy"
@@ -110,6 +121,11 @@
                  title="Awaiting link to server"
                  style="float:right; font-weight:bold"><span uk-icon="bolt"></span></div>
             <template v-if="aMsg.Id in mo">
+               &nbsp;
+               <span @click.stop="$refs.tagset.open(aMsg.Id, $event.currentTarget)"
+                     title="Message tags"
+                     style="cursor:default"
+                     uk-icon="tag">{{aMsg.Tags ? aMsg.Tags.length : '&numsp;'}}</span>
                <div v-if="!('msg_data' in mo[aMsg.Id])"
                     class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
                <template v-else-if="aMsg.From === '' && !aMsg.Queued">
@@ -203,9 +219,20 @@
             <a @click.prevent="mnm.TabSelect({type:cs.SvcTabs.Type, posfor:0, pos:aI})" href="#">
                {{ aTerm }}</a>
          </li></ul>
+      <span>
+         <span title="Search by tag"
+               uk-icon="hashtag" class="dropdown-icon"></span> &nbsp;
+         <div uk-dropdown="mode:click; offset:2; pos:left-top"
+              class="menu-bg dropdown-scroll">
+            <div class="dropdown-scroll-list">
+               <div v-for="aTag in g" :key="aTag.Id">
+                  <a @click.prevent="tabSearch('#'+aTag.Name, cs.SvcTabs)" href="#">{{aTag.Name}}</a>
+               </div></div>
+         </div>
+      </span>
       <input @keyup.enter="tabSearch($event.target.value, cs.SvcTabs)"
              :placeholder="' \u2315'" type="text"
-             title="Query all threads"
+             title="Search all threads"
              class="uk-width-1-2 search-box">
    </div>
    <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"
@@ -748,6 +775,70 @@
             }
             mnm._toClipboard(aTxt);
          },
+      },
+   });
+</script>
+
+<script type="text/x-template" id="mnm-tagset">
+   <div v-show="msgId"
+        class="tagset message-edit dropdown-scroll uk-card uk-card-default"
+        style="position:absolute" :style="{top:posTop, left:posLeft}"
+        @click.stop>
+      <div class="dropdown-scroll-list">
+         <div v-for="aTag in mnm._data.g" :key="aTag.Id"
+              @click="toggle(aTag.Id)">
+            <span><span :class="{vishide:!hasId[aTag.Id]}"
+                        uk-icon="check"></span></span>
+            {{aTag.Name}}
+         </div></div>
+      <form :action="'/g/+' + encodeURIComponent(newName)"
+            method="POST" enctype="multipart/form-data"
+            onsubmit="mnm.Upload(this); this.reset(); return false;"
+            class="dropdown-scroll-item">
+         <input type="hidden" name="filename" value="">
+         <input v-model="newName"
+                placeholder="New Tag" type="text"
+                style="width:7em">
+         <button @click="newName = ''"
+                 :disabled="!newName || mnm._data.g.find(function(c) { return c.Name === newName })"
+                 title="New tag"
+                 class="btn-icon"><span uk-icon="list"></span></button>
+      </form>
+   </div>
+</script><script>
+   Vue.component('mnm-tagset', {
+      template: '#mnm-tagset',
+      data: function() { return {msgId:'', newName:'', posTop:0, posLeft:0} },
+      computed: {
+         mnm: function() { return mnm },
+         hasId: function() {
+            var aSet = {};
+            var aMsg = mnm._data.ml.find(function(c) { return c.Id === this.msgId }, this);
+            if (aMsg && aMsg.Tags)
+               aMsg.Tags.forEach(function(cTag) { aSet[cTag] = true });
+            return aSet;
+         },
+      },
+      methods: {
+         open: function(iId, iEl) {
+            if (this.msgId === iId) {
+               this.msgId = '';
+            } else {
+               this.msgId = iId;
+               this.posTop = iEl.offsetTop +'px';
+               this.posLeft = iEl.offsetLeft + iEl.offsetWidth + 2 +'px';
+            }
+         },
+         toggle: function(iId) {
+            if (!this.hasId[iId])
+               mnm.ThreadTag(this.msgId, iId);
+            else
+               mnm.ThreadUntag(this.msgId, iId);
+         },
+      },
+      created: function() {
+         var that = this;
+         document.addEventListener('click', function() { that.msgId = '' });
       },
    });
 </script>
@@ -1877,7 +1968,7 @@
    mnm._lastPreview = '';
    mnm._data = {
    // global
-      v:[], t:[], f:[], fo:'', nlo:[], // fo populated by f requests
+      v:[], g:[], t:[], f:[], fo:'', nlo:[], // fo populated by f requests
    // per client
       cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
       ohiFrom: !mnm._isLocal, //todo move to cs
@@ -1946,6 +2037,19 @@
                   aList.unshift({msgId:aM.Id, name: aM.Subject ||
                      '\u25b8'+ (aM.From === '' ? 'Untitled Draft' : 'Subject Missing') +'\u25c2'});
             }
+            return aList;
+         },
+         msgTags: function() {
+            var aSet = {};
+            mnm._data.ml.forEach(function(cMsg) {
+               if (cMsg.Tags)
+                  cMsg.Tags.forEach(function(cId) { aSet[cId] = true });
+            });
+            var aList = [];
+            mnm._data.g.forEach(function(cTag) {
+               if (aSet[cTag.Id])
+                  aList.push(cTag);
+            });
             return aList;
          },
          nlNotSeen: function() {
@@ -2063,7 +2167,7 @@
       switch (i) {
       case 'cf': case 'nl': case 'cl': case 'al': case 'ml':
       case 'ps': case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
-      case 't' : case 'f' : case 'v' : case 'nlo':
+      case 't' : case 'f' : case 'v' : case 'g': case 'nlo':
          if (i === 'f' && iEtc) {
             mnm._data.fo = iData;
          } else {

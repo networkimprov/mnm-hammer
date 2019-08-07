@@ -125,6 +125,7 @@ input[type=text], textarea {
    position: relative; bottom: -2px;
 }
 .dropdown-scroll {
+   min-width: unset; /* fix uk-dropdown */
    padding: 1em;
    padding-right: 0;
 }
@@ -164,14 +165,21 @@ input[type=text], textarea {
    color: black;
 }
 
+.tagset {
+   z-index: 3;
+   cursor: default;
+}
+.tagset > div > div > span {
+   border: 1px solid lightgray;
+   border-radius: 4px;
+   background: white;
+}
+
 .message-title {
    cursor: pointer;
    display: inline-block;
    line-height: 2em;
    min-width: 50%;
-}
-.message-title-edit {
-   min-width: 0;
 }
 .message-title-unread {
    font-weight: bold;

@@ -488,9 +488,15 @@ and the account title, followed by a listing from the thread index controlled by
 the tabs above the list. 
 <i>All</i> lists all threads. 
 <i>Unread</i> lists threads with messages that have not been opened. 
-<i>Todo</i> lists threads with messages flagged as todo items [not yet implemented]. 
+<i>#Todo</i> lists threads with messages tagged as such. 
 <i>FFT</i> lists filled-form tables. 
-The search box creates a tab listing threads that match the entered query. 
+</p>
+
+<p>To create a tab listing all threads containing a specific tag, select the tag name from 
+the <span uk-icon="hashtag"></span> menu (see also <a href="#tags">Tags</a>). 
+</p>
+
+<p>The search box creates a tab listing threads that match the entered query. 
 To either require or disallow certain words in every thread of the result set, 
 prefix any words in the query with <tt>+</tt> or <tt>-</tt>.
 To require a phrase in every thread of the result set, 
@@ -549,9 +555,17 @@ The tabs above the list control which messages are open (i.e. fully shown).
 <i>Open</i> displays messages which the user has directly opened (or in the case of sent 
 messages, not yet closed). 
 <i>All</i> displays all messages. 
-The search box creates a tab displaying any messages that contain the entered phrase. 
-Clicking a message hyperlink anywhere in the UI creates a tab displaying 
-only the referenced message (see <a href="#mark">Markdown</a>). 
+</p>
+
+<p>To create a tab displaying all messages containing a specific tag, select the tag name from
+the <span uk-icon="hashtag"></span> menu (see also <a href="#tags">Tags</a>).
+</p>
+
+<p>The search box creates a tab displaying any messages that contain the entire entered phrase. 
+</p>
+
+<p>Clicking a message hyperlink anywhere in the UI creates a tab displaying 
+only the referenced message (see also <a href="#mark">Markdown</a>). 
 </p>
 
 <p>To open or close a message, click the message header (contains the date, time, and 
@@ -630,7 +644,31 @@ Blank forms are fillable only in the preview panel of the draft editor.
 </p>
 
 
-<h4 id="comp">10c. Draft Composition</h4>
+<h4 id="tags">10c. Tags</h4>
+
+<p>A message may be assigned any number of predefined and user-defined tags, 
+which allow threads and messages to be found via tag searches.
+</p>
+
+<p>To set or clear a tag, open the message to be tagged, and use 
+the <span uk-icon="tag"></span> menu that follows the sender's name in the message header.
+</p>
+
+<p>To create a new tag, use the <i>New Tag</i> form in the <span uk-icon="tag"></span> menu.
+</p>
+
+<p>To remove a tag from all messages where it appears... [not yet implemented] 
+To rename a tag... [not yet implemented] 
+</p>
+
+<p>To list all threads containing a specific tag, 
+use the <span uk-icon="hashtag"></span> menu next to the threads panel search box.
+To display all messages within a thread containing a specific tag, 
+use the <span uk-icon="hashtag"></span> menu next to the message panel search box.
+</p>
+
+
+<h4 id="comp">10d. Draft Composition</h4>
 
 <p>Starting a new thread or a reply within an existing thread opens a draft editor. 
 Its input fields are the Attachment list (optional), 
@@ -681,7 +719,7 @@ by the <span uk-icon="bolt"></span> icon to the right of the header.
 </p>
 
 
-<h4 id="mark">10d. Markdown</h4>
+<h4 id="mark">10e. Markdown</h4>
 
 <p>The message Body supports Markdown, a widely used plain-text shorthand 
 for essential rich-text HTML features. 
@@ -850,7 +888,8 @@ and the author frequently turns to the
 <ol type="a">
 <li><a href="#rcpt">Recipients</a></li>
 <li><a href="#recv">Received/Sent Messages</a></li>
-<li><a href="#comp">Draft Composition</a>
+<li><a href="#tags">Tags</a></li>
+<li><a href="#comp">Draft Composition</a></li>
 <li><a href="#mark">Markdown</a></li>
 </ol></li>
 <li><a href="#notc">Notices</a></li>
