@@ -10,6 +10,8 @@
 (function() {
    var sUrl = 'ws://'+ location.host +'/s/'+ location.pathname.split('/')[1];
    var sTouchSeen = 's'.charCodeAt(0);
+   var sTouchTag = 't'.charCodeAt(0);
+   var sTouchUntag = 'u'.charCodeAt(0);
    var sWs = {};
    var sXhrPending = 0;
 
@@ -88,6 +90,12 @@
    };
    mnm.ThreadClose = function(iId) {
       _wsSend({op:'thread_close', touch:{msgid:iId}})
+   };
+   mnm.ThreadTag = function(iId, iTag) {
+      _wsSend({op:'thread_tag', touch:{msgid:iId, act:sTouchTag, tagid:iTag}})
+   };
+   mnm.ThreadUntag = function(iId, iTag) {
+      _wsSend({op:'thread_tag', touch:{msgid:iId, act:sTouchUntag, tagid:iTag}})
    };
 
    mnm.ForwardSave = function(iId, iCc) {

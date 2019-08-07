@@ -16,7 +16,7 @@ import (
 )
 
 var sSortDefault = tSummarySort{Cc:"Who", Atc:"Date", Upload:"Date", Form:"Date"}
-var sSvcTabsDefault = []string{"All","Unread","Todo","FFT"}
+var sSvcTabsDefault = []string{"All","Unread","#Todo","FFT"}
 var sThreadTabsDefault = []string{"Open","All"}
 
 var sStateDoor sync.Mutex

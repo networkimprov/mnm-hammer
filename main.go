@@ -112,6 +112,7 @@ func mainResult() int {
    http.HandleFunc("/t/", runGlobal)
    http.HandleFunc("/f/", runGlobal)
    http.HandleFunc("/v/", runGlobal)
+   http.HandleFunc("/g/", runGlobal)
    http.HandleFunc("/s/", runWebsocket)
    http.HandleFunc("/w/", runFile)
    err = sHttpSrvr.ListenAndServe()
@@ -585,6 +586,7 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
    case 'f': aSet = pSl.BlankForm
    case 't': aSet = pSl.Upload
    case 'v': aSet = pSl.Service
+   case 'g': aSet = pSl.Tag
    }
    aId := iReq.URL.Path[3:]
    fErr := func(cSt int, cMsg string) { iResp.WriteHeader(cSt); iResp.Write([]byte(cMsg)) }

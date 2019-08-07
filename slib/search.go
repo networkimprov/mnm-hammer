@@ -18,6 +18,7 @@ import (
    "strings"
    "time"
 
+   pBkeyword  "github.com/blevesearch/bleve/analysis/analyzer/keyword"
    pBleve     "github.com/blevesearch/bleve"
    pBquery    "github.com/blevesearch/bleve/search/query"
    pBscorch   "github.com/blevesearch/bleve/index/scorch"
@@ -38,6 +39,7 @@ type tSearchDoc struct {
    id string
    Subject tStrings
    Author tStrings // excludes self
+   Tag tStrings
    OrigAuthor, LastAuthor string
    OrigDate, LastDate string
    Unread bool
@@ -93,7 +95,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       return err
    }
    var aQ pBquery.Query
-   if aTabType != ePosForDefault {
+   if aTabType != ePosForDefault || aTabVal[0] == '#' {
       aQ = _makeWordsQuery(aTabVal)
    } else if aTabVal == "All" {
       aQ = pBleve.NewMatchAllQuery()
@@ -101,8 +103,6 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       aQb := pBleve.NewBoolFieldQuery(true)
       aQb.SetField("Unread")
       aQ = aQb
-   } else if aTabVal == "Todo" {
-      aQ = pBleve.NewMatchNoneQuery()
    }
    if aQ == nil {
       _, err = iW.Write([]byte{'[',']'})
@@ -117,6 +117,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    for _, aHit := range aSet.Hits {
       aSubject := _i2slice(aHit.Fields["Subject"])
       //aAuthor  := _i2slice(aHit.Fields["Author"])
+      //aTag     := _i2slice(aHit.Fields["Tag"])
       aList = append(aList, tSearchEl{Id:         aHit.ID,
                                       Subject:    aSubject[len(aSubject)-1].(string),
                                       OrigDate:   aHit.Fields["OrigDate"].(string),
@@ -138,6 +139,18 @@ func _makeWordsQuery(iWords string) pBquery.Query {
    aLast := aWordSet[len(aWordSet)-1]
    if aWordSet[0][0] == '=' || aLast[len(aLast)-1] == '=' {
       return pBleve.NewMatchPhraseQuery(iWords)
+   }
+   if aWordSet[0][0] == '#' || aLast[len(aLast)-1] == '#' {
+      if aWordSet[0][0] == '#' {
+         iWords = iWords[strings.IndexByte(iWords, '#') + 1:]
+      } else {
+         iWords = iWords[:strings.LastIndexByte(iWords, '#')]
+      }
+      aTag := Tag.getId(iWords)
+      if aTag == "" {
+         return nil
+      }
+      return pBquery.NewPhraseQuery([]string{aTag}, "Tag") 
    }
    aOpSet := make([]byte, len(aWordSet))
    for a := len(aWordSet)-1; a >= 0; a-- {
@@ -265,10 +278,15 @@ func openIndexSearch(iSvc string) pBleve.Index {
    aBtext.Store = false
    aNtext := pBleve.NewTextFieldMapping()
    aNtext.Index = false
+   aKtext := pBleve.NewTextFieldMapping()
+   aKtext.Analyzer = pBkeyword.Name
+   aKtext.Store = false
    aFbool := pBleve.NewBooleanFieldMapping()
+
    aThread := pBleve.NewDocumentMapping()
    aThread.AddFieldMappingsAt("Subject", aFtext)
    aThread.AddFieldMappingsAt("Author", aFtext)
+   aThread.AddFieldMappingsAt("Tag", aKtext)
    aThread.AddFieldMappingsAt("OrigDate", aNtext)
    aThread.AddFieldMappingsAt("LastDate", aNtext)
    aThread.AddFieldMappingsAt("OrigAuthor", aNtext)

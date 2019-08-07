@@ -23,6 +23,7 @@ import (
 )
 
 const kStorageDir = "store/"
+const kTagFile    = kStorageDir + "tags"
 const kServiceDir = kStorageDir + "svc/"
 const kStateDir   = kStorageDir + "state/"
 const kUploadDir  = kStorageDir + "upload/"
@@ -194,6 +195,7 @@ type Update struct {
    }
    Touch *struct {
       ThreadId, MsgId string
+      TagId string
       Act int8
    }
    Forward *struct {
@@ -266,6 +268,7 @@ func Init(iStart func(string), iCrash func(string, string)) {
    }
    initUpload()
    initForms()
+   initTag()
    initStates()
    initServices(iStart)
    startAllService()

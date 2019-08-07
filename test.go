@@ -63,6 +63,9 @@ type tTestClient struct {
       Ffn string         `json:"ffn,omitempty"`
       Fields interface{} `json:"fields,omitempty"`
    }
+   Tags []struct {
+      Name string
+   }
    Orders []struct {
       Updt pSl.Update
       Result map[string]interface{}
@@ -247,6 +250,10 @@ func _setupTestDir(iDir string, iClients []tTestClient) bool {
             err = pSl.BlankForm.Drop(aPair[0]+".Dup")
             if err != nil { goto ReturnErr }
          }
+      }
+      for a1 := range aTc.Tags {
+         err = pSl.Tag.Add(aTc.Tags[a1].Name, "", nil)
+         if err != nil { goto ReturnErr }
       }
       if aTc.Cfg.Name == "" { continue }
       for {
@@ -477,9 +484,12 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
       fallthrough
    case "thread_send", "thread_discard":
       _applyLastId(&iUpdt.Thread.Id,         &aApply, iCtx.lastId, "ml")
-   case "thread_open", "thread_close":
+   case "thread_open", "thread_close", "thread_tag":
       _applyLastId(&iUpdt.Touch.MsgId,       &aApply, iCtx.lastId, "ml")
       _applyLastId(&iUpdt.Touch.ThreadId,    &aApply, iCtx.lastId, "tl")
+      if iUpdt.Touch.TagId == "flag" {
+         iUpdt.Touch.TagId = pSl.Tag.Map["flag"] // assume no map writes among .Orders
+      }
    case "forward_save":
       for a := range iUpdt.Forward.Cc {
          iUpdt.Forward.Cc[a].Who += sTestDate
@@ -593,6 +603,7 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    switch(iOp) {
    case "/t": aResult = pSl.Upload.GetIdx()
    case "/f": aResult = pSl.BlankForm.GetIdx()
+   case "/g": aResult = pSl.Tag.GetIdx()
    case "/v": aResult = pSl.Service.GetIdx()
               sort.Strings(aResult.([]string))
    case "cs": aResult = iCtx.state.GetSummary()

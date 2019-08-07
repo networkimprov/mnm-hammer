@@ -35,6 +35,7 @@ type tIndexElCore struct {
    Date string
    Subject string
    Seen string // mutable
+   Tags []string `json:",omitempty"` // mutable
    ForwardBy string `json:",omitempty"` // mutable
 }
 
@@ -140,6 +141,7 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    if aTid == "" { return nil }
 
    aBufHead := []byte{0,0,0,0}
+   var aTag string
    var aBodyTotal int64
    var aFound tTermSites
    if iId == "" {
@@ -147,6 +149,11 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
       if aTabType == ePosForTerms {
          if aTabVal[0] == '&' {
             iId = aTabVal[1:]
+         } else if aTabVal[0] == '#' {
+            aTag = Tag.getId(aTabVal[1:])
+            if aTag == "" {
+               return tError("tag not found")
+            }
          } else {
             aFound = messageSearch(iSvc, aTid, aTabVal)
          }
@@ -167,6 +174,12 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    for a := range aIdx {
       if iId != "" {
          if aIdx[a].Id != iId { continue }
+      } else if aTag != "" {
+         a1 := -1
+         for a1 = 0; a1 < len(aIdx[a].Tags); a1++ {
+            if aIdx[a].Tags[a1] == aTag { break }
+         }
+         if a1 >= len(aIdx[a].Tags) { continue }
       } else if aFound != nil {
          if aIdx[a].Offset < 0 { continue } //todo add draft support
          _, err = aFd.Seek(aIdx[a].Offset, io.SeekStart)
@@ -488,6 +501,22 @@ func touchThread(iSvc string, iUpdt *Update) bool {
          return false
       }
       aIdx[aIdxN].Seen = dateRFC3339()
+   case 't':
+      for _, aTag := range aIdx[aIdxN].Tags {
+         if aTag == iUpdt.Touch.TagId {
+            return false
+         }
+      }
+      aIdx[aIdxN].Tags = append(aIdx[aIdxN].Tags, iUpdt.Touch.TagId)
+   case 'u':
+      a := -1
+      for a = 0; a < len(aIdx[aIdxN].Tags); a++ {
+         if aIdx[aIdxN].Tags[a] == iUpdt.Touch.TagId { break }
+      }
+      if a >= len(aIdx[aIdxN].Tags) {
+         return false
+      }
+      aIdx[aIdxN].Tags = aIdx[aIdxN].Tags[:a + copy(aIdx[aIdxN].Tags[a:], aIdx[aIdxN].Tags[a+1:])]
    default:
       quit(tError("unknown Update.Touch.Act: "+ string(iUpdt.Touch.Act)))
    }
@@ -543,7 +572,6 @@ func storeSentThread(iSvc string, iHead *Header, iQid string) {
       return
    }
    defer aSd.Close()
-   aMh := _readMsgHead(aSd)
 
    aDoorId := aTid; if aTid == iHead.MsgId { aDoorId = iHead.Id }
    aDoor := _getThreadDoor(iSvc, aDoorId)
@@ -557,6 +585,15 @@ func storeSentThread(iSvc string, iHead *Header, iQid string) {
    aIdx, aCc := []tIndexEl{}, []tCcEl{}
    var aPos int64
    aEl := tIndexEl{}
+
+   if aTid == iHead.MsgId {
+      _readIndex(aSd, &aIdx, nil)
+      aEl.Tags = aIdx[0].Tags
+      aIdx = aIdx[:0]
+      _, err = aSd.Seek(0, io.SeekStart)
+      if err != nil { quit(err) }
+   }
+   aMh := _readMsgHead(aSd)
    aHeadCc := aMh.SubHead.Cc
    aMh.SubHead.Cc = nil
 
@@ -572,6 +609,7 @@ func storeSentThread(iSvc string, iHead *Header, iQid string) {
       for a, _ = range aIdx {
          if aIdx[a].Id == iHead.Id { break }
       }
+      aEl.Tags = aIdx[a].Tags
       aIdx = aIdx[:a + copy(aIdx[a:], aIdx[a+1:])]
    }
    aHead := Header{Id:iHead.MsgId, From:GetConfigService(iSvc).Uid, Posted:iHead.Posted,
@@ -631,6 +669,7 @@ func validateDraftThread(iSvc string, iUpdt *Update) error {
 
 func storeDraftThread(iSvc string, iUpdt *Update) {
    aId := parseLocalId(iUpdt.Thread.Id)
+   aDraft := fileDraft(iSvc, aId.tid(), aId.lms())
    aOrig := dirThread(iSvc) + aId.tid()
    aTempOk := ftmpSd(iSvc, aId.tid(), aId.lms())
    aTemp := aTempOk + ".tmp"
@@ -652,6 +691,16 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
    if aId.tid() == "" {
       aCc = _updateCc(iSvc, iUpdt.Thread.Cc, false)
       iUpdt.Thread.Cc = aCc
+      var aSd *os.File
+      aSd, err = os.Open(aDraft)
+      if err != nil {
+         if !os.IsNotExist(err) { quit(err) }
+      } else {
+         _readIndex(aSd, &aIdx, nil)
+         aEl.Tags = aIdx[0].Tags
+         aIdx = aIdx[:0]
+         aSd.Close()
+      }
    } else {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil { quit(err) }
@@ -659,6 +708,7 @@ func storeDraftThread(iSvc string, iUpdt *Update) {
       aPos = _readIndex(aFd, &aIdx, &aCc)
       for a, _ := range aIdx {
          if aIdx[a].Id == iUpdt.Thread.Id {
+            aEl.Tags = aIdx[a].Tags
             aIdx[a] = aEl
             aIdxN = a
             break
@@ -884,6 +934,7 @@ func sendFwdDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    if err != nil { quit(err) }
    for a := len(aIdx)-1; a >= 0; a-- {
       aIdx[a].Seen = ""
+      aIdx[a].Tags = nil
       if aIdx[a].Offset < 0 {
          aIdx = aIdx[:a + copy(aIdx[a:], aIdx[a+1:])]
       }
@@ -1293,6 +1344,9 @@ func _updateSearchDoc(iSvc string, iTid string, iFd *os.File, iI tIndexer) {
       }
       if aIdx[a].Subject != "" || a == 0 {
          aDoc.Subject.addUnique(aIdx[a].Subject)
+      }
+      for a1 := range aIdx[a].Tags {
+         aDoc.Tag.addUnique(aIdx[a].Tags[a1])
       }
       if aIdx[a].From != "" || a == 0 {
          aDoc.LastDate, aDoc.LastAuthor = aIdx[a].Date, aIdx[a].Alias

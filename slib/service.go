@@ -467,11 +467,11 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    switch iUpdt.Op {
    case "open":
       if iSvc == "local" {
-         aFn, aResult = fOne, []string{"/v", "/t", "/f"}
+         aFn, aResult = fOne, []string{"/v", "/t", "/f", "/g"}
       } else {
          aFn, aResult = fOne, []string{"of", "ot", "ps", "pt", "pf", "gl",
                                        "cf", "nl", "tl", "cs", "cl", "al", "_t", "ml", "mo",
-                                       "/v", "/t", "/f"}
+                                       "/v", "/t", "/f", "/g"}
       }
    case "config_update":
       aNewCfg := GetConfigService(iSvc)
@@ -590,6 +590,18 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "thread_close":
       iState.openMsg(iUpdt.Touch.MsgId, false)
       // no result
+   case "thread_tag":
+      iUpdt.Touch.ThreadId = iState.getThread()
+      touchThread(iSvc, iUpdt)
+      aFn = func(c *ClientState) interface{} {
+         if c.getThread() == iUpdt.Touch.ThreadId {
+            _, cTabVal := c.getSvcTab()
+            if cTabVal[0] == '#' && Tag.getId(cTabVal[1:]) == iUpdt.Touch.TagId { return aResult }
+            return aResult[1:]
+         }
+         return nil
+      }
+      aResult = []string{"tl", "ml"}
    case "forward_save":
       storeFwdDraftThread(iSvc, iUpdt)
       aFn = func(c *ClientState) interface{} {
