@@ -245,6 +245,9 @@ input[type=text], textarea {
    padding: 0.5em 1em;
    overflow: auto;
 }
+.draft-preview > div:first-child {
+   margin-bottom: 0.5em;
+}
 
 .vue-form-generator input:disabled {
    background-color: #ffffdc; /* from .message-edit */
