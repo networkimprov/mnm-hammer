@@ -62,7 +62,6 @@ func fileFfn(iSvc, iSub             string) string { return dirAttach(iSvc) + iS
 // these have either ".tmp" or a decimal string appended
 func ftmpSr(iSvc, iTid, iMid string) string { return dirTemp(iSvc) +"sr_"+ iTid +"_"+ iMid +"__" }
 func ftmpSc(iSvc, iTid, iMid string) string { return dirTemp(iSvc) +"sc_"+ iTid +"_"+ iMid +"__" }
-func ftmpTc(iSvc, iTid       string) string { return dirTemp(iSvc) +"nr_"+ iTid +"___" }
 func ftmpSs(iSvc, iTid, iMid,
                         iLms string) string { return dirTemp(iSvc) +"ss_"+ iTid +"_"+ iMid +"_"+ iLms +"_" }
 func ftmpSd(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"ws_"+ iTid +"__"+ iLms +"_" }
@@ -70,6 +69,7 @@ func ftmpDd(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"ds_"+ iTid 
 func ftmpFr(iSvc, iTid       string) string { return dirTemp(iSvc) +"fr_"+ iTid +"_"+ iTid +"__" }
 func ftmpFn(iSvc, iTid       string) string { return dirTemp(iSvc) +"fn_"+ iTid +"___" }
 func ftmpFs(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"fs_"+ iTid +"__"+ iLms +"_" }
+func ftmpTc(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"nr_"+ iTid +"__"+ iLms +"_" }
 
 func ftmpFwdS(iSvc, iTid string) string { return dirTemp(iSvc) + iTid +"_fwd.tmp" }
 func ftmpFwdD(iSvc, iTid string) string { return dirTemp(iSvc) +"forward_"+ iTid }

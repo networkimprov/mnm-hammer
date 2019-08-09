@@ -458,7 +458,11 @@ func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *
 
 func touchThread(iSvc string, iUpdt *Update) bool {
    aOrig := dirThread(iSvc) + iUpdt.Touch.ThreadId
-   aTempOk := ftmpTc(iSvc, iUpdt.Touch.ThreadId)
+   aTempOk := ftmpTc(iSvc, iUpdt.Touch.ThreadId, "")
+   if iUpdt.Touch.ThreadId[0] == '_' {
+      aId := parseLocalId(iUpdt.Touch.ThreadId)
+      aTempOk = ftmpTc(iSvc, aId.tid(), aId.lms())
+   }
    aTemp := aTempOk + ".tmp"
    var err error
 
@@ -505,15 +509,17 @@ func _completeTouch(iSvc string, iTmp string, iFd, iTd *os.File) {
    sCrashFn(iSvc, "touch-thread")
 
    aRec := _parseFtmp(iTmp)
-
-   var err error
+   aTid := aRec.tid(); if aTid == "" { aTid = "_"+ aRec.lms() }
    aTempOk := dirTemp(iSvc) + iTmp
 
+   var err error
+   err = iFd.Truncate(aRec.pos())
+   if err != nil { quit(err) }
    _, err = io.Copy(iFd, iTd) // iFd has correct pos from _readIndex
    if err != nil { quit(err) }
    err = iFd.Sync()
    if err != nil { quit(err) }
-   _updateSearchDoc(iSvc, aRec.tid(), iFd, nil) //todo _updateUnread()
+   _updateSearchDoc(iSvc, aTid, iFd, nil) //todo _updateUnread()
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
 }
@@ -1529,8 +1535,9 @@ func completeThread(iSvc string, iTempOk string) {
    }
    fmt.Printf("complete %s\n", iTempOk)
    var aFd, aTd *os.File
-   if aRec.op() == "sc" || aRec.tid() != "" && aRec.tid() != aRec.mid() {
-      aFd, err = os.OpenFile(dirThread(iSvc)+aRec.tid(), os.O_RDWR, 0600)
+   if aRec.op() == "sc" || aRec.op() == "nr" || aRec.tid() != "" && aRec.tid() != aRec.mid() {
+      aTid := aRec.tid(); if aTid == "" { aTid = "_"+ aRec.lms() }
+      aFd, err = os.OpenFile(dirThread(iSvc) + aTid, os.O_RDWR, 0600)
       if err != nil { quit(err) }
       defer aFd.Close()
       _, err = aFd.Seek(aRec.pos(), io.SeekStart)
@@ -1567,13 +1574,13 @@ func completeThread(iSvc string, iTempOk string) {
    switch aRec.op() {
    case "sc": _completeStoreConfirm    (iSvc, iTempOk, aFd, aTd, fMsgHead(), fIdx())
    case "sr": _completeStoreReceived   (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
-   case "nr": _completeTouch           (iSvc, iTempOk, aFd, aTd)
    case "ss": _completeStoreSent       (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
    case "ws": _completeStoreDraft      (iSvc, iTempOk, aFd, aTd, fMsgHead())
    case "ds": _completeDeleteDraft     (iSvc, iTempOk, aFd, aTd)
    case "fr": _completeStoreFwdReceived(iSvc, iTempOk,      aTd)
    case "fn": _completeStoreFwdNotify  (iSvc, iTempOk, aFd, aTd, fCc("fwd"))
    case "fs": _completeStoreFwdSent    (iSvc, iTempOk, aFd, aTd, fCc("fwd"), fFwdSent())
+   case "nr": _completeTouch           (iSvc, iTempOk, aFd, aTd)
    default:
       fmt.Fprintf(os.Stderr, "completeThread: unexpected op %s%s\n", dirTemp(iSvc), iTempOk)
    }
