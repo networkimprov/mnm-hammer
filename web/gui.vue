@@ -847,8 +847,7 @@
    <div @keydown="keyAction('pv_'+msgid, $event)">
       <div style="position:relative; padding:1px;">
          <button @click="send"
-                 :disabled="mnm._data.ml.length < 2 &&
-                            !(mnm._data.toSave[msgid] || mnm._data.mo[msgid].SubHead).Subject"
+                 :disabled="mnm._data.ml.length < 2 && !subject"
                  title="Send draft"
                  class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
          <span v-if="mnm._data.cl[1].length < 2"
@@ -872,10 +871,12 @@
          <span :id="'pv_'+msgid"></span>
       </div>
       <input @input="subjAdd"
+             @focus="subjShow = true"
              @click.stop="clickPreview"
-             :value="(mnm._data.toSave[msgid] || mnm._data.mo[msgid].SubHead).Subject"
-             :placeholder="'Subject'+ (mnm._data.ml.length > 1 ? '' : ' (req.)')" type="text"
-             class="width100">
+             :value="subject"
+             :placeholder="mnm._data.ml.length === 1 ? 'Subject' : subjShow ? 'Re' : ''" type="text"
+             class="width100"
+             :class="{'draft-minsubject': mnm._data.ml.length > 1 && !subjShow && !subject}">
       <mnm-textresize @input.native="textAdd"
                       @click.native.stop="clickPreview"
                       :src="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
@@ -886,8 +887,12 @@
    Vue.component('mnm-draft', {
       template: '#mnm-draft',
       props: {msgid:String},
+      data: function() { return {subjShow: false} },
       computed: {
          mnm: function() { return mnm },
+         subject: function() {
+            return (mnm._data.toSave[this.msgid] || mnm._data.mo[this.msgid].SubHead).Subject;
+         },
          firstCc: function() {
             var aUser;
             mnm._data.cl[1].forEach(function(cUser) {

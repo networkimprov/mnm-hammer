@@ -236,6 +236,13 @@ input[type=text], textarea {
    font-family: Monaco, monospace;
    font-size: 82%;
 }
+.draft-minsubject {
+   display: block;
+   margin: 0 auto 0.2em;
+   width: 7em;
+   height: 0.6em;
+   cursor: default;
+}
 .draft-preview {
    width: 40vw; /*todo match to messages panel width */
    max-height: 75vh;
