@@ -371,7 +371,7 @@
 <script type="text/x-template" id="mnm-tour">
    <div style="min-height:260px; width:85%; margin:0 auto 3em; padding:0.7em;
                border-radius:12px; background-color:white">
-      <div style="float:right; margin-top:0.75em">
+      <div style="float:right">
          <button @click="--count"
                  :disabled="count === 0"
                  class="uk-button uk-button-link">

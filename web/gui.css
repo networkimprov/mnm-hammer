@@ -423,7 +423,9 @@ button > .paperclip {
    width: 40%;
 }
 .tour-inset > div {
-   margin-bottom: 0.5em;
-   text-align: center;
+   margin-top: -1.5em;
+   margin-left: -1em;
+   margin-bottom: 1em;
+   font-size: 120%;
    font-style: italic;
 }
