@@ -233,8 +233,10 @@ input[type=text], textarea {
 }
 
 .draft-recip {
-   font-family: Monaco, monospace;
    font-size: 82%;
+}
+.draft-recip-new {
+   font-family: Monaco, monospace;
 }
 .draft-minsubject {
    display: block;

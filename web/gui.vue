@@ -851,11 +851,14 @@
                  title="Send draft"
                  class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
          <span v-if="mnm._data.cl[1].length < 2"
-               class="draft-recip">[self]</span>
+               class="draft-recip" :class="{'draft-recip-new': mnm._data.ml.length === 1}"
+               >[self]</span>
          <span v-else
-               class="draft-recip">{{firstCc}}</span>
+               class="draft-recip" :class="{'draft-recip-new': mnm._data.ml.length === 1}"
+               >{{firstCc}}</span>
          <span v-if="mnm._data.cl[1].length > 2"
-               class="draft-recip">+{{mnm._data.cl[1].length - 2}}</span>
+               class="draft-recip" :class="{'draft-recip-new': mnm._data.ml.length === 1}"
+               >+{{mnm._data.cl[1].length - 2}}</span>
          <div style="height:100%; position:absolute; left:13em; right:42px; top:0;">
             <mnm-draftmenu @drop="atcDrop"
                            :list="mnm._data.mo[msgid].SubHead.Attach"
