@@ -391,10 +391,9 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
             if cMsg == nil { return }
             cC.WriteJSON(cMsg)
          })
-         aMsg := aFn(aCtx.state)
-         aOps, _ = aMsg.([]string)
-         if aOps == nil && aMsg != nil {
-            fmt.Fprintf(os.Stderr, "%s update error %s\n", aPrefix, aMsg.(string))
+         aOps = aFn(aCtx.state)
+         if aOps[0] == "_e" {
+            fmt.Fprintf(os.Stderr, "%s update error %s\n", aPrefix, aOps[1])
             continue
          }
       }

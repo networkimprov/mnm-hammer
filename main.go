@@ -296,7 +296,6 @@ func runTmtpRecv(iSvcId string) {
    aDlr := net.Dialer{Timeout: 20*time.Second, KeepAlive: 5*time.Second} //todo drop keepalive
    var err error
    var aConn net.Conn
-   var aLogoutMsg []string
 
    for {
       aCfg := pSl.GetConfigService(iSvcId)
@@ -340,7 +339,7 @@ func runTmtpRecv(iSvcId string) {
       err = _readLink(iSvcId, aConn, time.Duration(aCfg.LoginPeriod / kIdleTimeFraction) * time.Second)
       aConn.Close()
 
-      aLogoutMsg = pSl.LogoutService(iSvcId)
+      aLogoutMsg := pSl.LogoutService(iSvcId)
       aSvc.ccs.Range(func(c *tWsConn) {
          c.WriteJSON(aLogoutMsg)
       })

@@ -284,11 +284,11 @@ func LogoutService(iSvc string) []string {
 }
 
 func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
-                       aFn func(*ClientState)interface{}) {
+                       aFn func(*ClientState)[]string) {
    var err error
    var aResult []string
-   fAll := func(c *ClientState) interface{} { return aResult }
-   fErr := func(c *ClientState) interface{} { return iHead.Op +" "+ err.Error() }
+   fAll := func(c *ClientState) []string { return aResult }
+   fErr := func(c *ClientState) []string { return []string{"_e", iHead.Op +" "+ err.Error()} }
 
    switch iHead.Op {
    case "tmtprev":
@@ -350,7 +350,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       if aGot == "thread" {
          aFn, aResult = fAll, []string{"pt", "pf", "tl"}
       } else if aGot == "msg" {
-         aFn = func(c *ClientState) interface{} {
+         aFn = func(c *ClientState) []string {
             if c.getThread() == iHead.SubHead.ThreadId { return aResult }
             return aResult[:3]
          }
@@ -362,7 +362,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: delivery error %s\n", iSvc, err.Error())
          return fErr
       }
-      aFn = func(c *ClientState) interface{} {
+      aFn = func(c *ClientState) []string {
          if c.getThread() == iHead.SubHead.ThreadId { return aResult }
          return aResult[:2]
       }
@@ -391,7 +391,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       case eSrecThread:
          if iHead.Error != "" {
             aTid := aId.tid(); if aTid == "" { aTid = iHead.Id }
-            aFn = func(c *ClientState) interface{} {
+            aFn = func(c *ClientState) []string {
                if c.getThread() == aTid { return aResult }
                return aResult[1:]
             }
@@ -401,13 +401,13 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          }
          storeSentThread(iSvc, iHead, aQid)
          if aId.tid() == "" {
-            aFn = func(c *ClientState) interface{} {
+            aFn = func(c *ClientState) []string {
                c.renameThread(iHead.Id, iHead.MsgId)
                if c.getThread() == iHead.MsgId { return aResult }
                return aResult[1:3]
             }
          } else {
-            aFn = func(c *ClientState) interface{} {
+            aFn = func(c *ClientState) []string {
                c.renameMsg(aId.tid(), iHead.Id, iHead.MsgId)
                if c.getThread() == aId.tid() { return aResult[1:] }
                return aResult[1:3]
@@ -416,7 +416,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          aResult = []string{"cs", "tl", "pf", "cl", "al", "ml", "mn", iHead.MsgId}
       case eSrecFwd:
          if iHead.Error != "" {
-            aFn = func(c *ClientState) interface{} {
+            aFn = func(c *ClientState) []string {
                if c.getThread() == aId.tid() { return aResult }
                return aResult[1:]
             }
@@ -425,7 +425,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
             break
          }
          storeFwdSentThread(iSvc, iHead, aQid)
-         aFn = func(c *ClientState) interface{} {
+         aFn = func(c *ClientState) []string {
             if c.getThread() == aId.tid() { return aResult }
             return aResult[:1]
          }
@@ -451,13 +451,13 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
 }
 
 func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
-                       aFn func(*ClientState)interface{}) {
+                       aFn func(*ClientState)[]string) {
    var err error
    var aResult []string
-   fAll := func(c *ClientState) interface{} { return aResult }
-   fOne := func(c *ClientState) interface{} { if c == iState { return aResult }; return nil }
-   fErr := func(c *ClientState) interface{} { if c == iState {
-                                            return iUpdt.Op +" "+ err.Error() }; return nil }
+   fAll := func(c *ClientState) []string { return aResult }
+   fOne := func(c *ClientState) []string { if c != iState { return nil }; return aResult }
+   fErr := func(c *ClientState) []string { if c != iState { return nil }
+                                           return []string{"_e", iUpdt.Op +" "+ err.Error()} }
 
    if iSvc == "local" && iUpdt.Op != "open" {
       err = tError("not supported")
@@ -522,7 +522,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       storeDraftThread(iSvc, iUpdt)
       if iUpdt.Thread.New == eNewThread {
          iState.addThread(iUpdt.Thread.Id)
-         aFn = func(c *ClientState) interface{} {
+         aFn = func(c *ClientState) []string {
             if c == iState { return aResult }
             return aResult[:1]
          }
@@ -530,13 +530,13 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       } else if iUpdt.Thread.New == eNewReply {
          iState.openMsg(iUpdt.Thread.Id, true)
          aTid := iState.getThread()
-         aFn = func(c *ClientState) interface{} {
+         aFn = func(c *ClientState) []string {
             if c.getThread() == aTid { return aResult }
             return nil
          }
          aResult = []string{"al", "ml", "mn", iUpdt.Thread.Id}
       } else { // may update msg from a threadid other than iState.getThread()
-         aFn = func(c *ClientState) interface{} {
+         aFn = func(c *ClientState) []string {
             if c.isOpen(iUpdt.Thread.Id) { return aResult }
             return nil
          }
@@ -549,14 +549,14 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       deleteDraftThread(iSvc, iUpdt)
       aTid := iState.getThread()
       if iUpdt.Thread.Id[0] == '_' {
-         aFn = func(c *ClientState) interface{} {
+         aFn = func(c *ClientState) []string {
             defer c.discardThread(aTid)
             if c.getThread() == aTid { return aResult }
             return aResult[:1]
          }
          aResult = []string{"tl", "cs", "cl", "al", "_t", "ml", "mo"}
       } else {
-         aFn = func(c *ClientState) interface{} {
+         aFn = func(c *ClientState) []string {
             c.openMsg(iUpdt.Thread.Id, false)
             if c.getThread() == aTid { return aResult }
             return nil
@@ -568,7 +568,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       err = validateDraftThread(iSvc, iUpdt)
       if err != nil { return fErr }
       aTid := iState.getThread()
-      aFn = func(c *ClientState) interface{} {
+      aFn = func(c *ClientState) []string {
          if c.getThread() == aTid { return aResult }
          return nil
       }
@@ -582,7 +582,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       iState.openMsg(iUpdt.Touch.MsgId, true)
       aChg := touchThread(iSvc, iUpdt)
       if !aChg { break }
-      aFn = func(c *ClientState) interface{} {
+      aFn = func(c *ClientState) []string {
          if c.getThread() == iUpdt.Touch.ThreadId { return aResult }
          return aResult[:1]
       }
@@ -593,7 +593,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "thread_tag":
       iUpdt.Touch.ThreadId = iState.getThread()
       touchThread(iSvc, iUpdt)
-      aFn = func(c *ClientState) interface{} {
+      aFn = func(c *ClientState) []string {
          if c.getThread() == iUpdt.Touch.ThreadId {
             _, cTabVal := c.getSvcTab()
             if cTabVal[0] == '#' && Tag.getId(cTabVal[1:]) == iUpdt.Touch.TagId { return aResult }
@@ -604,13 +604,13 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aResult = []string{"tl", "ml"}
    case "forward_save":
       storeFwdDraftThread(iSvc, iUpdt)
-      aFn = func(c *ClientState) interface{} {
+      aFn = func(c *ClientState) []string {
          if c.getThread() == iUpdt.Forward.ThreadId { return aResult }
          return nil
       }
       aResult = []string{"cl"}
    case "forward_send":
-      aFn = func(c *ClientState) interface{} {
+      aFn = func(c *ClientState) []string {
          if c.getThread() == iUpdt.Forward.ThreadId { return aResult }
          return nil
       }

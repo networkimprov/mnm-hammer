@@ -155,8 +155,6 @@
             mnm.Log('ws handle deferred from '+ iMs);
          mnm.Log('ws '+ iEvent.data);
 
-         if (iEvent.data.charAt(0) !== '[')
-            return;
          var aObj = JSON.parse(iEvent.data);
          for (var a=0; a < aObj.length; ++a) {
             if (aObj[a] === '_n') {
@@ -166,7 +164,7 @@
             if (aObj[a] === '_t')
                mnm.ThreadChange();
             else if (aObj[a] === '_e')
-               mnm.Log('ws '+ aObj[++a]);
+               mnm.Log('mnm error '+ aObj[++a]);
             else if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')
                _xhr(aObj[a], aObj[++a]);
             else
