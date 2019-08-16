@@ -363,16 +363,16 @@ button > .paperclip {
 .notice {
    padding-right: 0.5em;
 }
-.notice > li.notice-hasblurb {
+.notice > .notice-hasblurb {
    cursor: pointer;
 }
-.notice > li.notice-seen {
+.notice > .notice-seen {
    margin: 0;
    padding-top: 10px;
    background-color: whitesmoke;
 }
-.notice > li:not(.notice-seen) + li.notice-seen,
-.notice > li:first-child.notice-seen {
+.notice > :not(.notice-seen) + .notice-seen,
+.notice > :first-child.notice-seen {
    border-top: 4px double lightgray;
    padding-top: 6px;
    margin-top: 10px;

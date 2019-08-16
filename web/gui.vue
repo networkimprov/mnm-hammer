@@ -195,6 +195,8 @@
          <span uk-icon="bell" class="dropdown-icon" style="font-weight:bold"
                :title="'Notices for <%.TitleJs%>'">{{nlNotSeen}}</span>
          <mnm-notice ref="notice"
+                     @beforeshow.native="mnm.NoticeOpen('<%.TitleJs%>')"
+                     @hide.native="mnm.NoticeClose()"
                      offset="2" pos="bottom-right"/>
          <span uk-icon="users" class="dropdown-icon"
                :title="'Address book for <%.TitleJs%>'">&nbsp;</span>
@@ -343,26 +345,25 @@
    </div>
    <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto uk-light">
       <ul class="uk-list uk-list-divider">
-         <li v-for="aSvc in v" :key="aSvc">
-            <template v-if="aSvc === '<%.TitleJs%>'">
-               <span class="vishide">1</span
-              ><span uk-icon="settings" class="dropdown-icon"
-                     :title="'Settings for <%.TitleJs%>'">&nbsp;</span>
+         <li v-for="aSvc in v" :key="aSvc.Name">
+            <template v-if="aSvc.Name === '<%.TitleJs%>'">
+               <span uk-icon="settings" class="dropdown-icon"
+                     :title="'Settings for <%.TitleJs%>'">&numsp;</span>
                <mnm-svccfg/>
-               {{aSvc}}
+               {{aSvc.Name}}
             </template>
             <template v-else>
-               <span uk-icon="bell" :id="'n_'+aSvc" class="dropdown-icon"
-                     :title="'Notices for '+ aSvc">0{{aSvc.todo}} </span>
-               <a :href="'/'+encodeURIComponent(aSvc)"
-                  :target="mnm._isLocal ? '_self' : 'mnm_'+aSvc">{{aSvc}}</a>
+               <span uk-icon="bell" class="dropdown-icon"
+                     :title="'Notices for '+ aSvc.Name">{{aSvc.NoticeN || '&numsp;'}}</span>
+               <mnm-notice :svc="aSvc.Name"
+                           @beforeshow.native="mnm.NoticeOpen(aSvc.Name)"
+                           @hide.native="mnm.NoticeClose()"
+                           offset="-4" pos="left-top"/><!--todo single notice menu-->
+               <a :href="'/'+encodeURIComponent(aSvc.Name)"
+                  :target="mnm._isLocal ? '_self' : 'mnm_'+aSvc.Name">{{aSvc.Name}}</a>
             </template>
          </li></ul>
    </div>
-   <!--todo create notice menus dynamically-->
-   <mnm-notice v-for="aSvc in v" :key="aSvc"
-               :svc="aSvc" offset="-4" pos="left-top" :toggle="'#n_'+aSvc"
-               @beforeshow.native="mnm.NoticeOpen(aSvc)"/>
 </div>
 
 </div>
@@ -1614,25 +1615,25 @@
    <div uk-dropdown="mode:click" :toggle="toggle"
         class="uk-width-1-4 menu-bg dropdown-scroll">
       <button v-if="!svc"
-              @click="mnm.NoticeSeen(nl[0].MsgId)"
-              :disabled="!nl.length || nl[0].Seen > 0"
+              @click="mnm.NoticeSeen(mnm._data.nlo[0].MsgId)"
+              :disabled="!mnm._data.nlo.length || mnm._data.nlo[0].Seen > 0"
               title="Mark all as seen"
               class="btn-icon btn-floatr dropdown-scroll-item"><span uk-icon="check"></span></button>
-      <div style="min-height:2em; font-style:oblique;">
+      <div style="min-height:2em; font-style:oblique; color:#1e87f0"><!--uk-light workaround-->
          <span v-for="aType in [['i', 'invites']]"
                @click="$data[aType[0]] = !$data[aType[0]]"
-               class="uk-link" style="margin-right:0.5em">
+               style="margin-right:0.5em; cursor:pointer">
             <span :class="{vishide: !$data[aType[0]]}">&bull; </span>
             {{ aType[1] }}
          </span>
       </div>
-      <ul class="uk-list dropdown-scroll-list notice">
-         <li v-if="!nl.length"
-             style="text-align:center">No notices yet</li>
-         <li v-for="aNote in nl" :key="aNote.MsgId"
-             v-show="$data[aNote.Type]"
-             @click="$set(aNote, 'open', !aNote.open)"
-             :class="{'notice-seen':aNote.Seen, 'notice-hasblurb':aNote.Blurb}">
+      <div class="dropdown-scroll-list notice">
+         <div v-if="!mnm._data.nlo.length"
+              style="text-align:center">No notices yet</div>
+         <div v-for="aNote in mnm._data.nlo" :key="aNote.MsgId"
+              v-show="$data[aNote.Type]"
+              @click="$set(aNote, 'open', !aNote.open)"
+              :class="{'notice-seen':aNote.Seen, 'notice-hasblurb':aNote.Blurb}">
             <div style="float:left; font-style:oblique">{{aNote.Type}}</div>
             <div style="margin-left:1em">
                <div style="float:right"><mnm-date :iso="aNote.Date" ymd="md" hms="hm"/></div>
@@ -1642,7 +1643,7 @@
                <span v-show="aNote.Blurb && !aNote.open">. . .</span>
                <div v-show="aNote.open">{{aNote.Blurb}}</div>
             </div>
-         </li></ul>
+         </div></div>
    </div>
 </script><script>
    Vue.component('mnm-notice', {
@@ -1650,7 +1651,6 @@
       props: {svc:String, toggle:String},
       data: function() { return { i:true } },
       computed: {
-         nl: function() { return this.svc ? mnm._data.nlo : mnm._data.nl },
          mnm: function() { return mnm },
       },
    });
@@ -1985,7 +1985,7 @@
       cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
       ohiFrom: !mnm._isLocal, //todo move to cs
    // per service
-      cf:{}, nl:[], tl:[], ffn:'', // ffn derived from tl
+      cf:{}, tl:[], ffn:'', // ffn derived from tl
       ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
    // per thread
       cl:[[],[]], al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
@@ -2065,8 +2065,8 @@
             return aList;
          },
          nlNotSeen: function() {
-            for (var aN=0; aN < mnm._data.nl.length && !mnm._data.nl[aN].Seen; ++aN) {}
-            return aN || null;
+            var aSvc = mnm._data.v.find(function(c) { return c.Name === '<%.TitleJs%>' });
+            return aSvc && aSvc.NoticeN || null;
          },
          ffnCol: function() {
             if (!mnm._data.ffn) return {};
@@ -2177,7 +2177,7 @@
       }
 
       switch (i) {
-      case 'cf': case 'nl': case 'cl': case 'al': case 'ml':
+      case 'cf': case 'cl': case 'al': case 'ml':
       case 'ps': case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
       case 't' : case 'f' : case 'v' : case 'g': case 'nlo':
          if (i === 'f' && iEtc) {
@@ -2186,8 +2186,6 @@
             mnm._data[i] = JSON.parse(iData);
             if (mnm._data.cs.Sort[i])
                sApp.$refs[i].listSort(mnm._data.cs.Sort[i]);
-            else if (i === 'v')
-               mnm._data.v.sort();
          }
          break;
       case 'cs':
