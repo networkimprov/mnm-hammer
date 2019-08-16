@@ -11,7 +11,8 @@
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
       "/g": [{"Name":"Todo", "Id":"Todo"},
              {"Name":"flag", "Id":"*d"  }] ,
-      "/v": ["Blue", "Gold"] }
+      "/v": [{"Name":"Blue", "NoticeN":0},
+             {"Name":"Gold", "NoticeN":0}] }
 }]
 
 },{
@@ -414,7 +415,8 @@
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
       "/g": [{"Name":"Todo", "Id":"Todo"},
              {"Name":"flag", "Id":"*d"  }] ,
-      "/v": ["Blue", "Gold"] ,
+      "/v": [{"Name":"Blue", "NoticeN":1},
+             {"Name":"Gold", "NoticeN":1}] ,
       "of": [{"Alias":"Gold#td", "Uid":"*uid", "Date":"*d"}] ,
       "ot": [] ,
       "ps": [] ,
@@ -426,7 +428,6 @@
               "Response":{"Type":5, "Date":"*d", "Uid":"*uid", "Tid":"*mid"},
               "ResponseInvt":{"Type":9, "Date":"*d", "Gid":"Gold-G#tdg"}}] ,
       "gl": [{"Gid":"Gold-G#tdg", "Date":"*d", "Admin":false}] ,
-      "nl": [{"Type":"i", "Alias":"Gold#td", "Gid":"Gold-G#tdg", "MsgId":"*mid", "Date":"*d", "Seen":0}] ,
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} ,
       "ml": "navigate_history.a" ,
@@ -457,6 +458,11 @@
    "Result": null
 },{
    "Updt": {"Op":"notice_seen", "Notice":{"MsgId":"6"}},
+   "Result": {
+      "/v": [{"Name":"Blue", "NoticeN":0},
+             {"Name":"Gold", "NoticeN":1}] }
+},{
+   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["nl"]}},
    "Result": {
       "nl": [{"Type":"i", "MsgId":"6", "Date":"*dyo", "Seen":4, "Alias":"seen"},
              {"Type":"i", "MsgId":"5", "Date":"*dyo", "Seen":4, "Alias":"seen"},

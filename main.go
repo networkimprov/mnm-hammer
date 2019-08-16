@@ -441,9 +441,12 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) error {
                fmt.Fprintf(os.Stderr, "_readLink %s: ack channel blocked\n", iSvcId)
             }
          }
-         aFn := pSl.HandleTmtpService(iSvcId, aHead, &tTmtpInput{aData, iConn})
+         aFn, aToAll := pSl.HandleTmtpService(iSvcId, aHead, &tTmtpInput{aData, iConn})
          if aHead.From != "" && aHead.Id != "" {
             aSvc.queue.postAck(aHead.Id)
+         }
+         if aToAll != nil {
+            toAllClients(aToAll)
          }
          if aFn != nil {
             for _, aStEl := range sTestState {
@@ -687,8 +690,10 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
       var aUpdate pSl.Update
       err = json.Unmarshal(aJson, &aUpdate)
       if err != nil { panic(err) }
-      aFn := pSl.HandleUpdtService(aSvcId, aState, &aUpdate)
-
+      aFn, aToAll := pSl.HandleUpdtService(aSvcId, aState, &aUpdate)
+      if aToAll != nil {
+         toAllClients(aToAll)
+      }
       if aFn != nil {
          aSvc.ccs.Range(func(cC *tWsConn) {
             cMsg := aFn(cC.state)

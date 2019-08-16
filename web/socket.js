@@ -14,6 +14,7 @@
    var sTouchUntag = 'u'.charCodeAt(0);
    var sWs = {};
    var sXhrPending = 0;
+   var sNotice = '';
 
    // caller implements these
    mnm.Log =
@@ -49,7 +50,11 @@
    };
 
    mnm.NoticeOpen = function(iSvc) {
+      sNotice = iSvc;
       _xhr('nlo', iSvc)
+   };
+   mnm.NoticeClose = function() {
+      sNotice = ''
    };
    mnm.NoticeSeen = function(iMsgId) {
       _wsSend({op:'notice_seen', notice:{msgid:iMsgId}})
@@ -167,8 +172,11 @@
                mnm.Log('mnm error '+ aObj[++a]);
             else if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')
                _xhr(aObj[a], aObj[++a]);
-            else
+            else {
                _xhr(aObj[a]);
+               if (aObj[a] === '/v' && sNotice)
+                  _xhr('nlo', sNotice);
+            }
          }
       };
       sWs.onclose = function(iEvent) {

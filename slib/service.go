@@ -13,6 +13,7 @@ import (
    "encoding/json"
    "os"
    pBleve "github.com/blevesearch/bleve"
+   "sort"
    "strings"
    "sync"
    "net/url"
@@ -103,17 +104,28 @@ func initServices(iFn func(string)) {
 }
 
 func startAllService() {
-   for _, aSvc := range Service.GetIdx().([]string) {
-      sServiceStartFn(aSvc)
+   sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
+   for aK := range sServices {
+      sServiceStartFn(aK)
    }
+}
+
+type tServiceEl struct {
+   Name string
+   NoticeN int
 }
 
 func (tGlobalService) GetIdx() interface{} {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   aS := make([]string, 0, len(sServices))
-   for aK := range sServices {
-      aS = append(aS, aK)
+   aS := make([]tServiceEl, 0, len(sServices))
+   for aK, aV := range sServices {
+      aV.RLock()
+      aN := -1
+      for aN = 0; aN < len(aV.notice) && aV.notice[aN].Seen != 0; aN++ {}
+      aS = append(aS, tServiceEl{Name:aK, NoticeN: len(aV.notice) - aN})
+      aV.RUnlock()
    }
+   sort.Slice(aS, func(cA, cB int) bool { return aS[cA].Name < aS[cB].Name })
    return aS
 }
 
@@ -284,7 +296,7 @@ func LogoutService(iSvc string) []string {
 }
 
 func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
-                       aFn func(*ClientState)[]string) {
+                       aFn func(*ClientState)[]string, aToAll []string) {
    var err error
    var aResult []string
    fAll := func(c *ClientState) []string { return aResult }
@@ -306,7 +318,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       err = _updateConfig(aNewCfg)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: %s %s\n", iSvc, iHead.Op, err.Error())
-         return fErr
+         return fErr, nil
       }
       aFn, aResult = fAll, []string{"cf"}
    case "login":
@@ -321,16 +333,18 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       err = storeReceivedAdrsbk(iSvc, iHead, iR)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: ping error %s\n", iSvc, err.Error())
-         return fErr
+         return fErr, nil
       }
-      aFn, aResult = fAll, []string{"nl", "pf", "pt"}
+      aFn, aResult = fAll, []string{"pf", "pt"}
+      aToAll = []string{"/v"}
    case "invite":
       err = storeReceivedAdrsbk(iSvc, iHead, iR)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: invite error %s\n", iSvc, err.Error())
-         return fErr
+         return fErr, nil
       }
-      aFn, aResult = fAll, []string{"nl", "pf", "pt"}
+      aFn, aResult = fAll, []string{"pf", "pt"}
+      aToAll = []string{"/v"}
    case "member":
       if iHead.Act == "join" {
          groupJoinedAdrsbk(iSvc, iHead)
@@ -345,7 +359,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       }
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: delivery error %s\n", iSvc, err.Error())
-         return fErr
+         return fErr, nil
       }
       if aGot == "thread" {
          aFn, aResult = fAll, []string{"pt", "pf", "tl"}
@@ -360,7 +374,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       err = storeFwdNotifyThread(iSvc, iHead, iR)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: delivery error %s\n", iSvc, err.Error())
-         return fErr
+         return fErr, nil
       }
       aFn = func(c *ClientState) []string {
          if c.getThread() == iHead.SubHead.ThreadId { return aResult }
@@ -445,13 +459,13 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       }
    default:
       err = tError("unknown tmtp op")
-      return fErr
+      return fErr, nil
    }
-   return aFn
+   return aFn, aToAll
 }
 
 func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
-                       aFn func(*ClientState)[]string) {
+                       aFn func(*ClientState)[]string, aToAll []string) {
    var err error
    var aResult []string
    fAll := func(c *ClientState) []string { return aResult }
@@ -461,7 +475,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
 
    if iSvc == "local" && iUpdt.Op != "open" {
       err = tError("not supported")
-      return fErr
+      return fErr, nil
    }
 
    switch iUpdt.Op {
@@ -469,8 +483,8 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if iSvc == "local" {
          aFn, aResult = fOne, []string{"/v", "/t", "/f", "/g"}
       } else {
-         aFn, aResult = fOne, []string{"of", "ot", "ps", "pt", "pf", "gl",
-                                       "cf", "nl", "tl", "cs", "cl", "al", "_t", "ml", "mo",
+         aFn, aResult = fOne, []string{"cf", "of", "ot", "ps", "pt", "pf", "gl",
+                                       "tl", "cs", "cl", "al", "_t", "ml", "mo",
                                        "/v", "/t", "/f", "/g"}
       }
    case "config_update":
@@ -485,7 +499,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       }
       if iUpdt.Config.LoginPeriod >= 0 { aNewCfg.LoginPeriod = iUpdt.Config.LoginPeriod }
       err = _updateConfig(aNewCfg)
-      if err != nil { return fErr }
+      if err != nil { return fErr, nil }
       aFn, aResult = fAll, []string{"cf"}
    case "ohi_add", "ohi_drop":
       editOhi(iSvc, iUpdt)
@@ -505,14 +519,14 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "adrsbk_search":
       if iUpdt.Adrsbk.Term == "" {
          err = tError("search term missing")
-         return fErr
+         return fErr, nil
       }
       aResult = searchAdrsbk(iSvc, iUpdt)
       aFn, aResult = fOne, append([]string{"_n"}, aResult...)
    case "notice_seen":
       err = setLastSeenNotice(iSvc, iUpdt)
-      if err != nil { return fErr }
-      aFn, aResult = fAll, []string{"nl"}
+      if err != nil { return fErr, nil }
+      aToAll = []string{"/v"}
    case "thread_save":
       const ( _ int8 = iota; eNewThread; eNewReply )
       if iUpdt.Thread.New > 0 {
@@ -566,7 +580,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "thread_send":
       if iUpdt.Thread.Id == "" { break }
       err = validateDraftThread(iSvc, iUpdt)
-      if err != nil { return fErr }
+      if err != nil { return fErr, nil }
       aTid := iState.getThread()
       aFn = func(c *ClientState) []string {
          if c.getThread() == aTid { return aResult }
@@ -577,7 +591,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "thread_open":
       if iUpdt.Touch.ThreadId != iState.getThread() {
          err = tError("thread id out of sync")
-         return fErr
+         return fErr, nil
       }
       iState.openMsg(iUpdt.Touch.MsgId, true)
       aChg := touchThread(iSvc, iUpdt)
@@ -624,7 +638,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}
    case "navigate_link":
       _, err = os.Lstat(dirThread(iSvc) + iUpdt.Navigate.ThreadId)
-      if err != nil { return fErr }
+      if err != nil { return fErr, nil }
       aDiff := iUpdt.Navigate.ThreadId != iState.getThread()
       iState.goLink(iUpdt.Navigate.ThreadId, iUpdt.Navigate.MsgId)
       aFn = fOne
@@ -661,9 +675,9 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       }
    default:
       err = tError("unknown op")
-      return fErr
+      return fErr, nil
    }
-   return aFn
+   return aFn, aToAll
 }
 
 // only for testing

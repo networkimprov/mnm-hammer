@@ -16,7 +16,6 @@ import (
    "encoding/json"
    "os"
    pSl "github.com/networkimprov/mnm-hammer/slib"
-   "sort"
    "strconv"
    "strings"
    "sync"
@@ -383,7 +382,10 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
       if iTc.SvcId == sTestCrashSvc {
          atomic.StoreUint64(&sTestOrderLast, uint64(a))
       }
-      aFn := pSl.HandleUpdtService(iTc.SvcId, aCtx.state, aUpdt)
+      aFn, aToAll := pSl.HandleUpdtService(iTc.SvcId, aCtx.state, aUpdt)
+      if aToAll != nil {
+         toAllClients(aToAll)
+      }
       var aOps []string
       if aFn != nil {
          aSvc.ccs.Range(func(cC *tWsConn) {
@@ -397,6 +399,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
             continue
          }
       }
+      aOps = append(aOps, aToAll...)
       if iTc.Orders[a].Result == nil {
          iTc.Orders[a].Result = make(map[string]interface{})
       }
@@ -604,7 +607,6 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    case "/f": aResult = pSl.BlankForm.GetIdx()
    case "/g": aResult = pSl.Tag.GetIdx()
    case "/v": aResult = pSl.Service.GetIdx()
-              sort.Strings(aResult.([]string))
    case "cs": aResult = iCtx.state.GetSummary()
    case "cf": aResult = pSl.GetConfigService(iCtx.svcId)
    case "nl": aResult = pSl.GetIdxNotice(iCtx.svcId)
