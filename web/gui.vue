@@ -193,7 +193,11 @@
       </span>
       <div class="uk-float-right">
          <span uk-icon="bell" class="dropdown-icon" style="font-weight:bold"
-               :title="'Notices for <%.TitleJs%>'">{{nlNotSeen}}</span>
+               :title="'Notices for <%.TitleJs%>'">
+            <span v-show="mnm._data.errorFlag"
+                  style="color:crimson">!</span>
+            {{nlNotSeen}}<!---->
+         </span>
          <mnm-notice ref="notice"
                      @beforeshow.native="mnm.NoticeOpen('<%.TitleJs%>')"
                      @hide.native="mnm.NoticeClose()"
@@ -1613,21 +1617,40 @@
 
 <script type="text/x-template" id="mnm-notice">
    <div uk-dropdown="mode:click" :toggle="toggle"
+        @show="showErr = !svc && mnm._data.errorFlag && !(mnm._data.errorFlag = false)"
         class="uk-width-1-4 menu-bg dropdown-scroll">
       <button v-if="!svc"
+              @click="showErr = !showErr"
+              :disabled="!mnm._data.errors.length"
+              style="float:left; margin-right:1em"
+              title="Toggle errors list"
+              class="uk-button uk-button-link"><span uk-icon="warning"></span></button>
+      <button v-if="!svc"
+              v-show="!showErr"
               @click="mnm.NoticeSeen(mnm._data.nlo[0].MsgId)"
               :disabled="!mnm._data.nlo.length || mnm._data.nlo[0].Seen > 0"
               title="Mark all as seen"
               class="btn-icon btn-floatr dropdown-scroll-item"><span uk-icon="check"></span></button>
       <div style="min-height:2em; font-style:oblique; color:#1e87f0"><!--uk-light workaround-->
          <span v-for="aType in [['i', 'invites']]"
+               v-show="!showErr"
                @click="$data[aType[0]] = !$data[aType[0]]"
                style="margin-right:0.5em; cursor:pointer">
             <span :class="{vishide: !$data[aType[0]]}">&bull; </span>
             {{ aType[1] }}
          </span>
       </div>
-      <div class="dropdown-scroll-list notice">
+      <div v-show="showErr"
+           class="dropdown-scroll-list notice">
+         <div v-for="aErr in mnm._data.errors" :key="aErr.Date">
+            <div style="float:left; font-style:oblique">!</div>
+            <div style="margin-left:1em">
+               <div style="float:right"><mnm-date :iso="aErr.Date" ymd="md" hms="hm"/></div>
+               {{aErr.Err}}
+            </div>
+         </div></div>
+      <div v-show="!showErr"
+           class="dropdown-scroll-list notice">
          <div v-if="!mnm._data.nlo.length"
               style="text-align:center">No notices yet</div>
          <div v-for="aNote in mnm._data.nlo" :key="aNote.MsgId"
@@ -1649,7 +1672,7 @@
    Vue.component('mnm-notice', {
       template: '#mnm-notice',
       props: {svc:String, toggle:String},
-      data: function() { return { i:true } },
+      data: function() { return { i:true, showErr:false } },
       computed: {
          mnm: function() { return mnm },
       },
@@ -1984,6 +2007,7 @@
    // per client
       cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
       ohiFrom: !mnm._isLocal, //todo move to cs
+      errors: [], errorFlag: false,
    // per service
       cf:{}, tl:[], ffn:'', // ffn derived from tl
       ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
@@ -2157,6 +2181,13 @@
       document.getElementById('log').innerText = (i.substr(-1) === '\n' ? i : i+'\n')+aLog;
    };
 
+   mnm.Err = function(iMsg, iOnce) {
+      if (iOnce && mnm._data.errors.length && mnm._data.errors[0].Err === iMsg)
+         return;
+      mnm._data.errors.unshift({Date: luxon.DateTime.utc().toISO(), Err: iMsg});
+      mnm._data.errorFlag = true;
+   };
+
    mnm.Quit = function() {
       document.body.click(); // close dropdowns
       document.getElementById('app-quit').style.display = 'block';
@@ -2279,9 +2310,15 @@
       }
    });
 
-   sApp.$mount('#app');
    window.name = 'mnm_<%.TitleJs%>';
    window.onload = mnm.Connect;
+   window.onerror = function(iMsg /*etc*/) { mnm.Err(iMsg) };
+
+   Vue.config.errorHandler = function(iErr /*etc*/) {
+      mnm.Err(iErr.message, 'once');
+      console.error(iErr);
+   };
+   sApp.$mount('#app');
 
 }).call(this);
 </script>

@@ -18,6 +18,7 @@
 
    // caller implements these
    mnm.Log =
+   mnm.Err =
    mnm.Quit =
    mnm.Render =
    mnm.ThreadChange = function(){};
@@ -169,7 +170,7 @@
             if (aObj[a] === '_t')
                mnm.ThreadChange();
             else if (aObj[a] === '_e')
-               mnm.Log('mnm error '+ aObj[++a]);
+               mnm.Err(aObj[++a]);
             else if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')
                _xhr(aObj[a], aObj[++a]);
             else {
@@ -185,6 +186,7 @@
       };
       sWs.onerror = function(iEvent) {
          mnm.Log('ws error: ' + iEvent.data);
+         mnm.Err(iEvent.data);
       };
    };
 
