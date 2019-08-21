@@ -205,7 +205,8 @@
          <span uk-icon="users" class="dropdown-icon"
                :title="'Address book for <%.TitleJs%>'">&nbsp;</span>
          <mnm-adrsbk ref="adrsbk"/>
-         <span @mousedown="ohiFrom = !ohiFrom" class="dropdown-icon"
+         <span @mousedown="ohiFrom = !ohiFrom"
+               style="color:#1e87f0; font-size:110%; vertical-align:text-top; cursor:pointer"
                title="Toggle ohi-from panel">&nbsp;o/</span>
          &nbsp;
          <span uk-icon="push" class="dropdown-icon"
