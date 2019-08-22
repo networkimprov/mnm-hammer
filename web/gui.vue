@@ -9,7 +9,7 @@
 -->
 <html><head>
    <title><%html .Title%> - mnm</title>
-   <link rel="icon" href="/w/favicon.png"/>
+   <link rel="icon" href="/w/img/logo-48nobg-bleed-bright.png"/>
 
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1">
