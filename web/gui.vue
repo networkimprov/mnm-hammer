@@ -432,13 +432,13 @@
             <b>3.</b> Click the account to open it (and continue the tour).<br>
             <div class="service-panel uk-light"
                  style="width:20%; margin-top:0.5em; padding:1em; overflow:hidden">
-               <span v-if="$root.v.length === 0">
+               <span v-if="mnm._data.v.length === 0">
                   awaiting link. . .</span>
                <div v-else>
-                  <span uk-icon="bell" class="dropdown-icon">0 </span>
-                  <a :href="'/'+ encodeURIComponent($root.v[0]) +'#tour'"
+                  <span uk-icon="bell" class="dropdown-icon">{{mnm._data.v[0].NoticeN || '&numsp;'}}</span>
+                  <a :href="'/'+ encodeURIComponent(mnm._data.v[0].Name) +'#tour'"
                      target="_self"
-                     title="Continue tour">{{$root.v[0]}}</a>
+                     title="Continue tour">{{mnm._data.v[0].Name}}</a>
                </div>
             </div>
          </div>
