@@ -142,7 +142,8 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    if iDup != "" {
       return tError("duplicate disallowed")
    }
-   if iName != aCfg.Name || len(iName) < kServiceNameMin || strings.HasSuffix(iName, ".tmp") {
+   if iName != aCfg.Name || len(iName) < kServiceNameMin ||
+      strings.HasSuffix(iName, ".tmp") || iName == "favicon.ico" {
       return tError("name not valid: " + iName)
    }
    if aCfg.Addr[0] != '+' && aCfg.Addr[0] != '=' {

@@ -115,6 +115,7 @@ func mainResult() int {
    http.HandleFunc("/g/", runGlobal)
    http.HandleFunc("/s/", runWebsocket)
    http.HandleFunc("/w/", runFile)
+   http.HandleFunc("/favicon.ico", runFavicon)
    err = sHttpSrvr.ListenAndServe()
    if err != http.ErrServerClosed {
       fmt.Fprintf(os.Stderr, "%s\n", err)
@@ -707,6 +708,10 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
 
 func runFile(iResp http.ResponseWriter, iReq *http.Request) {
    http.ServeFile(iResp, iReq, "web"+ iReq.URL.Path[2:])
+}
+
+func runFavicon(iResp http.ResponseWriter, iReq *http.Request) {
+   iResp.WriteHeader(http.StatusNotFound)
 }
 
 
