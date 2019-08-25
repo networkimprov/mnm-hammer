@@ -601,13 +601,13 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
             aPart, err = aR.NextPart()
          }
          if err != nil {
-            fErr(http.StatusNotAcceptable, "form error: " + err.Error())
+            fErr(http.StatusNotAcceptable, "form: " + err.Error())
             return
          }
          defer aPart.Close()
          err = aSet.Add(aId[1:], "", aPart)
          if err != nil {
-            fErr(http.StatusInternalServerError, "add error: " + err.Error())
+            fErr(http.StatusInternalServerError, "add: " + err.Error())
             return
          }
       } else if aId[0] == '*' {
@@ -619,13 +619,13 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
             err = aSet.Add(aPrev_New[0], aPrev_New[1], nil)
          }
          if err != nil {
-            fErr(http.StatusNotAcceptable, "duplicate error: " + err.Error())
+            fErr(http.StatusNotAcceptable, "duplicate: " + err.Error())
             return
          }
       } else if aId[0] == '-' {
          err := aSet.Drop(aId[1:])
          if err != nil {
-            fErr(http.StatusNotAcceptable, "drop error: " + err.Error())
+            fErr(http.StatusNotAcceptable, "drop: " + err.Error())
             return
          }
       } else {
@@ -641,7 +641,7 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
    } else {
       aPath := aSet.GetPath(aId)
       if aPath == "" {
-         fErr(http.StatusNotAcceptable, "not a file type")
+         fErr(http.StatusNotAcceptable, "get: not a file type: "+ iReq.URL.Path)
          return
       }
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums

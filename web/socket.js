@@ -137,10 +137,12 @@
 
    mnm.Upload = function(iForm) {
       if (iForm.method.toLowerCase() !== 'post' || !iForm.action)
-        throw 'mnm.Upload: requires method=POST and valid action'
+         throw new Error('mnm.Upload: requires method=POST and valid action');
       var aXhr = new XMLHttpRequest();
       aXhr.onload = function() {
          mnm.Log(iForm.action +' '+ aXhr.responseText);
+         if (aXhr.status !== 200)
+            mnm.Err(aXhr.responseText);
       };
       aXhr.open('POST', iForm.action);
       aXhr.send(new FormData(iForm));
@@ -197,6 +199,7 @@
          --sXhrPending;
          if (aXhr.status !== 200) {
             mnm.Log(i +' '+ aXhr.responseText);
+            mnm.Err(aXhr.responseText);
             return;
          }
          if (i !== 'mo' && i !== 'mn') {
