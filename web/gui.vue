@@ -244,74 +244,72 @@
    </div>
    <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"
              :set="svcTabset" :state="cs.SvcTabs"/>
-   <div class="uk-position-relative"><!-- context for ohi card -->
-      <div uk-height-viewport="offset-top:true"
-           class="thread-list firefox-minheight-fix uk-overflow-auto">
-         <template v-if="ffn">
-            <table class="uk-table uk-table-small uk-table-hover uk-text-small">
-               <tr>
-                  <th v-for="(a, aKey) in ffnCol"
-                      v-if="aKey.charAt(0) !== '$' || aKey === '$msgid'"
-                      style="position:sticky; top:0">
-                     {{ aKey === '$msgid' ? 'source' : aKey }}</th>
-               </tr>
-               <tr v-for="aRow in tl">
-                  <td v-for="(a, aKey) in ffnCol"
-                      v-if="aKey.charAt(0) !== '$' || aKey === '$msgid'">
-                     <a v-if="aKey === '$msgid'"
-                        onclick="mnm.NavigateLink(this.href); return false"
-                        :href="'#'+ aRow.$threadid +'&'+ aRow.$msgid"><span uk-icon="mail"></span></a>
-                     <table v-else-if="aRow[aKey] instanceof Object"
-                            class="uk-table">
-                        <tr>
-                           <th v-for="(a, aSubKey) in aRow[aKey]"
-                               style="padding:0 0.5em">{{aSubKey}}</th>
-                        </tr><tr>
-                           <td v-for="aSubRow in aRow[aKey]"
-                               style="padding:0 0.5em">{{aSubRow}}</td>
-                        </tr></table>
-                     <template v-else>
-                        {{aRow[aKey]}}</template>
-                  </td>
-               </tr>
-            </table></template>
-         <template v-else-if="cs.SvcTabs.PosFor === 0 && cs.SvcTabs.Default[cs.SvcTabs.Pos] === 'FFT'">
-            <div v-for="aRow in tl" :key="aRow.Id"
-                 @click="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)"
-                 uk-grid class="uk-grid-small thread-row">
-               <div class="uk-width-auto" style="padding:0">
-                  <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
-               <div class="uk-width-expand">{{aRow.Id}}</div>
-               <!--todo more fields-->
-            </div></template>
-         <template v-else>
-            <div v-for="aRow in tl" :key="aRow.Id"
-                 @click="mnm.NavigateThread(aRow.Id)"
-                 uk-grid class="uk-grid-small thread-row"
-                 :style="{'background-color': aRow.Id === cs.Thread ? '#fff7cf' : null}"><!--todo class thread-row-thread-->
-               <div class="uk-width-auto" style="padding:0"
-                    :class="{'thread-unread': aRow.Unread}">
-                  <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
-               <div class="uk-width-1-6 overxhide"
-                    :class="{'thread-unread': aRow.Unread}">{{aRow.LastAuthor}}</div>
-               <div class="uk-width-expand overxhide"
-                    :title="aRow.Id">{{aRow.Subject}}</div>
-               <div class="uk-width-auto">
-                  <mnm-date :iso="aRow.OrigDate"/></div>
-               <div class="uk-width-1-6 overxhide">{{aRow.OrigAuthor}}</div>
-            </div></template>
-         <div style="margin-top:1em">
-            <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
-                 style="float:right; margin-right:1em; font-size:75%;">
-               <span class="uk-link">+/- mo</span></div
-           ><div style="display:none">{{JSON.stringify(mo)}}</div><br>
-            <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
-                 style="float:right; margin-right:1em; font-size:75%;">
-               <span class="uk-link">+/- log</span></div
-           ><div style="display:none" id="log"></div>
-         </div>
-         <mnm-tour v-if="mnm._isLocal || location.hash === '#tour'"/>
+   <div uk-height-viewport="offset-top:true"
+        class="thread-list firefox-minheight-fix uk-overflow-auto uk-position-relative">
+      <template v-if="ffn">
+         <table class="uk-table uk-table-small uk-table-hover uk-text-small">
+            <tr>
+               <th v-for="(a, aKey) in ffnCol"
+                   v-if="aKey.charAt(0) !== '$' || aKey === '$msgid'"
+                   style="position:sticky; top:0">
+                  {{ aKey === '$msgid' ? 'source' : aKey }}</th>
+            </tr>
+            <tr v-for="aRow in tl">
+               <td v-for="(a, aKey) in ffnCol"
+                   v-if="aKey.charAt(0) !== '$' || aKey === '$msgid'">
+                  <a v-if="aKey === '$msgid'"
+                     onclick="mnm.NavigateLink(this.href); return false"
+                     :href="'#'+ aRow.$threadid +'&'+ aRow.$msgid"><span uk-icon="mail"></span></a>
+                  <table v-else-if="aRow[aKey] instanceof Object"
+                         class="uk-table">
+                     <tr>
+                        <th v-for="(a, aSubKey) in aRow[aKey]"
+                            style="padding:0 0.5em">{{aSubKey}}</th>
+                     </tr><tr>
+                        <td v-for="aSubRow in aRow[aKey]"
+                            style="padding:0 0.5em">{{aSubRow}}</td>
+                     </tr></table>
+                  <template v-else>
+                     {{aRow[aKey]}}</template>
+               </td>
+            </tr>
+         </table></template>
+      <template v-else-if="cs.SvcTabs.PosFor === 0 && cs.SvcTabs.Default[cs.SvcTabs.Pos] === 'FFT'">
+         <div v-for="aRow in tl" :key="aRow.Id"
+              @click="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)"
+              uk-grid class="uk-grid-small thread-row">
+            <div class="uk-width-auto" style="padding:0">
+               <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
+            <div class="uk-width-expand">{{aRow.Id}}</div>
+            <!--todo more fields-->
+         </div></template>
+      <template v-else>
+         <div v-for="aRow in tl" :key="aRow.Id"
+              @click="mnm.NavigateThread(aRow.Id)"
+              uk-grid class="uk-grid-small thread-row"
+              :style="{'background-color': aRow.Id === cs.Thread ? '#fff7cf' : null}"><!--todo class thread-row-thread-->
+            <div class="uk-width-auto" style="padding:0"
+                 :class="{'thread-unread': aRow.Unread}">
+               <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
+            <div class="uk-width-1-6 overxhide"
+                 :class="{'thread-unread': aRow.Unread}">{{aRow.LastAuthor}}</div>
+            <div class="uk-width-expand overxhide"
+                 :title="aRow.Id">{{aRow.Subject}}</div>
+            <div class="uk-width-auto">
+               <mnm-date :iso="aRow.OrigDate"/></div>
+            <div class="uk-width-1-6 overxhide">{{aRow.OrigAuthor}}</div>
+         </div></template>
+      <div style="margin-top:1em">
+         <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
+              style="float:right; margin-right:1em; font-size:75%;">
+            <span class="uk-link">+/- mo</span></div
+        ><div style="display:none">{{JSON.stringify(mo)}}</div><br>
+         <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
+              style="float:right; margin-right:1em; font-size:75%;">
+            <span class="uk-link">+/- log</span></div
+        ><div style="display:none" id="log"></div>
       </div>
+      <mnm-tour v-if="mnm._isLocal || location.hash === '#tour'"/>
       <div v-show="ohiFrom"
            class="uk-card uk-card-secondary uk-text-small uk-border-rounded"
            style="padding:8px; position:absolute; bottom:10px; right:10px">
@@ -1438,68 +1436,66 @@
              :class="{'uk-active': aKey === mnm._data.cs.Sort.f}">
             <a @click.prevent="mnm.SortSelect('f', aKey)" href="#">{{aKey}}</a>
          </li></ul>
-      <div style="position:relative"><!--context for rev card-->
-         <ul class="uk-list uk-list-divider dropdown-scroll-list">
-            <template v-for="aSet in mnm._data.f">
-            <li v-for="aFile in aSet.Revs" :key="aSet.Name+'.'+aFile.Id">
-               <mnm-date :iso="aFile.Date" hms="hm"/>
-               <button v-if="toggle"
-                       @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
-                       title="Attach form"
-                       class="btn-iconsym"><mnm-paperclip/></button>
-               <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.currentTarget)"
-                  :ref="aSet.Name+'.'+aFile.Id" href="#">
-                  <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
-               <form v-if="!toggle"
-                     :action="'/f/-' + encodeURIComponent(aSet.Name+'.'+aFile.Id)" method="POST"
-                     onsubmit="mnm.Upload(this); return false;"
-                     style="float:right">
-                  <button @click="revDelete(aSet.Name,aFile.Id)"
-                          title="Erase form"
-                          class="btn-iconred"><span uk-icon="trash"></span></button>
-               </form>
-            </li></template></ul>
-         <div v-show="setName"
-              class="uk-card uk-card-default dropdown-scroll uk-width-1-1 menu-bg"
-              :class="{'message-bg':toggle}"
-              style="position:absolute" :style="{top:editTop, right:editRight}"
-              @click.stop>
-            <div class="uk-text-right uk-text-small dropdown-scroll-item">
-               {{(setName+'.'+fileId).toUpperCase()}}</div>
-            <div v-show="!mnm._data.fo"
-                 class="uk-text-center dropdown-scroll-item" style="padding:0.5em">
-               <span uk-icon="future"></span></div>
-            <div v-show="mnm._data.fo"
-                 class="pane-clip" style="margin-top:-1.5em">
-               <span v-if="!toggle"
-                     @click="showCode"
-                     class="uk-link"><tt>{...}</tt></span>
-               &nbsp;
-               <div class="uk-text-right uk-text-small dropdown-scroll-item">&nbsp;{{parseError}}</div>
-               <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
-                  <div class="pane-scroller" style="min-height:1px">
-                     <plugin-vfg :schema="formDef" :model="{}" :options="{}"/></div
-                 ><div class="pane-scroller">
-                     <mnm-textresize @input.native="editCode"
-                                     :src="mnm._data.fo"
-                                     ref="code"
-                                     class="width100"/></div>
-               </div>
-            </div>
-            <form action="/f/?" method="POST" enctype="multipart/form-data">
-               <input ref="save" name="filename" value="" type="hidden"></form>
-            <form :action="'/f/*' + encodeURIComponent(setName+'.'+fileId) +
-                              '+' + encodeURIComponent(dupname)" method="POST"
-                  onsubmit="mnm.Upload(this); return false;">
-               <input v-model="dupname"
-                      placeholder="New Revision" type="text"
-                      style="width:60%">
-               <button @click="dupShow = dupname"
-                       :disabled="!validName([].concat(setName,dupname.split('.')))"
-                       title="Duplicate form"
-                       class="btn-icon"><span uk-icon="copy"></span></button>
+      <ul class="uk-list uk-list-divider dropdown-scroll-list">
+         <template v-for="aSet in mnm._data.f">
+         <li v-for="aFile in aSet.Revs" :key="aSet.Name+'.'+aFile.Id">
+            <mnm-date :iso="aFile.Date" hms="hm"/>
+            <button v-if="toggle"
+                    @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
+                    title="Attach form"
+                    class="btn-iconsym"><mnm-paperclip/></button>
+            <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.currentTarget)"
+               :ref="aSet.Name+'.'+aFile.Id" href="#">
+               <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
+            <form v-if="!toggle"
+                  :action="'/f/-' + encodeURIComponent(aSet.Name+'.'+aFile.Id)" method="POST"
+                  onsubmit="mnm.Upload(this); return false;"
+                  style="float:right">
+               <button @click="revDelete(aSet.Name,aFile.Id)"
+                       title="Erase form"
+                       class="btn-iconred"><span uk-icon="trash"></span></button>
             </form>
+         </li></template></ul>
+      <div v-show="setName"
+           class="uk-card uk-card-default dropdown-scroll uk-width-1-1 menu-bg"
+           :class="{'message-bg':toggle}"
+           style="position:absolute" :style="{top:editTop, right:editRight}"
+           @click.stop>
+         <div class="uk-text-right uk-text-small dropdown-scroll-item">
+            {{(setName+'.'+fileId).toUpperCase()}}</div>
+         <div v-show="!mnm._data.fo"
+              class="uk-text-center dropdown-scroll-item" style="padding:0.5em">
+            <span uk-icon="future"></span></div>
+         <div v-show="mnm._data.fo"
+              class="pane-clip" style="margin-top:-1.5em">
+            <span v-if="!toggle"
+                  @click="showCode"
+                  class="uk-link"><tt>{...}</tt></span>
+            &nbsp;
+            <div class="uk-text-right uk-text-small dropdown-scroll-item">&nbsp;{{parseError}}</div>
+            <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
+               <div class="pane-scroller" style="min-height:1px">
+                  <plugin-vfg :schema="formDef" :model="{}" :options="{}"/></div
+              ><div class="pane-scroller">
+                  <mnm-textresize @input.native="editCode"
+                                  :src="mnm._data.fo"
+                                  ref="code"
+                                  class="width100"/></div>
+            </div>
          </div>
+         <form action="/f/?" method="POST" enctype="multipart/form-data">
+            <input ref="save" name="filename" value="" type="hidden"></form>
+         <form :action="'/f/*' + encodeURIComponent(setName+'.'+fileId) +
+                           '+' + encodeURIComponent(dupname)" method="POST"
+               onsubmit="mnm.Upload(this); return false;">
+            <input v-model="dupname"
+                   placeholder="New Revision" type="text"
+                   style="width:60%">
+            <button @click="dupShow = dupname"
+                    :disabled="!validName([].concat(setName,dupname.split('.')))"
+                    title="Duplicate form"
+                    class="btn-icon"><span uk-icon="copy"></span></button>
+         </form>
       </div>
    </div>
 </script><script>
