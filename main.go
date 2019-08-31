@@ -488,7 +488,7 @@ func (o *tTmtpInput) Read(iOut []byte) (int, error) {
 }
 
 var sStateOp = map[string]bool{
-   "cs":true, "cl":true, "al":true, "ml":true, "tl":true, "mo":true, "mn":true, "an":true,
+   "cs":true, "cl":true, "al":true, "ml":true, "tl":true, "mo":true, "mn":true, "an":true, "ad":true,
 }
 
 func runService(iResp http.ResponseWriter, iReq *http.Request) {
@@ -552,7 +552,11 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          break
       }
       err = pSl.WriteMessagesThread(iResp, aSvcId, aState, aOp_Id[1])
-   case "an":
+   case "an", "ad":
+      if aOp_Id[0] == "ad" {
+         aSaveName := url.QueryEscape(aOp_Id[1][strings.IndexByte(aOp_Id[1], '_')+3 :])
+         iResp.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''"+ aSaveName)
+      }
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
       http.ServeFile(iResp, iReq, pSl.GetPathAttach(aSvcId, aState, aOp_Id[1]))
    case "fn":
@@ -639,6 +643,10 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
       err := json.NewEncoder(iResp).Encode(aIdx)
       if err != nil { fmt.Fprintf(os.Stderr, "runGlobal: %s\n", err.Error()) }
    } else {
+      if aId[0] == '=' {
+         aId = aId[1:]
+         iResp.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''"+ url.QueryEscape(aId))
+      }
       aPath := aSet.GetPath(aId)
       if aPath == "" {
          fErr(http.StatusNotAcceptable, "get: not a file type: "+ iReq.URL.Path)
