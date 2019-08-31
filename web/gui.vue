@@ -722,34 +722,38 @@
 
 <script type="text/x-template" id="mnm-attach">
    <div uk-dropdown="mode:click; offset:2"
-        class="uk-width-1-3 menu-bg dropdown-scroll">
+        class="uk-width-1-3 menu-bg dropdown-scroll"
+        @hidden="$refs.viewer.close()" @click="$refs.viewer.close()">
       <ul uk-tab class="dropdown-scroll-item"><li style="display:none"></li>
          <li v-for="aKey in ['Date','Name','Size']"
              :class="{'uk-active': aKey === mnm._data.cs.Sort.al}">
             <a @click.prevent="mnm.SortSelect('al', aKey)" href="#">{{aKey}}</a>
          </li></ul>
+      <mnm-viewer ref="viewer"/>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
          <li v-for="aFile in mnm._data.al" :key="aFile.File">
-            <a v-if="aFile.MsgId.charAt(0) !== '_'"
-               onclick="mnm.NavigateLink(this.href); return false"
-               :href="'#'+ mnm._data.cs.Thread +'&'+ aFile.MsgId"><span uk-icon="mail"></span></a>
-            <span v-else
-                  uk-icon="mail" class="vishide"></span>
-            <mnm-date :iso="aFile.Date" ymd="md" hms="hm"/>
-            &nbsp;
-            <button v-if="false"
-                    :title="aFile.File.charAt(17) === 'u' ? 'Copy to attachable files'
-                                                          : 'Copy to blank forms'"
-                    class="btn-icon">
-               <span :uk-icon="aFile.File.charAt(17) === 'u' ? 'push' : 'file-edit'"></span></button>
-            &nbsp;
             <a @click.prevent="markdown(aFile)"
                title="Copy markdown to clipboard"
                :href="'#@'+ aFile.File"><span uk-icon="link"></span></a>
-            <a :href="'?ad=' + encodeURIComponent(aFile.File)">
-               <span uk-icon="download"></span></a>
-            <a :href="'?an=' + encodeURIComponent(aFile.File)"
-               :target="'mnm_atc_<%.TitleJs%>'">{{aFile.Name}}</a>
+            <a onclick="mnm.NavigateLink(this.href); return false"
+               title="Find message with attachment"
+               :href="'#'+ mnm._data.cs.Thread +'&'+ aFile.MsgId"
+               :class="{vishide: aFile.MsgId.charAt(0) === '_'}"><span uk-icon="mail"></span></a>
+            <mnm-date :iso="aFile.Date" ymd="md" hms="hm"/>
+            <!--todo button :title="aFile.File.charAt(17) === 'u' ? 'Copy to attachable files'
+                                                          : 'Copy to blank forms'"
+                    class="btn-icon">
+               <span :uk-icon="aFile.File.charAt(17) === 'u' ? 'push' : 'file-edit'"></span></button>
+            &nbsp;-->
+            <a :href="'?ad=' + encodeURIComponent(aFile.File)" download
+               title="Download attachment">
+               <span uk-icon="download">&nbsp;</span></a>
+            <span v-if="!mnm._viewerType('svc', aFile.File)">
+               &nbsp;<span class="icon-blank"></span>{{aFile.Name}}</span>
+            <a v-else
+               @click.stop.prevent="$refs.viewer.open('svc', aFile.File, $event.currentTarget)"
+               :href="'?an=' + encodeURIComponent(aFile.File)">
+               <span uk-icon="triangle-left">&nbsp;</span>{{aFile.Name}}</a>
             <div class="uk-float-right">{{aFile.Size}}</div>
          </li></ul>
    </div>
@@ -1353,7 +1357,8 @@
 <script type="text/x-template" id="mnm-files">
    <div uk-dropdown="mode:click; offset:2" :toggle="toggle"
         class="uk-width-1-3 menu-bg dropdown-scroll"
-        :class="{'message-bg':toggle}">
+        :class="{'message-bg':toggle}"
+        @hidden="$refs.viewer.close()" @click="$refs.viewer.close()">
       <form :action="'/t/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); this.reset(); return false;"
@@ -1378,6 +1383,7 @@
              :class="{'uk-active': aKey === mnm._data.cs.Sort.t}">
             <a @click.prevent="mnm.SortSelect('t', aKey)" href="#">{{aKey}}</a>
          </li></ul>
+      <mnm-viewer ref="viewer" :toggle="toggle"/>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
          <li v-for="aFile in mnm._data.t" :key="aFile.Name">
             <mnm-date :iso="aFile.Date" hms="hm"/>
@@ -1385,10 +1391,15 @@
                     @click="$emit('attach', 'upload/'+aFile.Name)"
                     title="Attach file"
                     class="btn-iconsym"><mnm-paperclip/></button>
-            <a :href="'/t/!' + encodeURIComponent(aFile.Name)">
+            <a :href="'/t/=' + encodeURIComponent(aFile.Name)" download
+               title="Download file">
                <span uk-icon="download">&nbsp;</span></a>
-            <a :href="'/t/' + encodeURIComponent(aFile.Name)"
-               :target="'mnm_atc_<%.TitleJs%>'">{{aFile.Name}}</a>
+            <span v-if="!mnm._viewerType(null, aFile.Name)">
+               &nbsp;<span class="icon-blank"></span>{{aFile.Name}}</span>
+            <a v-else
+               @click.stop.prevent="$refs.viewer.open(null, aFile.Name, $event.currentTarget)"
+               :href="'/t/' + encodeURIComponent(aFile.Name)">
+               <span uk-icon="triangle-left">&nbsp;</span>{{aFile.Name}}</a>
             <div class="uk-float-right">
                {{aFile.Size}}
                <form v-if="!toggle"
@@ -1987,6 +1998,97 @@
       props: {set:Array, state:Object},
       computed: { mnm: function() { return mnm } }
    });
+</script>
+
+<script type="text/x-template" id="mnm-viewer">
+   <div v-show="kind"
+        class="uk-card uk-card-default viewer dropdown-scroll menu-bg"
+        :class="{'message-bg':toggle}"
+        style="position:absolute; z-index:3" :style="{top:editTop, right:editRight}"
+        @click.stop>
+      <a v-show="kind !== 'form'"
+         :href="src" :target="'mnm_atc_<%.TitleJs%>'"
+         title="Open file in new tab">
+         <span uk-icon="expand"></span></a>
+      <div class="uk-text-small viewer-name dropdown-scroll-item">{{title}}</div>
+      <div v-if="kind === 'form'"
+           class="viewer-form">
+         <div v-show="!(file in mnm._data.ao)"
+              class="uk-text-center">
+            <span uk-icon="future"></span></div>
+         <plugin-vfg v-show="file in mnm._data.ao"
+                     :schema="formDef" :model="{}" :options="{}"/>
+      </div>
+      <div v-else-if="kind === 'img'"
+           class="dropdown-scroll-item" style="background-color:whitesmoke"><!--todo checkerboard-->
+         <img :src="src"></div>
+      <div v-else-if="kind === 'video'"
+           class="dropdown-scroll-item">
+         <video :src="src" controls>Player not available.</video></div>
+      <div v-else-if="kind === 'audio'"
+           class="dropdown-scroll-item">
+         <audio :src="src" controls>Player not available.</audio></div>
+      <div v-show="kind === 'page'"
+           class="dropdown-scroll-item">
+         <iframe v-if="srcPage"
+                 x-load="$event.target.contentWindow.onbeforeunload = //todo prevent PDF.js error
+                    function(iEv) { iEv.currentTarget.history.replaceState(null, null, srcPage) }"
+                 :src="srcPage"></iframe></div>
+   </div>
+</script><script>
+   Vue.component('mnm-viewer', {
+      template: '#mnm-viewer',
+      props: {toggle:String},
+      data: function() { return {file:'', kind:'', title:'', src:'', srcPage:'',
+                                 editTop:'', editRight:''} },
+      computed: {
+         mnm: function() { return mnm },
+         formDef: function() {
+            if (this.kind !== 'form')
+               return null;
+            if (!(this.file in mnm._data.ao))
+               return {};
+            try {
+               return JSON.parse(mnm._data.ao[this.file]);
+            } catch(aErr) {
+               return {fields:[ {type:"label", label:aErr.message.slice(12, -17)} ]};
+            }
+         },
+      },
+      methods: {
+         close: function() { this.kind = '' },
+         open: function(iSvc, iId, iEl) {
+            this.file = iId;
+            this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
+            this.src = (iSvc ? '?an=' : '/t/') + encodeURIComponent(iId);
+            this.editTop = iEl.offsetTop + 'px';
+            this.editRight = (iEl.offsetParent.offsetWidth - iEl.offsetLeft) +'px';
+            this.kind = mnm._viewerType(iSvc, iId);
+            if (this.kind === 'page')
+               this.srcPage = this.src;
+            else if (this.kind === 'form' && !(iId in mnm._data.ao))
+               mnm.AttachOpen(iId);
+         },
+      },
+      components: { 'plugin-vfg': VueFormGenerator.component },
+   });
+
+   mnm._viewerType = function(iSvc, iId) {
+      if (iSvc && iId.charAt(iId.indexOf('_')+1) === 'f')
+         return 'form';
+      var aExt = iId.lastIndexOf('.') + 1;
+      switch (aExt ? iId.substring(aExt).toLowerCase() : '') {
+      case 'jpg': case 'jpeg': case 'png': case 'gif': case 'svg':
+         return 'img';
+      case 'mp4': case 'webm':
+         return 'video';
+      case 'mp3': case 'wav':
+         return 'audio';
+      case 'htm': case 'html': case 'pdf': case 'txt':
+         return 'page';
+      }
+      return null;
+   };
 </script>
 
 <script>

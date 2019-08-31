@@ -5,8 +5,8 @@
 "Orders": [{
    "Updt": {"Op":"open"},
    "Result": {
-      "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"},
-             {"Name":"Gold/File", "Size":26, "Date":"*d"}] ,
+      "/t": [{"Name":"BlueFile.txt", "Size":26, "Date":"*d"},
+             {"Name":"Gold/File.txt", "Size":26, "Date":"*d"}] ,
       "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
       "/g": [{"Name":"Todo", "Id":"Todo"},
@@ -20,7 +20,7 @@
 "Name": "Blue1", "SvcId": "Blue",
 "Cfg": {"Name":"Blue", "Alias":"Blue"},
 "Files": [{
-   "Name":"BlueFile", "Data":"abcdefghijklmnopqrstuvwxyz"
+   "Name":"BlueFile.txt", "Data":"abcdefghijklmnopqrstuvwxyz"
 }],
 "Forms": [{
    "Name":"Blue.spec", "ffn":"networkimprov.github.io/mnm-registry/first"
@@ -105,12 +105,12 @@
    "Updt": {"Op":"thread_save", "Thread":{
                  "New":1, "Alias":"Blue", "Subject":"ohi",
                  "Cc":[{"Who":"Gold", "WhoUid":"lookup", "Note":"initial recipient"}],
-                 "Attach":[{"Name":"upload/BlueFile"},
+                 "Attach":[{"Name":"upload/BlueFile.txt"},
                            {"Name":"form/Blue.original"}] }},
    "Result": {
       "mo": [{"From":"self", "Id":"*midt", "Len":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
-                         "Attach":[{"Name":"u:BlueFile"},
+                         "Attach":[{"Name":"u:BlueFile.txt"},
                                    {"Name":"f:Blue.original",
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}],
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
@@ -132,13 +132,13 @@
               {"Who":"Gold#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"initial recipient", "Subscribe":true, "Queued":false}] ] ,
       "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*midt", "File":"*", "Date":"*d"},
-             {"Name":"BlueFile",      "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] },
+             {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] },
    "Name": "thread_save.b"
 },{
    "Updt": {"Op":"thread_save", "Thread":{
                  "Id":"last", "Alias":"Blue", "Subject":"ohi",
                  "Cc":[{"Who":"Gold", "WhoUid":"lookup", "Note":"initial recipient"}],
-                 "Attach":[{"Name":"upload/BlueFile"},
+                 "Attach":[{"Name":"upload/BlueFile.txt"},
                            {"Name":"form/Blue.original"},
                            {"Name":"form_fill/Blue.original", "FfKey":"lastfile"}],
                  "Data":"all good and true words",
@@ -146,7 +146,7 @@
    "Result": {
       "mn": [{"From":"self", "Id":"*midt", "Len":23, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
-                         "Attach":[{"Name":"u:BlueFile"},
+                         "Attach":[{"Name":"u:BlueFile.txt"},
                                    {"Name":"f:Blue.original",
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"},
                                    {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
@@ -176,7 +176,7 @@
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
       "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*mid", "File":"*", "Date":"*d"},
-             {"Name":"BlueFile",      "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] },
+             {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] },
    "Name": "thread_save.c"
 },{
    "Updt": {"Op":"thread_discard", "Thread":{"Id":"last"}},
@@ -203,7 +203,7 @@
    "Result": {
       "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Posted":"*d",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"to forward",
-                         "Attach":[{"Name":"u:Gold/File", "Size":26},
+                         "Attach":[{"Name":"u:Gold/File.txt", "Size":26},
                                    {"Name":"r:Blue.original", "Size":33,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
               "msg_data":"" }] ,
@@ -219,7 +219,7 @@
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false},
               {"Who":"Blue#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"Gold/File",      "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] }
+      "al": [{"Name":"Gold/File.txt", "Size":26, "MsgId":"*mid", "File":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_open", "Touch":{"Act":115, "ThreadId":"last", "MsgId":"last"}},
    "Result": {
@@ -267,7 +267,7 @@
    "Result": {
       "mo": [{"From":"*uid", "Id":"*mid", "Len":23, "Posted":"*d",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"ohi",
-                         "Attach":[{"Name":"u:BlueFile", "Size":26},
+                         "Attach":[{"Name":"u:BlueFile.txt", "Size":26},
                                    {"Name":"f:Blue.original", "Size":402,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"},
                                    {"Name":"r:Blue.original", "Size":33,
@@ -409,8 +409,8 @@
 },{
    "Updt": {"Op":"open"},
    "Result": {
-      "/t": [{"Name":"BlueFile", "Size":26, "Date":"*d"},
-             {"Name":"Gold/File", "Size":26, "Date":"*d"}] ,
+      "/t": [{"Name":"BlueFile.txt", "Size":26, "Date":"*d"},
+             {"Name":"Gold/File.txt", "Size":26, "Date":"*d"}] ,
       "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
       "/g": [{"Name":"Todo", "Id":"Todo"},
@@ -476,7 +476,7 @@
 "Name": "Gold1", "SvcId": "Gold",
 "Cfg": {"Name":"Gold", "Alias":"Gold"},
 "Files": [{
-   "Name":"Gold/File", "Data":"abcdefghijklmnopqrstuvwxyz"
+   "Name":"Gold/File.txt", "Data":"abcdefghijklmnopqrstuvwxyz"
 }],
 "Orders":
 [{
@@ -522,7 +522,7 @@
    "Result": {
       "mo": [{"From":"*uid", "Id":"*mid", "Len":23, "Posted":"*d",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"ohi",
-                         "Attach":[{"Name":"u:BlueFile", "Size":26},
+                         "Attach":[{"Name":"u:BlueFile.txt", "Size":26},
                                    {"Name":"f:Blue.original", "Size":402,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"},
                                    {"Name":"r:Blue.original", "Size":33,
@@ -541,7 +541,7 @@
               {"Who":"Gold#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"initial recipient", "Subscribe":true, "Queued":false}] ] ,
       "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*mid", "File":"*", "Date":"*d"},
-             {"Name":"BlueFile",      "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] },
+             {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] },
    "Name": "navigate_thread.a"
 },{
    "Updt": {"Op":"thread_save", "Thread":{
@@ -565,13 +565,13 @@
 },{
    "Updt": {"Op":"thread_save", "Thread":{
                  "New":1, "Alias":"Gold", "Subject":"to forward", "Cc":[],
-                 "Attach":[{"Name":"upload/Gold/File"},
+                 "Attach":[{"Name":"upload/Gold/File.txt"},
                            {"Name":"form_fill/Blue.original", "FfKey":"0123456789ab_f:Blue.original"}],
                  "FormFill":{"0123456789ab_f:Blue.original":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
    "Result": {
       "mo": [{"From":"self", "Id":"*midt", "Len":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"", "Subject":"to forward",
-                         "Attach":[{"Name":"u:Gold/File"},
+                         "Attach":[{"Name":"u:Gold/File.txt"},
                                    {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}],
                          "Cc":[{"Who":"Gold#td", "WhoUid":"*uid", "By":"Gold#td", "ByUid":"*uid",
@@ -591,7 +591,7 @@
       "cl": [[],
              [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"Gold/File",      "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] }
+      "al": [{"Name":"Gold/File.txt", "Size":26, "MsgId":"*midt", "File":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {
@@ -611,7 +611,7 @@
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
-      "al": [{"Name":"Gold/File",      "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] }
+      "al": [{"Name":"Gold/File.txt", "Size":26, "MsgId":"*mid", "File":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {

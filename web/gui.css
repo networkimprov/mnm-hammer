@@ -157,6 +157,44 @@ input[type=text], textarea {
    font-weight: bold;
 }
 
+.viewer {
+   min-width: 16em;
+}
+.viewer > a {
+   position: absolute;
+}
+.viewer .viewer-name {
+   float: right;
+   white-space: pre;
+   margin-left: 2em;
+   margin-bottom: 0.3em;
+}
+.viewer > div {
+   clear: right;
+}
+.viewer img,
+.viewer video,
+.viewer audio {
+   max-width: 25vw;
+   max-height: 25vh;
+   display: block;
+   margin: 0 auto;
+}
+.viewer iframe {
+   width: 25vw;
+   height: 25vh;
+   display: block;
+   margin: 0 auto;
+   background-color: whitesmoke;
+}
+.viewer .viewer-form {
+   width: 25vw;
+   min-width: 100%;
+   max-height: 25vh;
+   overflow-y: scroll;
+   background-color: whitesmoke;
+}
+
 .cc-new {
    display: inline-block;
    margin-right: 0.5em;
@@ -273,6 +311,11 @@ input[type=text], textarea {
 button > .paperclip {
    vertical-align: baseline;
    line-height: 1em;
+}
+
+.icon-blank {
+   display: inline-block;
+   width: 20px;
 }
 
 .adrsbkinput {
