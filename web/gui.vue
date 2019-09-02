@@ -106,6 +106,7 @@
         class="firefox-minheight-fix uk-overflow-auto message-bg message-list"
         style="position:relative">
       <mnm-tagset ref="tagset"/>
+      <mnm-viewer ref="viewer" :noparent="true"/>
       <ul class="uk-list uk-list-divider" style="margin:0">
          <li v-for="aMsg in ml" :key="aMsg.Id"
              :class="{'message-edit': aMsg.From === '' && !aMsg.Queued}" style="margin:0">
@@ -144,28 +145,51 @@
                              title="New reply draft"
                              class="btn-icon"><span uk-icon="comment"></span></button>
                   </div>
-                  <div v-if="mo[aMsg.Id].SubHead.Attach">
-                     Attached ({{ mo[aMsg.Id].SubHead.Attach.length }}):
-                     <template v-for="aAtc in mo[aMsg.Id].SubHead.Attach">
-                        <span v-if="'ForwardBy' in aMsg && !/failed$/.test(aMsg.ForwardBy)"
-                              :title="'Awaiting receipt from '+ aMsg.ForwardBy">
-                              class="">{{ aAtc.Name.substr(2) }}</span>
-                        <span v-else-if="aAtc.Name.charAt(0) === 'r'"
-                              @click="tabSearch('ffn:'+ aAtc.Ffn +
-                                           (aMsg.From === cf.Uid ? '_sent' : '_recv'), cs.SvcTabs)"
-                              class="uk-link">{{ aAtc.Name.substr(2) }}</span>
-                        <template v-else>
-                           <a :href="'?ad=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)">
-                              <span uk-icon="download"></span></a
-                          ><a :href="'?an=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)"
-                              :target="'mnm_atc_<%.TitleJs%>'">{{ aAtc.Name.substr(2) }}</a>
-                        </template>
-                        &#x25CA;
+                  <div class="message-subhead">
+                     <template v-if="mo[aMsg.Id].SubHead.Attach">
+                        <!--todo move _hideAtc to state-->
+                        <div @click="$set(mo[aMsg.Id], '_hideAtc', !mo[aMsg.Id]._hideAtc)"
+                             title="Hide/show attachments"
+                             class="uk-float-left message-paperclip"
+                             :class="{'message-paperclip-close': mo[aMsg.Id]._hideAtc}">
+                           {{ (mo[aMsg.Id].SubHead.Attach.length < 10 ? '&numsp;' : '') +
+                              mo[aMsg.Id].SubHead.Attach.length }}<mnm-paperclip/></div>
+                        <div v-show="mo[aMsg.Id]._hideAtc && !aMsg.Subject">
+                           &nbsp;</div>
+                        <div v-for="aAtc in mo[aMsg.Id].SubHead.Attach"
+                             v-show="!mo[aMsg.Id]._hideAtc"
+                             class="message-attach">
+                           <template v-if="'ForwardBy' in aMsg && !/failed$/.test(aMsg.ForwardBy)">
+                              <span class="icon-blank"></span>
+                              <span :title="'Awaiting receipt from '+ aMsg.ForwardBy">
+                                 <span uk-icon="bolt"></span> {{aAtc.Name.substr(2)}}</span>
+                           </template>
+                           <template v-else-if="aAtc.Name.charAt(0) === 'r'">
+                              <span class="icon-blank"></span>
+                              <span @click="tabSearch('ffn:'+ aAtc.Ffn +
+                                              (aMsg.From === cf.Uid ? '_sent' : '_recv'), cs.SvcTabs)"
+                                    title="Open filled-form table"
+                                    class="uk-link">
+                                 <span uk-icon="file-edit"></span> {{aAtc.Name.substr(2)}}</span>
+                           </template>
+                           <template v-else>
+                              <a :href="'?ad=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)" download
+                                 title="Download attachment">
+                                 <span uk-icon="download"></span></a>
+                              <span v-if="!mnm._viewerType('svc', aMsg.Id +'_'+ aAtc.Name)">
+                                 <span class="icon-blank"></span> {{aAtc.Name.substr(2)}}</span>
+                              <a v-else
+                                 @click.stop.prevent="$refs.viewer.open('svc', aMsg.Id +'_'+ aAtc.Name,
+                                                                        $event.currentTarget, 'rhs')"
+                                 :href="'?an=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)">
+                                 <span uk-icon="triangle-right">&nbsp;</span>{{aAtc.Name.substr(2)}}</a>
+                              <div class="uk-float-right">{{aAtc.Size}}</div>
+                           </template>
+                        </div>
                      </template>
+                     <div v-if="aMsg.Subject">
+                        Re: {{ aMsg.Subject }}</div>
                   </div>
-                  <div v-if="aMsg.Subject">
-                     Re: {{ aMsg.Subject }}</div>
-                  <div style="margin-bottom:1em"></div>
                   <div v-if="!mo[aMsg.Id].msg_data">
                      <p><span uk-icon="comment"></span></p></div>
                   <mnm-markdown v-else
@@ -2003,8 +2027,8 @@
 <script type="text/x-template" id="mnm-viewer">
    <div v-show="kind"
         class="uk-card uk-card-default viewer dropdown-scroll menu-bg"
-        :class="{'message-bg':toggle}"
-        style="position:absolute; z-index:3" :style="{top:editTop, right:editRight}"
+        :class="{'message-bg':toggle, 'message-edit':noparent}"
+        style="position:absolute; z-index:3" :style="{top:editTop, right:editRight, left:editLeft}"
         @click.stop>
       <a v-show="kind !== 'form'"
          :href="src" :target="'mnm_atc_<%.TitleJs%>'"
@@ -2038,9 +2062,9 @@
 </script><script>
    Vue.component('mnm-viewer', {
       template: '#mnm-viewer',
-      props: {toggle:String},
+      props: {toggle:String, noparent:Boolean},
       data: function() { return {file:'', kind:'', title:'', src:'', srcPage:'',
-                                 editTop:'', editRight:''} },
+                                 editTop:'', editRight:null, editLeft:null} },
       computed: {
          mnm: function() { return mnm },
          formDef: function() {
@@ -2057,18 +2081,27 @@
       },
       methods: {
          close: function() { this.kind = '' },
-         open: function(iSvc, iId, iEl) {
+         open: function(iSvc, iId, iEl, iRhs) {
             this.file = iId;
             this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
             this.src = (iSvc ? '?an=' : '/t/') + encodeURIComponent(iId);
             this.editTop = iEl.offsetTop + 'px';
-            this.editRight = (iEl.offsetParent.offsetWidth - iEl.offsetLeft) +'px';
+            if (iRhs)
+               this.editLeft = (iEl.offsetLeft + 20) +'px'; // 20 == icon width
+            else
+               this.editRight = (iEl.offsetParent.offsetWidth - iEl.offsetLeft) +'px';
             this.kind = mnm._viewerType(iSvc, iId);
             if (this.kind === 'page')
                this.srcPage = this.src;
             else if (this.kind === 'form' && !(iId in mnm._data.ao))
                mnm.AttachOpen(iId);
          },
+      },
+      created: function() {
+         if (!this.noparent)
+            return;
+         var that = this;
+         document.addEventListener('click', function() { that.kind = '' });
       },
       components: { 'plugin-vfg': VueFormGenerator.component },
    });

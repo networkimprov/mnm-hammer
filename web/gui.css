@@ -203,6 +203,13 @@ input[type=text], textarea {
    color: black;
 }
 
+.message-list > ul {
+   border-bottom: 4px double lightgray;
+}
+.message-list > ul > li {
+   padding: 0 0.2em 0 0.5em;
+}
+
 .tagset {
    z-index: 3;
    cursor: default;
@@ -223,11 +230,20 @@ input[type=text], textarea {
    font-weight: bold;
 }
 
-.message-list > ul {
-   border-bottom: 4px double lightgray;
+.message-subhead {
+   margin-bottom: 1em;
 }
-.message-list > ul > li {
-   padding: 0 0.2em 0 0.5em;
+.message-subhead .message-paperclip {
+   cursor: default;
+}
+.message-subhead .message-paperclip-close {
+   margin-right: 0.6em;
+}
+.message-subhead .message-attach {
+   margin-left: 2.5em;
+   width: 55%;
+   line-height: 1.75;
+   border-bottom: 1px solid burlywood;
 }
 
 .message {

@@ -630,14 +630,20 @@ If the original copy does not match the forwarded version, the sender's name is 
 <p>Heretofore unopened messages present the date &amp; author in bold text in the header. 
 </p>
 
-<p>Open messages display the <i>Subject</i> and <i>Attached</i> fields (unless empty). 
-The Body displays <span uk-icon="comment"></span> if empty. 
+<p>Open messages display the list of attachments, if any, immediately below the header. 
+To close the list, click the 1<span class="paperclip">&#128206;</span> icon.
 </p>
 
-<p>To open or download a file attachment, 
-click its filename or <span uk-icon="download"></span> hyperlink. 
-To view a form attachment, click its <span uk-icon="triangle-left"></span>formname hyperlink 
-[not yet implemented]. 
+<p>To download a file attachment, click its <span uk-icon="download"></span> hyperlink. 
+To preview a file or form, click its name hyperlink. 
+Attachments that can be previewed display a <span uk-icon="triangle-right"></span> icon. 
+To view a filled-form result, click its name hyperlink. 
+Filled-form attachments display a <span uk-icon="file-edit"></span> icon.
+Pending attachments in forwarded threads display a <span uk-icon="bolt"></span> icon.
+</p>
+
+<p>The <i>Subject</i> field, if given, appears as <i>Re: text</i>.
+The Body displays <span uk-icon="comment"></span> if it's empty. 
 </p>
 
 <p>To reply to a message, click the <span uk-icon="comment"></span> button to the right 
