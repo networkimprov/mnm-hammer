@@ -1381,7 +1381,7 @@
 <script type="text/x-template" id="mnm-files">
    <div uk-dropdown="mode:click; offset:2" :toggle="toggle"
         class="uk-width-1-3 menu-bg dropdown-scroll"
-        :class="{'message-bg':toggle}"
+        :class="{'message-edit':toggle}"
         @hidden="$refs.viewer.close()" @click="$refs.viewer.close()">
       <form :action="'/t/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
@@ -1449,7 +1449,7 @@
 <script type="text/x-template" id="mnm-forms">
    <div uk-dropdown="mode:click; offset:2" :toggle="toggle"
         class="uk-width-1-3 menu-bg dropdown-scroll"
-        :class="{'message-bg':toggle}"
+        :class="{'message-edit':toggle}"
         @hidden="revClose" @click="revClose">
       <form :action="'/f/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
@@ -1493,13 +1493,13 @@
          </li></template></ul>
       <div v-show="setName"
            class="uk-card uk-card-default dropdown-scroll uk-width-1-1 menu-bg"
-           :class="{'message-bg':toggle}"
+           :class="{'message-edit':toggle}"
            style="position:absolute" :style="{top:editTop, right:editRight}"
            @click.stop>
          <div class="uk-text-right uk-text-small dropdown-scroll-item">
             {{(setName+'.'+fileId).toUpperCase()}}</div>
          <div v-show="!mnm._data.fo"
-              class="uk-text-center dropdown-scroll-item" style="padding:0.5em">
+              class="uk-text-center dropdown-scroll-list message-bg" style="padding:0.5em">
             <span uk-icon="future"></span></div>
          <div v-show="mnm._data.fo"
               class="pane-clip" style="margin-top:-1.5em">
@@ -1509,7 +1509,7 @@
             &nbsp;
             <div class="uk-text-right uk-text-small dropdown-scroll-item">&nbsp;{{parseError}}</div>
             <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
-               <div class="pane-scroller" style="min-height:1px">
+               <div class="pane-scroller message-bg" style="min-height:1px">
                   <plugin-vfg :schema="formDef" :model="{}" :options="{}"/></div
               ><div class="pane-scroller">
                   <mnm-textresize @input.native="editCode"
@@ -2027,7 +2027,7 @@
 <script type="text/x-template" id="mnm-viewer">
    <div v-show="kind"
         class="uk-card uk-card-default viewer dropdown-scroll menu-bg"
-        :class="{'message-bg':toggle, 'message-edit':noparent}"
+        :class="{'message-edit': toggle || noparent}"
         style="position:absolute; z-index:3" :style="{top:editTop, right:editRight, left:editLeft}"
         @click.stop>
       <a v-show="kind !== 'form'"
