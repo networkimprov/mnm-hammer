@@ -122,22 +122,13 @@
                  title="Awaiting link to server"
                  style="float:right; font-weight:bold"><span uk-icon="bolt"></span></div>
             <template v-if="aMsg.Id in mo">
-               &nbsp;
-               <span @click.stop="$refs.tagset.open(aMsg.Id, $event.currentTarget)"
-                     title="Message tags"
-                     style="cursor:default"
-                     uk-icon="tag">{{aMsg.Tags ? aMsg.Tags.length : '&numsp;'}}</span>
-               <div v-if="!('msg_data' in mo[aMsg.Id])"
-                    class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
-               <template v-else-if="aMsg.From === '' && !aMsg.Queued">
-                  <button @click="mnm.ThreadDiscard(aMsg.Id)"
+               <span v-show="'msg_data' in mo[aMsg.Id]">
+                  <button v-if="aMsg.From === '' && !aMsg.Queued"
+                          @click="mnm.ThreadDiscard(aMsg.Id)"
                           title="Discard draft"
                           class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
-                  <mnm-draft :msgid="aMsg.Id"/>
-               </template>
-               <template v-else>
-                  <div v-if="!aMsg.Queued"
-                       style="float:right">
+                  <div v-else-if="!aMsg.Queued"
+                       class="uk-float-right">
                      <a @click.prevent="mnm._toClipboard('[msg_link](#'+ cs.Thread +'&'+ aMsg.Id +')')"
                         title="Copy markdown to clipboard"
                         :href="'#'+ cs.Thread +'&'+ aMsg.Id"><span uk-icon="link"></span></a>
@@ -145,6 +136,16 @@
                              title="New reply draft"
                              class="btn-icon"><span uk-icon="comment"></span></button>
                   </div>
+                  <div @click.stop="$refs.tagset.open(aMsg.Id, $event.currentTarget)"
+                       title="Message tags"
+                       class="uk-float-right tagset-icon">
+                     <span uk-icon="tag">{{aMsg.Tags ? aMsg.Tags.length : '&numsp;'}}</span></div>
+               </span>
+               <div v-if="!('msg_data' in mo[aMsg.Id])"
+                    class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
+               <mnm-draft v-else-if="aMsg.From === '' && !aMsg.Queued"
+                          :msgid="aMsg.Id"/>
+               <template v-else>
                   <div class="message-subhead">
                      <template v-if="mo[aMsg.Id].SubHead.Attach">
                         <!--todo move _hideAtc to state-->
@@ -814,7 +815,7 @@
 <script type="text/x-template" id="mnm-tagset">
    <div v-show="msgId"
         class="tagset message-edit dropdown-scroll uk-card uk-card-default"
-        style="position:absolute" :style="{top:posTop, left:posLeft}"
+        style="position:absolute" :style="{top:posTop, right:posRight}"
         @click.stop>
       <div class="dropdown-scroll-list">
          <div v-for="aTag in mnm._data.g" :key="aTag.Id"
@@ -840,7 +841,7 @@
 </script><script>
    Vue.component('mnm-tagset', {
       template: '#mnm-tagset',
-      data: function() { return {msgId:'', newName:'', posTop:0, posLeft:0} },
+      data: function() { return {msgId:'', newName:'', posTop:0, posRight:0} },
       computed: {
          mnm: function() { return mnm },
          hasId: function() {
@@ -858,7 +859,8 @@
             } else {
                this.msgId = iId;
                this.posTop = iEl.offsetTop +'px';
-               this.posLeft = iEl.offsetLeft + iEl.offsetWidth + 2 +'px';
+               this.posRight = (iEl.parentElement.offsetWidth - iEl.offsetLeft + 3) +'px';
+                                // .offsetParent.offsetWidth doesn't vary with scrollbar
             }
          },
          toggle: function(iId) {

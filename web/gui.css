@@ -210,6 +210,10 @@ input[type=text], textarea {
    padding: 0 0.2em 0 0.5em;
 }
 
+.tagset-icon {
+   margin-right: 0.5em;
+   cursor: default;
+}
 .tagset {
    z-index: 3;
    cursor: default;
