@@ -218,7 +218,7 @@ func getDoorService(iSvc string, iId string, iMake func()tDoor) tDoor {
 }
 
 func _newService(iCfg *tSvcConfig, iBi pBleve.Index) *tService {
-   aSvc := &tService{tabs: []string{}, doors: make(map[string]tDoor), index: iBi}
+   aSvc := &tService{tabs: []tTermEl{}, doors: make(map[string]tDoor), index: iBi}
    if iCfg != nil { aSvc.config = *iCfg }
    return aSvc
 }
@@ -249,16 +249,16 @@ func _updateConfig(iCfg *tSvcConfig) error {
    return nil
 }
 
-func getTabsService(iSvc string) []string {
+func getTabsService(iSvc string) []tTermEl {
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
-   return append([]string{}, aSvc.tabs...)
+   return append([]tTermEl{}, aSvc.tabs...)
 }
 
-func addTabService(iSvc string, iTerm string) int {
+func addTabService(iSvc string, iTerm *tTermEl) int {
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
-   aSvc.tabs = append(aSvc.tabs, iTerm)
+   aSvc.tabs = append(aSvc.tabs, *iTerm)
    err := storeFile(fileTab(iSvc), aSvc.tabs)
    if err != nil { quit(err) }
    return len(aSvc.tabs)-1
@@ -641,7 +641,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       _, err = os.Lstat(dirThread(iSvc) + iUpdt.Navigate.ThreadId)
       if err != nil { return fErr, nil }
       aDiff := iUpdt.Navigate.ThreadId != iState.getThread()
-      iState.goLink(iUpdt.Navigate.ThreadId, iUpdt.Navigate.MsgId)
+      iState.goLink(iUpdt.Navigate.Label, iUpdt.Navigate.ThreadId, iUpdt.Navigate.MsgId)
       aFn = fOne
       aResult = []string{"cs", "mo"}; if aDiff { aResult = []string{"cs", "cl", "al", "_t", "ml", "mo"} }
    case "tab_add":

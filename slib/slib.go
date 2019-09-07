@@ -102,7 +102,7 @@ type tService struct {
    sendQPost func(...*SendRecord)
    notice []tNoticeEl
    fromOhi tOhi
-   tabs []string
+   tabs []tTermEl
    doors map[string]tDoor // shared by *Thread & *FilledForm
    // fileOhi(svc), not cached
 }
@@ -226,6 +226,7 @@ type Update struct {
    }
    Navigate *struct {
       History int
+      Label string
       ThreadId, MsgId string
    }
    Tab *struct {

@@ -67,9 +67,11 @@
    mnm.NavigateHistory = function(i) {
       _wsSend({op:'navigate_history', navigate:{history:i}})
    };
-   mnm.NavigateLink = function(i) {
-      var aPair = i.substr(i.indexOf('#')+1).split('&');
-      _wsSend({op:'navigate_link', navigate:{threadId:aPair[0], msgId:aPair[1] || aPair[0]}})
+   mnm.NavigateLink = function(iLabel, iHref) {
+      if (iLabel.length > 32) // also limited by ClientState.goLink()
+         iLabel = iLabel.substring(0, 32) +'...';
+      var aPair = iHref.substring(iHref.indexOf('#')+1).split('&');
+      _wsSend({op:'navigate_link', navigate:{label:iLabel, threadId:aPair[0], msgId:aPair[1] || aPair[0]}})
    };
 
    mnm.ThreadNew = function(iObj) { // with alias, (cc), (data), (attach), (formFill)

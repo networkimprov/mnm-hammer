@@ -16,9 +16,10 @@ import (
 )
 
 var sSortDefault = tSummarySort{Cc:"Who", Atc:"Date", Upload:"Date", Form:"Date"}
-var sSvcTabsDefault = []string{"All","Unread","#Todo","FFT"}
-var sThreadTabsDefault = []string{"Open","All"}
+var sSvcTabsDefault = []tTermEl{{"All",""}, {"Unread",""}, {"#Todo",""}, {"FFT",""}}
+var sThreadTabsDefault = []tTermEl{{"Open",""}, {"All",""}}
 var kTabsStdService, kTabsStdThread string
+const kTabLabelMax = 64
 
 var sStateDoor sync.Mutex
 var sStates = make(map[string]bool) // key client id
@@ -61,7 +62,7 @@ func OpenState(iClientId, iSvc string) *ClientState {
    sStateDoor.Unlock()
    aState := &ClientState{Hpos: -1,
                           Thread: make(map[string]*tThreadState),
-                          SvcTabs: tTabs{Terms:[]string{}},
+                          SvcTabs: tTabs{Terms:[]tTermEl{}},
                           historyMax: GetConfigService(iSvc).HistoryLen,
                           svc: iSvc, filePath: fileState(iClientId, iSvc)}
    aFd, err := os.Open(aState.filePath)
@@ -103,13 +104,32 @@ type tThreadState struct {
 type tTabs struct {
    Pos int
    PosFor int8
-   Terms []string
+   Terms []tTermEl
+}
+
+type tTermEl struct {
+   Term string
+   Label string `json:",omitempty"`
+}
+
+//todo drop after 0.6
+func (o *tTermEl) UnmarshalJSON(iJson []byte) (err error) {
+   if iJson[0] == '{' {
+      type tTmp tTermEl
+      var aTmp tTmp
+      err = json.Unmarshal(iJson, &aTmp)
+      *o = tTermEl(aTmp)
+   } else {
+      err = json.Unmarshal(iJson, &o.Term)
+      fmt.Println("## update", o.Term)
+   }
+   return err
 }
 
 const ( ePosForDefault=iota; ePosForPinned; ePosForTerms; ePosForEnd )
 
 func (o *tTabs) copy() *tTabs {
-   return &tTabs{Pos:o.Pos, PosFor:o.PosFor, Terms:append([]string{}, o.Terms...)}
+   return &tTabs{Pos:o.Pos, PosFor:o.PosFor, Terms:append([]tTermEl{}, o.Terms...)}
 }
 
 type tOpenState map[string]bool // key msg id
@@ -142,7 +162,7 @@ type tSummarySort struct {
 
 type tSummaryTabs struct {
    tTabs
-   Pinned  *[]string `json:",omitempty"`
+   Pinned  *[]tTermEl `json:",omitempty"`
    Type int8
 }
 
@@ -185,24 +205,24 @@ func (o *ClientState) getThread() string {
 
 func (o *ClientState) getSvcTab() (int8, string) {
    o.RLock(); defer o.RUnlock()
-   var aSet []string
+   var aSet []tTermEl
    switch o.SvcTabs.PosFor {
    case ePosForDefault: aSet = sSvcTabsDefault
    case ePosForPinned:  aSet = getTabsService(o.svc)
    case ePosForTerms:   aSet = o.SvcTabs.Terms
    }
-   return o.SvcTabs.PosFor, aSet[o.SvcTabs.Pos]
+   return o.SvcTabs.PosFor, aSet[o.SvcTabs.Pos].Term
 }
 
 func (o *ClientState) getThreadTab() (int8, string) {
    o.RLock(); defer o.RUnlock()
    aT := o.Thread[o.History[o.Hpos]]
-   var aSet []string
+   var aSet []tTermEl
    switch aT.Tabs.PosFor {
    case ePosForDefault: aSet = sThreadTabsDefault
    case ePosForTerms:   aSet = aT.Tabs.Terms
    }
-   return aT.Tabs.PosFor, aSet[aT.Tabs.Pos]
+   return aT.Tabs.PosFor, aSet[aT.Tabs.Pos].Term
 }
 
 func (o *ClientState) isOpen(iMsgId string) bool {
@@ -225,7 +245,7 @@ func (o *ClientState) _addThread(iId string) {
    if o.Thread[iId] == nil {
       aMsgId := iId; if iId[0] != '_' { aMsgId = loadThread(o.svc, iId) }
       aOpen := tOpenState{}; if aMsgId != "" { aOpen[aMsgId] = true }
-      o.Thread[iId] = &tThreadState{Open: aOpen, Tabs: tTabs{Terms:[]string{}}}
+      o.Thread[iId] = &tThreadState{Open: aOpen, Tabs: tTabs{Terms:[]tTermEl{}}}
    } else if iId == o.History[o.Hpos] {
       fmt.Fprintf(os.Stderr, "addThread: ignored attempt to readd %s\n", iId)
       return
@@ -334,11 +354,12 @@ func (o *ClientState) discardThread(iId string) {
 }
 
 func (o *ClientState) addTab(iType int8, iTerm string) {
+   aLabel := ""; if len(iTerm) > kTabLabelMax { aLabel = iTerm[:kTabLabelMax] +"..." }
    o.Lock(); defer o.Unlock()
    aTabs := &o.SvcTabs; if iType == eTabThread { aTabs = &o.Thread[o.History[o.Hpos]].Tabs }
    aTabs.Pos = len(aTabs.Terms)
    aTabs.PosFor = ePosForTerms
-   aTabs.Terms = append(aTabs.Terms, iTerm)
+   aTabs.Terms = append(aTabs.Terms, tTermEl{iTerm, aLabel})
    err := storeFile(o.filePath, o)
    if err != nil { quit(err) }
 }
@@ -363,7 +384,7 @@ func (o *ClientState) pinTab(iType int8) {
    if aTabs.PosFor != ePosForTerms { quit(tError("pinTab: not ePosForTerms")) }
 
    aOrig := aTabs.Pos
-   aTabs.Pos = addTabService(o.svc, aTabs.Terms[aOrig])
+   aTabs.Pos = addTabService(o.svc, &aTabs.Terms[aOrig])
    aTabs.PosFor = ePosForPinned
    if len(aTabs.Terms) == 0 { quit(tError("pinTab: no terms to pin")) }
    aTabs.Terms = aTabs.Terms[:aOrig + copy(aTabs.Terms[aOrig:], aTabs.Terms[aOrig+1:])]
@@ -408,7 +429,10 @@ func (o *ClientState) setSort(iType string, iField string) {
    if err != nil { quit(err) }
 }
 
-func (o *ClientState) goLink(iThreadId, iMsgId string) {
+func (o *ClientState) goLink(iLabel string, iThreadId, iMsgId string) {
+   if len(iLabel) > kTabLabelMax {
+      iLabel = iLabel[:kTabLabelMax] +"..."
+   }
    o.Lock(); defer o.Unlock()
    if o.Hpos < 0 || o.History[o.Hpos] != iThreadId {
       o._addThread(iThreadId)
@@ -416,10 +440,12 @@ func (o *ClientState) goLink(iThreadId, iMsgId string) {
    aTabs := &o.Thread[o.History[o.Hpos]].Tabs
    aTabs.PosFor = ePosForTerms
    for aTabs.Pos = 0; aTabs.Pos < len(aTabs.Terms); aTabs.Pos++ {
-      if aTabs.Terms[aTabs.Pos] == "&" + iMsgId { break }
+      if aTabs.Terms[aTabs.Pos].Term == "&" + iMsgId { break }
    }
    if aTabs.Pos == len(aTabs.Terms) {
-      aTabs.Terms = append(aTabs.Terms, "&" + iMsgId)
+      aTabs.Terms = append(aTabs.Terms, tTermEl{"&" + iMsgId, iLabel})
+   } else {
+      aTabs.Terms[aTabs.Pos].Label = iLabel //todo consider adding to .Terms if label not identical
    }
    err := storeFile(o.filePath, o)
    if err != nil { quit(err) }
