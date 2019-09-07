@@ -49,10 +49,9 @@
       "tl": [{"Id":"*midt", "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":"", "Subject":"ohi"}] ,
       "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
       "cs": {"Thread":"*midt",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
              "History":{"Prev":false, "Next":false},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} ,
       "cl": [[],
              [{"Who":"Blue#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
@@ -79,8 +78,7 @@
       "cl": [[],[]] ,
       "al": [] ,
       "cs": {"Thread":"none", "History":{"Prev":false, "Next":false},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"ping_save", "Ping":{"Alias":"Blue", "To":"Gold"}},
@@ -121,10 +119,9 @@
       "tl": [{"Id":"*midt", "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":"", "Subject":"ohi"}] ,
       "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
       "cs": {"Thread":"*midt",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
              "History":{"Prev":false, "Next":false},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} ,
       "cl": [[],
              [{"Who":"Blue#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
@@ -209,10 +206,9 @@
               "msg_data":"" }] ,
       "ml": "test.b" ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
              "History":{"Prev":true, "Next":false},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} ,
       "cl": [[],
              [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
@@ -257,10 +253,9 @@
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":["#Todo"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":["#Todo"], "Type":0},
              "History":{"Prev":true, "Next":false},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"navigate_history", "Navigate":{"History":-1}},
@@ -276,10 +271,9 @@
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} ,
       "cl": [[],
              [{"Who":"Blue#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
@@ -293,10 +287,9 @@
    "Result": {
       "mo": "navigate_history.a" ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":["*"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":["*"], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"tab_drop", "Tab":{"Type":0}},
@@ -308,20 +301,18 @@
    "Result": {
       "mo": "navigate_history.a" ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":["good"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":["good"], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"tab_select", "Tab":{"Type":0, "PosFor":0, "Pos":0}},
    "Result": {
       "mo": "navigate_history.a" ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"tab_select", "Tab":{"Type":1, "PosFor":0, "Pos":2}},
@@ -329,10 +320,9 @@
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"}] ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":2, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":2, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"tab_add", "Tab":{"Type":1, "Term":"-- -+ohi +"}},
@@ -340,19 +330,17 @@
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":2, "Terms":["-- -+ohi +"],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":2, "Terms":["-- -+ohi +"], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"tab_pin", "Tab":{"Type":1}},
    "Result": {
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":1, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":["-- -+ohi +"], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":1, "Terms":[], "Pinned":["-- -+ohi +"], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"tab_add", "Tab":{"Type":1, "Term":"ffn:networkimprov.github.io/mnm-registry/first_recv"}},
@@ -363,39 +351,39 @@
                       {"nr":123, "or":{"anr":[[1],[2]]},
                        "$threadid":"*mid", "$msgid":"*mid", "$offset":"**", "$size":33, "$checksum":"**"}]} ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Type":0},
              "History":{"Prev":false, "Next":true},
              "SvcTabs":{"Pos":0, "PosFor":2, "Terms":["ffn:networkimprov.github.io/mnm-registry/first_recv"],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":["-- -+ohi +"], "Type":1},
+                        "Pinned":["-- -+ohi +"], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"tab_select", "Tab":{"Type":1, "PosFor":0, "Pos":1}},
    "Result": {
       "tl": "test.a" ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Type":0},
              "History":{"Prev":false, "Next":true},
              "SvcTabs":{"Pos":1, "PosFor":0, "Terms":["ffn:networkimprov.github.io/mnm-registry/first_recv"],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":["-- -+ohi +"], "Type":1},
+                        "Pinned":["-- -+ohi +"], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"tab_select", "Tab":{"Type":1, "PosFor":0, "Pos":0}},
    "Result": {
       "tl": "test.a" ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Type":0},
              "History":{"Prev":false, "Next":true},
              "SvcTabs":{"Pos":0, "PosFor":0, "Terms":["ffn:networkimprov.github.io/mnm-registry/first_recv"],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":["-- -+ohi +"], "Type":1},
+                        "Pinned":["-- -+ohi +"], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"sort_select", "Sort":{"Type":"cl", "Field":"Date"}},
    "Result": {
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":["good"], "Type":0},
              "History":{"Prev":false, "Next":true},
              "SvcTabs":{"Pos":0, "PosFor":0, "Terms":["ffn:networkimprov.github.io/mnm-registry/first_recv"],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":["-- -+ohi +"], "Type":1},
+                        "Pinned":["-- -+ohi +"], "Type":1},
              "Sort":{"cl":"Date", "al":"Date", "t":"Date", "f":"Date"}} },
    "Name": "sort_select.a"
 },{
@@ -530,10 +518,9 @@
               "msg_data":"all good and true words" }] ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
       "cs": {"Thread":"*mid",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
              "History":{"Prev":false, "Next":false},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} ,
       "cl": [[],
              [{"Who":"Blue#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
@@ -583,10 +570,9 @@
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] ,
       "cs": {"Thread":"*midt",
-             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Default":["Open", "All"], "Type":0},
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
              "History":{"Prev":true, "Next":false},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[],
-                        "Default":["All", "Unread", "#Todo", "FFT"], "Pinned":[], "Type":1},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} ,
       "cl": [[],
              [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",

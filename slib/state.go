@@ -18,12 +18,19 @@ import (
 var sSortDefault = tSummarySort{Cc:"Who", Atc:"Date", Upload:"Date", Form:"Date"}
 var sSvcTabsDefault = []string{"All","Unread","#Todo","FFT"}
 var sThreadTabsDefault = []string{"Open","All"}
+var kTabsStdService, kTabsStdThread string
 
 var sStateDoor sync.Mutex
 var sStates = make(map[string]bool) // key client id
 
 func initStates() {
-   var err error
+   aBuf, err := json.Marshal(sSvcTabsDefault)
+   if err != nil { quit(err) }
+   kTabsStdService = string(aBuf)
+   aBuf, err = json.Marshal(sThreadTabsDefault)
+   if err != nil { quit(err) }
+   kTabsStdThread = string(aBuf)
+
    aClients, err := readDirNames(kStateDir)
    if err != nil { quit(err) }
 
@@ -135,7 +142,6 @@ type tSummarySort struct {
 
 type tSummaryTabs struct {
    tTabs
-   Default []string
    Pinned  *[]string `json:",omitempty"`
    Type int8
 }
@@ -147,8 +153,7 @@ func (o *ClientState) GetSummary() interface{} {
 
    o.RLock(); defer o.RUnlock()
    aS := &tSummary{ Sort: sSortDefault, Thread: "none",
-                    SvcTabs: tSummaryTabs{ Type: eTabService, Default: sSvcTabsDefault,
-                                           tTabs: *o.SvcTabs.copy(), Pinned: &aPinned }}
+                    SvcTabs: tSummaryTabs{Type: eTabService, tTabs: *o.SvcTabs.copy(), Pinned: &aPinned} }
    if o.UploadSort != "" { aS.Sort.Upload = o.UploadSort }
    if o.FormSort   != "" { aS.Sort.Form   = o.FormSort }
 
@@ -157,8 +162,7 @@ func (o *ClientState) GetSummary() interface{} {
       if aTs.CcSort  != "" { aS.Sort.Cc  = aTs.CcSort }
       if aTs.AtcSort != "" { aS.Sort.Atc = aTs.AtcSort }
       aS.Thread = o.History[o.Hpos]
-      aS.ThreadTabs = &tSummaryTabs{ Type: eTabThread, Default: sThreadTabsDefault,
-                                     tTabs: *aTs.Tabs.copy() }
+      aS.ThreadTabs = &tSummaryTabs{Type: eTabThread, tTabs: *aTs.Tabs.copy()}
       aS.History.Prev = o.Hpos > 0
       aS.History.Next = o.Hpos < len(o.History)-1
    }
