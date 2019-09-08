@@ -39,8 +39,8 @@ body {
 
 .thread-list {
    background-color: wheat;
-   margin-left: -1em;
-   padding-left: 1em;
+   margin-left: -15px;
+   padding-left: 15px;
 }
 
 .service-panel {
@@ -207,7 +207,7 @@ input[type=text], textarea {
    border-bottom: 4px double lightgray;
 }
 .message-list > ul > li {
-   padding: 0 0.2em 0 0.5em;
+   padding: 10px 0.2em 0 0.5em;
 }
 
 .tagset-icon {
@@ -225,10 +225,12 @@ input[type=text], textarea {
 }
 
 .message-title {
-   cursor: pointer;
    display: inline-block;
-   line-height: 2em;
-   min-width: 50%;
+   min-width: 40%;
+   line-height: 2;
+   background-color: wheat;
+   border-radius: 10px 10px 0 0;
+   cursor: pointer;
 }
 .message-title-unread {
    font-weight: bold;
