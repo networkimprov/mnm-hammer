@@ -99,7 +99,7 @@
       </span>
       <input @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)"
              :placeholder="' \u2315'" type="text"
-             title="Find phrase in thread"
+             title="Find messages with phrase"
              class="uk-width-1-6 search-box">
    </div>
    <div uk-height-viewport="offset-top:true; offset-bottom:true"
@@ -246,10 +246,10 @@
    <div :class="{vishide: mnm._isLocal}"
         uk-grid class="uk-grid-collapse">
       <ul uk-tab class="uk-width-expand"><li style="display:none"></li>
-         <li v-for="(aTerm, aI) in cs.SvcTabs.Default"
+         <li v-for="(aTerm, aI) in mnm._tabsStdService"
              :class="{'uk-active': cs.SvcTabs.PosFor === 0 && cs.SvcTabs.Pos === aI}">
             <a @click.prevent="mnm.TabSelect({type:cs.SvcTabs.Type, posfor:0, pos:aI})" href="#">
-               {{ aTerm }}</a>
+               {{ aTerm.Label || aTerm.Term }}</a>
          </li></ul>
       <span>
          <span title="Search by tag"
@@ -283,7 +283,8 @@
                <td v-for="(a, aKey) in ffnCol"
                    v-if="aKey.charAt(0) !== '$' || aKey === '$msgid'">
                   <a v-if="aKey === '$msgid'"
-                     onclick="mnm.NavigateLink(this.href); return false"
+                     onclick="mnm.NavigateLink('Form result', this.href); return false"
+                     title="Find message with result"
                      :href="'#'+ aRow.$threadid +'&'+ aRow.$msgid"><span uk-icon="mail"></span></a>
                   <table v-else-if="aRow[aKey] instanceof Object"
                          class="uk-table">
@@ -299,7 +300,7 @@
                </td>
             </tr>
          </table></template>
-      <template v-else-if="cs.SvcTabs.PosFor === 0 && cs.SvcTabs.Default[cs.SvcTabs.Pos] === 'FFT'">
+      <template v-else-if="cs.SvcTabs.PosFor === 0 && mnm._tabsStdService[cs.SvcTabs.Pos].Term === 'FFT'">
          <div v-for="aRow in tl" :key="aRow.Id"
               @click="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)"
               uk-grid class="uk-grid-small thread-row">
@@ -626,7 +627,7 @@
         class="menu-bg" style="padding:0 0.5em 0.5em">
       <!--todo scrolling-->
       <template v-for="aSubject in list">
-         <a onclick="mnm.NavigateLink(this.href); return false"
+         <a onclick="mnm.NavigateLink('Subject', this.href); return false"
             :href="'#'+ mnm._data.cs.Thread +'&'+ aSubject.msgId">
             {{ aSubject.name }}</a> <br>
       </template></div>
@@ -760,7 +761,7 @@
             <a @click.prevent="markdown(aFile)"
                title="Copy markdown to clipboard"
                :href="'#@'+ aFile.File"><span uk-icon="link"></span></a>
-            <a onclick="mnm.NavigateLink(this.href); return false"
+            <a onclick="mnm.NavigateLink('Attached', this.href); return false"
                title="Find message with attachment"
                :href="'#'+ mnm._data.cs.Thread +'&'+ aFile.MsgId"
                :class="{vishide: aFile.MsgId.charAt(0) === '_'}"><span uk-icon="mail"></span></a>
@@ -1886,7 +1887,8 @@
    <div class="pingresponse">
       <div v-if="ping.Response">
          <a v-if="ping.Response.Tid"
-            onclick="mnm.NavigateLink(this.href); return false"
+            onclick="mnm.NavigateLink('Response', this.href); return false"
+            title="Find message with response"
             :href="'#'+ ping.Response.Tid"><span uk-icon="mail"></span></a>
          <span v-else
                title="Responded by invite"
@@ -2012,12 +2014,13 @@
          <li v-for="(aTerm, aJ) in aTabs"
              :class="{'uk-active': aI === state.PosFor && aJ === state.Pos}">
             <a @click.prevent="mnm.TabSelect({type:state.Type, posfor:aI, pos:aJ})" href="#">
-               {{ aTerm }}
-               <span v-if="aI > 0 && aI === state.PosFor && aJ === state.Pos"
-                     @click.prevent.stop="mnm.TabDrop(state.Type)">&times;</span>
-               <span v-else-if="aI > 0"
-                     class="vishide">&times;</span>
-            </a></li></template></ul>
+               {{ state.Type === 0 && aTerm.Term.charAt(0) === '&' ? '\u2992' : null }}
+               {{ aTerm.Label || aTerm.Term }}
+               <span v-if="aI > 0"
+                     @click.prevent.stop="mnm.TabDrop(state.Type)"
+                     :class="{vishide: aI !== state.PosFor || aJ !== state.Pos}">&times;</span>
+            </a>
+         </li></template></ul>
 </script><script>
    Vue.component('mnm-tabs', {
       template: '#mnm-tabs',
@@ -2135,11 +2138,13 @@
    mnm._mdi = markdownit();
    mnm._adrsbkmenuId = null;
    mnm._lastPreview = '';
+   mnm._tabsStdService = <%.tabsStdService%>;
+   mnm._tabsStdThread = <%.tabsStdThread%>;
    mnm._data = {
    // global
       v:[], g:[], t:[], f:[], fo:'', nlo:[], // fo populated by f requests
    // per client
-      cs:{SvcTabs:{Default:[], Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
+      cs:{SvcTabs:{Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
       ohiFrom: !mnm._isLocal, //todo move to cs
       errors: [], errorFlag: false,
    // per service
@@ -2159,10 +2164,10 @@
                return;
             if (iState.Pinned)
                for (var a=0; a < iState.Pinned.length; ++a)
-                  if (iState.Pinned[a] === iText)
+                  if (iState.Pinned[a].Term === iText)
                      return;
             for (var a=0; a < iState.Terms.length; ++a)
-               if (iState.Terms[a] === iText)
+               if (iState.Terms[a].Term === iText)
                   return;
             mnm.TabAdd({type:iState.Type, term:iText});
          },
@@ -2188,7 +2193,7 @@
          },
          msgTabset: function() {
             var aT = mnm._data.cs.ThreadTabs;
-            return aT ? [aT.Default, [], aT.Terms] : [];
+            return aT ? [mnm._tabsStdThread, [], aT.Terms] : [];
          },
          msgTitle: function() {
             for (var a=0; a < mnm._data.ml.length; ++a) {
@@ -2241,7 +2246,7 @@
    mnm._mdi.renderer.rules.link_open = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       var aHref = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('href')];
       if (aHref[1].charAt(0) === '#') {
-         iTokens[iIdx].attrs.push(['onclick','mnm.NavigateLink(this.href);return false']);
+         iTokens[iIdx].attrs.push(['onclick', "mnm.NavigateLink(this.innerText,this.href);return false"]);
       } else if (!sUrlStart.test(aHref[1])) {
          var aParam = aHref[1].replace(/^this_/, iEnv.thisVal+'_');
          aHref[1] = '?an=' + encodeURIComponent(aParam);

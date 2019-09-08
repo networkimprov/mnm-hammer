@@ -254,14 +254,25 @@ with the sender, or by joining the group if one is included.
 Issuing a response is optional. 
 </p>
 
-<p>Received invites are logged in the <span uk-icon="users"></span> menu under the <i>Invites</i> tab. 
+<p style="margin-bottom:0">Received invites are logged 
+in the <span uk-icon="users"></span> menu under the <i>Invites</i> tab. 
 Sent invites are logged under the <i>Sent</i> tab. 
 Items in these tabs for which responses have been sent or received indicate the date of the response 
 and its type: 
-<span uk-icon="rss"></span> for an invite, 
-<span uk-icon="check"></span> for an accepted group invitation, 
-<span uk-icon="plus-circle"></span> if the recipient joined the group, and a 
-<span uk-icon="mail"></span> hyperlink for a thread. 
+</p>
+
+<div style="margin: 0 2em; float:left">
+   <span uk-icon="rss"></span> for an invite, <br>
+   <span uk-icon="mail"></span> (a hyperlink) for a thread, 
+</div><div>
+   <span uk-icon="check"></span> for an accepted group invitation, <br>
+   <span uk-icon="plus-circle"></span> if the recipient joined the group. 
+</div> 
+
+<p>To view the thread &amp; message that delivered an invite response, 
+click the <span uk-icon="mail"></span> hyperlink, 
+which creates a <b>&#x2992;</b>&nbsp;<i>Response</i> tab above the message list.
+(For responses of other types, no hyperlink appears on the invite.)
 </p>
 
 <p>To compose an invite, open the <span uk-icon="users"></span> menu, 
@@ -536,11 +547,12 @@ which are listed under the <i>FFT</i> tab.
 See also <a href="#form">Blank Forms</a>. 
 </p>
 
-<p>To view a filled-form table in a thread panel tab, click its line in the <i>FFT</i> list. 
+<p>To view a filled-form table in a thread panel tab, click its row in the <i>FFT</i> list. 
 </p>
 
-<p>To view the thread &amp; message that created a filled-form table entry, click its 
-<span uk-icon="mail"></span> hyperlink. 
+<p>To view the thread &amp; message that delivered a filled-form table entry, 
+click its <span uk-icon="mail"></span> hyperlink,
+which creates a <b>&#x2992;</b>&nbsp;<i>Form result</i> tab above the message list. 
 </p>
 
 <p>Future versions of mnm will provide filled-form table queries, 
@@ -562,19 +574,22 @@ messages, not yet closed).
 <i>All</i> displays all messages. 
 </p>
 
-<p>To create a tab displaying all messages containing a specific tag, select the tag name from
-the <span uk-icon="hashtag"></span> menu (see also <a href="#tags">Tags</a>).
+<p>To display all messages containing a specific tag, select the tag name from
+the <span uk-icon="hashtag"></span> menu, which creates a <i>#Tagname</i> tab 
+(see also <a href="#tags">Tags</a>).
 </p>
 
-<p>The search box creates a tab displaying any messages that contain the entire entered phrase. 
+<p>To display any messages containing a phrase, enter the phrase in the search box and press enter, 
+which creates a new tab. 
 </p>
 
-<p>Clicking a message hyperlink anywhere in the UI creates a tab displaying 
+<p>Clicking a message hyperlink in a received/sent message or draft preview 
+creates a <b>&#x2992;</b>&nbsp;<i>Linkname</i> tab above the message list displaying 
 only the referenced message (see also <a href="#mark">Markdown</a>). 
+If a tab for the referenced message already exists, its title is instead updated to the latest linkname. 
 </p>
 
-<p>To open or close a message, click the message header (contains the date, time, and 
-sender's alias). 
+<p>To open or close a message, click the message header (contains the date, time, and sender's alias). 
 While a newly-opened message is loading, <span uk-icon="future"></span> is displayed. 
 </p>
 
@@ -583,8 +598,9 @@ are listed in the <span class="paperclip">&#128206;</span> menu.
 The list may be sorted using the <i>Date</i>, <i>Name</i>, and <i>Size</i> tabs. 
 </p>
 
-<p>To find the message that delivered an item in the <span class="paperclip">&#128206;</span> menu, 
-click the <span uk-icon="mail"></span> hyperlink for that item. 
+<p>To view the message that delivered an item in the <span class="paperclip">&#128206;</span> menu, 
+click the <span uk-icon="mail"></span> hyperlink for the item,
+which creates a <b>&#x2992;</b>&nbsp;<i>Attached</i> tab above the message list.
 </p>
 
 <p>To download a file in the <span class="paperclip">&#128206;</span> menu, 
