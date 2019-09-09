@@ -106,8 +106,8 @@
    <div uk-height-viewport="offset-top:true; offset-bottom:true"
         class="firefox-minheight-fix uk-overflow-auto message-bg message-list"
         style="position:relative">
-      <mnm-tagset ref="tagset"/>
       <mnm-viewer ref="viewer" :noparent="true"/>
+      <mnm-tagset ref="tagset"/><!--nextElementSibling is message list-->
       <ul class="uk-list uk-list-divider" style="margin:0">
          <li v-for="aMsg in ml" :key="aMsg.Id"
              :class="{'message-edit': aMsg.From === '' && !aMsg.Queued}" style="margin:0">
@@ -862,7 +862,7 @@
             } else {
                this.msgId = iId;
                this.posTop = iEl.offsetTop +'px';
-               this.posRight = (iEl.parentElement.offsetWidth - iEl.offsetLeft + 3) +'px';
+               this.posRight = (this.$el.nextElementSibling.offsetWidth - iEl.offsetLeft + 3) +'px';
                                 // .offsetParent.offsetWidth doesn't vary with scrollbar
             }
          },
