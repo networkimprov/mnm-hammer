@@ -81,6 +81,7 @@ input[type=text], textarea {
 
 .search-box {
    font-size: larger !important;
+   line-height: 1.36;
    color: #1e87f0;
 }
 

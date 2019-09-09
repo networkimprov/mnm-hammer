@@ -97,10 +97,11 @@
                </div></div>
          </div>
       </span>
-      <input @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)"
-             :placeholder="' \u2315'" type="text"
-             title="Find messages with phrase"
-             class="uk-width-1-6 search-box">
+      <div class="uk-width-1-6">
+         <input @keyup.enter="tabSearch($event.target.value, cs.ThreadTabs)"
+                :placeholder="' \u2315'" type="text"
+                title="Find messages with phrase"
+                class="width100 search-box"></div>
    </div>
    <div uk-height-viewport="offset-top:true; offset-bottom:true"
         class="firefox-minheight-fix uk-overflow-auto message-bg message-list"
@@ -262,10 +263,11 @@
                </div></div>
          </div>
       </span>
-      <input @keyup.enter="tabSearch($event.target.value, cs.SvcTabs)"
-             :placeholder="' \u2315'" type="text"
-             title="Search all threads"
-             class="uk-width-1-2 search-box">
+      <div class="uk-width-1-2">
+         <input @keyup.enter="tabSearch($event.target.value, cs.SvcTabs)"
+                :placeholder="' \u2315'" type="text"
+                title="Search all threads"
+                class="width100 search-box"></div>
    </div>
    <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"
              :set="svcTabset" :state="cs.SvcTabs"/>
