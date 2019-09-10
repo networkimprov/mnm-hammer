@@ -367,9 +367,17 @@ func (o *ClientState) addTab(iType int8, iTerm string) {
 func (o *ClientState) setTab(iType int8, iPosFor int8, iPos int) {
    o.Lock(); defer o.Unlock()
    aTabs := &o.SvcTabs; if iType == eTabThread { aTabs = &o.Thread[o.History[o.Hpos]].Tabs }
+   if iPosFor == aTabs.PosFor && iPos == aTabs.Pos {
+      return
+   }
    if iPosFor < 0 || iPosFor >= ePosForEnd { quit(tError("setTab: iPosFor out of range")) }
-   if iPos >= len(aTabs.Terms) && iPosFor == ePosForTerms ||
-      iPos < 0 { quit(tError("setTab: iPos out of range")) }
+   var aSet []tTermEl
+   switch iPosFor {
+   case ePosForDefault: aSet = sSvcTabsDefault; if iType == eTabThread { aSet = sThreadTabsDefault }
+   case ePosForPinned:  if iType != eTabThread { aSet = getTabsService(o.svc) }
+   case ePosForTerms:   aSet = aTabs.Terms
+   }
+   if iPos < 0 || iPos >= len(aSet) { quit(tError("setTab: iPos out of range")) }
 
    aTabs.PosFor = iPosFor
    aTabs.Pos = iPos
@@ -386,7 +394,6 @@ func (o *ClientState) pinTab(iType int8) {
    aOrig := aTabs.Pos
    aTabs.Pos = addTabService(o.svc, &aTabs.Terms[aOrig])
    aTabs.PosFor = ePosForPinned
-   if len(aTabs.Terms) == 0 { quit(tError("pinTab: no terms to pin")) }
    aTabs.Terms = aTabs.Terms[:aOrig + copy(aTabs.Terms[aOrig:], aTabs.Terms[aOrig+1:])]
    err := storeFile(o.filePath, o)
    if err != nil { quit(err) }
@@ -400,12 +407,10 @@ func (o *ClientState) dropTab(iType int8) {
       return
    }
 
-   aOrig := aTabs.Pos
-   aFor := aTabs.PosFor
+   aOrig, aFor := aTabs.Pos, aTabs.PosFor
    aTabs.Pos = 0
    aTabs.PosFor = ePosForDefault
    if aFor == ePosForTerms {
-      if len(aTabs.Terms) == 0 { quit(tError("dropTab: no terms to drop")) }
       aTabs.Terms = aTabs.Terms[:aOrig + copy(aTabs.Terms[aOrig:], aTabs.Terms[aOrig+1:])]
    }
    err := storeFile(o.filePath, o)
