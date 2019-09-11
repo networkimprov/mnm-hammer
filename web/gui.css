@@ -10,12 +10,14 @@
 
 table { border-spacing: 0; }
 
+.uk-tab {
+   margin-left: 0;
+}
+.uk-tab::before {
+   left: 0;
+}
 .uk-tab > li {
    padding: 0; /* todo create a nicer tab layout */
-}
-.uk-tab > li:first-child,
-.uk-tab > li[style="display: none;"] + li {
-   padding-left: 20px;
 }
 .uk-tab > li > a {
    cursor: default;
