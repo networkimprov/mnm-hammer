@@ -2251,7 +2251,9 @@
          iTokens[iIdx].attrs.push(['onclick', "mnm.NavigateLink(this.innerText,this.href);return false"]);
       } else if (!sUrlStart.test(aHref[1])) {
          var aParam = aHref[1].replace(/^this_/, iEnv.thisVal+'_');
-         aHref[1] = '?an=' + encodeURIComponent(aParam);
+         aHref[1] = '?ad=' + encodeURIComponent(aParam);
+         iTokens[iIdx].attrs.push(['download', '']);
+         //todo add download icon and viewer
       }
       return iSelf.renderToken(iTokens, iIdx, iOptions);
    };
