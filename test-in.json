@@ -185,7 +185,7 @@
    "Result": {
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
-             {"Id":"*mid", "Unread":true, "Subject":"ohi",
+             {"Id":"*mid", "Unread":true, "Subject":"reply ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
    "Name": "test.a"
 },{
@@ -268,7 +268,7 @@
                                    {"Name":"r:Blue.original", "Size":33,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
               "msg_data":"all good and true words" }] ,
-      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"", "Queued":false},
+      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"reply ohi", "Seen":"", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
@@ -288,6 +288,24 @@
       "mo": "navigate_history.a" ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":[{"Term":"*", "Label":"navlink"}], "Type":0},
+             "History":{"Prev":false, "Next":true},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
+             "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
+},{
+   "Updt": {"Op":"tab_drop", "Tab":{"Type":0}},
+   "Result": {
+      "mo": "navigate_history.a" ,
+      "cs": "navigate_history.a" }
+},{
+   "Updt": {"Op":"tab_add", "Tab":{"Type":0, "Term":":reply ohi"}},
+   "Result": {
+      "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Posted":"*d",
+              "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"reply ohi",
+                         "Attach":[{"Name":"r:Blue.original", "Size":33,
+                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
+              "msg_data":"" }] ,
+      "cs": {"Thread":"*mid",
+             "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":[{"Term":":reply ohi"}], "Type":0},
              "History":{"Prev":false, "Next":true},
              "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
@@ -327,7 +345,7 @@
 },{
    "Updt": {"Op":"tab_add", "Tab":{"Type":1, "Term":"-- -+ohi +"}},
    "Result": {
-      "tl": [{"Id":"*mid", "Unread":true, "Subject":"ohi",
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"reply ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"good"}], "Type":0},
@@ -532,14 +550,14 @@
    "Name": "navigate_thread.a"
 },{
    "Updt": {"Op":"thread_save", "Thread":{
-                 "New":2, "Alias":"Gold", "Subject":"",
+                 "New":2, "Alias":"Gold", "Subject":"reply ohi",
                  "Attach": [{"Name":"form_fill/Blue.original", "FfKey":"lastfile"}],
                  "FormFill":{"lastfile":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
    "Result": {
-      "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
+      "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"reply ohi", "Seen":".", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
-              "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"",
+              "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"reply ohi",
                          "Attach":[{"Name":"r:Blue.original", "FfKey":"*", "Size":33,
                                     "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
               "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
@@ -547,7 +565,7 @@
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {
-      "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":true},
+      "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"reply ohi", "Seen":".", "Queued":true},
              {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{
@@ -566,7 +584,7 @@
               "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
       "tl": [{"Id":"*midt", "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":""},
-             {"Id":"*mid", "Unread":true, "Subject":"ohi",
+             {"Id":"*mid", "Unread":true, "Subject":"reply ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] ,
       "cs": {"Thread":"*midt",
@@ -587,7 +605,7 @@
    "Result": {
       "tl": [{"Id":"*mid", "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
-             {"Id":"*mid", "Unread":true, "Subject":"ohi",
+             {"Id":"*mid", "Unread":true, "Subject":"reply ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Gold"}},

@@ -141,22 +141,24 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    if aTid == "" { return nil }
 
    aBufHead := []byte{0,0,0,0}
-   var aTag string
+   var aTag, aRe string
    var aBodyTotal int64
    var aFound tTermSites
    if iId == "" {
       aTabType, aTabVal := iState.getThreadTab()
-      if aTabType == ePosForTerms {
-         if aTabVal[0] == '&' {
-            iId = aTabVal[1:]
-         } else if aTabVal[0] == '#' {
-            aTag = Tag.getId(aTabVal[1:])
-            if aTag == "" {
-               return tError("tag not found")
-            }
-         } else {
-            aFound = messageSearch(iSvc, aTid, aTabVal)
+      if aTabType != ePosForTerms {
+         // no-op
+      } else if aTabVal[0] == '&' {
+         iId = aTabVal[1:]
+      } else if aTabVal[0] == ':' {
+         aRe = aTabVal[1:]
+      } else if aTabVal[0] == '#' {
+         aTag = Tag.getId(aTabVal[1:])
+         if aTag == "" {
+            return tError("tag not found")
          }
+      } else {
+         aFound = messageSearch(iSvc, aTid, aTabVal)
       }
    }
    aDoor := _getThreadDoor(iSvc, aTid)
@@ -174,6 +176,9 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    for a := range aIdx {
       if iId != "" {
          if aIdx[a].Id != iId { continue }
+      } else if aRe != "" {
+         aN := 0; if aIdx[a].Subject != "" { aN = a }
+         if aIdx[aN].Subject != aRe { continue }
       } else if aTag != "" {
          a1 := -1
          for a1 = 0; a1 < len(aIdx[a].Tags); a1++ {
