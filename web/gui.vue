@@ -57,8 +57,14 @@
          <span v-show="msgSubjects.length > 1"
                class="dropdown-icon">&nbsp;&#x25BD;&nbsp;</span>
       </span>
-      <mnm-subject v-if="msgSubjects.length > 1"
-                   :list="msgSubjects"/>
+      <div v-if="msgSubjects.length > 1"
+           uk-dropdown="mode:click; offset:2"
+           class="menu-bg dropdown-scroll">
+         <div class="dropdown-scroll-list">
+            <div v-for="aSubject in msgSubjects" :key="aSubject.msgId">
+               <span @click="tabSearch(':'+ aSubject.name, cs.ThreadTabs)"
+                     class="uk-link">{{aSubject.name}}</span>
+            </div></div></div>
       <div class="uk-float-right">
          <span uk-icon="social" class="dropdown-icon"
                title="Recipients of thread">{{ml.length === 1 && !ml[0].From ? '' : cl[1].length}}</span>
@@ -621,23 +627,6 @@
             return this.local.toLocaleString(luxon.DateTime.DATETIME_FULL_WITH_SECONDS);
          },
       },
-   });
-</script>
-
-<script type="text/x-template" id="mnm-subject">
-   <div uk-dropdown="mode:click; offset:2"
-        class="menu-bg" style="padding:0 0.5em 0.5em">
-      <!--todo scrolling-->
-      <template v-for="aSubject in list">
-         <a onclick="mnm.NavigateLink('Subject', this.href); return false"
-            :href="'#'+ mnm._data.cs.Thread +'&'+ aSubject.msgId">
-            {{ aSubject.name }}</a> <br>
-      </template></div>
-</script><script>
-   Vue.component('mnm-subject', {
-      template: '#mnm-subject',
-      props: {list:Array},
-      computed: { mnm: function() { return mnm } },
    });
 </script>
 
@@ -2016,8 +2005,7 @@
          <li v-for="(aTerm, aJ) in aTabs"
              :class="{'uk-active': aI === state.PosFor && aJ === state.Pos}">
             <a @click.prevent="mnm.TabSelect({type:state.Type, posfor:aI, pos:aJ})" href="#">
-               {{ state.Type === 0 && aTerm.Term.charAt(0) === '&' ? '\u2992' : null }}
-               {{ aTerm.Label || aTerm.Term }}
+               {{ getLabel(aTerm) }}
                <span v-if="aI > 0"
                      @click.prevent.stop="mnm.TabDrop(state.Type)"
                      :class="{vishide: aI !== state.PosFor || aJ !== state.Pos}">&times;</span>
@@ -2027,7 +2015,19 @@
    Vue.component('mnm-tabs', {
       template: '#mnm-tabs',
       props: {set:Array, state:Object},
-      computed: { mnm: function() { return mnm } }
+      computed: { mnm: function() { return mnm } },
+      methods: {
+         getLabel: function(iTerm) {
+            if (this.state.Type === 1)
+               return iTerm.Label || iTerm.Term;
+            switch (iTerm.Term.charAt(0)) {
+            case '&': return iTerm.Label ? '\u2992 '+ iTerm.Label : iTerm.Term;
+            case '#': return '# '+ iTerm.Term.substring(1);
+            case ':': return 're '+ iTerm.Term.substring(1);
+            default:  return iTerm.Term;
+            }
+         },
+      },
    });
 </script>
 
