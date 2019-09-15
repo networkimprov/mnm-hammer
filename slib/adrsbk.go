@@ -248,12 +248,17 @@ func searchAdrsbk(iSvc string, iUpdt *Update) []string {
    aSvc := _loadAdrsbk(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    aTerm := iUpdt.Adrsbk.Term
-   var aSet []string
    var aResult []tSearchResult
    fMatch := func(cName, cId string) {
-      aSet = strings.Split(cName, " ") //todo better split logic
-      for c := range aSet {
-         if len(aSet[c]) >= len(aTerm) && strings.EqualFold(aSet[c][:len(aTerm)], aTerm) {
+      if len(cName) < len(aTerm) {
+         return
+      }
+      if strings.EqualFold(cName[:len(aTerm)], aTerm) {
+         aResult = append(aResult, tSearchResult{cName, cId})
+         return
+      }
+      for _, cPart := range strings.Fields(cName) { //todo better split logic; skip first item
+         if len(cPart) >= len(aTerm) && strings.EqualFold(cPart[:len(aTerm)], aTerm) {
             aResult = append(aResult, tSearchResult{cName, cId})
             return
          }
