@@ -634,14 +634,22 @@
    <div uk-dropdown="mode:click; offset:2"
         class="uk-width-1-3 menu-bg dropdown-scroll">
       <div class="dropdown-scroll-item">
-         <input v-model="note"
-                placeholder="Note (opt.)" maxlength="1024" type="text"
-                style="width:calc(50% - 0.5em)">
-         <mnm-adrsbkinput @keyup.enter.native="addUser"
-                          :type="3"
-                          :placeholder="ccSet ? 'To' : 'Forward to'"
-                          style="width:50%; margin-bottom: 0.5em"/>
-         <br>
+         <form onsubmit="this.reset(); return false"
+               style="margin-bottom:0.5em">
+            <input v-model="note"
+                   placeholder="Note (opt.)" maxlength="1024" type="text"
+                   style="width:calc(50% - 2em)">
+            <mnm-adrsbkinput @alias="alias = $event"
+                             @input.native="alias = $event.target.value"
+                             :type="3"
+                             :placeholder="ccSet ? 'To' : 'Forward to'"
+                             name="resets" autocomplete="off"
+                             style="width:calc(50% - 1em)"/>
+            <button @click="addUser"
+                    :disabled="!(alias && alias in mnm._data.adrsbkmenuId)"
+                    title="Add contact"
+                    class="btn-icon btn-floatr"><span uk-icon="list"></span></button>
+         </form>
          <button v-show="!ccSet"
                  @click="mnm.ForwardSend(tid, mnm._data.cl[0][0].Qid)"
                  :disabled="ccSet || !mnm._data.cl[ccSet].length"
@@ -680,7 +688,7 @@
    Vue.component('mnm-cc', {
       template: '#mnm-cc',
       props: {tid:String},
-      data: function() { return {note:'', lastMenu:[]} },
+      data: function() { return {alias:'', note:'', lastMenu:[]} },
       computed: {
          ccSet: function() { return this.tid.charAt(0) === '_' ? 1 : 0 },
          menu: function() {
@@ -705,21 +713,18 @@
       },
       methods: {
          now: function() { return luxon.DateTime.local() },
-         addUser: function(iEvt) {
-            var aAlias = iEvt.target.value;
-            if (!(aAlias && aAlias in mnm._adrsbkmenuId))
-               return;
-            iEvt.target.value = '';
+         addUser: function() {
             var aCc = mnm._data.cl[this.ccSet].slice();
-            var aPrev = aCc.findIndex(function(c) { return c.Who === aAlias });
+            var aPrev = aCc.findIndex(function(c) { return c.Who === this.alias }, this);
             var aEl = aPrev >= 0 ? aCc.splice(aPrev, 1)[0]
-                                 : {Who:aAlias, WhoUid:mnm._adrsbkmenuId[aAlias]};
+                                 : {Who:this.alias, WhoUid:mnm._data.adrsbkmenuId[this.alias]};
             aEl.Note = this.note;
             aCc.push(aEl);
             if (this.ccSet)
                mnm._data.draftRefs[this.tid].save(aCc, null);
             else
                mnm.ForwardSave(this.tid, aCc);
+            this.alias = '';
          },
          dropUser: function(iItem) {
             var aCc = mnm._data.cl[this.ccSet];
@@ -1878,10 +1883,10 @@
             }
          },
          setOhiTo: function(iInput) {
-            var aOk = iInput.value && iInput.value in mnm._adrsbkmenuId;
+            var aOk = iInput.value && iInput.value in mnm._data.adrsbkmenuId;
             iInput.form.elements[1].disabled = !aOk;
             iInput.form.elements[1].innerText = aOk ? 'o/ '+ iInput.value : 'o/';
-            iInput.form.elements[1].value = aOk ? mnm._adrsbkmenuId[iInput.value] : '';
+            iInput.form.elements[1].value = aOk ? mnm._data.adrsbkmenuId[iInput.value] : '';
          },
       },
    });
@@ -2151,7 +2156,6 @@
 
    mnm._isLocal = '<%.TitleJs%>' === 'local';
    mnm._mdi = markdownit();
-   mnm._adrsbkmenuId = null;
    mnm._lastPreview = '';
    mnm._tabsStdService = <%.tabsStdService%>;
    mnm._tabsStdThread = <%.tabsStdThread%>;
@@ -2161,6 +2165,7 @@
    // per client
       cs:{SvcTabs:{Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
       ohiFrom: !mnm._isLocal, //todo move to cs
+      adrsbkmenuId: {},
       errors: [], errorFlag: false,
    // per service
       cf:{}, tl:[], ffn:'', // ffn derived from tl
@@ -2440,12 +2445,12 @@
          }
          break;
       case 'nameset':
-         mnm._adrsbkmenuId = {};
-         var aList = [];
+         var aIds = {}, aList = [];
          for (var a=0; a < iEtc.length; a+=2) {
-            mnm._adrsbkmenuId[iEtc[a]] = iEtc[a+1];
+            aIds[iEtc[a]] = iEtc[a+1];
             aList.push(iEtc[a]);
          }
+         mnm._data.adrsbkmenuId = aIds;
          sApp.$refs.adrsbkmenu.results(aList);
          break;
       }
