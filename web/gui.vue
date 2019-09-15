@@ -1072,15 +1072,15 @@
 </script>
 
 <script type="text/x-template" id="mnm-adrsbkinput">
-   <div @click="menu.selectId($el.firstChild, $event.target.id)"
+   <div @click="emitAlias(menu.selectId($event.target.id))"
         class="adrsbkinput">
       <input @focus="menu.placeEl($el, type, $event.target.value)"
              @blur ="menu.hideEl()"
              @input="menu.search(type, $event.target.value)"
-             @keydown.down ="menu.selectItem($event.target,  1)"
-             @keydown.up   ="menu.selectItem($event.target, -1)"
-             @keydown.esc  ="menu.selectNone($event.target)"
-             @keyup.enter  ="menu.selectOrClear($event)"
+             @keydown.down ="emitAlias(menu.selectItem(1))"
+             @keydown.up   ="emitAlias(menu.selectItem(-1))"
+             @keydown.esc  ="emitAlias(menu.selectNone())"
+             @keyup.enter  ="enterKey"
              v-bind="$attrs" type="text"
              class="width100">
       <!--menu appended here-->
@@ -1092,6 +1092,22 @@
       inheritAttrs: false,
       computed: {
          menu: function() { return this.$root.$refs.adrsbkmenu },
+      },
+      methods: {
+         enterKey: function(iEvt) {
+            var aVal = this.menu.selectOrClear();
+            this.emitAlias(aVal);
+            if (aVal !== null) {
+               iEvt.stopPropagation();
+               iEvt.preventDefault();
+            }
+         },
+         emitAlias: function(iVal) {
+            if (iVal === null)
+               return;
+            this.$el.firstChild.value = iVal;
+            this.$emit('alias', iVal);
+         },
       },
    });
 </script>
@@ -1119,7 +1135,7 @@
             this.list = [];
          },
          placeEl: function(iParent, iType, iQuery) {
-            if (iParent.lastChild !== this.$el) {
+            if (iParent.lastChild !== this.$el || iQuery !== this.query) {
                this.clear();
                this.query = iQuery;
                if (iQuery)
@@ -1143,34 +1159,31 @@
          },
          results: function(iList) {
             this.list = iList;
+            this.select = iList.findIndex(function(c) { return c === this.query }, this);
          },
-         selectNone: function(iInput) {
+         selectNone: function() {
             this.select = -1;
-            iInput.value = this.query;
+            return this.query;
          },
-         selectId: function(iInput, iId) {
+         selectId: function(iId) {
             if (!iId)
-               return;
+               return null;
             this.select = parseInt(iId.substring(3), 10);
-            iInput.value = this.list[this.select];
+            return this.list[this.select];
          },
-         selectOrClear: function(iEvent) {
-            if (this.select === -1 && this.list.length) {
-               iEvent.preventDefault();
-               iEvent.stopPropagation();
-               this.selectItem(iEvent.target, 1);
-            } else {
-               this.clear();
-            }
+         selectOrClear: function() {
+            if (this.select === -1 && this.list.length)
+               return this.selectItem(1);
+            this.clear();
+            return null;
          },
-         selectItem: function(iInput, iDirection) {
+         selectItem: function(iDirection) {
             if (this.select === -1 && iDirection === -1)
                this.select = this.list.length;
             this.select += iDirection;
             if (this.select === this.list.length || this.select === -1)
-               this.selectNone(iInput);
-            else
-               iInput.value = this.list[this.select];
+               return this.selectNone();
+            return this.list[this.select];
          },
       },
    });
