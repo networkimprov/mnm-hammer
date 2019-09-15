@@ -278,7 +278,7 @@
    <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"
              :set="svcTabset" :state="cs.SvcTabs"/>
    <div uk-height-viewport="offset-top:true"
-        class="thread-list firefox-minheight-fix uk-overflow-auto uk-position-relative">
+        class="thread-list firefox-minheight-fix uk-overflow-auto">
       <template v-if="ffn">
          <table class="uk-table uk-table-small uk-table-hover uk-text-small">
             <tr>
@@ -344,6 +344,8 @@
         ><div style="display:none" id="log"></div>
       </div>
       <mnm-tour v-if="mnm._isLocal || location.hash === '#tour'"/>
+   </div>
+   <div class="uk-position-relative">
       <div v-show="ohiFrom"
            class="uk-card uk-card-secondary uk-text-small uk-border-rounded"
            style="padding:8px; position:absolute; bottom:10px; right:10px">
@@ -357,8 +359,7 @@
                   {{aUser.Alias}}</li>
             </ul>
          </template>
-      </div>
-   </div>
+      </div></div>
 </div>
 
 <div class="uk-width-expand service-panel">
