@@ -422,7 +422,7 @@ filled-form results.
 
 <p style="margin-bottom:0">The .spec object may contain a data type specification, 
 or a filled-form name (FFN) that points into an online repository of specifications. 
-[FFN lookup not yet implemented]
+[In this release, any FFN lookup returns the contents of the file <i>formspec</i> in the app directory.]
 A data type specification is a JSON object with an array of field definitions. 
 Each definition has <tt>name</tt>, <tt>status</tt>, and <tt>type</tt> members. 
 An array definition also has an <tt>array</tt> member indicating the number of dimensions. 
@@ -436,8 +436,7 @@ This example illustrates all the options:
   {"name":"bd", "status":"deprecated", "type":"bool"   },
   {"name":"or", "status":"required",   "type":"object", "spec":[
     {"name":"anr", "status":"required", "type":"number", "array":2},
-    {"name":"aso", "status":"optional", "type":"string", "array":1}
-  ]}
+    {"name":"aso", "status":"optional", "type":"string", "array":1}] }
 ]}
 </pre>
 
@@ -451,12 +450,11 @@ This example definition conforms to the above spec:
 <pre style="background-color:inherit; border:none; margin:0">{"fields":[
   {"label":"SO", "model":"so", "type":"input", "inputType":"text"},
   {"label":"NR", "model":"nr", "type":"input", "inputType":"number"},
-  {"label":"ASR", "model":"or.asr", "type":"checklist",
-   "listBox":true, "values":["a","b"]},
-  {"label":"ANO", "model":"or.ano", "type":"checklist",
-   "inputType":"array",
-   "listBox":true, "values":[{"name":"aa", "value":[1,2]},
-                             {"name":"bb", "value":[2,2]}] }
+  {"label":"ASR", "model":"or.asr", "type":"checklist", "listBox":true,
+   "values":["a","b"]},
+  {"label":"ANO", "model":"or.ano", "type":"checklist", "listBox":true,
+   "values":[{"name":"12", "value":[1,2]},
+             {"name":"22", "value":[2,2]}] }
 ]}
 </pre>
 

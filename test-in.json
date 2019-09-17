@@ -1,6 +1,15 @@
 [{
 
 "Version": "0.6.0",
+"Formspec": {"ffn":"mnmnotmail.github.io/registry/test1", "spec":[
+  {"name":"nr", "status":"required",   "type":"number" },
+  {"name":"so", "status":"optional",   "type":"string" },
+  {"name":"bd", "status":"deprecated", "type":"bool"   },
+  {"name":"or", "status":"required",   "type":"object", "spec":[
+    {"name":"anr", "status":"required", "type":"number", "array":2},
+    {"name":"aso", "status":"optional", "type":"string", "array":1}] }
+]},
+
 "Name": "local1", "SvcId": "local",
 "Orders": [{
    "Updt": {"Op":"open"},
@@ -23,17 +32,16 @@
    "Name":"BlueFile.txt", "Data":"abcdefghijklmnopqrstuvwxyz"
 }],
 "Forms": [{
-   "Name":"Blue.spec", "ffn":"networkimprov.github.io/mnm-registry/first"
+   "Name":"Blue.spec", "ffn":"mnmnotmail.github.io/registry/test1"
 },{
    "Name":"Blue.original", "fields": [
-      {"label":"SO", "model":"so", "type":"input", "inputType":"text"},
-      {"label":"NR", "model":"nr", "type":"input", "inputType":"number"},
-      {"label":"ASO", "model":"or.aso", "type":"checklist",
-       "listBox":true, "values":["a","b"]},
-      {"label":"ANR", "model":"or.anr", "type":"checklist", "inputType":"array",
-       "listBox":true, "values": [
-          {"name":"aa", "value":[1,2]},
-          {"name":"bb", "value":[2,2]}] }]
+      {"label":"Text (opt)",    "model":"so",     "type":"input", "inputType":"text"},
+      {"label":"Num (req)",     "model":"nr",     "type":"input", "inputType":"number"},
+      {"label":"Text-A1 (opt)", "model":"or.aso", "type":"checklist", "listBox":true,
+       "values":["a","b"]},
+      {"label":"Num-A2 (req)",  "model":"or.anr", "type":"checklist", "listBox":true,
+       "values":[{"name":"12", "value":[1,2]},
+                 {"name":"22", "value":[2,2]}] }]
 }],
 "Tags": [{
    "Name": "flag"
@@ -110,7 +118,7 @@
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
                          "Attach":[{"Name":"u:BlueFile.txt"},
                                    {"Name":"f:Blue.original",
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}],
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"author", "Subscribe":true},
                                {"Who":"Gold#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
@@ -128,7 +136,7 @@
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false},
               {"Who":"Gold#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"initial recipient", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*midt", "File":"*", "Date":"*d"},
+      "al": [{"Name":"Blue.original", "Size":416, "MsgId":"*midt", "File":"*", "Date":"*d"},
              {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] },
    "Name": "thread_save.b"
 },{
@@ -145,9 +153,9 @@
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
                          "Attach":[{"Name":"u:BlueFile.txt"},
                                    {"Name":"f:Blue.original",
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"},
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"},
                                    {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}],
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"author", "Subscribe":true},
                                {"Who":"Gold#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
@@ -172,7 +180,7 @@
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
-      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*mid", "File":"*", "Date":"*d"},
+      "al": [{"Name":"Blue.original", "Size":416, "MsgId":"*mid", "File":"*", "Date":"*d"},
              {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] },
    "Name": "thread_save.c"
 },{
@@ -202,7 +210,7 @@
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"to forward",
                          "Attach":[{"Name":"u:Gold/File.txt", "Size":26},
                                    {"Name":"r:Blue.original", "Size":33,
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}] },
               "msg_data":"" }] ,
       "ml": "test.b" ,
       "cs": {"Thread":"*mid",
@@ -263,10 +271,10 @@
       "mo": [{"From":"*uid", "Id":"*mid", "Len":23, "Posted":"*d",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"ohi",
                          "Attach":[{"Name":"u:BlueFile.txt", "Size":26},
-                                   {"Name":"f:Blue.original", "Size":402,
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"},
+                                   {"Name":"f:Blue.original", "Size":416,
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"},
                                    {"Name":"r:Blue.original", "Size":33,
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}] },
               "msg_data":"all good and true words" }] ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"reply ohi", "Seen":"", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
@@ -302,7 +310,7 @@
       "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Posted":"*d",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"reply ohi",
                          "Attach":[{"Name":"r:Blue.original", "Size":33,
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}] },
               "msg_data":"" }] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":[{"Term":":reply ohi"}], "Type":0},
@@ -361,9 +369,9 @@
              "SvcTabs":{"Pos":0, "PosFor":1, "Terms":[], "Pinned":[{"Term":"-- -+ohi +"}], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
-   "Updt": {"Op":"tab_add", "Tab":{"Type":1, "Term":"ffn:networkimprov.github.io/mnm-registry/first_recv"}},
+   "Updt": {"Op":"tab_add", "Tab":{"Type":1, "Term":"ffn:mnmnotmail.github.io/registry/test1_recv"}},
    "Result": {
-      "tl": {"Ffn":"networkimprov.github.io/mnm-registry/first_recv",
+      "tl": {"Ffn":"mnmnotmail.github.io/registry/test1_recv",
              "Table":[{"nr":123, "or":{"anr":[[1],[2]]},
                        "$threadid":"*mid", "$msgid":"*mid", "$offset":3, "$size":33, "$checksum":"**"},
                       {"nr":123, "or":{"anr":[[1],[2]]},
@@ -371,7 +379,7 @@
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"good"}], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":2, "Terms":[{"Term":"ffn:networkimprov.github.io/mnm-registry/first_recv"}],
+             "SvcTabs":{"Pos":0, "PosFor":2, "Terms":[{"Term":"ffn:mnmnotmail.github.io/registry/test1_recv"}],
                         "Pinned":[{"Term":"-- -+ohi +"}], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
@@ -381,7 +389,7 @@
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"good"}], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":1, "PosFor":0, "Terms":[{"Term":"ffn:networkimprov.github.io/mnm-registry/first_recv"}],
+             "SvcTabs":{"Pos":1, "PosFor":0, "Terms":[{"Term":"ffn:mnmnotmail.github.io/registry/test1_recv"}],
                         "Pinned":[{"Term":"-- -+ohi +"}], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
@@ -391,7 +399,7 @@
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"good"}], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"ffn:networkimprov.github.io/mnm-registry/first_recv"}],
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"ffn:mnmnotmail.github.io/registry/test1_recv"}],
                         "Pinned":[{"Term":"-- -+ohi +"}], "Type":1},
              "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
@@ -400,7 +408,7 @@
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"good"}], "Type":0},
              "History":{"Prev":false, "Next":true},
-             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"ffn:networkimprov.github.io/mnm-registry/first_recv"}],
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"ffn:mnmnotmail.github.io/registry/test1_recv"}],
                         "Pinned":[{"Term":"-- -+ohi +"}], "Type":1},
              "Sort":{"cl":"Date", "al":"Date", "t":"Date", "f":"Date"}} },
    "Name": "sort_select.a"
@@ -529,10 +537,10 @@
       "mo": [{"From":"*uid", "Id":"*mid", "Len":23, "Posted":"*d",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"ohi",
                          "Attach":[{"Name":"u:BlueFile.txt", "Size":26},
-                                   {"Name":"f:Blue.original", "Size":402,
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"},
+                                   {"Name":"f:Blue.original", "Size":416,
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"},
                                    {"Name":"r:Blue.original", "Size":33,
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}] },
               "msg_data":"all good and true words" }] ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
       "cs": {"Thread":"*mid",
@@ -545,7 +553,7 @@
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false},
               {"Who":"Gold#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"initial recipient", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"Blue.original", "Size":402, "MsgId":"*mid", "File":"*", "Date":"*d"},
+      "al": [{"Name":"Blue.original", "Size":416, "MsgId":"*mid", "File":"*", "Date":"*d"},
              {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] },
    "Name": "navigate_thread.a"
 },{
@@ -559,7 +567,7 @@
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"reply ohi",
                          "Attach":[{"Name":"r:Blue.original", "FfKey":"*", "Size":33,
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}] },
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}] },
               "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
       "al": "navigate_thread.a" }
 },{
@@ -578,7 +586,7 @@
               "SubHead":{"Alias":"Gold#td", "ThreadId":"", "Subject":"to forward",
                          "Attach":[{"Name":"u:Gold/File.txt"},
                                    {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
-                                    "Ffn":"networkimprov.github.io/mnm-registry/first"}],
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}],
                          "Cc":[{"Who":"Gold#td", "WhoUid":"*uid", "By":"Gold#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"author", "Subscribe":true}] },
               "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,

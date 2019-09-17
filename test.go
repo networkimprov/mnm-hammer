@@ -47,7 +47,9 @@ type tTestStateEl struct {
 }
 
 type tTestClient struct {
+   Formspec map[string]interface{} // one for all clients
    Version string
+
    Name string
    SvcId string
    Cfg struct {
@@ -209,8 +211,6 @@ func _setupTestDir(iDir string, iClients []tTestClient) bool {
    if err != nil { quit(err) }
    err = os.Symlink("../../web", "web")
    if err != nil { quit(err) }
-   err = os.Symlink("../../formspec", "formspec")
-   if err != nil { quit(err) }
 
    pSl.Init(startService, crashTest)
 
@@ -219,6 +219,15 @@ func _setupTestDir(iDir string, iClients []tTestClient) bool {
    aEnc := json.NewEncoder(&aBuf)
    for a := range iClients {
       aTc = &iClients[a]
+      if aTc.Formspec != nil { //todo download spec
+         var aFd *os.File
+         aFd, err = os.Create("formspec")
+         if err != nil { quit(err) }
+         err = json.NewEncoder(aFd).Encode(aTc.Formspec)
+         if err != nil { quit(err) }
+         err = aFd.Close()
+         if err != nil { quit(err) }
+      }
       if aTc.Cfg.Name != "" {
          aTc.Cfg.Addr = "=" + sTestHost
          aTc.Cfg.Alias += sTestDate
