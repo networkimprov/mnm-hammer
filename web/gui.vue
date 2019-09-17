@@ -341,7 +341,7 @@
          <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
               style="float:right; margin-right:1em; font-size:75%;">
             <span class="uk-link">+/- log</span></div
-        ><div style="display:none" id="log"></div>
+        ><div style="display:none; white-space:pre-wrap" id="log"></div>
       </div>
       <mnm-tour v-if="mnm._isLocal || location.hash === '#tour'"/>
    </div>
@@ -2339,8 +2339,8 @@
    };
 
    mnm.Log = function(i) {
-      var aLog = document.getElementById('log').innerText;
-      document.getElementById('log').innerText = (i.substr(-1) === '\n' ? i : i+'\n')+aLog;
+      var aLog = document.getElementById('log').textContent;
+      document.getElementById('log').textContent = (i.substr(-1) === '\n' ? i : i+'\n')+aLog;
    };
 
    mnm.Err = function(iMsg, iOnce) {
