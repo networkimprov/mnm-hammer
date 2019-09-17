@@ -142,7 +142,7 @@
          throw new Error('mnm.Upload: requires method=POST and valid action');
       var aXhr = new XMLHttpRequest();
       aXhr.onload = function() {
-         mnm.Log(iForm.action +' '+ aXhr.responseText);
+         mnm.Log('post '+ iForm.action +' '+ aXhr.responseText);
          if (aXhr.status !== 200)
             mnm.Err(aXhr.responseText);
       };
@@ -200,7 +200,7 @@
       aXhr.onload = function() {
          --sXhrPending;
          if (aXhr.status !== 200) {
-            mnm.Log(i +' '+ aXhr.responseText);
+            mnm.Log('get '+ i +' '+ aXhr.responseText);
             mnm.Err(aXhr.responseText);
             return;
          }
