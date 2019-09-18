@@ -350,7 +350,7 @@
            class="uk-card uk-card-secondary uk-text-small uk-border-rounded"
            style="padding:8px; position:absolute; bottom:10px; right:10px">
          <div v-if="!of"
-              class="uk-text-danger">offline</div>
+              class="uk-text-danger">no link</div>
          <template v-else>
             <div v-show="of.length === 0"
                  class="uk-text-warning">no o/</div>
