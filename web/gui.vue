@@ -335,12 +335,12 @@
          </div></template>
       <div style="margin-top:1em">
          <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
-              style="float:right; margin-right:1em; font-size:75%;">
-            <span class="uk-link">+/- mo</span></div
+              style="float:right; margin-right:0.5em; font-size:75%;">
+            <span class="uk-link">&#x25c1; mo</span></div
         ><div style="display:none">{{JSON.stringify(mo)}}</div><br>
          <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
-              style="float:right; margin-right:1em; font-size:75%;">
-            <span class="uk-link">+/- log</span></div
+              style="float:right; margin-right:0.5em; font-size:75%;">
+            <span class="uk-link">&#x25c1; log</span></div
         ><div style="display:none; white-space:pre-wrap" id="log"></div>
       </div>
       <mnm-tour v-if="mnm._isLocal || location.hash === '#tour'"/>
