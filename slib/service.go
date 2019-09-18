@@ -330,6 +330,8 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
    case "ohi":
       updateFromOhi(iSvc, iHead)
       aFn, aResult = fAll, []string{"of"}
+   case "ohiedit":
+      //todo for multiple nodes
    case "ping":
       err = storeReceivedAdrsbk(iSvc, iHead, iR)
       if err != nil {
