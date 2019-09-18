@@ -424,7 +424,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          } else {
             aFn = func(c *ClientState) []string {
                c.renameMsg(aId.tid(), iHead.Id, iHead.MsgId)
-               if c.getThread() == aId.tid() { return aResult[1:] }
+               if c.getThread() == aId.tid() { return aResult }
                return aResult[1:3]
             }
          }
