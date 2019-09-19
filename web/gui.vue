@@ -1272,8 +1272,9 @@
       },
       created: function() {
          this.formDefBad = {fields:[ {type:"label",label:"file not found or invalid"} ]};
-         this.env = { thisVal:this.formreply ? this.msgid : this.msgid.substr(-12),
-                      fillMap:{}, parent:this, formview:null };
+         this.env = { fillMap:{}, parent:this, formview:null,
+                      thisVal: this.formreply && this.formreply !== 'Q' ? this.msgid
+                                                                        : this.msgid.substr(-12) };
          if (this.formfill)
             for (var a in this.formfill)
                Vue.set(this.env.fillMap, a, this.formfill[a]);
