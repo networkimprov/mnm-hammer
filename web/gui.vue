@@ -1055,8 +1055,14 @@
         :id="'pp_'+draft.msgid"
         class="draft-preview message-bg"
         onwheel="return mnm._canScroll(this, event.deltaY)">
-      <div v-show="subject"
-           >Re: {{subject}}</div>
+      <div v-show="subject || attach">
+         <div v-show="attach"
+              style="float:left; margin-right:0.6em">
+            {{attach && attach.length}}<mnm-paperclip/></div>
+         <span v-show="subject">
+            Re: {{subject}}</span>
+         &nbsp;
+      </div>
       <div v-show="!msg.msg_data">
          <p><span uk-icon="comment"></span></p></div>
       <mnm-markdown v-show="msg.msg_data"
@@ -1073,6 +1079,7 @@
          subject: function() { return (mnm._data.toSave[this.draft.msgid] ||
                                        mnm._data.mo[this.draft.msgid].SubHead).Subject },
          msg: function() { return mnm._data.toSave[this.draft.msgid] || mnm._data.mo[this.draft.msgid] },
+         attach: function() { return mnm._data.mo[this.draft.msgid].SubHead.Attach },
       },
    });
 </script>
