@@ -240,7 +240,14 @@ and ...
 </p>
 
 
-<h3 id="invt">4. Invitations</h3>
+<h3 id="cont">4. Contacts</h3>
+
+<p>The <span uk-icon="users"></span> menu groups features for managing contacts, 
+i.e. other members of the service with whom you can correspond.
+</p>
+
+
+<h4 id="invt">4a. Invitations</h4>
 
 <p>A service member makes initial contact with another member by sending an invite (a.k.a. ping). 
 Invites include the sender's UID &amp; alias, the recipient's alias, 
@@ -298,7 +305,7 @@ The sender is not notified that the recipient blocked them.
 </p>
 
 
-<h3 id="grup">5. Groups</h3>
+<h4 id="grup">4b. Groups</h4>
 
 <p>A group provides an alias to a set of service members. 
 As currently designed, 
@@ -346,7 +353,7 @@ by the <span uk-icon="bolt"></span> icon on the invite.
 </p>
 
 
-<h3 id="ohis">6. Ohis</h3>
+<h4 id="ohis">4c. Ohis</h4>
 
 <p>A service member may designate contacts to be notified when dis/connecting from/to the service. 
 This presence notification is referred to as an ohi. 
@@ -372,7 +379,7 @@ select the <i>Ohi To</i> tab, and click the <span uk-icon="trash"></span> button
 </p>
 
 
-<h3 id="upld">7. Attachable Files</h3>
+<h3 id="upld">5. Attachable Files</h3>
 
 <p>Files to be attached to outgoing messages are first added to the 
 <span uk-icon="push"></span> menu. 
@@ -402,7 +409,7 @@ Files that can be previewed display a <span uk-icon="triangle-left"></span> icon
 </p>
 
 
-<h3 id="form">8. Blank Forms</h3>
+<h3 id="form">6. Blank Forms</h3>
 
 <p>Users may create forms/surveys, similar to those on web pages, 
 to request specific data from their correspondents. 
@@ -495,7 +502,7 @@ Families remain grouped when sorted by date.
 </p>
 
 
-<h3 id="thrd">9. Threads</h3>
+<h3 id="thrd">7. Thread Tabs &amp; Search</h3>
 
 <p>The middle panel presents the service's logo (if available) [not yet implemented] 
 and the account title, followed by a listing from the thread index controlled by 
@@ -538,7 +545,7 @@ use the <span uk-icon="arrow-left"></span><span uk-icon="arrow-right"></span> hy
 </p>
 
 
-<h4 id="fftb">9a. Filled-Form Tables</h4>
+<h4 id="fftb">7a. Filled-Form Tables</h4>
 
 <p>Both incoming and outgoing filled-form results are appended to filled-form tables, 
 which are listed under the <i>FFT</i> tab. 
@@ -558,7 +565,7 @@ and operations on query results.
 </p>
 
 
-<h3 id="msgs">10. Messages</h3>
+<h3 id="msgs">8. Messages</h3>
 
 <p>The left-hand panel presents the subject and message list for the most-recently selected thread. 
 If the thread has multiple subjects, the subject field becomes a menu (denoted by &#x25BD;) 
@@ -608,7 +615,7 @@ Attachments that can be previewed display a <span uk-icon="triangle-left"></span
 </p>
 
 
-<h4 id="rcpt">10a. Recipients</h4>
+<h4 id="rcpt">8a. Recipients</h4>
 
 <p>Individuals or groups who have received a copy of the thread are listed 
 in the <span uk-icon="social"></span> menu. 
@@ -640,7 +647,7 @@ If the original copy does not match the forwarded version, the sender's name is 
 </p>
 
 
-<h4 id="recv">10b. Received/Sent Messages</h4>
+<h4 id="recv">8b. Received/Sent Messages</h4>
 
 <p>Heretofore unopened messages present the date &amp; author in bold text in the header. 
 </p>
@@ -671,7 +678,7 @@ Blank forms are fillable only in the preview panel of the draft editor.
 </p>
 
 
-<h4 id="tags">10c. Tags</h4>
+<h4 id="tags">8c. Tags</h4>
 
 <p>A message may be assigned any number of predefined and user-defined tags, 
 which allow threads and messages to be found via tag searches.
@@ -695,7 +702,7 @@ use the <span uk-icon="hashtag"></span> menu next to the message panel search bo
 </p>
 
 
-<h4 id="comp">10d. Draft Composition</h4>
+<h4 id="comp">8d. Draft Composition</h4>
 
 <p>Starting a new thread or a reply within an existing thread opens a draft editor. 
 Its input fields are the Attachment list (optional), 
@@ -749,7 +756,7 @@ by the <span uk-icon="bolt"></span> icon to the right of the header.
 </p>
 
 
-<h4 id="mark">10e. Markdown</h4>
+<h4 id="mark">8e. Markdown</h4>
 
 <p>The message Body supports Markdown, a widely used plain-text shorthand 
 for essential rich-text HTML features. 
@@ -807,7 +814,7 @@ to the right of the header, then paste the string into a message Body.
 </p>
 
 
-<h3 id="notc">11. Notices &amp; Errors</h3>
+<h3 id="notc">9. Notices &amp; Errors</h3>
 
 <p>Information received by mnm from TMTP servers is noted in the <span uk-icon="bell"></span> menu 
 (next to the <span uk-icon="users"></span> menu) for the account represented in the current 
@@ -835,20 +842,20 @@ a message is posted to the <span uk-icon="warning"></span> list in the menu.
 </p>
 
 
-<h3 id="conf">12. General Configuration</h3>
+<h3 id="conf">10. General Configuration</h3>
 
 <p>General configuration is listed in the <span uk-icon="cog"></span> menu. 
 [not yet implemented]
 </p>
 
 
-<h3 id="docs">13. Documentation</h3>
+<h3 id="docs">11. Documentation</h3>
 
 <p>Documentation and the product version string are provided in the <span uk-icon="info"></span> menu. 
 </p>
 
 
-<h3 id="cred">14. Credits</h3>
+<h3 id="cred">12. Credits</h3>
 
 <p>The mnm app and TMTP server are written in 
 <a target="_blank" href="https://golang.org/">Go</a>. 
@@ -882,7 +889,7 @@ Development of mnm is managed with
 </p>
 
 
-<h3 id="lcns">15. License</h3>
+<h3 id="lcns">13. License</h3>
 
 <p> Copyright 2018, 2019 Liam Breck
 <br>Published at <a target="_blank" href="https://github.com/networkimprov/mnm-hammer">
@@ -916,12 +923,15 @@ Development of mnm is managed with
 <li><a href="#alis">Aliases</a></li>
 <li><a href="#node">Nodes</a></li>
 </ol></li>
+<li><a href="#cont">Contacts</a>
+<ol type="a">
 <li><a href="#invt">Invitations</a></li>
 <li><a href="#grup">Groups</a></li>
 <li><a href="#ohis">Ohis</a></li>
+</ol></li>
 <li><a href="#upld">Attachable Files</a></li>
 <li><a href="#form">Blank Forms</a></li>
-<li><a href="#thrd">Threads</a>
+<li><a href="#thrd">Thread Tabs &amp; Search</a>
 <ol type="a">
 <li><a href="#fftb">Filled-Form Tables</a></li>
 </ol></li>

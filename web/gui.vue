@@ -235,7 +235,7 @@
                      @hide.native="mnm.NoticeClose()"
                      offset="2" pos="bottom-right"/>
          <span uk-icon="users" class="dropdown-icon"
-               :title="'Address book for <%.TitleJs%>'">&nbsp;</span>
+               :title="'Contacts for <%.TitleJs%>'">&nbsp;</span>
          <mnm-adrsbk ref="adrsbk"/>
          <span @mousedown="ohiFrom = !ohiFrom"
                style="color:#1e87f0; font-size:110%; vertical-align:text-top; cursor:pointer"
@@ -485,9 +485,9 @@
                <div>Sending an invite</div>
                <img src="/w/img/tour-sendinvite.png">
             </div>
-            Click the address book icon, then<br>
+            Click the contacts icon, then<br>
             <span @click.stop="UIkit.dropdown($root.$refs.adrsbk.$el).show()"
-                  uk-icon="users" title="Address book"></span>
+                  uk-icon="users" title="Contacts"></span>
             <div>
                a) Enter the contact's alias, click
                   <button class="btn-icon"><span uk-icon="pencil"></span></button><br>
@@ -575,9 +575,9 @@
                <div>Signaling online presence</div>
                <img src="/w/img/tour-sendohi.png">
             </div>
-            Click the address book icon, then<br>
+            Click the contacts icon, then<br>
             <span @click.stop="UIkit.dropdown($root.$refs.adrsbk.$el).show()"
-                  uk-icon="users" title="Address book"></span>
+                  uk-icon="users" title="Contacts"></span>
             <div>
                a) Select the <i>Ohi To</i> tab.<br>
                b) Enter a contact's alias in the <i>To</i> field.<br>
