@@ -1,27 +1,27 @@
-_Mnm is Not Mail_
+### mnm is not mail
 
-mnm provides the benefits of email without the huge risks of allowing 
-anyone, anywhere, claiming any identity to send you any content, any number of times. 
+Email allows anyone, anywhere, claiming any identity to send you any content, any number of times.  
+_mnm does not._
 
-mnm also offers electronic correspondence features missing from traditional email, 
-including forms/surveys whose results are collected into tables, 
-charts via [a JS chart library TBD], 
-hyperlinks to messages &amp; other threads, 
-slide deck layouts, 
-and easy inclusion of additional recipients in existing threads. 
-mnm creates HTML-formatted messages via Markdown (aka CommonMark), 
-for rapid composition of rich text with graphical elements. 
+Email is a cybercrime gateway.<img width="300" align="right" src="https://user-images.githubusercontent.com/458838/65545951-535f6980-decb-11e9-8f46-6122198097b0.png">  
+_mnm is not._
 
-mnm is an app that securely connects to any number of TMTP relay services via separate accounts, 
-and stores all messages locally on your machine. 
-TMTP accounts control who can send them correspondence. 
-Organizations of any size can run TMTP services on public or private network sites, 
-and may limit who participates in them. 
-See also [Why TMTP?](https://github.com/networkimprov/mnm/blob/master/Rationale.md) 
+mnm is a safer, more productive way to correspond with people you know, 
+and make contact with those you don't.
+
+mnm offers features missing from traditional email, including:  
+\+ forms/surveys whose results are collected into tables  
+\+ charts via [a JS chart library TBD]  
+\+ slide deck layouts  
+\+ hyperlinks to messages &amp; other threads  
+\+ easy addition of recipients to existing threads  
+\+ message formatting &amp; layout via Markdown (aka CommonMark)  
+
+mnm is a TMTP client. See also the [mnm relay server](https://github.com/networkimprov/mnm), 
+and [Why TMTP?](https://github.com/networkimprov/mnm/blob/master/Rationale.md) 
 
 This version of mnm is a localhost web app, 
-i.e. it runs on personal devices and its UI runs in a browser. 
-It's open source, and published [on GitHub](https://github.com/networkimprov/mnm-hammer). 
+i.e. it runs on personal devices and its GUI appears in a browser. 
 
 Complete documentation is provided within the app. 
 
