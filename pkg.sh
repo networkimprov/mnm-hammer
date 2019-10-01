@@ -35,7 +35,8 @@ for pf in "${bins[@]}"; do
    dst="$app/mnm-app-$GOOS-$GOARCH-${ver[-2]}"
    if [ $GOOS = windows ]; then
       (cd ..; zip -rq "$dst.zip" "${fileswin[@]}")
-      rm "$app".exe
+      zip -dq ../"$dst.zip" '*/web/gui.*'
+      rm "$app.exe"
    else
       (cd ..; tar -czf "$dst.tgz" "${files[@]}")
    fi
