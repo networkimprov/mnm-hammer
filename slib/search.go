@@ -109,7 +109,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       return err
    }
    aBi := getService(iSvc).index
-   aSr := pBleve.NewSearchRequest(aQ)
+   aSr := pBleve.NewSearchRequestOptions(aQ, 1024, 0, false)
    aSr.Fields = sResultFields
    aSet, err := aBi.Search(aSr)
    if err != nil { quit(err) }
