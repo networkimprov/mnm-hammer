@@ -229,8 +229,10 @@ input[type=text], textarea {
 
 .message-title {
    display: inline-block;
+   box-sizing: border-box;
    min-width: 40%;
    line-height: 2;
+   padding-right: 0.3em;
    background-color: wheat;
    border-radius: 10px 10px 0 0;
    cursor: pointer;
