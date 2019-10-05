@@ -52,11 +52,11 @@
 <div class="uk-width-2-5">
    <div :class="{vishide: mnm._isLocal}"
         class="uk-clearfix">
-      <span style="padding-left:0.5em; display:inline-block">
+      <div style="float:left; max-width:calc(100% - 1em - 182px); overflow-x:hidden; white-space: pre">
+         <span :class="{vishide: msgSubjects.length <= 1}"
+               class="dropdown-icon">&nbsp;&#x25BD;</span>
          <span class="uk-text-large" style="font-style:oblique">{{ msgTitle }}</span>
-         <span v-show="msgSubjects.length > 1"
-               class="dropdown-icon">&nbsp;&#x25BD;&nbsp;</span>
-      </span>
+      </div>
       <div v-if="msgSubjects.length > 1"
            uk-dropdown="mode:click; offset:2"
            class="menu-bg dropdown-scroll">
