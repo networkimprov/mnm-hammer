@@ -193,7 +193,7 @@
    "Result": {
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
-             {"Id":"*mid", "Unread":true, "Subject":"reply ohi",
+             {"Id":"*mid", "Unread":true, "Subject":"reply ohi", "SubjectWas":"ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
    "Name": "test.a"
 },{
@@ -353,7 +353,7 @@
 },{
    "Updt": {"Op":"tab_add", "Tab":{"Type":1, "Term":"-- -+ohi +"}},
    "Result": {
-      "tl": [{"Id":"*mid", "Unread":true, "Subject":"reply ohi",
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"reply ohi", "SubjectWas":"ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"good"}], "Type":0},
@@ -592,7 +592,7 @@
               "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
       "tl": [{"Id":"*midt", "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":""},
-             {"Id":"*mid", "Unread":true, "Subject":"reply ohi",
+             {"Id":"*mid", "Unread":true, "Subject":"reply ohi", "SubjectWas":"ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] ,
       "cs": {"Thread":"*midt",
@@ -613,7 +613,7 @@
    "Result": {
       "tl": [{"Id":"*mid", "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
-             {"Id":"*mid", "Unread":true, "Subject":"reply ohi",
+             {"Id":"*mid", "Unread":true, "Subject":"reply ohi", "SubjectWas":"ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Gold"}},

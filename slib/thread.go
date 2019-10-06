@@ -1340,6 +1340,7 @@ func _revCc(iCc []tCcEl, iHead *Header) {
 
 func _updateSearchDoc(iSvc string, iTid string, iFd *os.File, iI tIndexer) {
    aSelf := GetConfigService(iSvc).Alias
+   aLastSubjectN, aHasDraft := -1, false
    var aIdx []tIndexEl
    _readIndex(iFd, &aIdx, nil)
    aDoc := &tSearchDoc{id: iTid, OrigDate: aIdx[0].Date, OrigAuthor: aIdx[0].Alias}
@@ -1350,6 +1351,10 @@ func _updateSearchDoc(iSvc string, iTid string, iFd *os.File, iI tIndexer) {
       if aIdx[a].Subject != "" || a == 0 {
          aDoc.Subject.addUnique(aIdx[a].Subject)
       }
+      if aIdx[a].From == "" || !aHasDraft {
+         aLastSubjectN = a
+         aHasDraft = aIdx[a].From == ""
+      }
       for a1 := range aIdx[a].Tags {
          aDoc.Tag.addUnique(aIdx[a].Tags[a1])
       }
@@ -1357,6 +1362,12 @@ func _updateSearchDoc(iSvc string, iTid string, iFd *os.File, iI tIndexer) {
          aDoc.LastDate, aDoc.LastAuthor = aIdx[a].Date, aIdx[a].Alias
       }
       aDoc.Unread = aDoc.Unread || aIdx[a].Seen == ""
+   }
+   aSubj := aIdx[aLastSubjectN].Subject; if aSubj == "" { aSubj = aIdx[0].Subject }
+   for a := range aDoc.Subject {
+      if aDoc.Subject[a] != aSubj { continue }
+      aDoc.LastSubjectN = a
+      break
    }
    aDoc.bodyStream = _newThreadStream(iSvc, aIdx, iFd)
    indexThreadSearch(iSvc, aDoc, iI)

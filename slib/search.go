@@ -25,11 +25,12 @@ import (
    pBsearch   "github.com/blevesearch/bleve/search"
 )
 
-var sSearchIndexRev = []byte("0.6b")
+var sSearchIndexRev = []byte("0.6")
 
 type tSearchEl struct {
    Id string
    Subject string
+   SubjectWas string `json:",omitempty"`
    OrigDate, LastDate string
    OrigAuthor, LastAuthor string
    Unread bool `json:",omitempty"`
@@ -42,6 +43,7 @@ type tSearchDoc struct {
    Tag tStrings
    OrigAuthor, LastAuthor string
    OrigDate, LastDate string
+   LastSubjectN int // ref to Subject item
    Unread bool
    Body string
    bodyStream io.Reader
@@ -118,13 +120,17 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       aSubject := _i2slice(aHit.Fields["Subject"])
       //aAuthor  := _i2slice(aHit.Fields["Author"])
       //aTag     := _i2slice(aHit.Fields["Tag"])
+      aLastSubjectN := int(aHit.Fields["LastSubjectN"].(float64))
       aList = append(aList, tSearchEl{Id:         aHit.ID,
-                                      Subject:    aSubject[len(aSubject)-1].(string),
+                                      Subject:    aSubject[aLastSubjectN].(string),
                                       OrigDate:   aHit.Fields["OrigDate"].(string),
                                       LastDate:   aHit.Fields["LastDate"].(string),
                                       OrigAuthor: aHit.Fields["OrigAuthor"].(string),
                                       LastAuthor: aHit.Fields["LastAuthor"].(string),
                                       Unread:     aHit.Fields["Unread"].(bool)})
+      if aLastSubjectN != 0 {
+         aList[len(aList)-1].SubjectWas = aSubject[0].(string)
+      }
    }
    sort.Slice(aList, func(cA, cB int) bool { return aList[cA].LastDate > aList[cB].LastDate })
    err = json.NewEncoder(iW).Encode(aList)
@@ -281,6 +287,8 @@ func openIndexSearch(iSvc string) pBleve.Index {
    aKtext := pBleve.NewTextFieldMapping()
    aKtext.Analyzer = pBkeyword.Name
    aKtext.Store = false
+   aNnumr := pBleve.NewNumericFieldMapping()
+   aNnumr.Index = false
    aFbool := pBleve.NewBooleanFieldMapping()
 
    aThread := pBleve.NewDocumentMapping()
@@ -291,6 +299,7 @@ func openIndexSearch(iSvc string) pBleve.Index {
    aThread.AddFieldMappingsAt("LastDate", aNtext)
    aThread.AddFieldMappingsAt("OrigAuthor", aNtext)
    aThread.AddFieldMappingsAt("LastAuthor", aNtext)
+   aThread.AddFieldMappingsAt("LastSubjectN", aNnumr)
    aThread.AddFieldMappingsAt("Unread", aFbool)
    aThread.AddFieldMappingsAt("Body", aBtext)
    aIm.AddDocumentMapping("thread", aThread)
