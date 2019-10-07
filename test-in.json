@@ -175,6 +175,8 @@
 },{
    "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Blue"}},
    "Result": {
+      "tl": [{"Id":"*mid", "Subject":"ohi",
+             "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
@@ -186,6 +188,7 @@
 },{
    "Updt": {"Op":"thread_discard", "Thread":{"Id":"last"}},
    "Result": {
+      "tl": "thread_save.c" ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
       "al": "thread_save.c" }
 },{
@@ -562,6 +565,8 @@
                  "Attach": [{"Name":"form_fill/Blue.original", "FfKey":"lastfile"}],
                  "FormFill":{"lastfile":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
    "Result": {
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"reply ohi", "SubjectWas":"ohi",
+              "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"reply ohi", "Seen":".", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
@@ -614,10 +619,12 @@
       "tl": [{"Id":"*mid", "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
              {"Id":"*mid", "Unread":true, "Subject":"reply ohi", "SubjectWas":"ohi",
-              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] }
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
+   "Name": "test.c"
 },{
    "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Gold"}},
    "Result": {
+      "tl": "test.c" ,
       "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] ,
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",

@@ -551,7 +551,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if c.getThread() == aTid { return aResult }
             return nil
          }
-         aResult = []string{"al", "ml", "mn", iUpdt.Thread.Id}
+         aResult = []string{"tl", "al", "ml", "mn", iUpdt.Thread.Id}
       } else { // may update msg from a threadid other than iState.getThread()
          aFn = func(c *ClientState) []string {
             if c.isOpen(iUpdt.Thread.Id) { return aResult }
@@ -578,7 +578,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if c.getThread() == aTid { return aResult }
             return nil
          }
-         aResult = []string{"al", "ml"}
+         aResult = []string{"tl", "al", "ml"}
       }
    case "thread_send":
       if iUpdt.Thread.Id == "" { break }
