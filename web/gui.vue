@@ -328,7 +328,10 @@
             <div class="uk-width-1-6 overxhide"
                  :class="{'thread-unread': aRow.Unread}">{{aRow.LastAuthor}}</div>
             <div class="uk-width-expand overxhide"
-                 :title="aRow.Id">{{aRow.Subject}}</div>
+                 :title="aRow.Id">{{aRow.Subject}}<!---->
+               <i v-show="aRow.SubjectWas"
+                  >&nbsp;f. {{aRow.SubjectWas}}</i>
+            </div>
             <div class="uk-width-auto">
                <mnm-date :iso="aRow.OrigDate"/></div>
             <div class="uk-width-1-6 overxhide">{{aRow.OrigAuthor}}</div>
@@ -2224,13 +2227,17 @@
             var aT = mnm._data.cs.ThreadTabs;
             return aT ? [mnm._tabsStdThread, [], aT.Terms] : [];
          },
-         msgTitle: function() {
-            for (var a=0; a < mnm._data.ml.length; ++a) {
-               var aM = mnm._data.ml[a];
-               if (aM.From !== '')
-                  return aM.Subject || this.msgSubjects[this.msgSubjects.length-1].name;
+         msgTitle: function() { // mirrors slib/thread.go _updateSearchDoc()
+            var aLastN = -1, aHasDraft = false;
+            for (var a = mnm._data.ml.length-1; a >= 0; --a) {
+               if (mnm._data.ml[a].From === '' || !aHasDraft) {
+                  aLastN = a;
+                  aHasDraft = mnm._data.ml[a].From === '';
+               }
             }
-            return a === 1 ? this.msgSubjects[0].name : '';
+            if (aLastN === -1)
+               return null;
+            return mnm._data.ml[aLastN].Subject || this.msgSubjects[this.msgSubjects.length-1].name;
          },
          msgSubjects: function() {
             var aList = [];
