@@ -162,8 +162,8 @@
                              :class="{'message-paperclip-close': mo[aMsg.Id]._hideAtc}">
                            {{ (mo[aMsg.Id].SubHead.Attach.length < 10 ? '&numsp;' : '') +
                               mo[aMsg.Id].SubHead.Attach.length }}<mnm-paperclip/></div>
-                        <div v-show="mo[aMsg.Id]._hideAtc && !aMsg.Subject">
-                           &nbsp;</div>
+                        <div v-show="mo[aMsg.Id]._hideAtc && !aMsg.Subject"
+                             >&nbsp;</div>
                         <div v-for="aAtc in mo[aMsg.Id].SubHead.Attach"
                              v-show="!mo[aMsg.Id]._hideAtc"
                              class="message-attach">
@@ -195,8 +195,8 @@
                            </template>
                         </div>
                      </template>
-                     <div v-if="aMsg.Subject">
-                        Re: {{ aMsg.Subject }}</div>
+                     <div v-if="aMsg.Subject"
+                          >Re: {{aMsg.Subject}}</div>
                   </div>
                   <div v-if="!mo[aMsg.Id].msg_data">
                      <p><span uk-icon="comment"></span></p></div>
@@ -255,8 +255,8 @@
       <ul uk-tab class="uk-width-expand"><li style="display:none"></li>
          <li v-for="(aTerm, aI) in mnm._tabsStdService"
              :class="{'uk-active': cs.SvcTabs.PosFor === 0 && cs.SvcTabs.Pos === aI}">
-            <a @click.prevent="mnm.TabSelect({type:cs.SvcTabs.Type, posfor:0, pos:aI})" href="#">
-               {{ aTerm.Label || aTerm.Term }}</a>
+            <a @click.prevent="mnm.TabSelect({type:cs.SvcTabs.Type, posfor:0, pos:aI})"
+               href="#">{{aTerm.Label || aTerm.Term}}</a>
          </li></ul>
       <span>
          <span title="Search by tag"
@@ -284,8 +284,8 @@
             <tr>
                <th v-for="(a, aKey) in ffnCol"
                    v-if="aKey.charAt(0) !== '$' || aKey === '$msgid'"
-                   style="position:sticky; top:0">
-                  {{ aKey === '$msgid' ? 'source' : aKey }}</th>
+                   style="position:sticky; top:0"
+                   >{{aKey === '$msgid' ? 'source' : aKey}}</th>
             </tr>
             <tr v-for="aRow in tl">
                <td v-for="(a, aKey) in ffnCol"
@@ -303,8 +303,8 @@
                         <td v-for="aSubRow in aRow[aKey]"
                             style="padding:0 0.5em">{{aSubRow}}</td>
                      </tr></table>
-                  <template v-else>
-                     {{aRow[aKey]}}</template>
+                  <template v-else
+                            >{{aRow[aKey]}}</template>
                </td>
             </tr>
          </table></template>
@@ -358,8 +358,8 @@
             <div v-show="of.length === 0"
                  class="uk-text-warning">no o/</div>
             <ul class="uk-list uk-text-success" style="margin:0">
-               <li v-for="aUser in of" :key="aUser.Uid">
-                  {{aUser.Alias}}</li>
+               <li v-for="aUser in of" :key="aUser.Uid"
+                   >{{aUser.Alias}}</li>
             </ul>
          </template>
       </div></div>
@@ -426,8 +426,7 @@
       </div>
       <template v-if="mnm._isLocal">
          <div v-show="count < 4"
-              class="tour-heading">
-            How mnm works</div>
+              class="tour-heading">How mnm works</div>
          <div v-show="count === 0"
               class="tour-slide">
             <div><img src="/w/img/tour-orgs.png"></div>
@@ -445,8 +444,7 @@
             <div><img src="/w/img/tour-invite.png"></div>
             You invite a member to connect before exchanging messages.</div>
          <div v-show="count === 4"
-              class="tour-heading">
-            Get Started</div>
+              class="tour-heading">Get Started</div>
          <div v-show="count === 4"
               class="tour-slide">
             <div class="tour-inset">
@@ -468,8 +466,8 @@
             <b>3.</b> Click the account to open it (and continue the tour).<br>
             <div class="service-panel uk-light"
                  style="width:20%; margin-top:0.5em; padding:1em; overflow:hidden">
-               <span v-if="mnm._data.v.length === 0">
-                  awaiting link. . .</span>
+               <span v-if="mnm._data.v.length === 0"
+                     >awaiting link. . .</span>
                <div v-else>
                   <span uk-icon="bell" class="dropdown-icon">{{mnm._data.v[0].NoticeN || '&numsp;'}}</span>
                   <a :href="'/'+ encodeURIComponent(mnm._data.v[0].Name) +'#tour'"
@@ -480,8 +478,7 @@
          </div>
       </template>
       <template v-else>
-         <div class="tour-heading">
-            Basic Usage</div>
+         <div class="tour-heading">Basic Usage</div>
          <div v-show="count === 0"
               class="tour-slide">
             <div class="tour-inset">
@@ -1062,8 +1059,8 @@
          <div v-show="attach"
               style="float:left; margin-right:0.6em">
             {{attach && attach.length}}<mnm-paperclip/></div>
-         <span v-show="subject">
-            Re: {{subject}}</span>
+         <span v-show="subject"
+               >Re: {{subject}}</span>
          &nbsp;
       </div>
       <div v-show="!msg.msg_data">
@@ -1520,8 +1517,8 @@
            :class="{'message-edit':toggle}"
            style="position:absolute" :style="{top:editTop, right:editRight}"
            @click.stop>
-         <div class="uk-text-right uk-text-small dropdown-scroll-item">
-            {{(setName+'.'+fileId).toUpperCase()}}</div>
+         <div class="uk-text-right uk-text-small dropdown-scroll-item"
+              >{{(setName +'.'+ fileId).toUpperCase()}}</div>
          <div v-show="!mnm._data.fo"
               class="uk-text-center dropdown-scroll-list message-bg" style="padding:0.5em">
             <span uk-icon="future"></span></div>
@@ -1717,8 +1714,8 @@
             <div style="margin-left:1em">
                <div style="float:right"><mnm-date :iso="aNote.Date" ymd="md" hms="hm"/></div>
                {{aNote.Alias}}
-               <template v-if="aNote.Gid">
-                   - {{aNote.Gid}}</template>
+               <template v-if="aNote.Gid"
+                         >- {{aNote.Gid}}</template>
                <span v-show="aNote.Blurb && !aNote.open">. . .</span>
                <div v-show="aNote.open">{{aNote.Blurb}}</div>
             </div>
