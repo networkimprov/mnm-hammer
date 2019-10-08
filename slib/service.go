@@ -55,7 +55,7 @@ func initServices(iFn func(string)) {
          if err != nil { quit(err) }
          continue
       }
-      _makeTree(aSvc)
+      //_makeTree(aSvc) // for development, update tree
       aService := _newService(nil, nil)
       aSvcFiles := [...]struct { name string; cache interface{}; reqd bool }{
          {fileCfg  (aSvc), &aService.config, true },
@@ -691,8 +691,7 @@ func WipeDataService(iSvc string) error {
    if err != nil { return err }
    err = os.RemoveAll(dirSvc(iSvc))
    if err != nil { return err }
-   err = os.Mkdir(dirSvc(iSvc), 0700)
-   if err != nil { return err }
+   _makeTree(iSvc)
    err = os.Rename(aCfgTmp, fileCfg(iSvc))
    return err
 }
