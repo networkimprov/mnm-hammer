@@ -73,13 +73,14 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    aTabType, aTabVal := iState.getSvcTab()
    if aTabType == ePosForDefault && aTabVal == "FFT" {
       var aDir []os.FileInfo
-      aDir, err = ioutil.ReadDir(dirForm(iSvc))
+      aDir, err = readDirFis(dirForm(iSvc))
       if err != nil { quit(err) }
       aList := make([]tSearchEl, 0, len(aDir))
       for _, aFi := range aDir {
          aList = append(aList, tSearchEl{LastDate: aFi.ModTime().UTC().Format(time.RFC3339),
                                          Id: strings.Replace(aFi.Name(), "@", "/", -1)})
       }
+      sort.Slice(aList, func(cA, cB int)bool { return aList[cA].Id < aList[cB].Id })
       err = json.NewEncoder(iW).Encode(aList)
       return err
    }

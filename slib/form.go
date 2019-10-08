@@ -11,7 +11,6 @@ import (
    "bytes"
    "fmt"
    "io"
-   "io/ioutil"
    "encoding/json"
    "os"
    "sort"
@@ -38,7 +37,7 @@ type tBlankFormRev struct { Id string; Date string }
 
 func initForms() {
    var err error
-   aDir, err := ioutil.ReadDir(kFormDir)
+   aDir, err := readDirFis(kFormDir)
    if err != nil { quit(err) }
    sort.Slice(aDir, func (cA, cB int) bool { return aDir[cA].ModTime().Before(aDir[cB].ModTime()) })
 

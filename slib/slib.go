@@ -325,14 +325,6 @@ func (o *tCrcWriter) Write(i []byte) (int, error) {
    return len(i), nil
 }
 
-func readDirNames(iPath string) ([]string, error) {
-   aFd, err := os.Open(iPath)
-   if err != nil { return nil, err }
-   aList, err := aFd.Readdirnames(0)
-   aFd.Close()
-   return aList, err
-}
-
 func storeFile(iPath string, iData interface{}) error {
    aTemp := iPath + ".tmp"
    defer os.Remove(aTemp)

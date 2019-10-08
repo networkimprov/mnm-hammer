@@ -10,9 +10,9 @@ package slib
 import (
    "fmt"
    "io"
-   "io/ioutil"
    "encoding/json"
    "os"
+   "sort"
    "strings"
    "time"
    "net/url"
@@ -35,7 +35,7 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
    if aId == "" {
       return []tAttachEl{}
    }
-   aDir, err := ioutil.ReadDir(dirAttach(iSvc) + aId)
+   aDir, err := readDirFis(dirAttach(iSvc) + aId)
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
       return []tAttachEl{}
@@ -59,6 +59,7 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
          aSend[a].MsgId = aPair[0]
       }
    }
+   sort.Slice(aSend, func(cA, cB int)bool { return aSend[cA].File < aSend[cB].File })
    return aSend
 }
 

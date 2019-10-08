@@ -9,8 +9,8 @@ package slib
 
 import (
    "io"
-   "io/ioutil"
    "os"
+   "sort"
    "time"
    "net/url"
 )
@@ -34,7 +34,7 @@ type tUploadEl struct {
 }
 
 func (tGlobalUpload) GetIdx() interface{} {
-   aDir, err := ioutil.ReadDir(kUploadDir)
+   aDir, err := readDirFis(kUploadDir)
    if err != nil { quit(err) }
    aList := make([]tUploadEl, 0, len(aDir)-1) // omit temp/
    for _, aFi := range aDir {
@@ -45,6 +45,7 @@ func (tGlobalUpload) GetIdx() interface{} {
       aList = append(aList, tUploadEl{Name:aFile, Size:aFi.Size(),
                                       Date:aFi.ModTime().UTC().Format(time.RFC3339)})
    }
+   sort.Slice(aList, func(cA, cB int)bool { return aList[cA].Name < aList[cB].Name })
    return aList
 }
 
