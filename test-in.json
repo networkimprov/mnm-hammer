@@ -87,7 +87,8 @@
       "al": [] ,
       "cs": {"Thread":"none", "History":{"Prev":false, "Next":false},
              "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
-             "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
+             "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} },
+   "Name": "thread_discard.a"
 },{
    "Updt": {"Op":"ping_save", "Ping":{"Alias":"Blue", "To":"Gold"}},
    "Result": {
@@ -171,7 +172,8 @@
 },{
    "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["ml"]}} ,
    "Result": {
-      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] }
+      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] },
+   "Name": "poll_ack.a"
 },{
    "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Blue"}},
    "Result": {
@@ -198,14 +200,14 @@
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
              {"Id":"*mid", "Unread":true, "Subject":"reply ohi", "SubjectWas":"ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
-   "Name": "test.a"
+   "Name": "poll_delivery.a"
 },{
    "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["ml"], "ThreadId":"last"}},
    "Result": {
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
               "Queued":false}] },
-   "Name": "test.b"
+   "Name": "poll_confirm.a"
 },{
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
@@ -215,7 +217,7 @@
                                    {"Name":"r:Blue.original", "Size":33,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}] },
               "msg_data":"" }] ,
-      "ml": "test.b" ,
+      "ml": "poll_confirm.a" ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
              "History":{"Prev":true, "Next":false},
@@ -230,11 +232,12 @@
 },{
    "Updt": {"Op":"thread_open", "Touch":{"Act":115, "ThreadId":"last", "MsgId":"last"}},
    "Result": {
-      "tl": "test.a" ,
+      "tl": "poll_delivery.a" ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"*d",
               "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
-              "Queued":false}] }
+              "Queued":false}] },
+   "Name": "thread_open.a"
 },{
    "Updt": {"Op":"thread_tag", "Touch":{"MsgId":"last", "Act":116, "TagId":"Todo"}},
    "Result": {
@@ -388,7 +391,7 @@
 },{
    "Updt": {"Op":"tab_select", "Tab":{"Type":1, "PosFor":0, "Pos":1}},
    "Result": {
-      "tl": "test.a" ,
+      "tl": "poll_delivery.a" ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"good"}], "Type":0},
              "History":{"Prev":false, "Next":true},
@@ -398,7 +401,7 @@
 },{
    "Updt": {"Op":"tab_select", "Tab":{"Type":1, "PosFor":0, "Pos":0}},
    "Result": {
-      "tl": "test.a" ,
+      "tl": "poll_delivery.a" ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"good"}], "Type":0},
              "History":{"Prev":false, "Next":true},
@@ -451,7 +454,7 @@
       "cl": "navigate_history.a" ,
       "al": "navigate_history.a" ,
       "mo": "navigate_history.a" ,
-      "tl": "test.a" ,
+      "tl": "poll_delivery.a" ,
       "cs": "sort_select.a" }
 },{
    "Updt": {"Op":"config_update", "Config":{"HistoryLen":88, "LoginPeriod":99}},
@@ -495,8 +498,7 @@
 "Files": [{
    "Name":"Gold/File.txt", "Data":"abcdefghijklmnopqrstuvwxyz"
 }],
-"Orders":
-[{
+"Orders": [{
    "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["pf", "nl"]}},
    "Result": {
       "pf":[{"Type":4, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td", "Uid":"*uid", "MsgId":"*mid"}] ,
@@ -533,7 +535,8 @@
    "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
    "Result": {
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"ohi",
-              "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] }
+              "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
+   "Name": "poll_delivery.b"
 },{
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
@@ -620,11 +623,11 @@
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
              {"Id":"*mid", "Unread":true, "Subject":"reply ohi", "SubjectWas":"ohi",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
-   "Name": "test.c"
+   "Name": "poll_ack.b"
 },{
    "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Gold"}},
    "Result": {
-      "tl": "test.c" ,
+      "tl": "poll_ack.b" ,
       "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] ,
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
@@ -657,7 +660,8 @@
              [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false},
               {"Who":"Blue#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
-               "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":true}] ] }
+               "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":true}] ] },
+   "Name": "forward_send.a"
 }]
 
 }]

@@ -15,17 +15,17 @@ fi
 
 host="$1"
 
-# Orders-index Order-count transaction-name
+# SvcId Orders[n].Name Orders-count transaction-name
 list=(
-   'Blue  0 1 store-draft-thread'
-   'Blue  2 1 delete-draft-thread'
-   'Blue 10 1 store-sent-thread'
-   'Blue 13 2 store-fwd-received-thread'
-   'Blue 13 2 store-fwd-notify-thread'
-   'Blue 13 2 store-confirm-thread'
-   'Blue 16 1 touch-thread'
-   'Gold  8 1 store-received-thread'
-   'Gold 19 1 store-fwd-sent-thread'
+   'Blue thread_save.a    1 store-draft-thread'
+   'Blue thread_discard.a 1 delete-draft-thread'
+   'Blue poll_ack.a       1 store-sent-thread'
+   'Blue poll_delivery.a  2 store-fwd-received-thread'
+   'Blue poll_delivery.a  2 store-fwd-notify-thread'
+   'Blue poll_delivery.a  2 store-confirm-thread'
+   'Blue thread_open.a    1 touch-thread'
+   'Gold poll_delivery.b  1 store-received-thread'
+   'Gold forward_send.a   1 store-fwd-sent-thread'
 )
 
 if [ $# -eq 2 ]; then

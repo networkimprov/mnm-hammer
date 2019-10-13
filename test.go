@@ -91,9 +91,9 @@ func init() {
    flag.StringVar(&sTestHost, "test", sTestHost,
                   "run test sequence using named service host:port")
    flag.StringVar(&sTestCrash, "crash", sTestCrash,
-                  "exit transaction at dir:service:orderIdx:op, or setup & print dir with 'init'")
+                  "exit transaction at dir:service:order:op, or setup & print dir with 'init'")
    flag.StringVar(&sTestVerify, "verify", sTestVerify,
-                  "resume after crash and check result for dir:service:orderIdx:count")
+                  "resume after crash and check result for dir:service:order:count")
 }
 
 func crashTest(iSvc string, iOp string) {
@@ -301,24 +301,25 @@ func _setupTestDir(iDir string, iClients []tTestClient) bool {
 }
 
 func _setupTestCrash(iClients []tTestClient) (_ string, err error) {
+   const ( eDir = iota; eSvc; eOrder; eOp )
    aArg := []string{"","","",""}
    copy(aArg, strings.Split(sTestCrash, ":"))
-   if !strings.HasPrefix(aArg[0], "test-run/") {
+   if !strings.HasPrefix(aArg[eDir], "test-run/") {
       return "", tError("invalid dir")
    }
-   if aArg[3] == "" {
+   if aArg[eOp] == "" {
       return "", tError("missing op")
    }
-   sTestOrderCrash, err = strconv.ParseUint(aArg[2], 10, 64)
+   _, sTestOrderCrash, err = _findOrder(iClients, aArg[eSvc], aArg[eOrder])
    if err != nil { return }
-   sTestNow, err = time.Parse(kTestDateF, aArg[0][9:]) // omit "test-run/"
+   sTestNow, err = time.Parse(kTestDateF, aArg[eDir][9:]) // omit "test-run/"
    if err != nil { return }
    sTestNow = sTestNow.AddDate(time.Now().Year(), 0, 0)
    sTestDate = sTestNow.Format(" "+kTestDateF)
-   sTestCrashSvc = aArg[1]
-   sTestCrashOp = aArg[3]
+   sTestCrashSvc = aArg[eSvc]
+   sTestCrashOp = aArg[eOp]
 
-   err = os.Chdir(aArg[0])
+   err = os.Chdir(aArg[eDir])
    if err != nil { return }
    err = os.RemoveAll("store/state")
    if err != nil { return }
@@ -328,40 +329,34 @@ func _setupTestCrash(iClients []tTestClient) (_ string, err error) {
       if err != nil { return }
    }
    pSl.Init(startService, crashTest)
-   if sServices[aArg[1]].queue == nil {
+   if sServices[aArg[eSvc]].queue == nil {
       return "", tError("invalid service")
    }
-   return aArg[0], nil
+   return aArg[eDir], nil
 }
 
 func _setupTestVerify(iClients []tTestClient) (_ string, err error) {
+   const ( eDir = iota; eSvc; eOrder; eCount )
    aArg := []string{"","","",""}
    copy(aArg, strings.Split(sTestVerify, ":"))
-   if !strings.HasPrefix(aArg[0], "test-run/") {
+   if !strings.HasPrefix(aArg[eDir], "test-run/") {
       return "", tError("invalid dir")
    }
-   sTestOrderCrash, err = strconv.ParseUint(aArg[2], 10, 64)
+   aTc, sTestOrderCrash, err := _findOrder(iClients, aArg[eSvc], aArg[eOrder])
    if err != nil { return }
-   sTestOrderN, err = strconv.ParseUint(aArg[3], 10, 64)
+   sTestOrderN, err = strconv.ParseUint(aArg[eCount], 10, 64)
    if err != nil { return }
-   sTestNow, err = time.Parse(kTestDateF, aArg[0][9:]) // omit "test-run/"
+   sTestNow, err = time.Parse(kTestDateF, aArg[eDir][9:]) // omit "test-run/"
    if err != nil { return }
    sTestNow = sTestNow.AddDate(time.Now().Year(), 0, 0)
    sTestDate = sTestNow.Format(" "+kTestDateF)
-   sTestCrashSvc = aArg[1]
+   sTestCrashSvc = aArg[eSvc]
 
-   err = os.Chdir(aArg[0])
+   err = os.Chdir(aArg[eDir])
    if err != nil { return }
    pSl.Init(startService, crashTest)
-   if sServices[aArg[1]].queue == nil {
+   if sServices[aArg[eSvc]].queue == nil {
       return "", tError("invalid service")
-   }
-   var aTc *tTestClient
-   for a := range iClients {
-      if iClients[a].SvcId == aArg[1] {
-         aTc = &iClients[a]
-         break
-      }
    }
    if sTestOrderN == 0 || sTestOrderCrash+sTestOrderN > uint64(len(aTc.Orders)) {
       return "", tError("invalid order range")
@@ -381,7 +376,18 @@ func _setupTestVerify(iClients []tTestClient) (_ string, err error) {
       }
       aTc.Orders[a].Updt.Test.Poll = 0
    }
-   return aArg[0], nil
+   return aArg[eDir], nil
+}
+
+func _findOrder(iClients []tTestClient, iSvc string, iOrder string) (*tTestClient, uint64, error) {
+   for a := range iClients {
+      if iClients[a].SvcId != iSvc { continue }
+      for a1 := range iClients[a].Orders {
+         if iClients[a].Orders[a1].Name != iOrder { continue }
+         return &iClients[a], uint64(a1), nil
+      }
+   }
+   return nil, 1e6, tError("order not found")
 }
 
 func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
