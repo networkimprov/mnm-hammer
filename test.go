@@ -72,7 +72,6 @@ type tTestClient struct {
       Result map[string]interface{}
       Name string
    }
-   resultLib map[string]map[string]interface{} // keys order_name, result_op
 }
 
 type tTestContext struct {
@@ -126,10 +125,14 @@ func test() int {
    var aClients []tTestClient
 
    aFd, err := os.Open("test-in.json")
-   if err != nil { quit(err) }
-   defer aFd.Close()
-   err = json.NewDecoder(aFd).Decode(&aClients)
-   if err != nil { quit(err) }
+   if err == nil {
+      defer aFd.Close()
+      err = json.NewDecoder(aFd).Decode(&aClients)
+   }
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "%v\n", err)
+      return 33
+   }
 
    aAbout := getAbout()
    for a := range aClients {
@@ -137,6 +140,23 @@ func test() int {
          fmt.Fprintf(os.Stderr, "test-in expects v%s, app is v%s\n", aClients[a].Version, aAbout.Version)
          return 33
       }
+      aResultLib := make(map[string]map[string]interface{})
+      for a1 := range aClients[a].Orders {
+         aOrder := &aClients[a].Orders[a1]
+         for aK, aV := range aOrder.Result {
+            if aPrior, _ := aV.(string); aPrior != "" {
+               aOrder.Result[aK] = aResultLib[aPrior][aK]
+            }
+         }
+         if aOrder.Name != "" {
+            if aResultLib[aOrder.Name] != nil {
+               fmt.Fprintf(os.Stderr, "order name %s appears more than once\n", aOrder.Name)
+               return 33
+            }
+            aResultLib[aOrder.Name] = aOrder.Result
+         }
+      }
+      aResultLib = nil
    }
 
    if sTestVerify != "" {
@@ -380,7 +400,6 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    for a := range sTestState {
       if sTestState[a].name == iTc.Name { aCtx.state = sTestState[a].state }
    }
-   iTc.resultLib = make(map[string]map[string]interface{})
 
    for a := range iTc.Orders {
       aUpdt := &iTc.Orders[a].Updt
@@ -409,22 +428,12 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          }
       }
       aOps = append(aOps, aToAll...)
-      if iTc.Orders[a].Result == nil {
-         iTc.Orders[a].Result = make(map[string]interface{})
-      }
       for aK, aV := range iTc.Orders[a].Result {
-         if aPrior, _ := aV.(string); aPrior != "" {
-            aV = iTc.resultLib[aPrior][aK]
-            iTc.Orders[a].Result[aK] = aV
-         }
          a1 := 0
          for ; a1 < len(aOps) && aOps[a1] != aK; a1++ {}
          if a1 == len(aOps) {
             fmt.Fprintf(os.Stderr, "%s missing result\n  expect %s %v\n", aPrefix, aK, aV)
          }
-      }
-      if iTc.Orders[a].Name != "" {
-         iTc.resultLib[iTc.Orders[a].Name] = iTc.Orders[a].Result
       }
       var aSum *int32 = nil; if aUpdt.Test != nil && aUpdt.Test.Poll > 0 { aSum = new(int32) }
       for aTryN := 1; true; aTryN++ {
