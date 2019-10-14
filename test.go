@@ -442,7 +442,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          }
       }
       var aSum *int32 = nil; if aUpdt.Test != nil && aUpdt.Test.Poll > 0 { aSum = new(int32) }
-      for aTryN := 1; true; aTryN++ {
+      for aTryN := 4; true; aTryN-- {
          for a1 := 0; a1 < len(aOps); a1++ {
             aOp, aId := aOps[a1], ""
             if aOp == "_n" {
@@ -458,7 +458,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
             go _runTestService(&aCtx, aOp, aId, iTc.Orders[a].Result[aOp], aPrefix, aSum, aTryN)
          }
          aCtx.wg.Wait()
-         if aTryN == 5 || aSum == nil || *aSum == int32(len(aOps)) {
+         if aSum == nil || *aSum == int32(len(aOps)) || aTryN == 0 {
             if iTc.SvcId == sTestCrashSvc {
                atomic.StoreUint32(&sTestOrderPolling, 0)
             }
@@ -687,7 +687,7 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
 
    aName, aMis = _hasExpected(iOp, iExpect, aResult)
    if aName != "" {
-      if iSum == nil || iTryN % 2 == 0 {
+      if iSum == nil || iTryN == 0 {
          aWhat := "mismatch"; if iSum != nil { aWhat = "polling" }
          fmt.Fprintf(os.Stderr, "%s %s\n  expect %v\n  got    %s %v\n",
                                 iPrefix, aWhat, iExpect, aName, aMis)
