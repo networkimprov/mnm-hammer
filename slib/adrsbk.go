@@ -299,6 +299,10 @@ func storeSelfAdrsbk(iSvc string, iAlias string, iUid string) {
    _storeAdrsbk(iSvc, []tAdrsbkEl{aEl})
 }
 
+func patchSelfAdrsbk(iSvc string, iAlias string, iUid string) { // for WipeDataService()
+   _storeAdrsbk(iSvc, []tAdrsbkEl{{Type:eAbSelf, Date:dateRFC3339(), MyAlias:iAlias, Uid:iUid}})
+}
+
 func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    var err error
    aSvc := _loadAdrsbk(iSvc)

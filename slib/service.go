@@ -20,6 +20,7 @@ import (
 )
 
 const kServiceNameMin = 2
+const kServiceHistoryMax = 128
 
 type tGlobalService struct{}
 var Service tGlobalService
@@ -135,7 +136,7 @@ func (tGlobalService) GetPath(string) string {
 
 func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    var err error
-   aCfg := tSvcConfig{HistoryLen:128}
+   aCfg := tSvcConfig{HistoryLen:kServiceHistoryMax}
    err = json.NewDecoder(iR).Decode(&aCfg)
    if err != nil { return err } // todo only network errors
 
@@ -686,12 +687,19 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
 // only for testing
 func WipeDataService(iSvc string) error {
    aCfgTmp := kStorageDir +"svc-"+ url.QueryEscape(iSvc) +"-config"
-   var err error
-   err = os.Rename(fileCfg(iSvc), aCfgTmp)
+   err := os.Rename(fileCfg(iSvc), aCfgTmp)
    if err != nil { return err }
    err = os.RemoveAll(dirSvc(iSvc))
-   if err != nil { return err }
+   if err != nil { quit(err) }
    _makeTree(iSvc)
    err = os.Rename(aCfgTmp, fileCfg(iSvc))
-   return err
+   if err != nil { quit(err) }
+   var aCfg tSvcConfig
+   err = readJsonFile(&aCfg, fileCfg(iSvc))
+   if err != nil { quit(err) }
+   aCfg.HistoryLen = kServiceHistoryMax
+   err = storeFile(fileCfg(iSvc), &aCfg)
+   if err != nil { quit(err) }
+   patchSelfAdrsbk(iSvc, aCfg.Alias, aCfg.Uid)
+   return nil
 }
