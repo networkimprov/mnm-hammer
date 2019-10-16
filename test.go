@@ -25,16 +25,14 @@ import (
 const kTestDateF = "0102150405"
 var sTestBase32 = base32.NewEncoding("%+123456789BCDFGHJKLMNPQRSTVWXYZ")
 
-var sTestHost = "" // used by main.go
-var sTestCrash = ""
-var sTestVerify = ""
-var sTestCrashOp = ""
-var sTestCrashSvc = ""
-var sTestOrderCrash uint64
-var sTestOrderN uint64
+// inputs, set via command line flags
+var sTestHost string // used by main.go
+var sTestCrash, sTestVerify string
+var sTestCrashOp string
+var sTestCrashSrc, sTestCrashDst string
+var sTestOrderSrc, sTestOrderDst uint64
 
-var sTestOrderLast uint64    // atomic
-var sTestOrderPolling uint32 // atomic
+var sTestOrderN = map[string]*uint64{} // key SvcId, value atomic
 var sTestState []tTestStateEl // used by main.go
 var sTestNow = time.Now().Truncate(time.Second)
 var sTestDate = sTestNow.Format(" "+kTestDateF)
@@ -91,28 +89,19 @@ func init() {
    flag.StringVar(&sTestHost, "test", sTestHost,
                   "run test sequence using named service host:port")
    flag.StringVar(&sTestCrash, "crash", sTestCrash,
-                  "exit transaction at dir:service:order:op, or setup & print dir with 'init'")
+                  "exit transaction at dir:service:order:op[:sender:order], or setup dir with 'init'")
    flag.StringVar(&sTestVerify, "verify", sTestVerify,
                   "resume after crash and check result for dir:service:order:count")
 }
 
 func crashTest(iSvc string, iOp string) {
-   if iSvc != sTestCrashSvc || iOp != sTestCrashOp {
+   if iSvc != sTestCrashDst || iOp != sTestCrashOp ||
+      atomic.LoadUint64(sTestOrderN[sTestCrashSrc]) < sTestOrderSrc ||
+      atomic.LoadUint64(sTestOrderN[sTestCrashDst]) > sTestOrderDst {
       //if sTestCrash != "" { fmt.Printf("crash  --  %s %s\n", iSvc, iOp) }
       return
    }
-   // when called via pSl.HandleTmtpService(), wait for _runTestClient() to reach a .Test.Poll
-   a := 0
-   for atomic.LoadUint64(&sTestOrderLast) < sTestOrderCrash &&
-       atomic.LoadUint32(&sTestOrderPolling) == 0 {
-      time.Sleep(15 * time.Millisecond)
-      a++
-   }
-   if a > 0 { fmt.Printf("crash wait %d for %s %d %s\n", a, iSvc, sTestOrderCrash, iOp) }
-   if atomic.LoadUint64(&sTestOrderLast) != sTestOrderCrash {
-      return
-   }
-   fmt.Printf("crash test %s %d %s\n", iSvc, sTestOrderCrash, iOp)
+   fmt.Printf("crash test %s %s\n", iSvc, iOp)
    err := sHttpSrvr.Close()
    if err != nil { quit(err) }
    time.Sleep(15 * time.Second)
@@ -140,6 +129,7 @@ func test() int {
          fmt.Fprintf(os.Stderr, "test-in expects v%s, app is v%s\n", aClients[a].Version, aAbout.Version)
          return 33
       }
+      sTestOrderN[aClients[a].SvcId] = new(uint64)
       aResultLib := make(map[string]map[string]interface{})
       for a1 := range aClients[a].Orders {
          aOrder := &aClients[a].Orders[a1]
@@ -170,7 +160,7 @@ func test() int {
       for a := range aClients {
          sTestState = append(sTestState, tTestStateEl{aClients[a].SvcId, aClients[a].Name,
                                                       pSl.OpenState(aClients[a].Name, aClients[a].SvcId)})
-         if aClients[a].SvcId == sTestCrashSvc {
+         if aClients[a].SvcId == sTestCrashDst {
             aTc = &aClients[a]
          }
       }
@@ -301,8 +291,8 @@ func _setupTestDir(iDir string, iClients []tTestClient) bool {
 }
 
 func _setupTestCrash(iClients []tTestClient) (_ string, err error) {
-   const ( eDir = iota; eSvc; eOrder; eOp )
-   aArg := []string{"","","",""}
+   const ( eDir = iota; eDst; eDstOrder; eOp; eSrc; eSrcOrder; eArgLen )
+   aArg := make([]string, eArgLen)
    copy(aArg, strings.Split(sTestCrash, ":"))
    if !strings.HasPrefix(aArg[eDir], "test-run/") {
       return "", tError("invalid dir")
@@ -310,13 +300,20 @@ func _setupTestCrash(iClients []tTestClient) (_ string, err error) {
    if aArg[eOp] == "" {
       return "", tError("missing op")
    }
-   _, sTestOrderCrash, err = _findOrder(iClients, aArg[eSvc], aArg[eOrder])
+   sTestCrashDst = aArg[eDst]
+   _, sTestOrderDst, err = _findOrder(iClients, aArg[eDst], aArg[eDstOrder])
    if err != nil { return }
+   sTestCrashSrc, sTestOrderSrc = sTestCrashDst, sTestOrderDst
+   // may need aArg[eCount], sTestOrderDst += aCount - 1
+   if aArg[eSrc] != "" {
+      sTestCrashSrc = aArg[eSrc]
+      _, sTestOrderSrc, err = _findOrder(iClients, aArg[eSrc], aArg[eSrcOrder])
+      if err != nil { return }
+   }
    sTestNow, err = time.Parse(kTestDateF, aArg[eDir][9:]) // omit "test-run/"
    if err != nil { return }
    sTestNow = sTestNow.AddDate(time.Now().Year(), 0, 0)
    sTestDate = sTestNow.Format(" "+kTestDateF)
-   sTestCrashSvc = aArg[eSvc]
    sTestCrashOp = aArg[eOp]
 
    err = os.Chdir(aArg[eDir])
@@ -329,28 +326,28 @@ func _setupTestCrash(iClients []tTestClient) (_ string, err error) {
       if err != nil { return }
    }
    pSl.Init(startService, crashTest)
-   if sServices[aArg[eSvc]].queue == nil {
+   if sServices[sTestCrashDst].queue == nil || sServices[sTestCrashSrc].queue == nil {
       return "", tError("invalid service")
    }
    return aArg[eDir], nil
 }
 
 func _setupTestVerify(iClients []tTestClient) (_ string, err error) {
-   const ( eDir = iota; eSvc; eOrder; eCount )
-   aArg := []string{"","","",""}
+   const ( eDir = iota; eSvc; eOrder; eCount; eArgLen )
+   aArg := make([]string, eArgLen)
    copy(aArg, strings.Split(sTestVerify, ":"))
    if !strings.HasPrefix(aArg[eDir], "test-run/") {
       return "", tError("invalid dir")
    }
-   aTc, sTestOrderCrash, err := _findOrder(iClients, aArg[eSvc], aArg[eOrder])
+   aTc, aOrderN, err := _findOrder(iClients, aArg[eSvc], aArg[eOrder])
    if err != nil { return }
-   sTestOrderN, err = strconv.ParseUint(aArg[eCount], 10, 64)
+   aOrderLen, err := strconv.ParseUint(aArg[eCount], 10, 64)
    if err != nil { return }
    sTestNow, err = time.Parse(kTestDateF, aArg[eDir][9:]) // omit "test-run/"
    if err != nil { return }
    sTestNow = sTestNow.AddDate(time.Now().Year(), 0, 0)
    sTestDate = sTestNow.Format(" "+kTestDateF)
-   sTestCrashSvc = aArg[eSvc]
+   sTestCrashDst = aArg[eSvc]
 
    err = os.Chdir(aArg[eDir])
    if err != nil { return }
@@ -358,10 +355,10 @@ func _setupTestVerify(iClients []tTestClient) (_ string, err error) {
    if sServices[aArg[eSvc]].queue == nil {
       return "", tError("invalid service")
    }
-   if sTestOrderN == 0 || sTestOrderCrash+sTestOrderN > uint64(len(aTc.Orders)) {
+   if aOrderLen == 0 || aOrderN+aOrderLen > uint64(len(aTc.Orders)) {
       return "", tError("invalid order range")
    }
-   aTc.Orders = aTc.Orders[sTestOrderCrash : sTestOrderCrash+sTestOrderN]
+   aTc.Orders = aTc.Orders[aOrderN : aOrderN+aOrderLen]
    aOrder := &aTc.Orders[0]
    if aOrder.Updt.Op != "test" {
       aOrder.Updt.Op = "test"
@@ -413,9 +410,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
       if !_prepUpdt(aUpdt, &aCtx, aPrefix) {
          continue
       }
-      if iTc.SvcId == sTestCrashSvc {
-         atomic.StoreUint64(&sTestOrderLast, uint64(a))
-      }
+      atomic.StoreUint64(sTestOrderN[iTc.SvcId], uint64(a))
       aFn, aToAll := pSl.HandleUpdtService(iTc.SvcId, aCtx.state, aUpdt)
       if aToAll != nil {
          toAllClients(aToAll)
@@ -459,13 +454,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          }
          aCtx.wg.Wait()
          if aSum == nil || *aSum == int32(len(aOps)) || aTryN == 0 {
-            if iTc.SvcId == sTestCrashSvc {
-               atomic.StoreUint32(&sTestOrderPolling, 0)
-            }
             break
-         }
-         if iTc.SvcId == sTestCrashSvc {
-            atomic.StoreUint32(&sTestOrderPolling, 1)
          }
          time.Sleep(aUpdt.Test.Poll * time.Millisecond)
          *aSum = 0

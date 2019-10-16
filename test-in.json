@@ -168,7 +168,8 @@
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {
-      "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":true}] }
+      "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":true}] },
+   "Name": "thread_send.a"
 },{
    "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["ml"]}} ,
    "Result": {

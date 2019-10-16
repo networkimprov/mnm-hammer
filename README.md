@@ -139,7 +139,7 @@ To access a previous test pass:
 
 Crash testing  
 a) `./mnm-hammer --test server:port --crash  init` # make test directory  
-b) `./mnm-hammer --test server:port --crash  dir:service:order:op` # crash here in test sequence  
+b) `./mnm-hammer --test server:port --crash  dir:service:order:op[:sender:order]` # crash here in test sequence  
 c) `./mnm-hammer --test server:port --verify dir:service:order:count` # recover and verify result
 
 `./test-crash.sh server:port [ item_index ]` # collection of crash/verify runs in single directory
