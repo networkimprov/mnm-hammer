@@ -13,7 +13,7 @@ import (
    "sync"
 )
 
-var sTagDefault = []string{"Todo"}
+var kTagDefault = []string{"Todo"}
 
 type tGlobalTag struct { // implements GlobalSet
    Map map[string]string // key Name, value Id
@@ -37,9 +37,9 @@ func initTag() {
 
 func (o *tGlobalTag) GetIdx() interface{} {
    type tTagEl struct { Id, Name string }
-   aList := make([]tTagEl, 0, len(sTagDefault) + len(o.Map))
-   for a := range sTagDefault {
-      aList = append(aList, tTagEl{Name:sTagDefault[a], Id:sTagDefault[a]})
+   aList := make([]tTagEl, 0, len(kTagDefault) + len(o.Map))
+   for a := range kTagDefault {
+      aList = append(aList, tTagEl{Name:kTagDefault[a], Id:kTagDefault[a]})
    }
    for aK, aV := range o.Map {
       aList = append(aList, tTagEl{Name:aK, Id:aV})
@@ -66,8 +66,8 @@ func (o *tGlobalTag) Drop(iId string) error {
 }
 
 func (o *tGlobalTag) getId(iName string) string {
-   for a := range sTagDefault {
-      if sTagDefault[a] == iName {
+   for a := range kTagDefault {
+      if kTagDefault[a] == iName {
          return iName
       }
    }

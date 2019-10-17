@@ -1324,7 +1324,7 @@ func _revCc(iCc []tCcEl, iHead *Header) {
       iCc[a].Date = iHead.Posted
       aBuf, err = json.Marshal(iCc[a])
       if err != nil { quit(err) }
-      iCc[a].Checksum = crc32.Checksum(aBuf, sCrc32c)
+      iCc[a].Checksum = crc32.Checksum(aBuf, kCrc32c)
    }
 }
 

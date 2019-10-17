@@ -15,9 +15,9 @@ import (
    "sync"
 )
 
-var sSortDefault = tSummarySort{Cc:"Who", Atc:"Date", Upload:"Date", Form:"Date"}
-var sSvcTabsDefault = []tTermEl{{"All",""}, {"Unread",""}, {"#Todo",""}, {"FFT",""}}
-var sThreadTabsDefault = []tTermEl{{"Open",""}, {"All",""}}
+var kSortDefault = tSummarySort{Cc:"Who", Atc:"Date", Upload:"Date", Form:"Date"}
+var kSvcTabsDefault = []tTermEl{{"All",""}, {"Unread",""}, {"#Todo",""}, {"FFT",""}}
+var kThreadTabsDefault = []tTermEl{{"Open",""}, {"All",""}}
 var kTabsStdService, kTabsStdThread string
 const kTabLabelMax = 64
 
@@ -25,10 +25,10 @@ var sStateDoor sync.Mutex
 var sStates = make(map[string]bool) // key client id
 
 func initStates() {
-   aBuf, err := json.Marshal(sSvcTabsDefault)
+   aBuf, err := json.Marshal(kSvcTabsDefault)
    if err != nil { quit(err) }
    kTabsStdService = string(aBuf)
-   aBuf, err = json.Marshal(sThreadTabsDefault)
+   aBuf, err = json.Marshal(kThreadTabsDefault)
    if err != nil { quit(err) }
    kTabsStdThread = string(aBuf)
 
@@ -172,7 +172,7 @@ func (o *ClientState) GetSummary() interface{} {
    aPinned := getTabsService(o.svc)
 
    o.RLock(); defer o.RUnlock()
-   aS := &tSummary{ Sort: sSortDefault, Thread: "none",
+   aS := &tSummary{ Sort: kSortDefault, Thread: "none",
                     SvcTabs: tSummaryTabs{Type: eTabService, tTabs: *o.SvcTabs.copy(), Pinned: &aPinned} }
    if o.UploadSort != "" { aS.Sort.Upload = o.UploadSort }
    if o.FormSort   != "" { aS.Sort.Form   = o.FormSort }
@@ -207,7 +207,7 @@ func (o *ClientState) getSvcTab() (int8, string) {
    o.RLock(); defer o.RUnlock()
    var aSet []tTermEl
    switch o.SvcTabs.PosFor {
-   case ePosForDefault: aSet = sSvcTabsDefault
+   case ePosForDefault: aSet = kSvcTabsDefault
    case ePosForPinned:  aSet = getTabsService(o.svc)
    case ePosForTerms:   aSet = o.SvcTabs.Terms
    }
@@ -219,7 +219,7 @@ func (o *ClientState) getThreadTab() (int8, string) {
    aT := o.Thread[o.History[o.Hpos]]
    var aSet []tTermEl
    switch aT.Tabs.PosFor {
-   case ePosForDefault: aSet = sThreadTabsDefault
+   case ePosForDefault: aSet = kThreadTabsDefault
    case ePosForTerms:   aSet = aT.Tabs.Terms
    }
    return aT.Tabs.PosFor, aSet[aT.Tabs.Pos].Term
@@ -373,7 +373,7 @@ func (o *ClientState) setTab(iType int8, iPosFor int8, iPos int) {
    if iPosFor < 0 || iPosFor >= ePosForEnd { quit(tError("setTab: iPosFor out of range")) }
    var aSet []tTermEl
    switch iPosFor {
-   case ePosForDefault: aSet = sSvcTabsDefault; if iType == eTabThread { aSet = sThreadTabsDefault }
+   case ePosForDefault: aSet = kSvcTabsDefault; if iType == eTabThread { aSet = kThreadTabsDefault }
    case ePosForPinned:  if iType != eTabThread { aSet = getTabsService(o.svc) }
    case ePosForTerms:   aSet = aTabs.Terms
    }

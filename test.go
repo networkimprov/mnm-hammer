@@ -23,7 +23,7 @@ import (
 )
 
 const kTestDateF = "0102150405"
-var sTestBase32 = base32.NewEncoding("%+123456789BCDFGHJKLMNPQRSTVWXYZ")
+var kTestBase32 = base32.NewEncoding("%+123456789BCDFGHJKLMNPQRSTVWXYZ")
 
 // inputs, set via command line flags
 var sTestHost string // used by main.go
@@ -759,7 +759,7 @@ func _hasExpected(iName string, iExpect, iGot interface{}) (string, interface{})
          }
          if err != nil || len(aGot) != 29 || aGot[16] != '_' { return iName, iGot }
       } else if aExpect == "*uid" {
-         aBuf, err := sTestBase32.DecodeString(aGot)
+         aBuf, err := kTestBase32.DecodeString(aGot)
          if err != nil || len(aBuf) != 20 { return iName, iGot }
       } else if aExpect != "*" {
          if aExpect != aGot { return iName, iGot }

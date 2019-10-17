@@ -487,7 +487,7 @@ func (o *tTmtpInput) Read(iOut []byte) (int, error) {
    return aLen+aLen2, err
 }
 
-var sStateOp = map[string]bool{
+var kStateOp = map[string]bool{
    "cs":true, "cl":true, "al":true, "ml":true, "tl":true, "mo":true, "mn":true, "an":true, "ad":true,
 }
 
@@ -504,7 +504,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       aSvc := getService(aSvcId)
       if aSvc.ccs == nil {
          err = tError("service not found")
-      } else if len(aQuery) >= 2 && sStateOp[aQuery[:2]] {
+      } else if len(aQuery) >= 2 && kStateOp[aQuery[:2]] {
          aCc := aSvc.ccs.Get(aCid)
          if aCc == nil {
             err = tError("no client connected to service")
@@ -657,10 +657,7 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
    }
 }
 
-var sWsInit = pWs.Upgrader {
-  ReadBufferSize:  1024,
-  WriteBufferSize: 1024,
-}
+var kWsInit = pWs.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}
 
 func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
    aSvcId := iReq.URL.Path[3:]; if aSvcId == "" { aSvcId = "local" }
@@ -681,7 +678,7 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
    } else {
       aState = pSl.OpenState(aClientId.Value, aSvcId)
    }
-   aSock, err := sWsInit.Upgrade(iResp, iReq, nil)
+   aSock, err := kWsInit.Upgrade(iResp, iReq, nil)
    if err != nil { panic(err) }
    aSvc.ccs.Set(aClientId.Value, &tWsConn{conn: aSock, state: aState})
 

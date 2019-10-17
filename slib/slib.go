@@ -82,7 +82,7 @@ func ftmpFfn   (iSvc, iTid       string) string { return dirTemp(iSvc) +"ffninde
 func ftmpAdrsbk(iSvc, iPos, iQid string) string { return dirTemp(iSvc) +"adrsbk_"+ iPos +"_"+
                                                          url.QueryEscape(iQid) }
 
-var sCrc32c = crc32.MakeTable(crc32.Castagnoli)
+var kCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
 var sCrashFn func(string, string)
 
@@ -321,7 +321,7 @@ func (o tLocalId)   lms() string { return o[1] }
 type tCrcWriter struct { sum uint32 }
 
 func (o *tCrcWriter) Write(i []byte) (int, error) {
-   o.sum = crc32.Update(o.sum, sCrc32c, i)
+   o.sum = crc32.Update(o.sum, kCrc32c, i)
    return len(i), nil
 }
 

@@ -25,7 +25,7 @@ import (
    pBsearch   "github.com/blevesearch/bleve/search"
 )
 
-var sSearchIndexRev = []byte("0.6")
+var kSearchIndexRev = []byte("0.6")
 
 type tSearchEl struct {
    Id string
@@ -66,7 +66,7 @@ type tIndexer interface {
    Index(string, interface{}) error
 }
 
-var sResultFields = []string{"*"} //todo list fields?
+var kResultFields = []string{"*"} //todo list fields?
 
 func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    var err error
@@ -113,7 +113,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    }
    aBi := getService(iSvc).index
    aSr := pBleve.NewSearchRequestOptions(aQ, 1024, 0, false)
-   aSr.Fields = sResultFields
+   aSr.Fields = kResultFields
    aSet, err := aBi.Search(aSr)
    if err != nil { quit(err) }
    aList := make([]tSearchEl, 0, len(aSet.Hits))
@@ -201,21 +201,21 @@ func _i2slice(i interface{}) []interface{} { // bleve stores string for input []
 
 type tTermSites pBsearch.TermLocationMap
 
-var sTermSitesEmpty = tTermSites{}
-var sResultFieldsMsg = []string{"Body"}
+var kTermSitesEmpty = tTermSites{}
+var kResultFieldsMsg = []string{"Body"}
 
 func messageSearch(iSvc string, iTid string, iTerm string) tTermSites {
    aBi := getService(iSvc).index
    aQ := pBleve.NewConjunctionQuery(pBleve.NewDocIDQuery([]string{iTid}),
                                     pBleve.NewMatchPhraseQuery(iTerm))
    aSr := pBleve.NewSearchRequest(aQ)
-   aSr.Fields = sResultFieldsMsg
+   aSr.Fields = kResultFieldsMsg
    aSet, err := aBi.Search(aSr)
    if err != nil { quit(err) }
    if len(aSet.Hits) > 1 {
       quit(fmt.Errorf("search result got %d hits; expected 1", len(aSet.Hits)))
    } else if len(aSet.Hits) == 0 {
-      return sTermSitesEmpty
+      return kTermSitesEmpty
    }
    return tTermSites(aSet.Hits[0].Locations["Body"])
 }
@@ -265,7 +265,7 @@ func openIndexSearch(iSvc string) pBleve.Index {
       var aRev []byte
       aRev, err = aBi.GetInternal([]byte{'v'})
       if err != nil { quit(err) }
-      if bytes.Compare(aRev, sSearchIndexRev) != 0 {
+      if bytes.Compare(aRev, kSearchIndexRev) != 0 {
          err = aBi.Close()
          if err != nil { quit(err) }
          err = os.Rename(aPath, aTemp)
@@ -337,7 +337,7 @@ func _reindex(iSvc string, iBi pBleve.Index) {
    if len(aDir) > 0 {
       fmt.Printf(" done\n")
    }
-   aTx.SetInternal([]byte{'v'}, sSearchIndexRev)
+   aTx.SetInternal([]byte{'v'}, kSearchIndexRev)
    err = iBi.Batch(aTx)
    if err != nil { quit(err) }
 }
