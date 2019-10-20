@@ -30,7 +30,7 @@ fileswin[0]+=.exe
 
 for pf in "${bins[@]}"; do
    export $pf
-   go build
+   go build -a
    echo -n "$GOOS-$GOARCH built "
    dst="$app/mnm-app-$GOOS-$GOARCH-${ver[-2]}"
    if [ $GOOS = windows ]; then
