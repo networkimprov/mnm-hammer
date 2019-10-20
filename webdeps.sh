@@ -8,7 +8,7 @@
 
 set -e
 
-GITHUB=https://github.com/networkimprov/mnm-hammer/releases/download/v0.2.0
+GITHUB=https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0
 CDN_UIKIT=https://cdnjs.cloudflare.com/ajax/libs/uikit/3.0.0-beta.40
 CDN_VUE=https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.22
 CDN_MDI=https://cdnjs.cloudflare.com/ajax/libs/markdown-it/8.4.2
