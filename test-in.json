@@ -1,6 +1,6 @@
 [{
 
-"Version": "0.6.0",
+"Version": "0.7.0",
 "Formspec": {"ffn":"mnmnotmail.github.io/registry/test1", "spec":[
   {"name":"nr", "status":"required",   "type":"number" },
   {"name":"so", "status":"optional",   "type":"string" },
