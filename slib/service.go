@@ -292,6 +292,8 @@ func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
    return err
 }
 
+func ErrorService(iErr error) []string { return []string{"_e", iErr.Error()} }
+
 func LogoutService(iSvc string) []string {
    dropFromOhi(iSvc)
    return []string{"of"}

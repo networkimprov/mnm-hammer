@@ -321,7 +321,7 @@ func runTmtpRecv(iSvcId string) {
             break
          }
          aSvc.ccs.Range(func(c *tWsConn) {
-            c.WriteJSON(err.Error())
+            c.WriteJSON(pSl.ErrorService(err))
          })
          fmt.Fprintf(os.Stderr, "runTmtpRecv %s: %s\n", iSvcId, err.Error())
          if aWait > kDialRetryDelayMax { aWait = kDialRetryDelayMax }
