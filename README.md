@@ -6,19 +6,20 @@ _mnm does not._
 Email is a cybercrime gateway.<img width="300" align="right" src="https://user-images.githubusercontent.com/458838/65545951-535f6980-decb-11e9-8f46-6122198097b0.png">  
 _mnm is not._
 
-mnm is a safer, more productive way to correspond with people you know, 
-and make contact with those you don't.
+mnm is a far safer way to correspond with people you know, 
+and make contact with those you don't. See [_How It Works_](Howitworks.md).
 
-mnm offers features missing from traditional email, including:  
+mnm also offers capabilities missing in traditional email, including:  
 \+ forms/surveys whose results are collected into tables  
-\+ charts via [a JS chart library TBD]  
+\+ data-driven charts via [a JS chart library TBD]  
 \+ slide deck layouts  
 \+ hyperlinks to messages &amp; other threads  
 \+ easy addition of recipients to existing threads  
 \+ message formatting &amp; layout via Markdown (aka CommonMark)  
 
-mnm is a TMTP client. See also the [mnm relay server](https://github.com/networkimprov/mnm), 
-and [Why TMTP?](https://github.com/networkimprov/mnm/blob/master/Rationale.md) 
+mnm is a TMTP client. 
+See [_Why TMTP?_](https://github.com/networkimprov/mnm/blob/master/Rationale.md) 
+and the [mnm relay server](https://github.com/networkimprov/mnm). 
 
 This version of mnm is a localhost web app, 
 i.e. it runs on personal devices and its GUI appears in a browser. 
