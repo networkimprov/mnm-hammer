@@ -60,6 +60,8 @@ func fileAtc(iSvc, iSub, iMid, iFil string) string { return dirAttach(iSvc) + iS
                                                             iMid +"_"+ url.QueryEscape(iFil) }
 func fileFfn(iSvc, iSub             string) string { return dirAttach(iSvc) + iSub + "/ffnindex" }
 
+func fileForm(iSvc, iFft string) string { return dirForm(iSvc) + url.QueryEscape(iFft) }
+
 // these have either ".tmp" or a decimal string appended
 func ftmpSr(iSvc, iTid, iMid string) string { return dirTemp(iSvc) +"sr_"+ iTid +"_"+ iMid +"__" }
 func ftmpSc(iSvc, iTid, iMid string) string { return dirTemp(iSvc) +"sc_"+ iTid +"_"+ iMid +"__" }

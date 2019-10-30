@@ -210,22 +210,22 @@ func _insertBlank(iName, iRev string, iDate string) {
    }
 }
 
-func WriteTableFilledForm(iW io.Writer, iSvc string, iFfn string) error {
+func WriteTableFilledForm(iW io.Writer, iSvc string, iFft string) error {
    var err error
-   aDoor := _getFormDoor(iSvc, iFfn)
+   aDoor := _getFormDoor(iSvc, iFft)
    aDoor.RLock(); defer aDoor.RUnlock()
-   aFd, err := os.Open(dirForm(iSvc) + _ffnFileName(iFfn))
+   aFd, err := os.Open(fileForm(iSvc, iFft))
    if err != nil { return err }
    defer aFd.Close()
    _, err = io.Copy(iW, aFd)
    return err
 }
 
-func writeRowFilledForm(iW io.Writer, iSvc string, iFfn, iMsgId string) (int64, error) {
+func writeRowFilledForm(iW io.Writer, iSvc string, iFft string, iMsgId string) (int64, error) {
    var err error
-   aDoor := _getFormDoor(iSvc, iFfn)
+   aDoor := _getFormDoor(iSvc, iFft)
    aDoor.RLock(); defer aDoor.RUnlock()
-   aFd, err := os.Open(dirForm(iSvc) + _ffnFileName(iFfn))
+   aFd, err := os.Open(fileForm(iSvc, iFft))
    if err != nil { quit(err) }
    defer aFd.Close()
 
@@ -241,7 +241,7 @@ func writeRowFilledForm(iW io.Writer, iSvc string, iFfn, iMsgId string) (int64, 
       if aRow["$msgid"].(string) == iMsgId { break }
    }
    if aRow == nil {
-      quit(fmt.Errorf("%s formfill table %s lacks msgid %s\n", iSvc, iFfn, iMsgId))
+      quit(fmt.Errorf("%s formfill table %s lacks msgid %s\n", iSvc, iFft, iMsgId))
    }
    aLen, err := aRow["$size"].(json.Number).Int64()
    if err != nil { quit(err) }
@@ -354,7 +354,7 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    defer aFd.Close()
 
    var aFi os.FileInfo
-   aFi, err = os.Lstat(dirForm(iSvc) + _ffnFileName(iFile.Ffn) + iSuffix)
+   aFi, err = os.Lstat(fileForm(iSvc, iFile.Ffn + iSuffix))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos, aSep := int64(0), '['; if err == nil { aPos, aSep = aFi.Size() - 1, ',' }
    _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x%c\n\n", aPos, aPos, aSep))) // 2 copies for safety
@@ -408,7 +408,7 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
       fmt.Fprintf(os.Stderr, "storeFilledForm %s: missing %s, assume it was appended to %s\n",
-                             iSvc, iFile.Name, _ffnFileName(iFile.Ffn) + iSuffix)
+                             iSvc, iFile.Name, iFile.Ffn + iSuffix)
       return false
    }
    defer aTd.Close()
@@ -424,7 +424,7 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
       quit(tError(fmt.Sprintf("position values do not match in %s", aFn)))
       //todo recovery instructions
    }
-   aPath := dirForm(iSvc) + _ffnFileName(iFile.Ffn) + iSuffix
+   aPath := fileForm(iSvc, iFile.Ffn + iSuffix)
    _, err = os.Lstat(aPath)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aDoSync := err != nil
@@ -444,9 +444,5 @@ func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2
 
 func _getFormDoor(iSvc string, iFfn string) *sync.RWMutex {
    return getDoorService(iSvc, iFfn, func()tDoor{ return &sync.RWMutex{} }).(*sync.RWMutex)
-}
-
-func _ffnFileName(iFfn string) string {
-   return strings.Replace(iFfn, "/", "@", -1)
 }
 

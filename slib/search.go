@@ -17,6 +17,7 @@ import (
    "sort"
    "strings"
    "time"
+   "net/url"
 
    pBkeyword  "github.com/blevesearch/bleve/analysis/analyzer/keyword"
    pBleve     "github.com/blevesearch/bleve"
@@ -77,8 +78,10 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       if err != nil { quit(err) }
       aList := make([]tSearchEl, 0, len(aDir))
       for _, aFi := range aDir {
-         aList = append(aList, tSearchEl{LastDate: aFi.ModTime().UTC().Format(time.RFC3339),
-                                         Id: strings.Replace(aFi.Name(), "@", "/", -1)})
+         var aId string
+         aId, err = url.QueryUnescape(aFi.Name())
+         if err != nil { quit(err) }
+         aList = append(aList, tSearchEl{Id: aId, LastDate: aFi.ModTime().UTC().Format(time.RFC3339)})
       }
       sort.Slice(aList, func(cA, cB int)bool { return aList[cA].Id < aList[cB].Id })
       err = json.NewEncoder(iW).Encode(aList)
