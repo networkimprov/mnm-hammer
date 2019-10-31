@@ -204,7 +204,7 @@ func GetCfService(iSvc string) interface{} {
 func getUriService(iSvc string) string {
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
-   return aSvc.config.Addr +"/"+ aSvc.config.Uid +"/"
+   return aSvc.config.Addr +"/"+ aSvc.config.Alias +"/"
 }
 
 func getDoorService(iSvc string, iId string, iMake func()tDoor) tDoor {
