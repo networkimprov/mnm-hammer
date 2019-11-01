@@ -356,7 +356,8 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    var aFi os.FileInfo
    aFi, err = os.Lstat(fileForm(iSvc, iFile.Ffn + iSuffix))
    if err != nil && !os.IsNotExist(err) { quit(err) }
-   aPos, aSep := int64(0), '['; if err == nil { aPos, aSep = aFi.Size() - 1, ',' }
+   aPos := int64(0); if err == nil { aPos = aFi.Size() - 1 }
+   aSep := '[';      if err == nil { aSep = ',' }
    _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x%c\n\n", aPos, aPos, aSep))) // 2 copies for safety
    if err != nil { quit(err) }
 
@@ -370,16 +371,19 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    if err != nil {
       return err //todo only return network error
    }
-   if aBuf.Bytes()[0] != '{' || json.Unmarshal(aBuf.Bytes(), &struct{}{}) != nil {
+   aTee = io.MultiWriter(aFd, &aCw)
+   aBytes := aBuf.Bytes()
+   if aBytes[0] != '{' || json.Unmarshal(aBytes, &struct{}{}) != nil {
       fmt.Fprintf(os.Stderr, "tempFilledForm %s: received bad json for %s\n", iSvc, iFile.Ffn+iSuffix)
-      var aJson []byte
-      aJson, err = json.Marshal(aBuf.String())
+      aBytes, err = json.Marshal(aBuf.String())
       if err != nil { quit(err) }
       _, err = aFd.Seek(32, io.SeekStart)
       if err != nil { quit(err) }
-      aCw = tCrcWriter{}
-      aTee = io.MultiWriter(aFd, &aCw)
-      _, err = aTee.Write([]byte(fmt.Sprintf(`{"$text":%s`, aJson)))
+      aCw.clear()
+      _, err = aTee.Write([]byte(fmt.Sprintf(`{"$text":%s`, aBytes)))
+      if err != nil { quit(err) }
+   } else if aBytes[1] == '}' {
+      _, err = aTee.Write([]byte(`"$empty":true`))
       if err != nil { quit(err) }
    }
    _, err = aTee.Write([]byte(fmt.Sprintf(`,"$threadid":"%s","$msgid":"%s","$offset":%d,"$size":%d`,

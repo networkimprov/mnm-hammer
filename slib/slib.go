@@ -327,6 +327,8 @@ func (o *tCrcWriter) Write(i []byte) (int, error) {
    return len(i), nil
 }
 
+func (o *tCrcWriter) clear() { o.sum = 0 }
+
 func storeFile(iPath string, iData interface{}) error {
    aTemp := iPath + ".tmp"
    defer os.Remove(aTemp)
