@@ -19,45 +19,106 @@ loadThread return set of msgids
 ClientState keeps form-table; send "tl" op if changed
   keeps msg panel scroll position
   drop old states
-tService.tabs carry names for pinned terms
-tThreadState keep tOpenState for each .Terms item
-blankform update msg to all clients, include ID
+slib: %-encode initial '.' in filename
+form: Add() reject filename ".*"
+  blankform update msg to all clients, include ID
   flag update in msg editor if form is attached
+  form-fill option to log data in ..._recv FFT
 attach size set on save
+util: app or script to find hard-linked files, run robocopy, replace found files with hard-links
+search: sort threads with a draft to top for T+n hours
 config file: path for store/, http host & port, ...
 test-in: add op open to Gold
-test: Orders[n].Note == "print this // hide this"
-main: TLS1.3, call api correctly
+test:
+  Orders[n].Note == "print this // hide this"
+  watch for unexpected changes: get all "xy" ops after each Order, compare with expected state
+main: TLS1.3, call api correctly https://github.com/golang/go/issues/31224
   secure link to clients
   revise disconnected ClientState files on rename/discard
+ohi: on receipt, add to adrsbk if missing
+  SendAllOhi allow empty .For (currently disallowed by server)
+    editOhi() set .status=pending
+    SendAllOhi() omit .status==pending items
+    tmtp "ohiedit" set .status=confirm
+service: allow *.tmp service names
+  allow svcid change
+  "registered" needs transaction with adrsbk & config
+  add-account: check whether net address works
+mswin: can't fsync directory, so verify that dirctory updates are durable after syscall returns
+  if not, can recover lost files via FILE_OPEN_BY_FILE_ID?
 clean
-  slib: add fileThread, fileAttach, fileState ...?
+  slib: add fileThread, fileForm->fileFft?, fileBlank ...
   use file.readat where offset known
   service: "ack" default aResult = []string{"",...}
   tError to fmt.Errorf; separate line
   writestring vs write([]byte(s))
   form: kSuffix* -> kFfnSuffix* 
   thread: mv t*El to read/write section, mv completeThread to top
+    tComplete methods to encapsulate msgid logic
   test: _prepUpdt closures
 gui
+  all: fixes for narrow window
+    name sorts case-insensitive
+  ao: clear on thread change
   mo: drop draft object after send/discard
   formview: default field values in form-def "defaults" object
     create component with parent param?
     handle multiple form instances
-  fix draft edit position reset for long text
-  fix update draft editors when shown in other message list tabs
+    attach-fill to paperclip button that changes to checkmark
+  markdown: attachment hyperlinks display mnm-viewer or download icon
+    foreign hyperlinks display arrows icon
+    prevent excess rendering
+  draft: fix body edit position reset for long text
+    update editors when shown in other message list tabs
+    to-summary abbrev names
+    bug causes occasional reopen after update & close
+    reply started in a search tab isn't open in Open tab
+    attachmt menu has links to clip markdown
+    progress bar on long outgoing msgs
+    prevent send if missing attachment for ref to (this_...)
+    markdown guide in popup menu
   blankform listsort only when edit pane closed
-  attachment links to forms open form editor
-  use v-show instead of v-if/else where both elements appear frequently
-  use ref/$refs instead of id/getElementById
-  hrefs meaningful, or change element to button/span
+    .spec preview shows ffn, or list of field name/type
+    validate on send
+  docs: pin menu open?, resize pane
+    chrome bug: restored scroll position inaccurate
+  cc: bold last alias added
+    no recipients indicates [self]?
+  attachments: escape special chars in markdown ref links
+    add sender name
+  FFT: indicate empty records when $empty:true
+  svcadd: indicate success/failure
+  notice: audio tone option
+    count in window title
+  adrsbk: change ohi-to selection via enter-key?
+  msg-list: in ALL tab, open msg shouldn't mark it unread?
+  thread-list: UNREAD tab title include count
+  clean:
+    css use .outer .inner {...} when .inner not standalone
+    after text use <!----> to eliminate whitespace before </tag>
+    use v-show instead of v-if/else where both elements appear frequently
+    use ref/$refs instead of id/getElementById
+    hrefs meaningful, or change element to button/span
 
 server try-back-later msg
   gives: reconnect time in tenths of second, reason eg max-idle/shutdown/etc
   reconnect to send
   disconnect when send queue empty
 
+tags
+  in search result, textbox to rename tag
+    button to remove tag
+  on open msgs
+    select-tag adds search tab?
+    _completeTouch stores new tag in global list?
+    on change, distribute to nodes
+  kTagsFile
+    blurb to describe tag?
+    rebuild file on search-index build?
+  tags.go impl global interface
+
 forwarding
+  verify correct when forwarded thread lacks in-transit msgs from other senders
   CC menu: forward form + button, unsubscribe button, CC list
     dropped CCs have strikethrough
     on drop CC, send unsubscribe
@@ -72,16 +133,12 @@ forwarding
   add non-pinged CCs to adrsbk
 
 notices menu
-  log of new pings, invites, threads, msgs, group membership
-  fields: from type, alias, threadid, msgid, gid, blurb
-  delimit not-seen set, UI give not-seen count
+  log threads, msgs, group membership
   delimit seen sets ?
-  filter (in clientstate) to omit categories
-  limit history to 1wk + 2 seen sets (configurable)
+  categories filter in clientstate?
+  configurable history limit, default 1wk + 2 seen sets
   accrete related items in not-seen set
   overwrite not-seen items on new entry
-  seen button sends request to update not-seen items
-  rewrite file on seen update if nec
 
 alias: add, drop, list; store in sep file
   status pending until ack
@@ -115,81 +172,56 @@ forms
     renderResult (js) in form-blank preview and form-filled preview
     on reply, copy selected form ref to text
 
-one service per window/tab/page
-  view panels: [msg editor], msgs (under editor), threads, services
-    have service-specified look & ringtone; adjustable by user
-  text-boxes over each panel to search: thread, service, all services
-    results highlight text in msg panel
-    results add tab in thread panel
-    search-all jumps to you-service tab?
+enable service-specified skin & ringtone; adjustable by user
 
 msg panel
-  panel history, per client: panel back/forward buttons change msg list panel
-    drop last item if last pair would repeat: abcb + c -> abc
-  give thread subject/s
-  attachment list pop-up pane
-    links jump to relevant msg?
-  tags dropdown: add, delete existing
-  tabs for msg subsets, per client: user-opened, search result, reply-to chain, all
-    pin tab saves state, broadcasts to clients
-  list of msgs in archaeological order; scrolling
-    remember which msgs are open, per client
-    combine consecutive msgs from single user chronologically, tag each with date-time
-    ohi status of sender
-    reply-to chain link/button per msg
-    retain msg header bar at top of panel if topmost visible msg is open
-  reply editor opens above msgs
-  overlay panel with iframe to view pdf/html/video attachments in browser
+  tabs, per client: reply-to chain
+    pin tab? saves state, broadcasts to clients & nodes
+    search tabs highlight result text
+  combine consecutive msgs from single user chronologically, tag each with date-time
+  ohi status of sender?
+  reply-to chain link/button per msg
+  retain msg header bar at top of panel if topmost visible msg is open
+  overlay panel to view pdf/html/video attachments?
   thread-summary popup or tab
     list of excerpts and optional notes, with link to msg of excerpt
     to add item, select text in msg, right-click for add-to-summary, write optional note
 
 thread panel
-  archaeological order
   infinite scrolling or back/forward buttons
-  permanent tabs: All, Unread, Todo, Form-table
-  sort by first/latest ctrl
-  tags menu "#" near search box; items open new search tab
-  search tabs are client-specific unless saved
-    save-search pins tab, notify other clients
+  sort by first/latest toggle
+  named pinned tabs, notify other clients & nodes
   search relevance slider (# positions varies with result set size?)
     lower relevance yields more results
-  NewThread button
   mute button to hide panel updates
-  you-service
+  local service
     have origin service's look in msg panel
     permanent thread tabs: todo/tag, contact
     transient thread tabs: search-all results
     thread items include column for svc name
     group consecutive same-service items with color
-  form-table view (alternate panel layout)
-    presents table of all data received via a certain form
-    include ref column with link to thread+msg data source
+  form-table view
     drag to order columns, click column to sort rows
-    form editor
-    form revision history
+    per-row link to form-viewer (in attachments?)
     export to csv, json, etc
+  events table, via EVENTS tab
 
-ohi panels
-  slide out from services panel
-  whos-on normally retracted, can pin display
-    indicate disconnect of browser or client
-  who-i-ohi
+ohi panel
+  normally hidden, can pin panel
 
-attachment panel
-  button per item attaches file to current message
-  checkbox on "browse..." form to attach
+files menu
+  attach on "browse..." form
   search box, adds a tab after Date, Name
 
 services (notifications) panel
-  per-item popup shows recent activity in that service
-  click item opens tab
+  search box searches svc name, description, etc
+    prefix all: or second box jumps to local tab?
   back/forward buttons? switch tab if possible
   panes
     all services, sorted by recent activity
     deadlines, sorted by date
     services with user-defined tags
-  new msg button?
+  contact search?
     enter contact name (aided by menu)
     jumps to relevant service
     thread list panel shows recent threads including the contact/s
@@ -197,14 +229,16 @@ services (notifications) panel
     display service certificate
     user can specify network (e.g. NIC)
     select other nodes to add on service
+  form to disconnect or delete service
 
 msg viewer
-  see/hide-chain button opens/closes reply-to chain
+  reply-chain button opens reply-to tab
   way to link attachment in upload dir for future use
   button to copy form to our collection
   enable revision of last-sent msg
     single item on msg panel if no intervening msgs (ie combine consecutive)
     list rev history on revised msgs
+    limit size of total revs to N% or N characters
   lookup/rewrite bit.ly etc links
 
 msg editor
@@ -215,70 +249,42 @@ msg editor
     change linebreak to ^ or non-ascii character
     change em & strong to ~
     insert > when dividing >'d paragraph
-    img/etc hrefs must be to attachment
+    video/audio object via ![>](ref)
     help pane shows formatting characters; click or ctrl-? to pop-up docs
     can render tables as charts, or chart input as table?
     select from menu of common & service-supplied stylesheets
-  preview rendering
-    short pane below or above editor showing current lines, collapsible
-      toggle with ctrl-something
-    pane expands to scrolling pop-up on ctrl-J/F?, repeat/enter/esc to close
-      if pane at start/end of message
-         expand down/up, grow pop-up on scroll to x% of vh
-      highlight current cursor position
-      scroll with IJKLUO/ESDFWR, page-up/down with [shift-]space
-  upload attachment
-    drag/drop or copy/paste file, file dialog box
-    menu of upload dir; sort by date/filename
-    attachment hrefs
+  preview pop-up on ctrl-J/F?, repeat/esc to close
+    highlight line for current cursor position
+    scroll with cursor position changes
+  upload attachment via drag/drop, copy/paste file or data, file dialog box
   attach by reference to previous attachment
-  attach icalendar object
-  attach pasted HTML
-    display in iframe
-  to/attach-list expand to multiple columns if nec
-  on msg add-CC enable forwarding
-    forwarding buttons: next msg, reply-to chain, all msgs
-    send index entry for initial message (if not forwarded)
+  create & attach icalendar object, markdown ![@](ref)
+  attach-list expand to multiple columns if nec
   add msg to thread by ref-to msg link
     placeholder for recipients who did not receive original
-  branch-reply/forward
-    make new thread with copy of (or ref-to for recipients of original) replied msg
-    buttons copy-next, copy-all
+  branch-reply
+    make new thread with copy/excerpt of (or ref-to for recipients of original) replied msg
+    button copy-next adds msg from reply-chain
     ref parent thread & msg
   reply with tag (continues at link, closed, defer until date, priority, user-defined)
-  forms menu & editor
-    can fill in form or leave blank
-  slides/pages
-    slide hrefs
-  thread/message hyperlinks
-    may indicate excerpts (list of byte ranges)
+  slides/pages; markdown hrefs
+  thread/message hyperlinks may indicate excerpts (list of byte ranges)
   charts menu; outputs templates
   form-table queries?
   message templates menu
-  cursor nav mode ctrl-H?
-    different highlight & cursor color
-    restore prior selection if cursor hasn't moved
-    repeat/esc exit mode
-    IJKLUO/ESDFWR [shift-]space set cursor position
-    ctrl-anyOfAbove select text
-    formatting characters work as toggles on selection
-    enter preserve selection, exit mode
-    cut/copy/paste/delete work on selection, exit mode
 
-error log
-  show last error, expand to show scrolling list
-  item on settings menu
+error log section for unseen errors
 
 meta-messages
-  reader opinion value (-5 to +5 or none)
+  reader ack/opinion (-5 to +5 or none)
+    msg SubHead.RequestAck enables ack UI
+      auto-tag msg with Todo?
     summaries in index
     display as bar graph, y-axis gives totals
 
 UI controls that change data state get hand cursor, others get arrow
-certain buttons show confirmation pop-up next to click point
-  send, discard new msg, close search tab
-
-msg link: MessageGo() combining ThreadGo(thread_id) + TabAdd(msg:msg_id)
+  certain buttons show confirmation pop-up next to click point
+    send, discard new msg, close search tab
 
 address book
   alias lists for import into Cc?
@@ -286,10 +292,6 @@ address book
   join/leave button on invites
   query s,n returns n matches starting with s
     s$ ending in s
-
-clientstate
-  history status, thread tabs, selected tab
-  selected thread, service tabs, selected tab
 
 require app password for certain ops after idle period
 
@@ -299,44 +301,31 @@ groups
   popup with groups on thread panel
     edit & select links, select opens tab
   group-invite option on compose/reply UI
-  SubHead.Attn []string: aliases of members to be flagged; instead of .Cc
-
-aliases
-  popup with aliases on compose/reply UI
-    drop & revive links, add-new link
+  SubHead.Attn []string: aliases of members to be flagged
+  choose number of months to store unreplied incoming threads from group (or service?)
 
 nodes
-  popup with ref names on you-service
+  popup with ref names on local service
+  distribute tool state: services, saved searches, tags, contacts
 
 make browser cache data URIs for fast service reload
-  getSvcs, getTodos, getThreads, getThreadTabs, getMsgs, getPicture, getMsgHistory
-  on websocket update msg, silently reload relevant URL?
-
-distribute tool state to other nodes
-  services, saved searches, tags, contacts
 
 msg signing and signature validation
 
 define in-msg header
   dates: authored, received, read (client)
-  subject
-  recipients
-  ack-requested/acknowledged
   action requested by [recipients]
-
-choose number of months to store unreplied incoming threads from each group (or service?)
 
 streaming de/compression on get/post attachment, except for compressed formats
 
 on attachment re-send, upload diff (placeholder if no difference)
-track revisions for attachment
+  track revisions for attachment
+
 store 1 of any attachment received/sent multiple times
 
 new-thread draft list
 
-tag/todo lists
-  select msg, add tags & optional deadline-date & comment
-  tag view sorted in deadline chronological order, no-deadline items last
+provide tags which reference: message, icalendar event
 
 calendar
   endless scrolling list of weeks
@@ -375,16 +364,11 @@ storage
     attachment directory: link file if checksum matches
     thread directory
       push old threads into zip
-    msg index with thread id, msg offset count, msg metadata
-      keep backup db copy
-      rebuild database from files to recover from db corruption & backup failure
   upload directory
     flag unsent items with name_
     drop items sent and untouched for >N days
     can pin items in place?
   index directory
     attachment index: checksum, filename
-    msg index here?
-    tag index
-    full-text index
   nodes file
+  rebuild index from files to recover from db corruption
