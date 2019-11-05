@@ -272,6 +272,8 @@ func validateFilledForm(iSvc string, iBuf []byte, iFfn string) error {
    aLocalUri := getUriService(iSvc)
    if strings.HasPrefix(iFfn, aLocalUri) {
       aPath = kFormDir + iFfn[len(aLocalUri):] + ".spec"
+   } else if strings.HasPrefix(iFfn, aLocalUri[:1 + strings.IndexByte(aLocalUri, '/')]) {
+      return nil // assume host does not provide a FFN registry
    } else {
       aPath = fileFormReg(iFfn)
       err = _retrieveSpec(iFfn)
@@ -280,7 +282,9 @@ func validateFilledForm(iSvc string, iBuf []byte, iFfn string) error {
    var aJson struct { Spec []tSpecEl; Ffn string }
    err = readJsonFile(&aJson, aPath)
    if err != nil && !os.IsNotExist(err) { return err }
-   if aJson.Spec == nil { return nil } //todo indicate spec not found?
+   if aJson.Spec == nil {
+      return nil //todo indicate spec not found?
+   }
 
    var aResult []byte
    _validateObject(&aResult, "", aForm, aJson.Spec)
