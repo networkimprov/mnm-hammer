@@ -2304,6 +2304,128 @@
       return sMdiRenderImg(iTokens, iIdx, iOptions, iEnv, iSelf);
    };
 
+   var kSlideMarkNum  = 3,
+       kSlideMark     = ':'.charCodeAt(0),
+       kSlideMarkEnd  = '>'.charCodeAt(0),
+       sSlideCount    = 0,
+       sSlideInDeck   = false;
+
+   mnm._mdi.block.ruler.before('fence', 'mnm-deck', _slideMarkdown,
+                               {alt: ['paragraph', 'reference', 'blockquote', 'list'] });
+   mnm._mdi.renderer.rules['md-slide_open'] = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
+      ++sSlideCount;
+      return iSelf.renderToken(iTokens, iIdx, iOptions);
+   };
+   mnm._mdi.renderer.rules['md-deck_close'] = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
+      var aTwo = sSlideCount >= 2 ? '' : 'disabled ';
+      sSlideCount = 0;
+      return '<div class="md-deck-ctl">' +
+                '<button onclick="return mnm._slideGo(this,-2)" disabled ' +
+                        'class="uk-button uk-button-link">&Lang;</button>&nbsp;' +
+                '<button onclick="return mnm._slideGo(this,-1)" disabled ' +
+                        'class="uk-button uk-button-link">&lang;</button>&nbsp;' +
+                '<button onclick="return mnm._slideGo(this,+1)" ' + aTwo +
+                        'class="uk-button uk-button-link">&rang;</button>&nbsp;' +
+                '<button onclick="return mnm._slideGo(this,+2)" ' + aTwo +
+                        'class="uk-button uk-button-link">&Rang;</button></div>' +
+             iSelf.renderToken(iTokens, iIdx, iOptions);
+   };
+
+   mnm._slideGo = function(iCtl, iStep) {
+      var aSet = iCtl.parentNode.parentNode;
+      var aShown = aSet.querySelector('div.md-slide-show');
+      aShown.classList.remove('md-slide-show');
+      var aEl;
+      switch (iStep) {
+      case -1: aEl = aShown.previousElementSibling;                break;
+      case  1: aEl = aShown.nextElementSibling;                    break;
+      case -2: aEl = aSet.firstElementChild;                       break;
+      case  2: aEl = aSet.lastElementChild.previousElementSibling; break;
+      }
+      aEl.classList.add('md-slide-show');
+      var aCtls = aSet.lastElementChild;
+      aCtls.firstChild.disabled = aCtls.firstChild.nextElementSibling.disabled =
+         aEl === aSet.firstElementChild;
+      aCtls.lastChild.disabled = aCtls.lastChild.previousElementSibling.disabled =
+         aEl === aSet.lastElementChild.previousElementSibling;
+      return false;
+   };
+
+   function _slideMarkdown(iState, iStartLine, iEndLine, iSilent) {
+      var aPos, aNextLine, aMarkup, aParams, aToken, aOldParent, aOldLineMax, aHasEod,
+          aHasClose = false,
+          aStart = iState.bMarks[iStartLine] + iState.tShift[iStartLine],
+          aMax = iState.eMarks[iStartLine];
+
+      if (iState.src.charCodeAt(aStart) !== kSlideMark)
+         return false;
+      for (aPos = aStart + 1; iState.src.charCodeAt(aPos) === kSlideMark; aPos++) {}
+      if (aPos - aStart !== kSlideMarkNum)
+         return false;
+      aMarkup = iState.src.slice(aStart, aPos);
+      aParams = iState.src.slice(aPos, aMax);
+      if (aParams.trim() !== '')
+         return false;
+      if (iSilent)
+         return true;
+
+      for (aNextLine = iStartLine + 1; aNextLine < iEndLine; ++aNextLine) {
+         aStart = iState.bMarks[aNextLine] + iState.tShift[aNextLine];
+         aMax = iState.eMarks[aNextLine];
+         if (aStart < aMax && iState.sCount[aNextLine] < iState.blkIndent)
+            break; // non-empty line with negative indent stops the list
+         if (iState.src.charCodeAt(aStart) !== kSlideMark)
+            continue;
+         if (iState.sCount[aNextLine] - iState.blkIndent >= 4)
+            continue; // closing fence must be indented less than 4 spaces
+         for (aPos = aStart + 1; iState.src.charCodeAt(aPos) === kSlideMark; aPos++) {}
+         if (aPos - aStart !== kSlideMarkNum)
+            continue;
+         aHasEod = iState.src.charCodeAt(aPos) === kSlideMarkEnd;
+         if (aHasEod)
+            ++aPos;
+         aPos = iState.skipSpaces(aPos); // make sure tail has spaces only
+         if (aPos >= aMax) {
+            aHasClose = true;
+            break;
+         }
+      }
+      aOldParent = iState.parentType;
+      aOldLineMax = iState.lineMax;
+      iState.parentType = 'container';
+      iState.lineMax = aNextLine; // prevent lazy continuations from going past our end marker
+
+      if (!sSlideInDeck) {
+         aToken = iState.push('md-deck_open', 'div', 1);
+         aToken.block = true;
+         aToken.attrPush(['class', 'md-deck']);
+      }
+      aToken        = iState.push('md-slide_open', 'div', 1);
+      aToken.markup = aMarkup;
+      aToken.block  = true;
+      aToken.info   = aParams;
+      aToken.map    = [ iStartLine, aNextLine ];
+      aToken.attrPush(['class', 'md-slide']);
+      if (!sSlideInDeck) {
+         aToken.attrJoin('class', 'md-slide-show');
+         sSlideInDeck = true;
+      }
+      iState.md.block.tokenize(iState, iStartLine + 1, aNextLine);
+      aToken        = iState.push('md-slide_close', 'div', -1);
+      aToken.markup = iState.src.slice(aStart, aPos);
+      aToken.block  = true;
+      if (!aHasClose || aHasEod) {
+         aToken = iState.push('md-deck_close', 'div', -1);
+         aToken.block = true;
+         sSlideInDeck = false;
+      }
+
+      iState.parentType = aOldParent;
+      iState.lineMax = aOldLineMax;
+      iState.line = aNextLine + (aHasClose && aHasEod ? 1 : 0);
+      return true;
+   }
+
    mnm._listSort = function(iName, iKey) {
       var aTmp;
       var aList = iName === 'cl' ? mnm._data.cl[1] : mnm._data[iName];

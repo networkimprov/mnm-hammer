@@ -296,6 +296,35 @@ input[type=text], textarea {
 .message th, .message td {
    padding: 0.1em 0.5em;
 }
+.message div.md-deck {
+   position: relative;
+}
+.message div.md-deck-ctl {
+   position: absolute;
+   right: 4px;
+   top: -2px;
+   z-index: 3;
+}
+.message div.md-deck-ctl > button {
+   padding: 0 0.2em;
+   font-size: 120%;
+}
+.message div.md-slide {
+   display: none;
+   height: 22.5vw; /* based on 40% panel width */
+   overflow: hidden;
+   border: 1px solid peru;
+   border-radius: 8px;
+   padding: 6px;
+   margin-bottom: 0.5em;
+}
+.message div.md-slide-show { /*todo general purpose .display? */
+   display: block;
+}
+.message div.md-slide img {
+   max-width: 100%;
+   max-height: 22.5vw; /* same as .md-slide */
+}
 
 .draft-recip {
    font-size: 82%;
