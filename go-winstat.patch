@@ -1,0 +1,34 @@
+diff --git a/src/os/stat_windows.go b/src/os/stat_windows.go
+index fd22ef2..7e80178 100644
+--- a/src/os/stat_windows.go
++++ b/src/os/stat_windows.go
+@@ -132,3 +132,29 @@ func lstatNolog(name string) (FileInfo, error) {
+ 	attrs |= syscall.FILE_FLAG_OPEN_REPARSE_POINT
+ 	return stat("Lstat", name, attrs)
+ }
++
++// added for github.com/networkimprov/mnm-hammer
++
++func StatWindows(name string) (*fileStat, error) {
++	if len(name) == 0 {
++		return nil, &PathError{"StatWindows", name, syscall.Errno(syscall.ERROR_PATH_NOT_FOUND)}
++	}
++	if isNulName(name) {
++		return &devNullStat, nil
++	}
++	namep, err := syscall.UTF16PtrFromString(fixLongPath(name))
++	if err != nil {
++		return nil, &PathError{"StatWindows", name, err}
++	}
++	h, err := syscall.CreateFile(namep, 0, 0, nil,
++		syscall.OPEN_EXISTING, syscall.FILE_FLAG_BACKUP_SEMANTICS, 0)
++	if err != nil {
++		return nil, &PathError{"CreateFile", name, err}
++	}
++	defer syscall.CloseHandle(h)
++	return newFileStatFromGetFileInformationByHandle(name, h)
++}
++
++func (fs *fileStat) GetIno() (uint32, uint64) {
++	return fs.vol, (uint64(fs.idxhi) << 32) | uint64(fs.idxlo)
++}
