@@ -1055,26 +1055,32 @@
         :id="'pp_'+draft.msgid"
         class="draft-preview message-bg"
         onwheel="return mnm._canScroll(this, event.deltaY)">
-      <div v-show="subject || attach">
+      <div v-show="subject || attach || hasDeck">
          <div v-show="attach"
-              style="float:left; margin-right:0.6em">
-            {{attach && attach.length}}<mnm-paperclip/></div>
+              style="float:left; margin-right:0.6em"
+              >{{attach && attach.length}}<mnm-paperclip/></div>
+         <div v-show="hasDeck"
+              style="float:right">
+            <a @click.prevent="allSlides = !allSlides"
+               title="Toggle all slides"
+               href="#">&Lang;. . .&Rang;</a></div>
          <span v-show="subject"
-               >Re: {{subject}}</span>
-         &nbsp;
+               >Re: {{subject}}</span>&nbsp;<!---->
       </div>
       <div v-show="!msg.msg_data">
          <p><span uk-icon="comment"></span></p></div>
       <mnm-markdown v-show="msg.msg_data"
+                    @hasdeck="hasDeck = $event"
                     @formfill="draft.ffAdd.apply(draft, arguments)"
                     @toggle="draft.atcToggleFf.apply(draft, arguments)"
-                    :src="msg.msg_data" :formfill="msg.form_fill"
-                    :atchasff="draft.atcHasFf" :msgid="draft.msgid"/>
+                    :src="msg.msg_data" :msgid="draft.msgid" :allslides="allSlides"
+                    :formfill="msg.form_fill" :atchasff="draft.atcHasFf"/>
    </div>
 </script><script>
    Vue.component('mnm-draftpv', {
       template: '#mnm-draftpv',
       props: {draft:Object},
+      data: function() { return {hasDeck:false, allSlides:false} },
       computed: {
          subject: function() { return (mnm._data.toSave[this.draft.msgid] ||
                                        mnm._data.mo[this.draft.msgid].SubHead).Subject },
@@ -1262,11 +1268,17 @@
 </script><script>
    Vue.component('mnm-markdown', {
       template: '#mnm-markdown',
-      props: {src:String, msgid:String, formfill:Object, formreply:[Object,String], atchasff:Function},
+      props: {src:String, msgid:String, allslides:Boolean,
+              formfill:Object, formreply:[Object,String], atchasff:Function},
+      data: function() { return {hasDeck:false} },
       computed: {
          mdi: function() { return mnm._mdi },
       },
       watch: {
+         allslides: function(i) {
+            this.env.allSlides = i;
+            this.$forceUpdate();
+         },
          formfill: { deep: true, handler:
             function(iMap) {
                for (var a in this.env.fillMap)
@@ -1279,16 +1291,29 @@
       },
       created: function() {
          this.formDefBad = {fields:[ {type:"label",label:"file not found or invalid"} ]};
-         this.env = { fillMap:{}, parent:this, formview:null,
+         this.env = { allSlides:this.allslides, fillMap:{}, parent:this, formview:null,
                       thisVal: this.formreply && this.formreply !== 'Q' ? this.msgid
                                                                         : this.msgid.substr(-12) };
          if (this.formfill)
             for (var a in this.formfill)
                Vue.set(this.env.fillMap, a, this.formfill[a]);
       },
-      mounted:       function() { if (this.env.formview) this.env.formview.remount() },
-      updated:       function() { if (this.env.formview) this.env.formview.remount() },
       beforeDestroy: function() { if (this.env.formview) this.env.formview.destroy() },
+      mounted:       function() { this.onRender() },
+      updated:       function() { this.onRender() },
+      methods: {
+         onRender: function() {
+            if (this.env.formview)
+               this.env.formview.remount();
+            if (this.formreply)
+               return;
+            var aHasDeck = !!this.$el.querySelector('div.md-deck');
+            if (this.hasDeck !== aHasDeck) {
+               this.$emit('hasdeck', aHasDeck);
+               this.hasDeck = aHasDeck;
+            }
+         },
+      },
    });
 </script>
 
@@ -2314,11 +2339,15 @@
                                {alt: ['paragraph', 'reference', 'blockquote', 'list'] });
    mnm._mdi.renderer.rules['md-slide_open'] = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       ++sSlideCount;
+      if (iEnv.allSlides)
+         iTokens[iIdx].attrSet('class', 'md-slide md-slide-show');
       return iSelf.renderToken(iTokens, iIdx, iOptions);
    };
    mnm._mdi.renderer.rules['md-deck_close'] = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       var aTwo = sSlideCount >= 2 ? '' : 'disabled ';
       sSlideCount = 0;
+      if (iEnv.allSlides)
+         return iSelf.renderToken(iTokens, iIdx, iOptions);
       return '<div class="md-deck-ctl">' +
                 '<button onclick="return mnm._slideGo(this,-2)" disabled ' +
                         'class="uk-button uk-button-link">&Lang;</button>&nbsp;' +
