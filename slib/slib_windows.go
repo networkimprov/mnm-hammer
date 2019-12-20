@@ -7,13 +7,23 @@
 
 package slib
 
-import "syscall"
+import (
+   "os"
+   "syscall"
+)
 
 const kENOTEMPTY = syscall.Errno(145) // missing in syscall
 
 func init() {
    // see README.md for required patch to go/src/syscall/syscall_windows.go
    syscall.Open_FileShareDelete = true
+}
+
+func getInode(iDir string, iFi os.FileInfo) (uint64, error) {
+   aFs, err := os.StatWindows(iDir +`\`+ iFi.Name())
+   if err != nil { return 0, err }
+   _, aId := aFs.GetIno()
+   return aId, nil
 }
 
 // the NTFS journal logs file create, delete, rename

@@ -16,6 +16,10 @@ import (
 
 const kENOTEMPTY = syscall.ENOTEMPTY
 
+func getInode(_ string, iFi os.FileInfo) (uint64, error) {
+   return iFi.Sys().(*syscall.Stat_t).Ino, nil
+}
+
 func syncDir(iPath string) error {
    aFd, err := os.Open(iPath)
    if err != nil { return err }
