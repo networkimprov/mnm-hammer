@@ -143,8 +143,7 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    if iDup != "" {
       return tError("duplicate disallowed")
    }
-   if iName != aCfg.Name || len(iName) < kServiceNameMin ||
-      strings.HasSuffix(iName, ".tmp") || iName == "favicon.ico" {
+   if iName != aCfg.Name || !checkNameService(iName) {
       return tError("name not valid: " + iName)
    }
    if aCfg.Addr[0] != '+' && aCfg.Addr[0] != '=' {
@@ -216,6 +215,12 @@ func getDoorService(iSvc string, iId string, iMake func()tDoor) tDoor {
       aSvc.doors[iId] = aDoor
    }
    return aDoor
+}
+
+func checkNameService(iName string) bool {
+   iName = strings.ToLower(iName)
+   return !(len(iName) < kServiceNameMin || strings.HasSuffix(iName, ".tmp") ||
+            isReservedFile(iName) || iName == ".." || iName == "favicon.ico" )
 }
 
 func _newService(iCfg *tSvcConfig, iBi pBleve.Index) *tService {

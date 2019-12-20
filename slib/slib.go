@@ -398,6 +398,12 @@ func renameRemove(iA, iB string) error {
    return err
 }
 
+func isReservedFile(iN string) bool {
+   // iN must be lowercase
+   return iN == "con" || iN == "prn" || iN == "aux" || iN == "nul" ||
+          len(iN) == 4 && (iN[:3] == "com" || iN[:3] == "lpt") && iN[3] >= '1' && iN[3] <= '9'
+}
+
 func dateRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
 
 func quit(err error) {
