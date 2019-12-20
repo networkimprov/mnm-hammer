@@ -158,9 +158,10 @@ c) `./webdeps.sh` # download browser modules
 d) Edit _kVersionDate_ in main.go  
 e) `./pkg.sh` # make release downloads for all platforms
 
-Building for Windows requires this patch to the Go source (which does not affect other programs):  
-[go-winfsd.patch](https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0/go-winfsd.patch) 
-fixes [#32088](https://github.com/golang/go/issues/32088)
+Building for Windows requires patches to the Go source (which do not affect other programs):  
+go-winfsd.patch fixes [#32088](https://github.com/golang/go/issues/32088)  
+go-winstat.patch fixes [#9611](https://github.com/golang/go/issues/9611)  
+Apply patches with: `cp go*.patch /.../go && (cd /.../go && git apply go*.patch)`
 
 
 ### Testing
