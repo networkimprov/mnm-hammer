@@ -258,8 +258,8 @@ func deleteThreadSearch(iSvc string, iTid string) {
    if err != nil && err != pBleve.ErrorEmptyID { quit(err) }
 }
 
-func openIndexSearch(iSvc string) pBleve.Index {
-   aPath := fileIndex(iSvc)
+func openIndexSearch(iCfg *tSvcConfig) pBleve.Index {
+   aPath := fileIndex(iCfg.Name)
    aTemp := aPath + ".tmp"
    err := os.RemoveAll(aTemp)
    if err != nil && !os.IsNotExist(err) { quit(err) }
@@ -273,7 +273,7 @@ func openIndexSearch(iSvc string) pBleve.Index {
          if err != nil { quit(err) }
          err = os.Rename(aPath, aTemp)
          if err != nil { quit(err) }
-         aBi = openIndexSearch(iSvc)
+         aBi = openIndexSearch(iCfg)
       }
       return aBi
    }
@@ -310,7 +310,7 @@ func openIndexSearch(iSvc string) pBleve.Index {
 
    aBi, err = pBleve.New(aTemp, aIm)
    if err != nil { quit(err) }
-   _reindex(iSvc, aBi)
+   _reindex(iCfg, aBi)
    err = aBi.Close()
    if err != nil { quit(err) }
    err = syncDir(aTemp) // in case bleve doesn't do so
@@ -322,9 +322,9 @@ func openIndexSearch(iSvc string) pBleve.Index {
    return aBi
 }
 
-func _reindex(iSvc string, iBi pBleve.Index) {
+func _reindex(iCfg *tSvcConfig, iBi pBleve.Index) {
    aTx := iBi.NewBatch()
-   aDir, err := readDirNames(dirThread(iSvc))
+   aDir, err := readDirNames(dirThread(iCfg.Name))
    if err != nil { quit(err) }
    if len(aDir) > 0 {
       fmt.Printf("Indexing %d threads...", len(aDir))
@@ -332,9 +332,9 @@ func _reindex(iSvc string, iBi pBleve.Index) {
    for _, aFn := range aDir {
       if strings.ContainsRune(aFn[1:], '_') { continue }
       var aFd *os.File
-      aFd, err = os.Open(dirThread(iSvc) + aFn)
+      aFd, err = os.Open(dirThread(iCfg.Name) + aFn)
       if err != nil { quit(err) }
-      _updateSearchDoc(iSvc, aFn, aFd, aTx)
+      _updateSearchDoc(iCfg.Name, iCfg, aFn, aFd, aTx)
       aFd.Close()
    }
    if len(aDir) > 0 {

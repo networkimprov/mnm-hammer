@@ -12,7 +12,6 @@ import (
    "io"
    "encoding/json"
    "os"
-   pBleve "github.com/blevesearch/bleve"
    "sort"
    "strings"
    "sync"
@@ -56,26 +55,8 @@ func initServices(iFn func(string)) {
          if err != nil { quit(err) }
          continue
       }
-      //_makeTree(aSvc) // for development, update tree
-      aService := _newService(nil, nil)
-      aSvcFiles := [...]struct { name string; cache interface{}; reqd bool }{
-         {fileCfg  (aSvc), &aService.config, true },
-         {fileSendq(aSvc), &aService.sendQ,  false},
-         {fileTab  (aSvc), &aService.tabs,   false},
-         {fileNotc (aSvc), &aService.notice, false},
-         {filePing (aSvc), nil,              false},
-         {fileOhi  (aSvc), nil,              false},
-      }
-      for a := range aSvcFiles {
-         err = resolveTmpFile(aSvcFiles[a].name + ".tmp")
-         if err != nil { quit(err) }
-         if aSvcFiles[a].cache != nil {
-            err = readJsonFile(aSvcFiles[a].cache, aSvcFiles[a].name)
-            if err != nil && (aSvcFiles[a].reqd || !os.IsNotExist(err)) { quit(err) }
-         }
-      }
-      sServices[aSvc] = aService
-      aService.index = openIndexSearch(aSvc)
+      //makeTreeService(aSvc) // for development, update tree
+      sServices[aSvc] = _openService(aSvc)
       var aTmps []string
       aTmps, err = readDirNames(dirTemp(aSvc))
       if err != nil { quit(err) }
@@ -102,6 +83,28 @@ func initServices(iFn func(string)) {
          }
       }
    }
+}
+
+func _openService(iSvc string) *tService {
+   aService := _newService(nil)
+   aSvcFiles := [...]struct { name string; cache interface{}; reqd bool }{
+      {fileCfg  (iSvc), &aService.config, true },
+      {fileSendq(iSvc), &aService.sendQ,  false},
+      {fileTab  (iSvc), &aService.tabs,   false},
+      {fileNotc (iSvc), &aService.notice, false},
+      {filePing (iSvc), nil,              false},
+      {fileOhi  (iSvc), nil,              false},
+   }
+   for a := range aSvcFiles {
+      err := resolveTmpFile(aSvcFiles[a].name + ".tmp")
+      if err != nil { quit(err) }
+      if aSvcFiles[a].cache != nil {
+         err = readJsonFile(aSvcFiles[a].cache, aSvcFiles[a].name)
+         if err != nil && (aSvcFiles[a].reqd || !os.IsNotExist(err)) { quit(err) }
+      }
+   }
+   aService.index = openIndexSearch(&aService.config)
+   return aService
 }
 
 func startAllService() {
@@ -158,14 +161,14 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
       return tError("name already exists: " + iName)
    }
    aTemp := iName + ".tmp"
-   _makeTree(aTemp)
+   makeTreeService(aTemp)
    err = writeJsonFile(fileCfg(aTemp), &aCfg)
    if err != nil { quit(err) }
    err = syncDir(dirSvc(aTemp))
    if err != nil { quit(err) }
    err = os.Rename(dirSvc(aTemp), dirSvc(iName))
    if err != nil { quit(err) }
-   sServices[iName] = _newService(&aCfg, openIndexSearch(iName))
+   sServices[iName] = _newService(&aCfg)
    sServicesDoor.Unlock()
 
    if sServiceStartFn != nil {
@@ -223,13 +226,16 @@ func checkNameService(iName string) bool {
             isReservedFile(iName) || iName == ".." || iName == "favicon.ico" )
 }
 
-func _newService(iCfg *tSvcConfig, iBi pBleve.Index) *tService {
-   aSvc := &tService{tabs: []tTermEl{}, doors: make(map[string]tDoor), index: iBi}
-   if iCfg != nil { aSvc.config = *iCfg }
+func _newService(iCfg *tSvcConfig) *tService {
+   aSvc := &tService{tabs: []tTermEl{}, doors: make(map[string]tDoor)}
+   if iCfg != nil {
+      aSvc.config = *iCfg
+      aSvc.index = openIndexSearch(iCfg)
+   }
    return aSvc
 }
 
-func _makeTree(iSvc string) {
+func makeTreeService(iSvc string) {
    var err error
    for _, aDir := range [...]string{dirTemp(iSvc), dirThread(iSvc), dirAttach(iSvc), dirForm(iSvc)} {
       err = os.MkdirAll(aDir, 0700)
@@ -698,7 +704,7 @@ func WipeDataService(iSvc string) error {
    if err != nil { return err }
    err = os.RemoveAll(dirSvc(iSvc))
    if err != nil { quit(err) }
-   _makeTree(iSvc)
+   makeTreeService(iSvc)
    err = os.Rename(aCfgTmp, fileCfg(iSvc))
    if err != nil { quit(err) }
    var aCfg tSvcConfig

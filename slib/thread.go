@@ -427,7 +427,7 @@ func _completeStoreConfirm(iSvc string, iTmp string, iFd, iTd *os.File, iHead *t
    if err != nil { quit(err) }
    err = iFd.Sync()
    if err != nil { quit(err) }
-   _updateSearchDoc(iSvc, aRec.tid(), iFd, nil)
+   _updateSearchDoc(iSvc, nil, aRec.tid(), iFd, nil)
 
    var aEl *tIndexEl
    for a := range iIdx {
@@ -469,7 +469,7 @@ func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *
       err = iFd.Sync()
       if err != nil { quit(err) }
    }
-   _updateSearchDoc(iSvc, aRec.tid(), iFd, nil)
+   _updateSearchDoc(iSvc, nil, aRec.tid(), iFd, nil)
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
 }
@@ -553,7 +553,7 @@ func _completeTouch(iSvc string, iTmp string, iFd, iTd *os.File) {
    if err != nil { quit(err) }
    err = iFd.Sync()
    if err != nil { quit(err) }
-   _updateSearchDoc(iSvc, aTid, iFd, nil) //todo _updateUnread()
+   _updateSearchDoc(iSvc, nil, aTid, iFd, nil) //todo _updateUnread()
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
 }
@@ -783,7 +783,7 @@ func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMs
    }
    aTid := aRec.tid(); if aTid == "" { aTid = "_" + aRec.lms() }
    if aRec.op() == "ws" || aRec.tid() != "" {
-      _updateSearchDoc(iSvc, aTid, iFd, nil)
+      _updateSearchDoc(iSvc, nil, aTid, iFd, nil)
    } else {
       deleteThreadSearch(iSvc, aTid)
    }
@@ -1023,7 +1023,7 @@ func _completeStoreFwdReceived(iSvc string, iTmp string, iTd *os.File) {
    if err != nil && !os.IsExist(err) { quit(err) }
    err = syncDir(dirThread(iSvc))
    if err != nil { quit(err) }
-   _updateSearchDoc(iSvc, aRec.tid(), iTd, nil)
+   _updateSearchDoc(iSvc, nil, aRec.tid(), iTd, nil)
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
 }
@@ -1338,8 +1338,9 @@ func _revCc(iCc []tCcEl, iHead *Header) {
    updateUnreadSearch(iSvc, iTid, aUnread)
 }*/
 
-func _updateSearchDoc(iSvc string, iTid string, iFd *os.File, iI tIndexer) {
-   aSelf := GetConfigService(iSvc).Alias
+func _updateSearchDoc(iSvc string, iCfg *tSvcConfig, iTid string, iFd *os.File, iI tIndexer) {
+   if iCfg == nil { iCfg = GetConfigService(iSvc) }
+   aSelf := iCfg.Alias
    aLastSubjectN, aHasDraft := -1, false
    var aIdx []tIndexEl
    _readIndex(iFd, &aIdx, nil)
