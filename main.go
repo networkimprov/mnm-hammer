@@ -124,6 +124,16 @@ func mainResult() int {
    return 0
 }
 
+func _getNetAddress() string {
+   aLink, err := net.Dial("udp", "1.1.1.1:11") // doesn't cause network activity
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "_getNetAddress: %v\n", err)
+      return "Unavailable"
+   }
+   defer aLink.Close()
+   return aLink.LocalAddr().(*net.UDPAddr).IP.String()
+}
+
 type tService struct {
    queue *tQueue
    ccs *tClientConns
