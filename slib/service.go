@@ -27,6 +27,7 @@ var Service tGlobalService
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]*tService)
 var sServiceStartFn func(string)
+var sMsgToSelfFn func(string, *Header)
 
 type tSvcConfig struct {
    Name string
@@ -41,8 +42,8 @@ type tSvcConfig struct {
    Error string `json:",omitempty"` // from "registered" message
 }
 
-func initServices(iFn func(string)) {
-   sServiceStartFn = iFn
+func initServices(iSs func(string), iMts func(string, *Header)) {
+   sServiceStartFn, sMsgToSelfFn = iSs, iMts
    var err error
    aSvcs, err := readDirNames(kServiceDir)
    if err != nil { quit(err) }

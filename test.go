@@ -222,7 +222,7 @@ func _setupTestDir(iDir string, iClients []tTestClient) bool {
    err = os.Symlink("../../web", "web")
    if err != nil { quit(err) }
 
-   pSl.Init(startService, crashTest)
+   pSl.Init(StartService, MsgToSelf, crashTest)
 
    var aTc *tTestClient
    var aBuf bytes.Buffer
@@ -325,7 +325,7 @@ func _setupTestCrash(iClients []tTestClient) (_ string, err error) {
       err = pSl.WipeDataService(iClients[a].SvcId)
       if err != nil { return }
    }
-   pSl.Init(startService, crashTest)
+   pSl.Init(StartService, MsgToSelf, crashTest)
    if sServices[sTestCrashDst].queue == nil || sServices[sTestCrashSrc].queue == nil {
       return "", tError("invalid service")
    }
@@ -351,7 +351,7 @@ func _setupTestVerify(iClients []tTestClient) (_ string, err error) {
 
    err = os.Chdir(aArg[eDir])
    if err != nil { return }
-   pSl.Init(startService, crashTest)
+   pSl.Init(StartService, MsgToSelf, crashTest)
    if sServices[aArg[eSvc]].queue == nil {
       return "", tError("invalid service")
    }

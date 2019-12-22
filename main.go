@@ -98,7 +98,7 @@ func mainResult() int {
             return 1
          }
       }
-      pSl.Init(startService, crashTest)
+      pSl.Init(StartService, MsgToSelf, crashTest)
    }
 
    sServiceTmpl, err = template.New("service.html").Delims(`<%`,`%>`).ParseFiles("web/service.html")
@@ -137,15 +137,22 @@ func _getNetAddress() string {
 type tService struct {
    queue *tQueue
    ccs *tClientConns
+   toSelf chan *pSl.Header
 }
 
-func startService(iSvcId string) {
+func StartService(iSvcId string) {
    sServicesDoor.Lock(); defer sServicesDoor.Unlock()
    if sServices[iSvcId].ccs != nil {
       panic(fmt.Sprintf("startService %s: already started", iSvcId))
    }
-   sServices[iSvcId] = tService{queue: newQueue(iSvcId), ccs: newClientConns()}
+   sServices[iSvcId] = tService{queue: newQueue(iSvcId),
+                                ccs: newClientConns(),
+                                toSelf: make(chan *pSl.Header, 1)} //todo larger buffer?
    go runTmtpRecv(iSvcId)
+}
+
+func MsgToSelf(iSvcId string, iHead *pSl.Header) {
+   getService(iSvcId).toSelf <- iHead
 }
 
 func getService(iSvcId string) tService {
@@ -364,20 +371,53 @@ func runTmtpRecv(iSvcId string) {
 func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) error {
    aSvc := getService(iSvcId)
    aBuf := make([]byte, kMsgHeaderMaxLen+4) //todo start smaller, realloc as needed
+   aReadFlag := make(chan bool)
    aLogin := false
    var aHead *pSl.Header
    var aPos, aHeadEnd, aHeadStart int64 = 0, 0, 4
+   var aLen int
+   var err error
 
    fErr := func(cS string) error {
       if aLogin { <-aSvc.queue.connSrc }
       return tError(cS)
    }
+   fNotify := func(cFn func(*pSl.ClientState)[]string, cToAll []string) {
+      if cToAll != nil {
+         toAllClients(cToAll)
+      }
+      if cFn != nil {
+         for _, aStEl := range sTestState {
+            if aStEl.svcId == iSvcId { cFn(aStEl.state) }
+         }
+         aSvc.ccs.Range(func(cC *tWsConn) {
+            cMsg := cFn(cC.state)
+            if cMsg == nil { return }
+            cC.WriteJSON(cMsg)
+         })
+      }
+   }
+
+   go func() { //todo drop this if net.Conn.Read() can be interrupted
+      for <-aReadFlag { // wait for handler
+         if iIdleMax > 0 {
+            iConn.SetReadDeadline(time.Now().Add(iIdleMax))
+         }
+         aLen, err = iConn.Read(aBuf[aPos:])
+         aReadFlag <- true
+      }
+   }()
+   defer func() { aReadFlag <- false }()
 
    for {
-      if iIdleMax > 0 {
-         iConn.SetReadDeadline(time.Now().Add(iIdleMax))
+      aReadFlag <- true // signal to reader
+   WaitForMsg:
+      select {
+      case aHd := <-aSvc.toSelf:
+         fNotify(pSl.HandleTmtpService(iSvcId, aHd, nil))
+         goto WaitForMsg
+      case <-aReadFlag:
       }
-      aLen, err := iConn.Read(aBuf[aPos:])
       if err != nil {
          //todo if recoverable continue
          if err == io.EOF {
@@ -456,19 +496,7 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) error {
          if aHead.From != "" && aHead.Id != "" {
             aSvc.queue.postAck(aHead.Id)
          }
-         if aToAll != nil {
-            toAllClients(aToAll)
-         }
-         if aFn != nil {
-            for _, aStEl := range sTestState {
-               if aStEl.svcId == iSvcId { aFn(aStEl.state) }
-            }
-            aSvc.ccs.Range(func(cC *tWsConn) {
-               cMsg := aFn(cC.state)
-               if cMsg == nil { return }
-               cC.WriteJSON(cMsg)
-            })
-         }
+         fNotify(aFn, aToAll)
       }
       if aPos > aHeadEnd + aHead.DataLen {
          aPos = int64(copy(aBuf, aBuf[aHeadEnd + aHead.DataLen : aPos]))

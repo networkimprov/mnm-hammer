@@ -263,7 +263,7 @@ const (
 type Msg map[string]interface{}
 
 
-func Init(iStart func(string), iCrash func(string, string)) {
+func Init(iStart func(string), iMts func(string, *Header), iCrash func(string, string)) {
    sCrashFn = iCrash
    for _, aDir := range [...]string{kUploadTmp, kServiceDir, kStateDir, kFormDir, kFormRegDir} {
       err := os.MkdirAll(aDir, 0700)
@@ -273,7 +273,7 @@ func Init(iStart func(string), iCrash func(string, string)) {
    initForms()
    initTag()
    initStates()
-   initServices(iStart)
+   initServices(iStart, iMts)
    startAllService()
 }
 
