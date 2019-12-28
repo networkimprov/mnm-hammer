@@ -79,6 +79,7 @@ func main() {
 func mainResult() int {
    // return 2 reserved for use by Go internals
    var err error
+   defer func() { if err != nil { fmt.Fprintf(os.Stderr, "mainResult: %v\n", err) } }()
 
    sServices["local"] = tService{ccs: newClientConns()}
 
@@ -93,19 +94,13 @@ func mainResult() int {
       _, err = os.Stat("web/service.html")
       if err != nil {
          err = os.Chdir(path.Dir(os.Args[0]))
-         if err != nil {
-            fmt.Fprintf(os.Stderr, "chdir: %s\n", err.Error())
-            return 1
-         }
+         if err != nil { return 1 }
       }
       pSl.Init(StartService, MsgToSelf, crashTest)
    }
 
    sServiceTmpl, err = template.New("service.html").Delims(`<%`,`%>`).ParseFiles("web/service.html")
-   if err != nil {
-      fmt.Fprintf(os.Stderr, "template parse error %s\n", err.Error())
-      return 1
-   }
+   if err != nil { return 1 }
 
    http.HandleFunc("/"  , runService)
    http.HandleFunc("/a/", runAbout)
@@ -117,10 +112,8 @@ func mainResult() int {
    http.HandleFunc("/w/", runFile)
    http.HandleFunc("/favicon.ico", runFavicon)
    err = sHttpSrvr.ListenAndServe()
-   if err != http.ErrServerClosed {
-      fmt.Fprintf(os.Stderr, "%s\n", err)
-   }
-
+   if err != http.ErrServerClosed { return 1 }
+   err = nil
    return 0
 }
 
