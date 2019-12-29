@@ -479,12 +479,12 @@
    "Result": null
 },{
    "Updt": {"Op":"notice_seen", "Notice":{"MsgId":"6"}},
+   "Result": null
+},{
+   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["/v", "nl"]}},
    "Result": {
       "/v": [{"Name":"Blue", "NoticeN":0},
-             {"Name":"Gold", "NoticeN":1}] }
-},{
-   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["nl"]}},
-   "Result": {
+             {"Name":"Gold", "NoticeN":1}] ,
       "nl": [{"Type":"i", "MsgId":"6", "Date":"*dyo", "Seen":4, "Alias":"seen"},
              {"Type":"i", "MsgId":"5", "Date":"*dyo", "Seen":4, "Alias":"seen"},
              {"Type":"i", "MsgId":"4", "Date":"*dyo", "Seen":3, "Alias":"keep"},

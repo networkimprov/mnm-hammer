@@ -13,13 +13,19 @@ import (
    "bytes"
    "flag"
    "fmt"
+   "net/http"
+   "io"
+   "io/ioutil"
    "encoding/json"
+   "net"
    "os"
-   pSl "github.com/networkimprov/mnm-hammer/slib"
    "strconv"
    "strings"
    "sync"
    "time"
+   "net/url"
+   pWs "github.com/gorilla/websocket"
+   pSl "github.com/networkimprov/mnm-hammer/slib"
 )
 
 const kTestDateF = "0102150405"
@@ -32,17 +38,12 @@ var sTestCrashOp string
 var sTestCrashSrc, sTestCrashDst string
 var sTestOrderSrc, sTestOrderDst uint64
 
+var sTestWebAddr string
 var sTestOrderN = map[string]*uint64{} // key SvcId, value atomic
-var sTestState []tTestStateEl // used by main.go
 var sTestNow = time.Now().Truncate(time.Second)
 var sTestDate = sTestNow.Format(" "+kTestDateF)
 var sTestDateGid = time.Now().Format(":"+kTestDateF+".000")
 var sTestExit = false
-
-type tTestStateEl struct {
-   svcId, name string
-   state *pSl.ClientState
-}
 
 type tTestClient struct {
    Formspec map[string]interface{} // one for all clients
@@ -75,7 +76,8 @@ type tTestClient struct {
 type tTestContext struct {
    svcId string
    lastId tTestLastId
-   state *pSl.ClientState
+   web *http.Client
+   path, pathSoc string
    wg sync.WaitGroup
 }
 
@@ -109,6 +111,7 @@ func crashTest(iSvc string, iOp string) {
 }
 
 func test() int {
+   sTestWebAddr = sHttpSrvr.Addr; if sTestWebAddr[0] == ':' { sTestWebAddr = "localhost"+ sTestWebAddr }
    aDir := "test-run/" + sTestDate[1:]
    var err error
    var aClients []tTestClient
@@ -156,16 +159,16 @@ func test() int {
          return 33
       }
       time.Sleep(600 * time.Millisecond) // handle msgs pending from -crash run
-      var aTc *tTestClient
       for a := range aClients {
-         sTestState = append(sTestState, tTestStateEl{aClients[a].SvcId, aClients[a].Name,
-                                                      pSl.OpenState(aClients[a].Name, aClients[a].SvcId)})
-         if aClients[a].SvcId == sTestCrashDst {
-            aTc = &aClients[a]
-         }
+         if aClients[a].SvcId != sTestCrashDst { continue }
+         go func(c int) {
+            _runTestClient(&aClients[c], nil)
+            err = sHttpSrvr.Close()
+            if err != nil { quit(err) }
+         }(a)
+         return -1
       }
-      _runTestClient(aTc, nil)
-      return 0
+      quit(tError("SvcId not found: "+ sTestCrashDst))
    }
    if sTestCrash == "init" {
       if !_setupTestDir(aDir, aClients) {
@@ -187,10 +190,7 @@ func test() int {
          return -1
       }
    }
-   for a := range aClients {
-      sTestState = append(sTestState, tTestStateEl{aClients[a].SvcId, aClients[a].Name,
-                                                   pSl.OpenState(aClients[a].Name, aClients[a].SvcId)})
-   }
+
    var aWg sync.WaitGroup
    for a := range aClients {
       aWg.Add(1)
@@ -203,6 +203,7 @@ func test() int {
          sTestExit = true
       } else {
          fmt.Printf("end test pass. http on %s\n", sHttpSrvr.Addr)
+         sTestHost = "" // reenable logging
       }
       if sTestExit {
          err = sHttpSrvr.Close()
@@ -387,22 +388,35 @@ func _findOrder(iClients []tTestClient, iSvc string, iOrder string) (*tTestClien
    return nil, 1e6, tError("order not found")
 }
 
+type tJar []*http.Cookie
+func (o tJar) SetCookies(*url.URL, []*http.Cookie) {}
+func (o tJar) Cookies(*url.URL) []*http.Cookie { return o }
+
 func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    if iWg != nil {
       defer iWg.Done()
    }
-   aSvc := getService(iTc.SvcId)
-   if aSvc.ccs == nil {
-      fmt.Fprintf(os.Stderr, "%s %s client quit; service unknown\n", iTc.Name, iTc.SvcId)
-      return
-   }
    aCtx := tTestContext{
       svcId: iTc.SvcId,
       lastId: tTestLastId{"tl":{}, "al":{}, "ml":{}, "cl":{}, "mn":{}, "ps":{}, "pf":{}},
+      web: &http.Client{Jar: tJar([]*http.Cookie{{Name: "clientid", Value: iTc.Name}})},
+      path: "http://"+ sTestWebAddr +"/"+ url.PathEscape(iTc.SvcId),
+      pathSoc: "ws://"+ sTestWebAddr +"/5/"+ url.PathEscape(iTc.SvcId),
    }
-   for a := range sTestState {
-      if sTestState[a].name == iTc.Name { aCtx.state = sTestState[a].state }
+   aRsp, err := aCtx.web.Get(aCtx.path)
+   if err != nil { quit(err) }
+   _, err = io.Copy(ioutil.Discard, aRsp.Body)
+   if err != nil { quit(err) }
+   aRsp.Body.Close()
+   if aRsp.StatusCode != http.StatusOK {
+      quit(tError("status "+ aRsp.Status +" for "+ aCtx.path))
    }
+   aReq := http.Request{Header:http.Header{}}
+   aReq.AddCookie(aCtx.web.Jar.Cookies(nil)[0])
+   aSoc, _, err := pWs.DefaultDialer.Dial(aCtx.pathSoc, aReq.Header)
+   if err != nil { quit(err) }
+   defer aSoc.Close()
+   var aBuf []byte
 
    for a := range iTc.Orders {
       aUpdt := &iTc.Orders[a].Updt
@@ -411,24 +425,22 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          continue
       }
       atomic.StoreUint64(sTestOrderN[iTc.SvcId], uint64(a))
-      aFn, aToAll := pSl.HandleUpdtService(iTc.SvcId, aCtx.state, aUpdt)
-      if aToAll != nil {
-         toAllClients(aToAll)
+      aBuf, err = json.Marshal(aUpdt)
+      if err != nil { quit(err) }
+      err = aSoc.WriteMessage(pWs.TextMessage, aBuf)
+      if err != nil { quit(err) }
+      if len(iTc.Orders[a].Result) == 0 {
+         continue
       }
+      _, aBuf, err = aSoc.ReadMessage()
+      if err != nil { quit(err) }
       var aOps []string
-      if aFn != nil {
-         aSvc.ccs.Range(func(cC *tWsConn) {
-            cMsg := aFn(cC.state)
-            if cMsg == nil { return }
-            cC.WriteJSON(cMsg)
-         })
-         aOps = aFn(aCtx.state)
-         if aOps[0] == "_e" {
-            fmt.Fprintf(os.Stderr, "%s update error %s\n", aPrefix, aOps[1])
-            continue
-         }
+      err = json.Unmarshal(aBuf, &aOps)
+      if err != nil { quit(err) }
+      if aOps[0] == "_e" {
+         fmt.Fprintf(os.Stderr, "%s update error %s\n", aPrefix, aOps[1])
+         continue
       }
-      aOps = append(aOps, aToAll...)
       for aK, aV := range iTc.Orders[a].Result {
          a1 := 0
          for ; a1 < len(aOps) && aOps[a1] != aK; a1++ {}
@@ -464,6 +476,18 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          *aCtx.lastId["mn"] = tTestAnyId{}
       }
    }
+   err = aSoc.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
+   if err != nil { quit(err) }
+   for {
+      _, aBuf, err = aSoc.ReadMessage()
+      if err != nil {
+         if !err.(net.Error).Timeout() { quit(err) }
+         break
+      }
+      fmt.Printf("%s %s unprompted\n  got    %s\n", iTc.Name, iTc.SvcId, string(aBuf))
+   }
+   err = aSoc.WriteMessage(pWs.CloseMessage, pWs.FormatCloseMessage(pWs.CloseGoingAway, ""))
+   if err != nil { quit(err) }
 }
 
 func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
@@ -611,70 +635,55 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
                      iPrefix string, iSum *int32, iTryN int) {
    defer iCtx.wg.Done()
    var err error
-   var aResult, aMis interface{}
-   var aResp bytes.Buffer
-   var aName string
+   defer func() { if err != nil { fmt.Fprintf(os.Stderr, "%s %s\n  expect %s %v\n",
+                                                         iPrefix, err, iOp, iExpect) } }()
 
-   switch(iOp) {
-   case "/t": aResult = pSl.Upload.GetIdx()
-   case "/f": aResult = pSl.BlankForm.GetIdx()
-   case "/g": aResult = pSl.Tag.GetIdx()
-   case "/v": aResult = pSl.Service.GetIdx()
-   case "cs": aResult = iCtx.state.GetSummary()
-   case "cf": aResult = pSl.GetConfigService(iCtx.svcId)
-   case "nl": aResult = pSl.GetIdxNotice(iCtx.svcId)
-   case "ps": aResult = pSl.GetDraftAdrsbk(iCtx.svcId)
-   case "pt": aResult = pSl.GetSentAdrsbk(iCtx.svcId)
-   case "pf": aResult = pSl.GetReceivedAdrsbk(iCtx.svcId)
-   case "gl": aResult = pSl.GetGroupAdrsbk(iCtx.svcId)
-   case "of": aResult = pSl.GetFromOhi(iCtx.svcId)
-   case "ot": aResult = pSl.GetToOhi(iCtx.svcId)
-   case "cl": aResult = pSl.GetCcThread(iCtx.svcId, iCtx.state)
-   case "al": aResult = pSl.GetIdxAttach(iCtx.svcId, iCtx.state)
-   case "ml": aResult = pSl.GetIdxThread(iCtx.svcId, iCtx.state)
-   case "tl": err     = pSl.WriteResultSearch(&aResp, iCtx.svcId, iCtx.state)
-   case "mo": err     = pSl.WriteMessagesThread(&aResp, iCtx.svcId, iCtx.state, "")
-   case "mn": err     = pSl.WriteMessagesThread(&aResp, iCtx.svcId, iCtx.state, iId)
-   case "fn": err     = pSl.WriteTableFilledForm(&aResp, iCtx.svcId, iId)
-   case "an":
-      var aFi os.FileInfo
-      aFi, err = os.Lstat(pSl.GetPathAttach(iCtx.svcId, iCtx.state, iId))
-      aResult = aFi.Size()
-   default:
-      err = tError("unknown op")
+   aPath := iCtx.path
+   if iOp[0] == '/' {
+      aPath = aPath[:strings.LastIndexByte(aPath, '/')] + iOp +"/"
+   } else {
+      aPath += "?"+ iOp
+      if iId != "" {
+         aPath += "="+ url.QueryEscape(iId)
+      }
    }
-   if err != nil { goto ReturnErr }
-   if aResult != nil {
-      err = json.NewEncoder(&aResp).Encode(aResult)
-      if err != nil { goto ReturnErr }
+   aRsp, err := iCtx.web.Get(aPath)
+   if err != nil { quit(err) }
+   defer aRsp.Body.Close()
+   var aResult bytes.Buffer
+   _, err = io.Copy(&aResult, aRsp.Body)
+   if err != nil { quit(err) }
+   if aRsp.StatusCode != http.StatusOK {
+      err = tError("status "+ aRsp.Status +" for "+ aPath)
+      return
    }
    if iOp == "mn" {
       *iCtx.lastId[iOp] = tTestAnyId{{Id:iId}}
    } else if iOp == "cl" {
       aClPair := [2]tTestAnyId{}
-      err = json.Unmarshal(aResp.Bytes(), &aClPair)
-      if err != nil { goto ReturnErr }
+      err = json.Unmarshal(aResult.Bytes(), &aClPair)
+      if err != nil { return }
       *iCtx.lastId[iOp] = aClPair[0]
-   } else if iOp == "tl" && aResp.Bytes()[0] == '{' {
+   } else if iOp == "tl" && aResult.Bytes()[0] == '{' {
       // nothing to do
    } else if iCtx.lastId[iOp] != nil {
-      err = json.Unmarshal(aResp.Bytes(), iCtx.lastId[iOp])
-      if err != nil { goto ReturnErr }
+      err = json.Unmarshal(aResult.Bytes(), iCtx.lastId[iOp])
+      if err != nil { return }
    }
    if iExpect == nil {
       fmt.Fprintf(os.Stderr, "%s unexpected\n  got    %s %s\n",
-                             iPrefix, iOp, aResp.Bytes())
+                             iPrefix, iOp, aResult.Bytes())
       return
    }
+   var aGot interface{}
    if iOp == "mo" || iOp == "mn" {
-      aResult, err = _parseMessageStream(aResp.Bytes())
+      aGot, err = _parseMessageStream(aResult.Bytes())
    } else {
-      aResult = nil
-      err = json.Unmarshal(aResp.Bytes(), &aResult)
+      err = json.Unmarshal(aResult.Bytes(), &aGot)
    }
-   if err != nil { goto ReturnErr }
+   if err != nil { return }
 
-   aName, aMis = _hasExpected(iOp, iExpect, aResult)
+   aName, aMis := _hasExpected(iOp, iExpect, aGot)
    if aName != "" {
       if iSum == nil || iTryN == 0 {
          aWhat := "mismatch"; if iSum != nil { aWhat = "polling" }
@@ -686,10 +695,6 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
    if iSum != nil {
       atomic.AddInt32(iSum, 1)
    }
-   return
-   ReturnErr:
-      fmt.Fprintf(os.Stderr, "%s %s\n  expect %s %v\n",
-                             iPrefix, err, iOp, iExpect)
 }
 
 func _parseMessageStream(iBuf []byte) ([]interface{}, error) {

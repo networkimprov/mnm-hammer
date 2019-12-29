@@ -54,7 +54,7 @@ const (
    eOpEnd
 )
 
-var sHttpSrvr http.Server
+var sHttpSrvr = http.Server{Addr: ":http"}
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]tService)
 var sServiceTmpl *template.Template
@@ -83,10 +83,13 @@ func mainResult() int {
 
    sServices["local"] = tService{ccs: newClientConns()}
 
+   if sTestHost != "" && sHttpSrvr.Addr == ":http" {
+      sHttpSrvr.Addr = ":8123"
+   }
+   aLsn, err := net.Listen("tcp", sHttpSrvr.Addr)
+   if err != nil { return 1 }
+
    if sTestHost != "" {
-      if sHttpSrvr.Addr == "" {
-         sHttpSrvr.Addr = ":8123"
-      }
       if aRes := test(); aRes >= 0 {
          return aRes
       }
@@ -109,9 +112,11 @@ func mainResult() int {
    http.HandleFunc("/v/", runGlobal)
    http.HandleFunc("/g/", runGlobal)
    http.HandleFunc("/s/", runWebsocket)
+   http.HandleFunc("/5/", runWebsocket) // test clients
    http.HandleFunc("/w/", runFile)
    http.HandleFunc("/favicon.ico", runFavicon)
-   err = sHttpSrvr.ListenAndServe()
+
+   err = sHttpSrvr.Serve(aLsn)
    if err != http.ErrServerClosed { return 1 }
    err = nil
    return 0
@@ -159,7 +164,9 @@ func toAllClients(iMsg interface{}) {
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
    for _, aV := range sServices {
       aV.ccs.Range(func(cC *tWsConn) {
-         cC.WriteMessage(pWs.TextMessage, aJson)
+         if !cC.test {
+            cC.WriteMessage(pWs.TextMessage, aJson)
+         }
       })
    }
 }
@@ -331,7 +338,9 @@ func runTmtpRecv(iSvcId string) {
             break
          }
          aSvc.ccs.Range(func(c *tWsConn) {
-            c.WriteJSON(pSl.ErrorService(err))
+            if !c.test {
+               c.WriteJSON(pSl.ErrorService(err))
+            }
          })
          fmt.Fprintf(os.Stderr, "runTmtpRecv %s: %s\n", iSvcId, err.Error())
          if aWait > kDialRetryDelayMax { aWait = kDialRetryDelayMax }
@@ -352,7 +361,9 @@ func runTmtpRecv(iSvcId string) {
 
       aLogoutMsg := pSl.LogoutService(iSvcId)
       aSvc.ccs.Range(func(c *tWsConn) {
-         c.WriteJSON(aLogoutMsg)
+         if !c.test {
+            c.WriteJSON(aLogoutMsg)
+         }
       })
       if err != nil {
          fmt.Fprintf(os.Stderr, "runTmtpRecv %s: %s\n", iSvcId, err)
@@ -380,13 +391,11 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) error {
          toAllClients(cToAll)
       }
       if cFn != nil {
-         for _, aStEl := range sTestState {
-            if aStEl.svcId == iSvcId { cFn(aStEl.state) }
-         }
          aSvc.ccs.Range(func(cC *tWsConn) {
             cMsg := cFn(cC.state)
-            if cMsg == nil { return }
-            cC.WriteJSON(cMsg)
+            if !cC.test && cMsg != nil {
+               cC.WriteJSON(cMsg)
+            }
          })
       }
    }
@@ -547,7 +556,9 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          copy(aOp_Id, strings.SplitN(aQuery, "=", 2))
       }
    }
-   fmt.Printf("runService %s: op %s id %s\n", aSvcId, aOp_Id[0], aCid)
+   if sTestHost == "" {
+      fmt.Printf("runService %s: op %s id %s\n", aSvcId, aOp_Id[0], aCid)
+   }
    var aResult interface{}
 
    switch aOp_Id[0] {
@@ -711,18 +722,22 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
    }
    aSock, err := kWsInit.Upgrade(iResp, iReq, nil)
    if err != nil { panic(err) }
-   aSvc.ccs.Set(aClientId.Value, &tWsConn{conn: aSock, state: aState})
+   aSvc.ccs.Set(aClientId.Value, &tWsConn{conn: aSock, state: aState, test: iReq.URL.Path[1] == '5'})
 
    for {
       _, aJson, err := aSock.ReadMessage()
       if err != nil {
-         fmt.Fprintf(os.Stderr, "runWebsocket %s: readmsg: %s\n", aSvcId, err.Error())
+         if sTestHost == "" || !pWs.IsCloseError(err, pWs.CloseGoingAway) {
+            fmt.Fprintf(os.Stderr, "runWebsocket %s: readmsg: %s\n", aSvcId, err.Error())
+         }
          if strings.HasSuffix(err.Error(), "use of closed network connection") {
             return // don't .Drop(aClientId.Value)
          }
          break
       }
-      fmt.Printf("runWebsocket %s: msg %s\n", aSvcId, string(aJson))
+      if sTestHost == "" {
+         fmt.Printf("runWebsocket %s: msg %s\n", aSvcId, string(aJson))
+      }
 
       var aUpdate pSl.Update
       err = json.Unmarshal(aJson, &aUpdate)
@@ -734,8 +749,9 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
       if aFn != nil {
          aSvc.ccs.Range(func(cC *tWsConn) {
             cMsg := aFn(cC.state)
-            if cMsg == nil { return }
-            cC.WriteJSON(cMsg)
+            if cMsg != nil {
+               cC.WriteJSON(cMsg)
+            }
          })
       }
    }
@@ -784,6 +800,7 @@ type tWsConn struct {
    sync.Mutex // protect conn.WriteMessage/JSON()
    conn *pWs.Conn
    state *pSl.ClientState
+   test bool
 }
 
 func (o *tWsConn) WriteMessage(iT int, iB []byte) {
