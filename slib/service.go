@@ -15,6 +15,7 @@ import (
    "sort"
    "strings"
    "sync"
+   "time"
    "net/url"
 )
 
@@ -39,7 +40,26 @@ type tSvcConfig struct {
    Uid string
    Alias string
    Node string
+   NodeSet []tNode
    Error string `json:",omitempty"` // from "registered" message
+}
+
+type tNode struct {
+   Name string
+   Status byte
+   Local bool    `json:",omitempty"`
+   Qid string    `json:",omitempty"`
+   NodeId string `json:",omitempty"`
+}
+
+const ( eNodePending = 'p'; eNodeSent = 's'; eNodeAllowed = 'l'
+        eNodeReady = 'r'; eNodeActive = 'a'; eNodeDefunct = 'd' )
+
+func (o *tSvcConfig) findNode(i string) int {
+   for a := range o.NodeSet {
+      if o.NodeSet[a].Name == i { return a }
+   }
+   return -1
 }
 
 func initServices(iSs func(string), iMts func(string, *Header)) {
@@ -105,6 +125,11 @@ func _openService(iSvc string) *tService {
       }
    }
    aService.index = openIndexSearch(&aService.config)
+   if len(aService.config.NodeSet) == 0 { //todo drop in 0.8
+      aService.config.NodeSet = []tNode{{Name:"first", Status:eNodeActive, Local:true}}
+      err := storeFile(fileCfg(iSvc), &aService.config)
+      if err != nil { quit(err) }
+   }
    return aService
 }
 
@@ -138,9 +163,14 @@ func (tGlobalService) GetPath(string) string {
    return ""
 }
 
+func (tGlobalService) Drop(iName string) error {
+   return tError("Drop not supported")
+}
+
 func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    var err error
-   aCfg := tSvcConfig{HistoryLen:kServiceHistoryMax}
+   aCfg := tSvcConfig{HistoryLen:kServiceHistoryMax,
+                      NodeSet: []tNode{{Name:"first", Status:eNodeActive, Local:true}}}
    err = json.NewDecoder(iR).Decode(&aCfg)
    if err != nil { return err } // todo only network errors
 
@@ -148,7 +178,7 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
       return tError("duplicate disallowed")
    }
    if iName != aCfg.Name || !checkNameService(iName) {
-      return tError("name not valid: " + iName)
+      return tError("name not valid: "+ iName)
    }
    if aCfg.Addr[0] != '+' && aCfg.Addr[0] != '=' {
       return tError("address missing +/= prefix")
@@ -159,9 +189,15 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    sServicesDoor.Lock()
    if sServices[iName] != nil {
       sServicesDoor.Unlock()
-      return tError("name already exists: " + iName)
+      return tError("account already exists: "+ iName)
    }
    aTemp := iName + ".tmp"
+   err = os.Mkdir(dirSvc(aTemp), 0700)
+   if err != nil {
+      if !os.IsExist(err) { quit(err) }
+      sServicesDoor.Unlock()
+      return tError("account in progress: "+ iName)
+   }
    makeTreeService(aTemp)
    err = writeJsonFile(fileCfg(aTemp), &aCfg)
    if err != nil { quit(err) }
@@ -178,8 +214,29 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    return nil
 }
 
-func (tGlobalService) Drop(iName string) error {
-   return tError("Drop not supported")
+func addNodeService(iName, iPath string) error {
+   sServicesDoor.Lock()
+   if sServices[iName] != nil {
+      err := os.Rename(iPath, dirSvc(iName +".tmp"))
+      if err != nil {
+         if !os.IsNotExist(err) { quit(err) }
+      } else {
+         err = os.RemoveAll(dirSvc(iName +".tmp"))
+         if err != nil { quit(err) }
+      }
+      sServicesDoor.Unlock()
+      return tError("account already exists: "+ iName)
+   }
+   err := os.Rename(iPath, dirSvc(iName))
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+      sServicesDoor.Unlock()
+      return tError("path does not exist: "+ iPath)
+   }
+   sServices[iName] = _openService(iName)
+   sServicesDoor.Unlock()
+   sServiceStartFn(iName)
+   return nil
 }
 
 func getService(iSvc string) *tService {
@@ -194,6 +251,7 @@ func GetConfigService(iSvc string) *tSvcConfig {
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    aCfg := aSvc.config
+   aCfg.NodeSet = append([]tNode{}, aCfg.NodeSet...)
    return &aCfg
 }
 
@@ -201,6 +259,24 @@ func GetCfService(iSvc string) interface{} {
    aCfg := GetConfigService(iSvc)
    aV := "="; if aCfg.Verify { aV = "+" }
    aCfg.Addr = aV + aCfg.Addr
+   return aCfg
+}
+
+func GetCnService(iSvc string) interface{} {
+   aSvc := getService(iSvc)
+   return aSvc.toNode
+}
+
+func makeNodeConfigService(iSvc string, iNode *tNode) *tSvcConfig {
+   aCfg := GetConfigService(iSvc)
+   aCfg.Node = iNode.NodeId
+   for a := range aCfg.NodeSet {
+      aCfg.NodeSet[a].Local = aCfg.NodeSet[a].Name == iNode.Name
+      if aCfg.NodeSet[a].Local {
+         aCfg.NodeSet[a].Status = eNodeActive
+         aCfg.NodeSet[a].NodeId = ""
+      }
+   }
    return aCfg
 }
 
@@ -257,6 +333,7 @@ func _updateConfig(iCfg *tSvcConfig) error {
    }
    aSvc.Lock(); defer aSvc.Unlock()
    aSvc.config = *iCfg
+   aSvc.config.NodeSet = append([]tNode{}, iCfg.NodeSet...)
    err = storeFile(fileCfg(iCfg.Name), iCfg)
    if err != nil { quit(err) }
    return nil
@@ -294,6 +371,7 @@ func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
    case eSrecThread: aFn = sendDraftThread
    case eSrecFwd:    aFn = sendFwdDraftThread
    case eSrecCfm:    aFn = sendFwdConfirmThread
+   case eSrecNode:   aFn = sendUserEditNode
    default:
       quit(tError("unknown op " + iSrec.Id[:1]))
    }
@@ -338,10 +416,58 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       }
       aFn, aResult = fAll, []string{"cf"}
    case "login":
-      aFn, aResult = fAll, []string{"_e", "login by "+ iHead.Node}
+      fmt.Printf("HandleTmtpService %s: login %s\n", iSvc, iHead.Node)
    case "info":
       setFromOhi(iSvc, iHead)
       aFn, aResult = fAll, []string{"of"}
+   case "user":
+      if iHead.NewAlias != "" { break } //todo
+      aCfg := GetConfigService(iSvc)
+      a := aCfg.findNode(iHead.NewNode)
+      if a >= 0 {
+         if aCfg.NodeSet[a].Status != eNodePending &&
+            aCfg.NodeSet[a].Status != eNodeSent {
+            fmt.Fprintf(os.Stderr, "HandleTmtpService %s: user node %s already '%c'\n",
+                                   iSvc, iHead.NewNode, aCfg.NodeSet[a].Status)
+            break
+         }
+         go func(cQid, cNewNode, cNodeId string) { // start "_node" after ack received
+            for c := 70; hasQueue(iSvc, eSrecNode, cQid); c += c/2 {
+               if c > 2000 { c = 2000 }
+               time.Sleep(time.Duration(c) * time.Millisecond)
+               //todo break on dropped service connection
+            }
+            sMsgToSelfFn(iSvc, &Header{Op:"_node", NewNode:cNewNode, NodeId:cNodeId})
+         }(aCfg.NodeSet[a].Qid, iHead.NewNode, iHead.NodeId)
+         aCfg.NodeSet[a].Status = eNodeAllowed
+         aCfg.NodeSet[a].Qid = ""
+         aCfg.NodeSet[a].NodeId = iHead.NodeId
+      } else {
+         aCfg.NodeSet = append(aCfg.NodeSet, tNode{Name:iHead.NewNode, Status:eNodeActive})
+         a = len(aCfg.NodeSet) - 1
+         if a > 0 && (aCfg.NodeSet[a-1].Status == eNodePending ||
+                      aCfg.NodeSet[a-1].Status == eNodeSent) {
+            aCfg.NodeSet[a], aCfg.NodeSet[a-1] = aCfg.NodeSet[a-1], aCfg.NodeSet[a]
+         }
+      }
+      _updateConfig(aCfg)
+      aFn, aResult = fAll, []string{"cf"}
+   case "_node": // via sMsgToSelfFn
+      aCfg := GetConfigService(iSvc)
+      a := aCfg.findNode(iHead.NewNode)
+      if a < 0 {
+         quit(tError("_node message for unknown Newnode: "+ iHead.NewNode))
+      }
+      err = replicateNode(iSvc, &aCfg.NodeSet[a])
+      if err != nil { return fErr, nil }
+      aCfg.NodeSet[a].Status = eNodeReady
+      _updateConfig(aCfg)
+      err = completeNode(iSvc, nil, &aCfg.NodeSet[a])
+      if err != nil { return fErr, nil }
+      aCfg.NodeSet[a].Status = eNodeActive
+      aCfg.NodeSet[a].NodeId = ""
+      _updateConfig(aCfg)
+      aFn, aResult = fAll, []string{"cf", "cn"}
    case "ohi":
       updateFromOhi(iSvc, iHead)
       aFn, aResult = fAll, []string{"of"}
@@ -404,6 +530,22 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       iHead.Id = iHead.Id[1:]
       aId := parseLocalId(iHead.Id)
       switch aQid[0] {
+      case eSrecNode:
+         if iHead.Error != "" {
+            aFn, aResult = fAll, []string{"_e", iHead.Error}
+         } else {
+            aCfg := GetConfigService(iSvc)
+            a := aCfg.findNode(aId.info())
+            if a < 0 {
+               quit(tError("ack for unknown node: "+ aId.info()))
+            }
+            if aCfg.NodeSet[a].Status == eNodePending {
+               aCfg.NodeSet[a].Status = eNodeSent
+               _updateConfig(aCfg)
+               aFn, aResult = fAll, []string{"cf"}
+            }
+         }
+         dropQueue(iSvc, aQid)
       case eSrecPing:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"ps", "_e", iHead.Error}
@@ -491,19 +633,23 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    fErr := func(c *ClientState) []string { if c != iState { return nil }
                                            return []string{"_e", iUpdt.Op +" "+ err.Error()} }
 
-   if iSvc == "local" && iUpdt.Op != "open" {
-      err = tError("not supported")
-      return fErr, nil
+   if iUpdt.Op != "open" {
+      if iSvc == "local" {
+         err = tError("not supported")
+         return fErr, nil
+      }
+      aSvc := getService(iSvc)
+      aSvc.updt.RLock(); defer aSvc.updt.RUnlock() //todo use TryRLock()
    }
 
    switch iUpdt.Op {
    case "open":
       if iSvc == "local" {
-         aFn, aResult = fOne, []string{"/v", "/t", "/f", "/g"}
+         aFn, aResult = fOne, []string{"/v", "/t", "/f", "/g", "/l"}
       } else {
-         aFn, aResult = fOne, []string{"cf", "of", "ot", "ps", "pt", "pf", "gl",
+         aFn, aResult = fOne, []string{"cf", "cn", "of", "ot", "ps", "pt", "pf", "gl",
                                        "tl", "cs", "cl", "al", "_t", "ml", "mo",
-                                       "/v", "/t", "/f", "/g"}
+                                       "/v", "/t", "/f", "/g", "/l"}
       }
    case "config_update":
       aNewCfg := GetConfigService(iSvc)
@@ -680,6 +826,33 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    case "sort_select":
       iState.setSort(iUpdt.Sort.Type, iUpdt.Sort.Field)
       aFn, aResult = fOne, []string{"cs"}
+   case "node_add":
+      aCfg := GetConfigService(iSvc)
+      a := aCfg.findNode(iUpdt.Node.Newnode)
+      aIsNew := a < 0
+      if aIsNew {
+         a = len(aCfg.NodeSet)
+         aCfg.NodeSet = append(aCfg.NodeSet, tNode{Name:iUpdt.Node.Newnode, Status:eNodePending,
+                                                   Qid:makeLocalId(iUpdt.Node.Newnode)})
+         _updateConfig(aCfg)
+      }
+      if aCfg.NodeSet[a].Status != eNodeReady {
+         err = createNode(iSvc, iUpdt, &aCfg.NodeSet[a])
+         if err != nil {
+            if aIsNew {
+               aCfg.NodeSet = aCfg.NodeSet[:a]
+               _updateConfig(aCfg)
+            }
+            return fErr, nil
+         }
+      } else {
+         err = completeNode(iSvc, iUpdt, &aCfg.NodeSet[a])
+         if err != nil { return fErr, nil }
+         aCfg.NodeSet[a].Status = eNodeActive
+         aCfg.NodeSet[a].NodeId = ""
+         _updateConfig(aCfg)
+      }
+      aFn, aResult = fAll, []string{"cf", "cn"}
    case "test":
       if len(iUpdt.Test.Request) > 0 {
          if iUpdt.Test.ThreadId != "" {

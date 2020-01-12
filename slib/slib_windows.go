@@ -30,3 +30,4 @@ func getInode(iDir string, iFi os.FileInfo) (uint64, error) {
 // hopefully that is equivalent to fsync() of a directory in unix
 
 func syncDir(string) error { return nil }
+func syncTree(string) error { return nil }

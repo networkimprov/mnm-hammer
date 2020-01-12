@@ -39,6 +39,7 @@ var sTestCrashSrc, sTestCrashDst string
 var sTestOrderSrc, sTestOrderDst uint64
 
 var sTestWebAddr string
+var sTestNodePin string
 var sTestOrderN = map[string]*uint64{} // key SvcId, value atomic
 var sTestNow = time.Now().Truncate(time.Second)
 var sTestDate = sTestNow.Format(" "+kTestDateF)
@@ -70,6 +71,7 @@ type tTestClient struct {
       Updt pSl.Update
       Result map[string]interface{}
       Name string
+      Client *struct { Name, SvcId string }
    }
 }
 
@@ -224,6 +226,9 @@ func _setupTestDir(iDir string, iClients []tTestClient) bool {
    if err != nil { quit(err) }
 
    pSl.Init(StartService, MsgToSelf, crashTest)
+   pSl.ListenNode()
+   aPin := pSl.GetPinNode(sNetAddr)
+   sTestNodePin = aPin.Pin
 
    var aTc *tTestClient
    var aBuf bytes.Buffer
@@ -419,12 +424,22 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    var aBuf []byte
 
    for a := range iTc.Orders {
+      if sTestOrderN[iTc.SvcId] != nil {
+         atomic.StoreUint64(sTestOrderN[iTc.SvcId], uint64(a))
+      }
+      if iTc.Orders[a].Client != nil {
+         aCl := iTc.Orders[a].Client
+         iTc.Orders[a].Client = nil
+         aTc := tTestClient{Name:aCl.Name, SvcId:aCl.SvcId, Orders:iTc.Orders[a:a+1]}
+         iWg.Add(1)
+         go _runTestClient(&aTc, iWg)
+         continue
+      }
       aUpdt := &iTc.Orders[a].Updt
       aPrefix := fmt.Sprintf("%s %s %s", iTc.Name, iTc.SvcId, aUpdt.Op)
       if !_prepUpdt(aUpdt, &aCtx, aPrefix) {
          continue
       }
-      atomic.StoreUint64(sTestOrderN[iTc.SvcId], uint64(a))
       aBuf, err = json.Marshal(aUpdt)
       if err != nil { quit(err) }
       err = aSoc.WriteMessage(pWs.TextMessage, aBuf)
@@ -496,6 +511,17 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
    case "config_update":
       if iUpdt.Config.Addr == "orig" {
          iUpdt.Config.Addr = "=" + sTestHost
+      }
+   case "node_add":
+      if iUpdt.Node.Addr == "localhost" {
+         if sHttpSrvr.Addr[0] == ':' {
+            iUpdt.Node.Addr += sHttpSrvr.Addr
+         } else {
+            iUpdt.Node.Addr = sHttpSrvr.Addr
+         }
+      }
+      if iUpdt.Node.Pin == "localpin" {
+         iUpdt.Node.Pin = sTestNodePin
       }
    case "thread_save":
       if iUpdt.Thread.Alias != "" {
@@ -739,6 +765,14 @@ func _hasExpected(iName string, iExpect, iGot interface{}) (string, interface{})
    switch aExpect := iExpect.(type) {
    case string:
       if aExpect == "**" { break }
+      if len(aExpect) >= 2 && aExpect[0] == '>' {
+         aGot, ok := iGot.(float64)
+         if ok {
+            aF, err := strconv.ParseFloat(aExpect[1:], 64)
+            if err != nil || aGot <= aF { return iName, iGot }
+            break
+         }
+      }
       aGot, ok := iGot.(string)
       if !ok { return iName, iGot }
       if aExpect == "*d" {

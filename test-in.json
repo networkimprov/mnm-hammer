@@ -21,7 +21,8 @@
       "/g": [{"Name":"Todo", "Id":"Todo"},
              {"Name":"flag", "Id":"*d"  }] ,
       "/v": [{"Name":"Blue", "NoticeN":0},
-             {"Name":"Gold", "NoticeN":0}] }
+             {"Name":"Gold", "NoticeN":0}] ,
+      "/l": {"Addr":"*", "Pin":"*"} }
 }]
 
 },{
@@ -438,6 +439,7 @@
              {"Name":"flag", "Id":"*d"  }] ,
       "/v": [{"Name":"Blue", "NoticeN":1},
              {"Name":"Gold", "NoticeN":1}] ,
+      "/l": {"Addr":"*", "Pin":"*"} ,
       "of": [{"Alias":"Gold#td", "Uid":"*uid", "Date":"*d"}] ,
       "ot": [] ,
       "ps": [] ,
@@ -450,23 +452,77 @@
               "ResponseInvt":{"Type":9, "Date":"*d", "Gid":"Gold-G#tdg"}}] ,
       "gl": [{"Gid":"Gold-G#tdg", "Date":"*d", "Admin":false}] ,
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
-             "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} ,
+             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+             "NodeSet":[{"Name":"first", "Status":97, "Local":true}] } ,
+      "cn": {"Addr":"", "Pin":"", "Xfer":0} ,
       "ml": "navigate_history.a" ,
       "cl": "navigate_history.a" ,
       "al": "navigate_history.a" ,
       "mo": "navigate_history.a" ,
       "tl": "poll_delivery.a" ,
-      "cs": "sort_select.a" }
+      "cs": "sort_select.a" },
+   "Name": "open.a"
+},{
+   "Updt": {"Op":"node_add", "Node":{"Addr":"localhost", "Pin":"localpin", "Newnode":"n1"}},
+   "Result": {
+      "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
+             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+             "NodeSet":[{"Name":"first", "Status":97, "Local":true},
+                        {"Name":"n1", "Status":112, "Qid":"*"}] } ,
+      "cn": {"Addr":"localhost:8123", "Pin":"*", "Xfer":0} }
+},{
+   "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["cf", "cn"]}},
+   "Result": {
+      "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
+             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+             "NodeSet":[{"Name":"first", "Status":97, "Local":true},
+                        {"Name":"n1", "Status":97}] } ,
+      "cn": {"Addr":"localhost:8123", "Pin":"*", "Xfer":">138300"} }
+},{
+   "Client": {"Name":"Blue2", "SvcId":"Blue.n1"},
+   "Updt": {"Op":"open"},
+   "Result": {
+      "/t": "open.a" ,
+      "/f": "open.a" ,
+      "/g": "open.a" ,
+      "/v": [{"Name":"Blue",    "NoticeN":1},
+             {"Name":"Blue.n1", "NoticeN":1},
+             {"Name":"Gold",    "NoticeN":1}] ,
+      "/l": "open.a" ,
+      "of": "open.a" ,
+      "ot": "open.a" ,
+      "ps": "open.a" ,
+      "pt": "open.a" ,
+      "pf": "open.a" ,
+      "gl": "open.a" ,
+      "cf": {"Name":"Blue.n1", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
+             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+             "NodeSet":[{"Name":"first", "Status":97},
+                        {"Name":"n1", "Status":97, "Local":true}] } ,
+      "cn": "open.a" ,
+      "ml": [] ,
+      "cl": [[], []] ,
+      "al": [] ,
+      "mo": [] ,
+      "tl": "open.a" ,
+      "cs": {"Thread":"none",
+             "History":{"Prev":false, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[{"Term":"-- -+ohi +"}], "Type":1},
+             "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"config_update", "Config":{"HistoryLen":88, "LoginPeriod":99}},
    "Result": {
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":88, "LoginPeriod":99, "Addr":"*", "Verify":"**",
-             "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} }
+             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+             "NodeSet":[{"Name":"first", "Status":97, "Local":true},
+                        {"Name":"n1", "Status":97}] } }
 },{
    "Updt": {"Op":"config_update", "Config":{"Addr":"orig", "LoginPeriod":0}},
    "Result": {
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":88, "LoginPeriod":0, "Addr":"*", "Verify":"**",
-             "Uid":"*uid", "Alias":"Blue#td", "Node":"*"} }
+             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+             "NodeSet":[{"Name":"first", "Status":97, "Local":true},
+                        {"Name":"n1", "Status":97}] } }
 },{
    "Updt": {"Op":"test", "Test":{"Notice":[
                  {"Type":"i", "MsgId":"0", "Date":"-9", "Seen":1, "Alias":"discard"},
@@ -484,6 +540,7 @@
    "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["/v", "nl"]}},
    "Result": {
       "/v": [{"Name":"Blue", "NoticeN":0},
+             {"Name":"Blue.n1", "NoticeN":1},
              {"Name":"Gold", "NoticeN":1}] ,
       "nl": [{"Type":"i", "MsgId":"6", "Date":"*dyo", "Seen":4, "Alias":"seen"},
              {"Type":"i", "MsgId":"5", "Date":"*dyo", "Seen":4, "Alias":"seen"},

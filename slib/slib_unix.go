@@ -27,3 +27,19 @@ func syncDir(iPath string) error {
    aFd.Close()
    return err
 }
+
+func syncTree(iPath string) error {
+   if iPath[len(iPath)-1] == '/' {
+      iPath = iPath[:len(iPath)-1]
+   }
+   err := syncDir(iPath)
+   if err != nil { return err }
+   aDir, err := readDirFis(iPath)
+   if err != nil { return err }
+   for _, aFi := range aDir {
+      if !aFi.IsDir() { continue }
+      err = syncTree(iPath +"/"+ aFi.Name())
+      if err != nil { return err }
+   }
+   return nil
+}

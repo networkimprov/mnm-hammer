@@ -130,6 +130,10 @@
       _wsSend({op:'sort_select', sort:{type:iType, field:iField}})
    };
 
+   mnm.NodeAdd = function(iAddr, iPin, iNewnode) {
+      _wsSend({op:'node_add', node:{addr:iAddr, pin:iPin, newnode:iNewnode}})
+   };
+
    mnm.FormOpen = function(iId) {
       _xhr('/f', iId);
    };

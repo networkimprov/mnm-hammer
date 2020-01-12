@@ -68,6 +68,46 @@ func GetPathAttach(iSvc string, iState *ClientState, iFile string) string {
    return fileAtc(iSvc, iState.getThread(), iFile[:aDel], iFile[aDel+1:])
 }
 
+type tPathInode struct {
+   path string
+   inode uint64
+   size int64
+   modtime time.Time
+}
+
+func getAllAttach(iSvc string) []tPathInode {
+   aDir, err := readDirNames(dirAttach(iSvc))
+   if err != nil { quit(err) }
+   aList := make([]tPathInode, 0, 2*len(aDir)) //todo find average attachments/thread
+   for a := range aDir {
+      var aSub []os.FileInfo
+      aSub, err = readDirFis(dirAttach(iSvc) + aDir[a])
+      if err != nil { quit(err) }
+      for _, aFi := range aSub {
+         var aId uint64
+         aId, err = getInode(dirAttach(iSvc) + aDir[a], aFi)
+         if err != nil { quit(err) }
+         aList = append(aList, tPathInode{aDir[a] +"/"+ aFi.Name(), aId, aFi.Size(), aFi.ModTime()})
+      }
+   }
+   sort.Slice(aList, func(cA, cB int)bool { return aList[cA].inode < aList[cB].inode })
+
+   aDirUp, err := readDirFis(kUploadDir)
+   if err != nil { quit(err) }
+   for _, aFi := range aDirUp {
+      var aId uint64
+      aId, err = getInode(kUploadDir, aFi)
+      if err != nil { quit(err) }
+      aPos := sort.Search(len(aList), func(c int)bool { return aList[c].inode >= aId })
+      if aPos < len(aList) && aList[aPos].inode == aId {
+         aList = append(aList, tPathInode{})
+         copy(aList[aPos+1:], aList[aPos:])
+         aList[aPos] = tPathInode{kNodeFlagUpload + aFi.Name(), aId, aFi.Size(), aFi.ModTime()}
+      }
+   }
+   return aList
+}
+
 func sizeDraftAttach(iSvc string, iSubHead *tHeader2, iId tLocalId) int64 {
    aTid := iId.tid(); if aTid == "" { aTid = "_" + iId.lms() }
    var aTotal int64

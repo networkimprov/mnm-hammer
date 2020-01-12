@@ -30,6 +30,7 @@ const kUploadDir  = kStorageDir + "upload/"
 const kUploadTmp  = kUploadDir  + "temp/"
 const kFormDir    = kStorageDir + "form/"
 const kFormRegDir = kStorageDir + "reg-cache/"
+const kTempDir    = kStorageDir + "temp/"
 
 func fileState(iCli, iSvc string) string { return kStateDir + iCli +"/"+ url.QueryEscape(iSvc) }
 
@@ -38,8 +39,11 @@ func fileUptmp (iFil string) string { return kUploadTmp + url.QueryEscape(iFil) 
 
 func fileFormReg(iFfn string) string { return kFormRegDir + url.QueryEscape(iFfn) }
 
+func fileTemp(iFil string) string { return kTempDir + url.QueryEscape(iFil) }
+
 func dirSvc(iSvc string) string { return kServiceDir + url.QueryEscape(iSvc) + "/" }
 
+// node.go uses some of these literals
 func dirTemp  (iSvc string) string { return dirSvc(iSvc) + "temp/" }
 func dirThread(iSvc string) string { return dirSvc(iSvc) + "thread/" }
 func dirAttach(iSvc string) string { return dirSvc(iSvc) + "attach/" }
@@ -96,8 +100,10 @@ type GlobalSet interface {
 }
 
 type tService struct {
+   updt sync.RWMutex // protect entire service during node replication
    adrsbk tAdrsbk
    index pBleve.Index
+   toNode tToNode
    sync.RWMutex // protects the following
    config tSvcConfig
    sendQ []*tQueueEl
@@ -119,14 +125,14 @@ type Header struct {
    Error string
    Id, MsgId, PostId string
    Uid, NodeId string
-   Node string
+   NewNode, Node string
    Info string
    Ohi []string
    From string
    Posted string
    To string
    Gid string
-   Alias string
+   NewAlias, Alias string
    Act string
    Status int8
    Notify uint16
@@ -241,6 +247,11 @@ type Update struct {
       Type string
       Field string
    }
+   Node *struct {
+      Addr string
+      Pin string
+      Newnode string
+   }
    Test *UpdateTest
 }
 
@@ -258,6 +269,7 @@ type SendRecord struct {
 const (
    eSrecThread = 't'; eSrecFwd = 'f'; eSrecCfm = 'c'
    eSrecPing = 'p'; eSrecOhi = 'o'; eSrecAccept = 'a'
+   eSrecNode = 'n'
 )
 
 type Msg map[string]interface{}
@@ -265,7 +277,7 @@ type Msg map[string]interface{}
 
 func Init(iStart func(string), iMts func(string, *Header), iCrash func(string, string)) {
    sCrashFn = iCrash
-   for _, aDir := range [...]string{kUploadTmp, kServiceDir, kStateDir, kFormDir, kFormRegDir} {
+   for _, aDir := range [...]string{kUploadTmp, kServiceDir, kStateDir, kFormDir, kFormRegDir, kTempDir} {
       err := os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
    }
@@ -318,6 +330,7 @@ func (o tLocalId)  ping() string { return o[0] }
 func (o tLocalId)   gid() string { return o[0] }
 func (o tLocalId)   ohi() string { return o[0] }
 func (o tLocalId)   tid() string { return o[0] }
+func (o tLocalId)  info() string { return o[0] } //todo replace others with this?
 func (o tLocalId)   lms() string { return o[1] }
 
 type tCrcWriter struct { sum uint32 }

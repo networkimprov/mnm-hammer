@@ -58,7 +58,7 @@ var sHttpSrvr = http.Server{Addr: ":http"}
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]tService)
 var sServiceTmpl *template.Template
-
+var sNetAddr string
 
 func init() {
    flag.StringVar(&sHttpSrvr.Addr, "http", sHttpSrvr.Addr, "[host]:port of http server")
@@ -82,6 +82,7 @@ func mainResult() int {
    defer func() { if err != nil { fmt.Fprintf(os.Stderr, "mainResult: %v\n", err) } }()
 
    sServices["local"] = tService{ccs: newClientConns()}
+   sNetAddr = _getNetAddress()
 
    if sTestHost != "" && sHttpSrvr.Addr == ":http" {
       sHttpSrvr.Addr = ":8123"
@@ -107,6 +108,8 @@ func mainResult() int {
 
    http.HandleFunc("/"  , runService)
    http.HandleFunc("/a/", runAbout)
+   http.HandleFunc("/l/", runNodeListen)
+   http.HandleFunc("/n/", runNodeRecv)
    http.HandleFunc("/t/", runGlobal)
    http.HandleFunc("/f/", runGlobal)
    http.HandleFunc("/v/", runGlobal)
@@ -573,6 +576,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       err = sServiceTmpl.Execute(iResp, aParams)
    case "cs": aResult = aState.GetSummary()
    case "cf": aResult = pSl.GetCfService(aSvcId)
+   case "cn": aResult = pSl.GetCnService(aSvcId)
    case "nl": aResult = pSl.GetIdxNotice(aSvcId)
    case "ps": aResult = pSl.GetDraftAdrsbk(aSvcId)
    case "pt": aResult = pSl.GetSentAdrsbk(aSvcId)
@@ -627,6 +631,44 @@ type tAbout struct { Version, VersionDate, HttpAddr string }
 func getAbout() *tAbout {
    return &tAbout{ fmt.Sprintf("%d.%d.%d", kVersionA, kVersionB, kVersionC),
                    kVersionDate, sHttpSrvr.Addr }
+}
+
+func runNodeListen(iResp http.ResponseWriter, iReq *http.Request) {
+   if iReq.Method == "POST" {
+      aToAll := pSl.ListenNode()
+      toAllClients(aToAll)
+   } else {
+      err := json.NewEncoder(iResp).Encode(pSl.GetPinNode(sNetAddr))
+      if err != nil { fmt.Fprintf(os.Stderr, "runListen: %v\n", err) }
+   }
+}
+
+func runNodeRecv(iResp http.ResponseWriter, iReq *http.Request) {
+   // network peer is a separate mnm app instance
+   aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
+   if err != nil || !pSl.CheckPinNode(aQuery) {
+      iResp.WriteHeader(http.StatusForbidden)
+      return
+   }
+   if iReq.Method == "GET" {
+      if len(iReq.URL.Path) > 3 {
+         aToAll := pSl.StartNode(iReq.URL.Path[3:])
+         if aToAll == nil {
+            iResp.WriteHeader(http.StatusNotFound)
+            return
+         }
+         toAllClients(aToAll)
+      }
+   } else if iReq.Method == "POST" {
+      err = pSl.MakeNode(iReq.Body)
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "runNodeRecv: %v\n", err)
+         iResp.WriteHeader(http.StatusNotAcceptable)
+         iResp.Write([]byte(err.Error()))
+      }
+   } else {
+      iResp.WriteHeader(http.StatusMethodNotAllowed)
+   }
 }
 
 func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
