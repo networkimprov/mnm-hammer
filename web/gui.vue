@@ -240,6 +240,9 @@
          <span @mousedown="ohiFrom = !ohiFrom"
                style="color:#1e87f0; font-size:110%; vertical-align:text-top; cursor:pointer"
                title="Toggle ohi-from panel">&nbsp;o/</span>
+         <span uk-icon="laptop" class="dropdown-icon"
+               title="Replicas">&nbsp;</span>
+         <mnm-nodes/>
          &nbsp;
          <span uk-icon="push" class="dropdown-icon"
                title="Attachable files">&nbsp;</span>
@@ -371,10 +374,9 @@
             title="Add account"></span>
       <mnm-svcadd ref="svcadd"/>
       <div style="float:right; margin:0 1em 1em 0">
-         <!--todo span uk-icon="cog" class="dropdown-icon"
-               title="">&nbsp;</span>
-         <div uk-dropdown="mode:click; offset:2; pos:bottom-right" class="uk-width-1-5">
-            <div class="uk-text-right uk-text-small">SETTINGS</div></div -->
+         <span uk-icon="cog" class="dropdown-icon"
+               title="General settings">&nbsp;</span>
+         <mnm-settings/>
          <span uk-icon="info" class="dropdown-icon"
                title="Documentation">&nbsp;</span>
          <div ref="doc"
@@ -1955,6 +1957,82 @@
    });
 </script>
 
+<script type="text/x-template" id="mnm-nodes">
+   <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
+        class="uk-width-1-5 menu-bg dropdown-scroll">
+      <form onsubmit="return false" @submit="name = ''"
+            class="dropdown-scroll-item">
+         <span v-show="mnm._data.cn.Xfer > 0"
+               >{{Math.round(mnm._data.cn.Xfer / 1024/1024) || '< 1'}} MB sent</span>
+         <div class="uk-float-right uk-text-small">REPLICAS</div>
+         <br>
+         <input v-model="mnm._data.cn.Addr"
+                placeholder="Target Address" type="text"
+                style="width:60%">
+         <input v-model="mnm._data.cn.Pin"
+                placeholder="Target Pin" type="text"
+                style="width:calc(40% - 0.5em)">
+         <br>
+         <input v-model="name"
+                :disabled="anyInProgress"
+                placeholder="New replica name" type="text"
+                style="width:60%">
+         <button @click="mnm.NodeAdd(mnm._data.cn.Addr, mnm._data.cn.Pin, name)"
+                 :disabled="anyInProgress || !mnm._data.cn.Addr || !validPin || !validName"
+                 :title="'Replicate <%.TitleJs%>'"
+                 class="btn-icon btn-floatr"><span uk-icon="laptop"></span></button>
+      </form>
+      <div style="margin-top:0.5em" class="dropdown-scroll-list">
+         <div v-for="aNode in mnm._data.cf.NodeSet" :key="aNode.Name">
+            {{aNode.Name}}
+            <div class="uk-float-right">
+               <button v-if="aNode.Status === 'p'.charCodeAt(0) ||
+                             aNode.Status === 'l'.charCodeAt(0) ||
+                             aNode.Status === 'r'.charCodeAt(0)"
+                       @click="mnm.NodeAdd(mnm._data.cn.Addr, mnm._data.cn.Pin, aNode.Name)"
+                       :disabled="!mnm._data.cn.Addr || !validPin"
+                       :title="'Replicate <%.TitleJs%>'"
+                       class="btn-icon"><span uk-icon="laptop"></span></button>
+               {{status(aNode.Status)}}
+            </div>
+         </div></div>
+   </div>
+</script><script>
+   Vue.component('mnm-nodes', {
+      template: '#mnm-nodes',
+      data: function() { return {name:''} },
+      computed: {
+         mnm: function() { return mnm },
+         validPin: function() {
+            return mnm._data.cn.Pin.replace(/ /g, '').length === 9;
+         },
+         validName: function() {
+            if (!this.name)
+               return false;
+            return 0 > mnm._data.cf.NodeSet.findIndex(function(c) { return c.Name === this.name }, this);
+         },
+         anyInProgress: function() {
+            return 0 <= mnm._data.cf.NodeSet.findIndex(function(c) {
+               return c.Status !== 'a'.charCodeAt(0) && c.Status !== 'd'.charCodeAt(0);
+            });
+         },
+      },
+      methods: {
+         status: function(i) {
+            switch (i) {
+            case 'p'.charCodeAt(0): return 'Pending';
+            case 's'.charCodeAt(0): return 'Requested';
+            case 'l'.charCodeAt(0): return 'Accepted';
+            case 'r'.charCodeAt(0): return 'Ready';
+            case 'a'.charCodeAt(0): return 'Active';
+            case 'd'.charCodeAt(0): return 'Defunct';
+            default:                return 'Unknown';
+            }
+         },
+      },
+   });
+</script>
+
 <script type="text/x-template" id="mnm-svcadd">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
         class="uk-width-1-5 menu-bg dropdown-static"
@@ -2039,6 +2117,33 @@
             this.hlin = this.addr = this.lpin = null;
             this.historylen = this.loginperiod = -1;
          },
+      },
+   });
+</script>
+
+<script type="text/x-template" id="mnm-settings">
+   <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
+        class="uk-width-1-5 menu-bg dropdown-static">
+      <div class="uk-text-right uk-text-small">SETTINGS</div>
+      <form action="/l/" method="POST"
+            onsubmit="mnm.Upload(this); return false;"
+            style="float:left">
+         <button title="Accept replicas"
+                 class="btn-icon"><span uk-icon="laptop"></span><span uk-icon="arrow-left"></span>
+         </button></form>
+      <div style="margin-left:3.5em">
+         <span v-show="!mnm._data.l.Pin"
+               >(not accepting replicas)</span>
+         <span v-show="mnm._data.l.Pin"
+               >Address {{mnm._data.l.Addr}}<br>
+                Pin {{mnm._data.l.Pin}}</span>
+      </div>
+   </div>
+</script><script>
+   Vue.component('mnm-settings', {
+      template: '#mnm-settings',
+      computed: {
+         mnm: function() { return mnm },
       },
    });
 </script>
@@ -2195,14 +2300,14 @@
    mnm._tabsStdThread = <%.tabsStdThread%>;
    mnm._data = {
    // global
-      v:[], g:[], t:[], f:[], fo:'', nlo:[], // fo populated by f requests
+      v:[], g:[], l:{Pin:''}, t:[], f:[], fo:'', nlo:[], // fo populated by f requests
    // per client
       cs:{SvcTabs:{Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
       ohiFrom: !mnm._isLocal, //todo move to cs
       adrsbkmenuId: {},
       errors: [], errorFlag: false,
    // per service
-      cf:{}, tl:[], ffn:'', // ffn derived from tl
+      cf:{NodeSet:[]}, cn:{}, tl:[], ffn:'', // ffn derived from tl
       ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
    // per thread
       cl:[[],[]], al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
@@ -2533,9 +2638,9 @@
       }
 
       switch (i) {
-      case 'cf': case 'cl': case 'al': case 'ml':
+      case 'cf': case 'cn': case 'cl': case 'al': case 'ml':
       case 'ps': case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
-      case 't' : case 'f' : case 'v' : case 'g': case 'nlo':
+      case 't' : case 'f' : case 'v' : case 'g': case 'l': case 'nlo':
          if (i === 'f' && iEtc) {
             mnm._data.fo = iData;
          } else {

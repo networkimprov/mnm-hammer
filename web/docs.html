@@ -214,22 +214,41 @@ but may be deactivated and reactivated.
 </p>
 
 
-<h4 id="node">3b. Nodes</h4>
+<h4 id="repl">3b. Replicas</h4>
 
-<p>A user may replicate an account on other devices running the mnm app. 
-Each copy of an account is referred to as a node, and has a unique, server-generated password. 
-All nodes receive every message sent to the account. 
-Nodes provide automatic backup of account data, and access to it from any device running mnm. 
+<p>You can replicate your accounts on other devices running the mnm app. 
+Each copy of an account is known as a replica, and has a unique, server-generated password. 
+All replicas receive every message sent to the account. 
+Replicas provide automatic backup of account data, and access to it from multiple devices. 
 </p>
 
-<p>To add a node, open the <span uk-icon="settings"></span> menu on the accounts panel, 
-and use the <i>+Node</i> form. 
-The client device creating the node must contact an existing node to download the data for the account. 
-[not yet implemented on client]
+<p>The login status and history for each replica is 
+[not yet implemented]
 </p>
 
-<p>To deactivate a node, open the <span uk-icon="settings"></span> menu on the accounts panel, 
-and ... 
+<p>To create a replica, open the <span uk-icon="cog"></span> menu above the accounts panel 
+on the destination device, 
+and click the <span uk-icon="laptop"></span><span uk-icon="arrow-left"></span> button. 
+The menu will display the address and pin required to make a replica. 
+On the origin device, open the <span uk-icon="laptop"></span> menu and fill in the form with the 
+<i>Target Address</i> and <i>Target Pin</i> you've obtained. 
+Also provide a <i>New replica name</i>, and then click the <span uk-icon="laptop"></span> button. 
+</p>
+
+<p>If a replication cannot be completed immediately, the replica's status will indicate 
+<i>Pending</i> if the account's service is unreachable, or 
+<i>Accepted</i> if the destination device becomes unreachable, or 
+<i>Ready</i> if the origin device crashed after the destination received all the data. 
+To complete a replication, obtain and fill in the <i>Target Address</i> and <i>Target Pin</i> as above, 
+then click the <span uk-icon="laptop"></span> button in the entry for the incomplete replica. 
+A <i>Pending</i> or <i>Accepted</i> replica can be completed on a different destination device. 
+</p>
+
+<p>To rename a replica, open the <span uk-icon="laptop"></span> menu and ...
+[not yet implemented]
+</p>
+
+<p>To deactivate a replica, open the <span uk-icon="laptop"></span> menu and ... 
 [not yet implemented]
 </p>
 
@@ -856,8 +875,12 @@ a message is posted to the <span uk-icon="warning"></span> list in the menu.
 
 <h3 id="conf">10. General Configuration</h3>
 
-<p>General configuration is listed in the <span uk-icon="cog"></span> menu. 
-[not yet implemented]
+<p>General configuration for the mnm app is listed in the <span uk-icon="cog"></span> menu. 
+</p>
+
+<p>To accept an account replica from an mnm app running on a different device, 
+click the <span uk-icon="laptop"></span><span uk-icon="arrow-left"></span> button. 
+See <a href="#repl">Replicas</a> for complete instructions. 
 </p>
 
 
@@ -933,7 +956,7 @@ Development of mnm is managed with
 <li><a href="#acct">Accounts</a>
 <ol type="a">
 <li><a href="#alis">Aliases</a></li>
-<li><a href="#node">Nodes</a></li>
+<li><a href="#repl">Replicas</a></li>
 </ol></li>
 <li><a href="#cont">Contacts</a>
 <ol type="a">
