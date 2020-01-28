@@ -23,7 +23,6 @@ import (
 )
 
 const kStorageDir = "store/"
-const kTagFile    = kStorageDir + "tags"
 const kServiceDir = kStorageDir + "svc/"
 const kStateDir   = kStorageDir + "state/"
 const kUploadDir  = kStorageDir + "upload/"
@@ -52,6 +51,7 @@ func fileCfg  (iSvc string) string { return dirSvc(iSvc) + "config" }
 func filePing (iSvc string) string { return dirSvc(iSvc) + "ping-draft" }
 func fileAdrs (iSvc string) string { return dirSvc(iSvc) + "adrsbk" }
 func fileOhi  (iSvc string) string { return dirSvc(iSvc) + "ohi" }
+func fileTag  (iSvc string) string { return dirSvc(iSvc) + "tag" }
 func fileTab  (iSvc string) string { return dirSvc(iSvc) + "tabs" }
 func fileSendq(iSvc string) string { return dirSvc(iSvc) + "sendq" }
 func fileNotc (iSvc string) string { return dirSvc(iSvc) + "notice" }
@@ -76,7 +76,8 @@ func ftmpDd(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"ds_"+ iTid 
 func ftmpFr(iSvc, iTid       string) string { return dirTemp(iSvc) +"fr_"+ iTid +"_"+ iTid +"__" }
 func ftmpFn(iSvc, iTid       string) string { return dirTemp(iSvc) +"fn_"+ iTid +"___" }
 func ftmpFs(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"fs_"+ iTid +"__"+ iLms +"_" }
-func ftmpTc(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"nr_"+ iTid +"__"+ iLms +"_" }
+func ftmpTc(iSvc, iTid, iMid,
+                        iLms string) string { return dirTemp(iSvc) +"nr_"+ iTid +"_"+ iMid +"_"+ iLms +"_" }
 
 func ftmpFwdS(iSvc, iTid string) string { return dirTemp(iSvc) + iTid +"_fwd.tmp" }
 func ftmpFwdD(iSvc, iTid string) string { return dirTemp(iSvc) +"forward_"+ iTid }
@@ -232,6 +233,9 @@ type Update struct {
    Notice *struct {
       MsgId string
    }
+   Tag *struct {
+      Name string
+   }
    Navigate *struct {
       History int
       Label string
@@ -283,7 +287,6 @@ func Init(iStart func(string), iMts func(string, *Header), iCrash func(string, s
    }
    initUpload()
    initForms()
-   initTag()
    initStates()
    initServices(iStart, iMts)
    startAllService()

@@ -68,6 +68,7 @@ func initServices(iSs func(string), iMts func(string, *Header)) {
    aSvcs, err := readDirNames(kServiceDir)
    if err != nil { quit(err) }
 
+   os.Remove(kStorageDir + "tags") //todo remove in 0.8
    for _, aSvc := range aSvcs {
       aSvc, err = url.QueryUnescape(aSvc)
       if err != nil { quit(err) }
@@ -77,6 +78,8 @@ func initServices(iSs func(string), iMts func(string, *Header)) {
          continue
       }
       //makeTreeService(aSvc) // for development, update tree
+      err = os.Symlink("empty", fileTag(aSvc)) //todo drop in 0.8
+      if err != nil && !os.IsExist(err) { quit(err) }
       sServices[aSvc] = _openService(aSvc)
       var aTmps []string
       aTmps, err = readDirNames(dirTemp(aSvc))
@@ -115,6 +118,7 @@ func _openService(iSvc string) *tService {
       {fileNotc (iSvc), &aService.notice, false},
       {filePing (iSvc), nil,              false},
       {fileOhi  (iSvc), nil,              false},
+      {fileTag  (iSvc), &tTagset{},       false}, // last for initTag()
    }
    for a := range aSvcFiles {
       err := resolveTmpFile(aSvcFiles[a].name + ".tmp")
@@ -124,6 +128,7 @@ func _openService(iSvc string) *tService {
          if err != nil && (aSvcFiles[a].reqd || !os.IsNotExist(err)) { quit(err) }
       }
    }
+   initTag(iSvc, * aSvcFiles[len(aSvcFiles)-1].cache.(*tTagset))
    aService.index = openIndexSearch(&aService.config)
    if len(aService.config.NodeSet) == 0 { //todo drop in 0.8
       aService.config.NodeSet = []tNode{{Name:"first", Status:eNodeActive, Local:true}}
@@ -319,7 +324,7 @@ func makeTreeService(iSvc string) {
       if err != nil { quit(err) }
    }
    for _, aFile := range [...]string{filePing(iSvc), fileOhi(iSvc), fileTab(iSvc), fileSendq(iSvc),
-                                     fileNotc(iSvc)} {
+                                     fileNotc(iSvc), fileTag(iSvc)} {
       err = os.Symlink("empty", aFile)
       if err != nil && !os.IsExist(err) { quit(err) }
    }
@@ -774,7 +779,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aFn = func(c *ClientState) []string {
          if c.getThread() == iUpdt.Touch.ThreadId {
             _, cTabVal := c.getSvcTab()
-            if cTabVal[0] == '#' && Tag.getId(cTabVal[1:]) == iUpdt.Touch.TagId { return aResult }
+            if cTabVal[0] == '#' && GetIdTag(cTabVal[1:]) == iUpdt.Touch.TagId { return aResult }
             return aResult[1:]
          }
          return nil
@@ -794,6 +799,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       }
       aResult = []string{"cl"}
       addQueue(iSvc, eSrecFwd, iUpdt.Forward.Qid)
+   case "tag_add":
+      err = addTag(iSvc, iUpdt.Tag.Name)
+      if err != nil { return fErr, nil }
+      aToAll = []string{"/g"}
    case "navigate_thread":
       iState.addThread(iUpdt.Navigate.ThreadId)
       aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}

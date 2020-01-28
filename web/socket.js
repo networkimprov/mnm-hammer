@@ -113,6 +113,10 @@
       _wsSend({op:'forward_send', forward:{threadId:iId, qid:iQid}})
    };
 
+   mnm.TagAdd = function(iName) {
+      _wsSend({op:'tag_add', tag:{name:iName}})
+   };
+
    mnm.TabAdd = function(iObj) { // with type, term
       _wsSend({op:'tab_add', tab:iObj})
    };

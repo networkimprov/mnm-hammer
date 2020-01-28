@@ -113,7 +113,7 @@ func mainResult() int {
    http.HandleFunc("/t/", runGlobal)
    http.HandleFunc("/f/", runGlobal)
    http.HandleFunc("/v/", runGlobal)
-   http.HandleFunc("/g/", runGlobal)
+   http.HandleFunc("/g/", runTag)
    http.HandleFunc("/s/", runWebsocket)
    http.HandleFunc("/5/", runWebsocket) // test clients
    http.HandleFunc("/w/", runFile)
@@ -677,7 +677,6 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
    case 'f': aSet = pSl.BlankForm
    case 't': aSet = pSl.Upload
    case 'v': aSet = pSl.Service
-   case 'g': aSet = pSl.Tag
    }
    aId := iReq.URL.Path[3:]
    fErr := func(cSt int, cMsg string) { iResp.WriteHeader(cSt); iResp.Write([]byte(cMsg)) }
@@ -739,6 +738,11 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
       http.ServeFile(iResp, iReq, aPath)
    }
+}
+
+func runTag(iResp http.ResponseWriter, iReq *http.Request) {
+   err := json.NewEncoder(iResp).Encode(pSl.GetIdxTag())
+   if err != nil { fmt.Fprintf(os.Stderr, "runTag: %v\n", err) }
 }
 
 var kWsInit = pWs.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}

@@ -153,7 +153,7 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
       } else if aTabVal[0] == ':' {
          aRe = aTabVal[1:]
       } else if aTabVal[0] == '#' {
-         aTag = Tag.getId(aTabVal[1:])
+         aTag = GetIdTag(aTabVal[1:])
          if aTag == "" {
             return tError("tag not found")
          }
@@ -476,10 +476,10 @@ func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *
 
 func touchThread(iSvc string, iUpdt *Update) bool {
    aOrig := dirThread(iSvc) + iUpdt.Touch.ThreadId
-   aTempOk := ftmpTc(iSvc, iUpdt.Touch.ThreadId, "")
+   aTempOk := ftmpTc(iSvc, iUpdt.Touch.ThreadId, iUpdt.Touch.MsgId, "")
    if iUpdt.Touch.ThreadId[0] == '_' {
       aId := parseLocalId(iUpdt.Touch.ThreadId)
-      aTempOk = ftmpTc(iSvc, aId.tid(), aId.lms())
+      aTempOk = ftmpTc(iSvc, aId.tid(), iUpdt.Touch.MsgId, aId.lms())
    }
    aTemp := aTempOk + ".tmp"
    var err error
@@ -492,6 +492,7 @@ func touchThread(iSvc string, iUpdt *Update) bool {
    aIdx, aCc := []tIndexEl{}, []tCcEl{}
    aIdxN := -1
    var aPos int64
+   var aElTagged *tIndexEl
 
    aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
    if err != nil { quit(err) }
@@ -512,6 +513,7 @@ func touchThread(iSvc string, iUpdt *Update) bool {
             return false
          }
       }
+      aElTagged = &aIdx[aIdxN]
       aIdx[aIdxN].Tags = append(aIdx[aIdxN].Tags, iUpdt.Touch.TagId)
    case 'u':
       a := -1
@@ -535,11 +537,11 @@ func touchThread(iSvc string, iUpdt *Update) bool {
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeTouch(iSvc, path.Base(aTempOk), aFd, aTd)
+   _completeTouch(iSvc, path.Base(aTempOk), aFd, aTd, aElTagged)
    return true
 }
 
-func _completeTouch(iSvc string, iTmp string, iFd, iTd *os.File) {
+func _completeTouch(iSvc string, iTmp string, iFd, iTd *os.File, iElTagged *tIndexEl) {
    sCrashFn(iSvc, "touch-thread")
 
    aRec := _parseFtmp(iTmp)
@@ -554,6 +556,9 @@ func _completeTouch(iSvc string, iTmp string, iFd, iTd *os.File) {
    err = iFd.Sync()
    if err != nil { quit(err) }
    _updateSearchDoc(iSvc, nil, aTid, iFd, nil) //todo _updateUnread()
+   if iElTagged != nil {
+      copyTag(iSvc, iElTagged.Tags)
+   }
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
 }
@@ -1642,6 +1647,16 @@ func completeThread(iSvc string, iTempOk string) {
       }
       return -1
    }
+   fMsgEl := func() *tIndexEl {
+      cIdx := fIdx()
+      for c := range cIdx {
+         if cIdx[c].Id == aRec.mid() {
+            return &cIdx[c]
+         }
+      }
+      quit(tError("missing msg for id: "+ aRec.mid()))
+      return nil
+   }
    switch aRec.op() {
    case "sc": _completeStoreConfirm    (iSvc, iTempOk, aFd, aTd, fMsgHead(), fIdx())
    case "sr": _completeStoreReceived   (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
@@ -1651,7 +1666,7 @@ func completeThread(iSvc string, iTempOk string) {
    case "fr": _completeStoreFwdReceived(iSvc, iTempOk,      aTd)
    case "fn": _completeStoreFwdNotify  (iSvc, iTempOk, aFd, aTd, fCc("fwd"))
    case "fs": _completeStoreFwdSent    (iSvc, iTempOk, aFd, aTd, fCc("fwd"), fFwdSent())
-   case "nr": _completeTouch           (iSvc, iTempOk, aFd, aTd)
+   case "nr": _completeTouch           (iSvc, iTempOk, aFd, aTd, fMsgEl())
    default:
       fmt.Fprintf(os.Stderr, "completeThread: unexpected op %s%s\n", dirTemp(iSvc), iTempOk)
    }

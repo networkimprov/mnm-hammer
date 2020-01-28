@@ -18,8 +18,7 @@
              {"Name":"Gold/File.txt", "Size":26, "Date":"*d"}] ,
       "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
-      "/g": [{"Name":"Todo", "Id":"Todo"},
-             {"Name":"flag", "Id":"*d"  }] ,
+      "/g": [{"Name":"Todo", "Id":"Todo"}] ,
       "/v": [{"Name":"Blue", "NoticeN":0},
              {"Name":"Gold", "NoticeN":0}] ,
       "/l": {"Addr":"*", "Pin":"*"} }
@@ -43,9 +42,6 @@
       {"label":"Num-A2 (req)",  "model":"or.anr", "type":"checklist", "listBox":true,
        "values":[{"name":"12", "value":[1,2]},
                  {"name":"22", "value":[2,2]}] }]
-}],
-"Tags": [{
-   "Name": "flag"
 }],
 "Orders": [{
    "Updt": {"Op":"thread_save", "Thread":{"New":1, "Alias":"Blue", "Subject":"ohi"}},
@@ -435,8 +431,8 @@
              {"Name":"Gold/File.txt", "Size":26, "Date":"*d"}] ,
       "/f": [{"Name":"Blue", "Spec":true, "Revs":[{"Id":"original", "Date":"*d"},
                                                   {"Id":"spec",     "Date":"*d"}] }] ,
-      "/g": [{"Name":"Todo", "Id":"Todo"},
-             {"Name":"flag", "Id":"*d"  }] ,
+      "/g": [{"Name":"flag", "Id":"*d"  },
+             {"Name":"Todo", "Id":"Todo"}] ,
       "/v": [{"Name":"Blue", "NoticeN":1},
              {"Name":"Gold", "NoticeN":1}] ,
       "/l": {"Addr":"*", "Pin":"*"} ,
@@ -720,6 +716,9 @@
               {"Who":"Blue#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":true}] ] },
    "Name": "forward_send.a"
+},{
+   "Updt": {"Op":"tag_add", "Tag":{"Name":"flag"}},
+   "Result": null
 }]
 
 }]

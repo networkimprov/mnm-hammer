@@ -156,7 +156,7 @@ func _makeWordsQuery(iWords string) pBquery.Query {
       } else {
          iWords = iWords[:strings.LastIndexByte(iWords, '#')]
       }
-      aTag := Tag.getId(iWords)
+      aTag := GetIdTag(iWords)
       if aTag == "" {
          return nil
       }
