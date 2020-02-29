@@ -66,6 +66,7 @@ type tTestClient struct {
    }
    Orders []struct {
       Updt pSl.Update
+      Poll int
       Result map[string]interface{}
       Name string
       Client *struct { Name, SvcId string }
@@ -370,7 +371,7 @@ func _setupTestVerify(iClients []tTestClient) (_ string, err error) {
       if aTc.Orders[a].Updt.Op != "test" {
          return "", tError("Updt.Op not 'test': "+ aTc.Orders[a].Updt.Op)
       }
-      aTc.Orders[a].Updt.Test.Poll = 0
+      aTc.Orders[a].Poll = 0
    }
    return aArg[eDir], nil
 }
@@ -456,8 +457,8 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
             fmt.Fprintf(os.Stderr, "%s missing result\n  expect %s %v\n", aPrefix, aK, aV)
          }
       }
-      var aSum *int32 = nil; if aUpdt.Test != nil && aUpdt.Test.Poll > 0 { aSum = new(int32) }
-      for aTryN := 4; true; aTryN-- {
+      var aSum *int32 = nil; if iTc.Orders[a].Poll > 0 { aSum = new(int32) }
+      for aTryN := 2 * iTc.Orders[a].Poll; true; aTryN-- {
          for a1 := 0; a1 < len(aOps); a1++ {
             aOp, aId := aOps[a1], ""
             if aOp == "_n" {
@@ -476,7 +477,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          if aSum == nil || *aSum == int32(len(aOps)) || aTryN == 0 {
             break
          }
-         time.Sleep(aUpdt.Test.Poll * time.Millisecond)
+         time.Sleep(500 * time.Millisecond)
          *aSum = 0
       }
       if len(*aCtx.lastId["mn"]) > 0 {

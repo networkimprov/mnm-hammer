@@ -95,7 +95,8 @@
    "Result": {
       "ps": [{"Type":1, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*", "Queued":true}] }
 },{
-   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["pf", "nl"]}},
+   "Updt": {"Op":"test", "Test":{"Request":["pf", "nl"]}},
+   "Poll": 3,
    "Result": {
       "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
               "Gid":"Gold-G#tdg", "Uid":"*uid", "MsgId":"*mid", "Response":"**"}] ,
@@ -168,7 +169,8 @@
       "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":true}] },
    "Name": "thread_send.a"
 },{
-   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["ml"]}} ,
+   "Updt": {"Op":"test", "Test":{"Request":["ml"]}},
+   "Poll": 3,
    "Result": {
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] },
    "Name": "poll_ack.a"
@@ -192,7 +194,8 @@
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
       "al": "thread_save.c" }
 },{
-   "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
+   "Updt": {"Op":"test", "Test":{"Request":["tl"]}},
+   "Poll": 4,
    "Result": {
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
@@ -200,7 +203,8 @@
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
    "Name": "poll_delivery.a"
 },{
-   "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["ml"], "ThreadId":"last"}},
+   "Updt": {"Op":"test", "Test":{"Request":["ml"], "ThreadId":"last"}},
+   "Poll": 4,
    "Result": {
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
@@ -467,7 +471,8 @@
                         {"Name":"n1", "Status":112, "Qid":"*"}] } ,
       "cn": {"Addr":"localhost:8123", "Pin":"*", "Xfer":0} }
 },{
-   "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["cf", "cn"]}},
+   "Updt": {"Op":"test", "Test":{"Request":["cf", "cn"]}},
+   "Poll": 4,
    "Result": {
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
@@ -533,7 +538,8 @@
    "Updt": {"Op":"notice_seen", "Notice":{"MsgId":"6"}},
    "Result": null
 },{
-   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["/v", "nl"]}},
+   "Updt": {"Op":"test", "Test":{"Request":["/v", "nl"]}},
+   "Poll": 3,
    "Result": {
       "/v": [{"Name":"Blue", "NoticeN":0},
              {"Name":"Blue.n1", "NoticeN":1},
@@ -553,7 +559,8 @@
    "Name":"Gold/File.txt", "Data":"abcdefghijklmnopqrstuvwxyz"
 }],
 "Orders": [{
-   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["pf", "nl"]}},
+   "Updt": {"Op":"test", "Test":{"Request":["pf", "nl"]}},
+   "Poll": 3,
    "Result": {
       "pf":[{"Type":4, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td", "Uid":"*uid", "MsgId":"*mid"}] ,
       "nl": [{"Type":"i", "Alias":"Blue#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
@@ -586,7 +593,8 @@
    "Result": {
       "ot": [{"Alias":"Blue#td", "Uid":"*uid", "Date":"*d"}] }
 },{
-   "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
+   "Updt": {"Op":"test", "Test":{"Request":["tl"]}},
+   "Poll": 4,
    "Result": {
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"ohi",
               "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
@@ -671,7 +679,8 @@
    "Result": {
       "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":true}] }
 },{
-   "Updt": {"Op":"test", "Test":{"Poll":1000, "Request":["tl"]}},
+   "Updt": {"Op":"test", "Test":{"Request":["tl"]}},
+   "Poll": 4,
    "Result": {
       "tl": [{"Id":"*mid", "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
@@ -694,7 +703,8 @@
       "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":true},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] }
 },{
-   "Updt": {"Op":"test", "Test":{"Poll":500, "Request":["ml"]}} ,
+   "Updt": {"Op":"test", "Test":{"Request":["ml"]}},
+   "Poll": 3,
    "Result": {
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] }

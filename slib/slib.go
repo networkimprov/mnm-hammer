@@ -260,7 +260,6 @@ type Update struct {
 }
 
 type UpdateTest struct {
-   Poll time.Duration // for use by test.go
    Request []string
    ThreadId string
    Notice []tNoticeEl
