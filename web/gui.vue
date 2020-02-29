@@ -824,15 +824,12 @@
                         uk-icon="check"></span></span>
             {{aTag.Name}}
          </div></div>
-      <form :action="'/g/+' + encodeURIComponent(newName)"
-            method="POST" enctype="multipart/form-data"
-            onsubmit="mnm.Upload(this); this.reset(); return false;"
+      <form onsubmit="return false" @submit="newName = ''"
             class="dropdown-scroll-item">
-         <input type="hidden" name="filename" value="">
          <input v-model="newName"
                 placeholder="New Tag" type="text"
                 style="width:7em">
-         <button @click="newName = ''"
+         <button @click="mnm.TagAdd(newName)"
                  :disabled="!newName || mnm._data.g.find(function(c) { return c.Name === newName })"
                  title="New tag"
                  class="btn-icon"><span uk-icon="list"></span></button>
