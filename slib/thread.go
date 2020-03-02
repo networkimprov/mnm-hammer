@@ -308,6 +308,9 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    aNewCc := iHead.SubHead.Cc; if aThreadId != aMsgId { aNewCc = nil }
    aCid := iHead.SubHead.ConfirmId
 
+   if iHead.From == GetConfigService(iSvc).Uid {
+      aEl.Seen = eSeenLocal
+   }
    aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aTd.Close()

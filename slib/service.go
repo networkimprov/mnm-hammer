@@ -562,11 +562,10 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       case eSrecAccept:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"pf", "_e", iHead.Error}
-            dropQueue(iSvc, aQid)
-            break
+         } else {
+            aFn, aResult = fAll, []string{"pf", "gl"}
          }
-         acceptInviteAdrsbk(iSvc, aId.gid(), iHead.Posted, aQid)
-         aFn, aResult = fAll, []string{"pf", "gl"}
+         dropQueue(iSvc, aQid)
       case eSrecThread:
          if iHead.Error != "" {
             aTid := aId.tid(); if aTid == "" { aTid = iHead.Id }
