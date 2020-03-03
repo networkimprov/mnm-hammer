@@ -353,6 +353,11 @@ func getTabsService(iSvc string) []tTermEl {
 func addTabService(iSvc string, iTerm *tTermEl) int {
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
+   for a := range aSvc.tabs {
+      if aSvc.tabs[a].Term == iTerm.Term && aSvc.tabs[a].Label == iTerm.Label {
+         return a
+      }
+   }
    aSvc.tabs = append(aSvc.tabs, *iTerm)
    err := storeFile(fileTab(iSvc), aSvc.tabs)
    if err != nil { quit(err) }
