@@ -137,6 +137,8 @@ type Header struct {
    Act string
    Status int8
    Notify uint16
+   For tForOhi
+   Type string
    DataLen, DataHead int64
    SubHead *tHeader2
 }

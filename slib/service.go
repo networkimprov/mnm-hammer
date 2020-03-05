@@ -482,7 +482,8 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       updateFromOhi(iSvc, iHead)
       aFn, aResult = fAll, []string{"of"}
    case "ohiedit":
-      //todo for multiple nodes
+      updateOhi(iSvc, iHead)
+      aFn, aResult = fAll, []string{"ot"}
    case "ping":
       err = storeReceivedAdrsbk(iSvc, iHead, iR)
       if err != nil {
@@ -622,7 +623,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"_e", iHead.Error}
          }
-         // not queued
+         dropQueue(iSvc, aQid)
       default:
          quit(tError("bad SendRecord " + aQid))
       }

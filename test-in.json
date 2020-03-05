@@ -581,24 +581,27 @@
    "Result": {
       "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#tdg", "MyAlias":"Gold#td", "Qid":"*", "Queued":true}] }
 },{
-   "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue", "Uid":"last"}},
-   "Result": {
-      "ot": [{"Alias":"Blue#td", "Uid":"*uid", "Date":"*d"}] }
-},{
-   "Updt": {"Op":"ohi_drop", "Ohi":{"Uid":"last"}},
-   "Result": {
-      "ot": [] }
-},{
-   "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue", "Uid":"last"}},
-   "Result": {
-      "ot": [{"Alias":"Blue#td", "Uid":"*uid", "Date":"*d"}] }
-},{
    "Updt": {"Op":"test", "Test":{"Request":["tl"]}},
    "Poll": 4,
    "Result": {
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"ohi",
               "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
    "Name": "poll_delivery.b"
+},{
+   "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue", "Uid":"last"}},
+   "Poll": 1,
+   "Result": {
+      "ot": [{"Alias":"Blue#td", "Uid":"*uid", "Date":"*d"}] }
+},{
+   "Updt": {"Op":"ohi_drop", "Ohi":{"Uid":"last"}},
+   "Poll": 1,
+   "Result": {
+      "ot": [] }
+},{
+   "Updt": {"Op":"ohi_add", "Ohi":{"Alias":"Blue", "Uid":"last"}},
+   "Poll": 1,
+   "Result": {
+      "ot": [{"Alias":"Blue#td", "Uid":"*uid", "Date":"*d"}] }
 },{
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {

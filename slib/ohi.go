@@ -87,49 +87,41 @@ func GetToOhi(iSvc string) []tOhiEl {
 }
 
 func SendAllOhi(iW io.Writer, iSvc string, iId string) error {
-   var err error
-   aMap := tOhi{}
    aSvc := getService(iSvc)
    aSvc.RLock()
-   err = readJsonFile(&aMap, fileOhi(iSvc))
-   aSvc.RUnlock()
+   aMap := tOhi{}
+   err := readJsonFile(&aMap, fileOhi(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
-   if len(aMap) == 0 {
+   aSvc.RUnlock()
+   a, aFor := 0, make(tForOhi, len(aMap))
+   for aK, aV := range aMap {
+      if aV.Date == "pending" { continue }
+      aFor[a].Id = aK
+      a++
+   }
+   if a == 0 {
       return nil
    }
-   aFor := make(tForOhi, len(aMap))
-   a := 0
-   for aFor[a].Id, _ = range aMap { a++ }
-   aHead, err := json.Marshal(Msg{"Op":4, "Id":iId, "For":aFor, "Type":"add"})
+   aHead, err := json.Marshal(Msg{"Op":4, "Id":iId, "For":aFor[:a], "Type":"init"})
    if err != nil { quit(err) }
    err = writeHeaders(iW, aHead, nil)
    return err
 }
 
 func editOhi(iSvc string, iUpdt *Update) {
-   var err error
+   aOp := "-"; if iUpdt.Op == "ohi_add" { aOp = "+" }
+   addQueue(iSvc, eSrecOhi, aOp + makeLocalId(iUpdt.Ohi.Uid)) // can cause race with updateOhi()?
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    aMap := tOhi{}
-   err = readJsonFile(&aMap, fileOhi(iSvc))
+   err := readJsonFile(&aMap, fileOhi(iSvc))
    if err != nil && !os.IsNotExist(err) { quit(err) }
-   var aOp string
-   if iUpdt.Op == "ohi_add" {
-      aOp = "+"
-      aMap[iUpdt.Ohi.Uid] = tOhiEl{Alias:iUpdt.Ohi.Alias, Date:dateRFC3339()}
-   } else {
-      aOp = "-"
-      delete(aMap, iUpdt.Ohi.Uid)
-   }
-   err = storeFile(fileOhi(iSvc), aMap)
+   aMap[iUpdt.Ohi.Uid] = tOhiEl{Alias:iUpdt.Ohi.Alias, Date:"pending"}
+   err = storeFile(fileOhi(iSvc), aMap) // if addQueue works but this fails, updateOhi() will fix the map
    if err != nil { quit(err) }
-   if aSvc.sendQPost != nil {
-      aSvc.sendQPost(&SendRecord{Id: string(eSrecOhi) + aOp + makeLocalId(iUpdt.Ohi.Uid)})
-   }
 }
 
 func sendEditOhi(iW io.Writer, iSvc string, iQid, iId string) error {
-   var err error
    aId := parseLocalId(iQid)
    aFor := tForOhi{{Id:aId.ohi()[1:]}}
    aType := "add"; if aId.ohi()[0] == '-' { aType = "drop" }
@@ -139,4 +131,20 @@ func sendEditOhi(iW io.Writer, iSvc string, iQid, iId string) error {
    return err
 }
 
-
+func updateOhi(iSvc string, iHead *Header) {
+   aSvc := getService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   aMap := tOhi{}
+   err := readJsonFile(&aMap, fileOhi(iSvc))
+   if err != nil && !os.IsNotExist(err) { quit(err) }
+   for a := range iHead.For {
+      if iHead.Type == "add" {
+         aAlias := lookupUidAdrsbk(iSvc, iHead.For[a].Id) //todo temporary
+         aMap[iHead.For[a].Id] = tOhiEl{Alias:aAlias, Date:iHead.Posted}
+      } else {
+         delete(aMap, iHead.For[a].Id)
+      }
+   }
+   err = storeFile(fileOhi(iSvc), aMap)
+   if err != nil { quit(err) }
+}
