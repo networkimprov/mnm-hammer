@@ -1865,9 +1865,15 @@
             <table class="uk-table uk-table-small">
                <tr><th>Date</th> <th>To</th> <th></th></tr>
                <tr v-for="aOhi in mnm._data.ot">
-                  <td><mnm-date :iso="aOhi.Date"/></td>
+                  <td><mnm-date v-if="aOhi.Date !== 'pending'"
+                                :iso="aOhi.Date"/>
+                      <span v-else
+                            title="Awaiting link to server"
+                            uk-icon="bolt"></span>
+                  </td>
                   <td>{{aOhi.Alias}}</td>
                   <td><button @click="mnm.OhiDrop(aOhi.Uid)"
+                              :disabled="aOhi.Date === 'pending'"
                               title="Stop notifying contact"
                               class="btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
