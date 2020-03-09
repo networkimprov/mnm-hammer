@@ -782,11 +782,12 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       iUpdt.Touch.ThreadId = iState.getThread()
       touchThread(iSvc, iUpdt)
       aFn = func(c *ClientState) []string {
-         if c.getThread() == iUpdt.Touch.ThreadId {
-            _, cTabVal := c.getSvcTab()
-            if cTabVal[0] == '#' && GetIdTag(cTabVal[1:]) == iUpdt.Touch.TagId { return aResult }
-            return aResult[1:]
+         _, cTabVal := c.getSvcTab()
+         if cTabVal[0] == '#' && GetIdTag(cTabVal[1:]) == iUpdt.Touch.TagId {
+            if c.getThread() == iUpdt.Touch.ThreadId { return aResult }
+            return aResult[:1]
          }
+         if c.getThread() == iUpdt.Touch.ThreadId { return aResult[1:] }
          return nil
       }
       aResult = []string{"tl", "ml"}
