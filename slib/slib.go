@@ -8,6 +8,7 @@
 package slib
 
 import (
+   "sync/atomic"
    "runtime/debug"
    "hash/crc32"
    "fmt"
@@ -92,6 +93,7 @@ func ftmpAdrsbk(iSvc, iPos, iQid string) string { return dirTemp(iSvc) +"adrsbk_
 var kCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
 var sCrashFn func(string, string)
+var sLocalId = time.Now().UnixNano() / 1e6 // milliseconds
 
 type GlobalSet interface {
    Add(string, string, io.Reader) error
@@ -323,7 +325,7 @@ func writeHeaders(iW io.Writer, iHead, iSub []byte) error {
 }
 
 func makeLocalId(iTid string) string {
-   return fmt.Sprintf("%s_%012x", iTid, time.Now().UnixNano() / 1e6) // milliseconds
+   return fmt.Sprintf("%s_%012x", iTid, atomic.AddInt64(&sLocalId, 1))
 }
 
 type tLocalId []string
