@@ -81,6 +81,7 @@ func initServices(iSs func(string), iMts func(string, *Header)) {
       err = os.Symlink("empty", fileTag(aSvc)) //todo drop in 0.8
       if err != nil && !os.IsExist(err) { quit(err) }
       sServices[aSvc] = _openService(aSvc)
+      initSyncNode(aSvc)
       var aTmps []string
       aTmps, err = readDirNames(dirTemp(aSvc))
       if err != nil { quit(err) }
@@ -99,9 +100,15 @@ func initServices(iSs func(string), iMts func(string, *Header)) {
          } else if strings.HasPrefix(aTmp, "ffnindex_") {
             err = renameRemove(dirTemp(aSvc) + aTmp, fileFfn(aSvc, aTmp[9:]))
             if err != nil { quit(err) }
+         } else if strings.HasPrefix(aTmp, "synclog") {
+            // no action
          } else if strings.HasSuffix(aTmp, ".tmp") {
             // could be a valid attachment or forward from thread transaction
             defer os.Remove(dirTemp(aSvc) + aTmp)
+         } else if strings.HasPrefix(aTmp, "syncupdt_") {
+            completeUpdtNode(aSvc, aTmp)
+         } else if strings.HasPrefix(aTmp, "syncack_") {
+            dropSyncNode(aSvc, aTmp[8+1:], aTmp[8:], "complete")
          } else {
             completeThread(aSvc, aTmp)
          }
@@ -382,6 +389,7 @@ func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
    case eSrecFwd:    aFn = sendFwdDraftThread
    case eSrecCfm:    aFn = sendFwdConfirmThread
    case eSrecNode:   aFn = sendUserEditNode
+   case eSrecSync:   aFn = sendSyncNode
    default:
       quit(tError("unknown op " + iSrec.Id[:1]))
    }
@@ -557,6 +565,13 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
             }
          }
          dropQueue(iSvc, aQid)
+      case eSrecSync:
+         if iHead.Error != "" {
+            aFn, aResult = fAll, []string{"_e", iHead.Error}
+            dropQueue(iSvc, aQid)
+            break
+         }
+         dropSyncNode(iSvc, iHead.Id, aQid, "")
       case eSrecPing:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"ps", "_e", iHead.Error}
@@ -634,6 +649,39 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
    return aFn, aToAll
 }
 
+func HandleSyncService(iSvc string, iHead *Header, iR io.Reader,
+                       iNotify func(func(*ClientState)[]string, []string)) {
+   if iHead.From != GetConfigService(iSvc).Uid {
+      fmt.Fprintf(os.Stderr, "HandleSyncService %s: message from foreign uid %s\n", iSvc, iHead.From)
+      _ = discardTmtp(iHead, iR)
+      return
+   }
+   aBuf := make([]byte, iHead.DataLen)
+   aLen, err := iR.Read(aBuf)
+   if err != nil || aLen != len(aBuf) {
+      return
+   }
+   var aUpdates []Update
+   err = json.Unmarshal(aBuf, &aUpdates)
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "HandleSyncService %s: %v\n", iSvc, err)
+      return
+   }
+   if len(aUpdates) == 0 {
+      fmt.Fprintf(os.Stderr, "HandleSyncService %s: missing updates\n", iSvc)
+   } else {
+      aCs := ClientState{History:[]string{""}}
+      for a := range aUpdates {
+         aCs.History[0] = aUpdates[a].LogThreadId
+         if aUpdates[a].LogOp != "" {
+            aUpdates[a].Op = aUpdates[a].LogOp
+         }
+         aUpdates[a].log = eLogNone
+         iNotify(HandleUpdtService(iSvc, &aCs, &aUpdates[a]))
+      }
+   }
+}
+
 func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
                        aFn func(*ClientState)[]string, aToAll []string) {
    var err error
@@ -671,8 +719,13 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          aNewCfg.Verify = iUpdt.Config.Addr[0] == '+'
          aNewCfg.Addr = iUpdt.Config.Addr[1:]
       }
-      if iUpdt.Config.LoginPeriod >= 0 { aNewCfg.LoginPeriod = iUpdt.Config.LoginPeriod }
-      err = _updateConfig(aNewCfg)
+      if iUpdt.Config.LoginPeriod >= 0 {
+         aNewCfg.LoginPeriod = iUpdt.Config.LoginPeriod
+      }
+      syncUpdtNode(iSvc, iUpdt, iState, func() error {
+         err = _updateConfig(aNewCfg)
+         return err
+      })
       if err != nil { return fErr, nil }
       aFn, aResult = fAll, []string{"cf"}
    case "ohi_add", "ohi_drop":
@@ -698,7 +751,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aResult = searchAdrsbk(iSvc, iUpdt)
       aFn, aResult = fOne, append([]string{"_n"}, aResult...)
    case "notice_seen":
-      err = setLastSeenNotice(iSvc, iUpdt)
+      syncUpdtNode(iSvc, iUpdt, iState, func() error {
+         err = setLastSeenNotice(iSvc, iUpdt)
+         return err
+      })
       if err != nil { return fErr, nil }
       aToAll = []string{"/v"}
    case "thread_save":
@@ -763,13 +819,26 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aResult = []string{"ml"}
       addQueue(iSvc, eSrecThread, iUpdt.Thread.Id)
    case "thread_open":
-      if iUpdt.Touch.ThreadId != iState.getThread() {
+      if iUpdt.log == 0 && iUpdt.Touch.ThreadId != iState.getThread() {
          err = tError("thread id out of sync")
          return fErr, nil
       }
-      iState.openMsg(iUpdt.Touch.MsgId, true)
-      aChg := touchThread(iSvc, iUpdt)
+      aChg := false
+      iUpdt.LogOp = "thread_seen_sync"
+      syncUpdtNode(iSvc, iUpdt, iState, func() error {
+         iState.openMsg(iUpdt.Touch.MsgId, true)
+         aChg = touchThread(iSvc, iUpdt)
+         if !aChg { return tError("") } // no sync
+         return nil
+      })
       if !aChg { break }
+      aFn = func(c *ClientState) []string {
+         if c.getThread() == iUpdt.Touch.ThreadId { return aResult }
+         return aResult[:1]
+      }
+      aResult = []string{"tl", "ml"}
+   case "thread_seen_sync":
+      touchThread(iSvc, iUpdt)
       aFn = func(c *ClientState) []string {
          if c.getThread() == iUpdt.Touch.ThreadId { return aResult }
          return aResult[:1]
@@ -779,18 +848,27 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       iState.openMsg(iUpdt.Touch.MsgId, false)
       // no result
    case "thread_tag":
-      iUpdt.Touch.ThreadId = iState.getThread()
-      touchThread(iSvc, iUpdt)
+      if iUpdt.log == 0 {
+         iUpdt.Touch.TagName = mustCopyTag(iSvc, iUpdt.Touch.TagId)
+         iUpdt.Touch.ThreadId = iState.getThread()
+      }
+      syncUpdtNode(iSvc, iUpdt, iState, func() error {
+         if iUpdt.Touch.TagName != "" {
+            addTag(iSvc, iUpdt.Touch.TagName, iUpdt.Touch.TagId)
+         }
+         touchThread(iSvc, iUpdt)
+         return nil
+      })
       aFn = func(c *ClientState) []string {
          _, cTabVal := c.getSvcTab()
          if cTabVal[0] == '#' && GetIdTag(cTabVal[1:]) == iUpdt.Touch.TagId {
             if c.getThread() == iUpdt.Touch.ThreadId { return aResult }
-            return aResult[:1]
+            return aResult[:2]
          }
          if c.getThread() == iUpdt.Touch.ThreadId { return aResult[1:] }
-         return nil
+         return aResult[1:2]
       }
-      aResult = []string{"tl", "ml"}
+      aResult = []string{"tl", "/g", "ml"}
    case "forward_save":
       storeFwdDraftThread(iSvc, iUpdt)
       aFn = func(c *ClientState) []string {
@@ -806,7 +884,13 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aResult = []string{"cl"}
       addQueue(iSvc, eSrecFwd, iUpdt.Forward.Qid)
    case "tag_add":
-      err = addTag(iSvc, iUpdt.Tag.Name)
+      if iUpdt.log == 0 {
+         iUpdt.Tag.Id = makeIdTag()
+      }
+      syncUpdtNode(iSvc, iUpdt, iState, func() error {
+         addTag(iSvc, iUpdt.Tag.Name, iUpdt.Tag.Id)
+         return nil
+      })
       if err != nil { return fErr, nil }
       aToAll = []string{"/g"}
    case "navigate_thread":
@@ -827,7 +911,17 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aAlt := "tl"; if iUpdt.Tab.Type == eTabThread { aAlt = "mo" }
       aFn, aResult = fOne, []string{"cs", aAlt}
    case "tab_pin":
-      iState.pinTab(iUpdt.Tab.Type)
+      if iUpdt.log == 0 {
+         iUpdt.Tab.Term = iState.getTab(iUpdt.Tab.Type).Term
+      }
+      iUpdt.LogOp = "tab_pin_sync"
+      syncUpdtNode(iSvc, iUpdt, iState, func() error {
+         iState.pinTab(iUpdt.Tab.Type)
+         return nil
+      })
+      aFn, aResult = fAll, []string{"cs"}
+   case "tab_pin_sync":
+      addTabService(iSvc, newTermEl(iUpdt.Tab.Term, ""))
       aFn, aResult = fAll, []string{"cs"}
    case "tab_drop":
       iState.dropTab(iUpdt.Tab.Type)

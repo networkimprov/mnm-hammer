@@ -16,6 +16,7 @@ import (
    "encoding/json"
    "os"
    "crypto/rand"
+   "strconv"
    "strings"
    "archive/tar"
    "time"
@@ -26,6 +27,7 @@ const kNodeFlagUpload = ".../"
 var kNodeListen = []string{"/l"}
 var kNodeStart  = []string{"/l", "/v"}
 
+var sNodeSyncPeriod = time.Duration(2 * time.Minute)
 var sNodePin = ""
 
 type tToNode struct {
@@ -161,11 +163,22 @@ func MakeNode(iR io.Reader) error {
             if !os.IsNotExist(err) { quit(err) }
             return err
          }
-         var aLen int64
-         aLen, err = io.Copy(aFd, aTf)
-         if err == nil && aLen != aHead.Size {
-            err = tError("size mismatch for "+ aName)
-         }
+         func() {
+            var cLen, cLenDecode int64
+            if aName == "tag" {
+               cTagset := tTagset{}
+               err = json.NewDecoder(&tReadCounter{aTf, &cLenDecode}).Decode(&cTagset)
+               if err != nil { return }
+               cTagset, err = fixConflictTag(cTagset, aSvc)
+               if err != nil { return }
+               err = json.NewEncoder(aFd).Encode(cTagset)
+               if err != nil { quit(err) }
+            }
+            cLen, err = io.Copy(aFd, aTf)
+            if err == nil && cLen + cLenDecode != aHead.Size {
+               err = tError("size mismatch for "+ aName)
+            }
+         }()
          if err != nil {
             aFd.Close()
             return err //todo only network errors
@@ -175,11 +188,6 @@ func MakeNode(iR io.Reader) error {
          aFd.Close()
          err = os.Chtimes(dirSvc(aTemp) + aName, aHead.ModTime, aHead.ModTime)
          if err != nil { quit(err) }
-         if aName == "tag" {
-            if aTag, ok := hasConflictTag(aTemp); ok {
-               return tError("conflicting tag: "+ aTag)
-            }
-         }
       } else {
          return tError("unexpected typeflag: "+ string(aHead.Typeflag))
       }
@@ -420,4 +428,192 @@ func completeNode(iSvc string, iUpdt *Update, iNode *tNode) error {
       return tError("status: "+ aRsp.Status)
    }
    return nil
+}
+
+func SetSyncPeriodNode(iPeriod time.Duration) { sNodeSyncPeriod = iPeriod }
+
+func syncUpdtNode(iSvc string, iUpdt *Update, iState *ClientState, iFunc func()error) {
+   if iUpdt.log == eLogNone {
+      iFunc()
+      return
+   }
+   aLog := ftmpSyncLog(iSvc)
+   aTempOk := ftmpSyncUpdt(iSvc, iState.id)
+   aTemp := aTempOk +".tmp"
+   var aTd *os.File
+   var err error
+   var aPos int64
+
+   aSvc := getService(iSvc)
+   aSvc.nodeUpdt.Lock(); defer aSvc.nodeUpdt.Unlock()
+
+   if iUpdt.log != eLogRetry {
+      aFi, err := os.Stat(aLog)
+      if err != nil {
+         if !os.IsNotExist(err) { quit(err) }
+      } else {
+         aPos = aFi.Size(); if aPos > 0 { aPos-- }
+      }
+      aTempOk += fmt.Sprint(aPos)
+
+      aTd, err = os.OpenFile(aTemp, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
+      if err != nil { quit(err) }
+      defer aTd.Close()
+
+      iUpdt.LogThreadId = iState.getThread()
+      err = json.NewEncoder(aTd).Encode(iUpdt)
+      if err != nil { quit(err) }
+      err = aTd.Sync()
+      if err != nil { quit(err) }
+      _, err = aTd.Seek(0, io.SeekStart)
+      if err != nil { quit(err) }
+
+      err = os.Rename(aTemp, aTempOk)
+      if err != nil { quit(err) }
+      err = syncDir(dirTemp(iSvc))
+      if err != nil { quit(err) }
+   } else {
+      aPos = iUpdt.logPos
+      aTempOk += fmt.Sprint(aPos)
+      aTd, err = os.Open(aTempOk)
+      if err != nil { quit(err) }
+      defer aTd.Close()
+   }
+
+   if iFunc() == nil {
+      sCrashFn(iSvc, "sync-updt-node")
+      var aFd *os.File
+      aFd, err = os.OpenFile(aLog, os.O_WRONLY, 0600)
+      if err != nil {
+         if !os.IsNotExist(err) { quit(err) }
+         err = os.Remove(aLog)
+         if err != nil && !os.IsNotExist(err) { quit(err) }
+         aLogQ := ftmpSyncLogQ(iSvc, makeLocalId("")[1:])
+         err = os.Symlink(aLogQ[len(dirTemp(iSvc)):], aLog)
+         if err != nil { quit(err) }
+         aFd, err = os.OpenFile(aLogQ, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+         if err != nil { quit(err) }
+         err = syncDir(dirTemp(iSvc))
+         if err != nil { quit(err) }
+fmt.Println("## log  ", aLogQ, iSvc)
+      }
+      defer aFd.Close()
+
+      aChar := byte('['); if aPos > 0 { aChar = ',' }
+      _, err = aFd.Seek(aPos, io.SeekStart)
+      if err != nil { quit(err) }
+      _, err = aFd.Write([]byte{aChar, '\n'})
+      if err != nil { quit(err) }
+      _, err = io.Copy(aFd, aTd)
+      if err != nil { quit(err) }
+      _, err = aFd.Write([]byte{']'})
+      if err != nil { quit(err) }
+      err = aFd.Sync()
+      if err != nil { quit(err) }
+
+      if aPos == 0 {
+         _startSyncTimer(iSvc)
+      }
+   }
+   err = os.Remove(aTempOk)
+   if err != nil { quit(err) }
+}
+
+func initSyncNode(iSvc string) {
+   aFi, err := os.Stat(ftmpSyncLog(iSvc))
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+   } else if aFi.Size() > 0 {
+      var aPath string
+      aPath, err = os.Readlink(ftmpSyncLog(iSvc))
+      if err != nil { quit(err) }
+      if !hasQueue(iSvc, eSrecSync, aPath) {
+         _startSyncTimer(iSvc)
+      }
+   }
+}
+
+func _startSyncTimer(iSvc string) {
+   //todo P2P xfer to local nodes, with short delay
+   // updates from nodes with conflicting inputs that cross on the relay can yield out-of-sync state
+   aPath, err := os.Readlink(ftmpSyncLog(iSvc))
+   if err != nil { quit(err) }
+   _ = time.AfterFunc(sNodeSyncPeriod, func() {
+      //todo don't queue if no link to service; retry timer
+      addQueue(iSvc, eSrecSync, aPath)
+fmt.Println("## queue", aPath, iSvc)
+   })
+}
+
+func sendSyncNode(iW io.Writer, iSvc string, iNodeQ, iId string) error {
+   aSvc := getService(iSvc)
+   aSvc.nodeUpdt.Lock()
+   aPath, err := os.Readlink(ftmpSyncLog(iSvc))
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+   } else if aPath == iNodeQ {
+      err = os.Remove(ftmpSyncLog(iSvc))
+      if err != nil { quit(err) }
+   }
+   aSvc.nodeUpdt.Unlock()
+fmt.Println("## send ", iNodeQ, iSvc, " log", aPath, err)
+
+   aFd, err := os.Open(dirTemp(iSvc) + iNodeQ)
+   if err != nil { quit(err) }
+   defer aFd.Close()
+   aFi, err := aFd.Stat()
+   if err != nil { quit(err) }
+
+   aSubh, err := json.Marshal(tHeader2{NodeSync:true})
+   if err != nil { quit(err) }
+   aMsg := Msg{"Op":7, "Id":iId, "For":[]tHeaderFor{},
+               "DataHead": len(aSubh), "DataLen": int64(len(aSubh)) + aFi.Size()}
+   aHead, err := json.Marshal(aMsg)
+   if err != nil { quit(err) }
+
+   err = writeHeaders(iW, aHead, aSubh)
+   if err != nil { return err }
+   _, err = io.Copy(iW, aFd) //todo only return network errors
+   return err
+}
+
+func dropSyncNode(iSvc string, iNodeQ, iQid string, iComplete string) {
+   aTempOk := ftmpSyncAck(iSvc, iQid)
+   aTemp := aTempOk +".tmp"
+   var err error
+   if iComplete == "" {
+      var aFd *os.File
+      aFd, err = os.OpenFile(aTemp, os.O_RDONLY|os.O_CREATE|os.O_EXCL, 0600)
+      if err != nil { quit(err) }
+      err = aFd.Sync() // not strictly required since no data
+      if err != nil { quit(err) }
+      aFd.Close()
+      err = os.Rename(aTemp, aTempOk)
+      if err != nil { quit(err) }
+      err = syncDir(dirTemp(iSvc))
+      if err != nil { quit(err) }
+   } else {
+      fmt.Printf("complete %s\n", aTempOk[len(dirTemp(iSvc)):])
+   }
+   sCrashFn(iSvc, "drop-sync-node")
+   dropQueue(iSvc, iQid)
+   err = os.Remove(dirTemp(iSvc) + iNodeQ)
+   if err != nil && !os.IsNotExist(err) { quit(err) }
+fmt.Println("## drop ", iNodeQ, iSvc)
+   err = os.Remove(aTempOk)
+   if err != nil { quit(err) }
+}
+
+func completeUpdtNode(iSvc string, iTmp string) {
+   fmt.Printf("complete %s\n", iTmp)
+   var err error
+   aUpdt := Update{log:eLogRetry}
+   aRec := strings.SplitN(iTmp, "_", 3)
+   aUpdt.logPos, err = strconv.ParseInt(aRec[2], 10, 64)
+   if err != nil { quit(err) }
+   aCs := OpenState(aRec[1], iSvc)
+   err = readJsonFile(&aUpdt, dirTemp(iSvc) + iTmp)
+   if err != nil { quit(err) }
+   aFunc, _ := HandleUpdtService(iSvc, aCs, &aUpdt) // must call syncUpdtNode()
+   aFunc(aCs) //todo update other saved ClientStates
 }

@@ -15,7 +15,7 @@ fi
 
 host="$1"
 
-# SvcId Orders[n].Name Orders-count transaction-name
+# SvcId Orders[n].Name Orders-count transaction-name [sender Orders[n].Name]
 list=(
    'Blue thread_save.a    1 store-draft-thread'
    'Blue thread_discard.a 1 delete-draft-thread'
@@ -24,6 +24,8 @@ list=(
    'Blue poll_delivery.a  2 store-fwd-notify-thread   Gold forward_send.a'
    'Blue poll_delivery.a  2 store-confirm-thread      Gold forward_send.a'
    'Blue thread_open.a    1 touch-thread'
+   'Blue thread_tag.a     1 sync-updt-node'
+   'Blue end.z            1 drop-sync-node            Blue thread_tag.a'
    'Gold poll_delivery.b  1 store-received-thread     Blue thread_send.a'
    'Gold forward_send.a   1 store-fwd-sent-thread'
 )

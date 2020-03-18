@@ -497,11 +497,14 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) error {
                fmt.Fprintf(os.Stderr, "_readLink %s: ack channel blocked\n", iSvcId)
             }
          }
-         aFn, aToAll := pSl.HandleTmtpService(iSvcId, aHead, &tTmtpInput{aData, iConn})
+         if aHead.SubHead == nil || !aHead.SubHead.NodeSync {
+            fNotify(pSl.HandleTmtpService(iSvcId, aHead, &tTmtpInput{aData, iConn}))
+         } else {
+            pSl.HandleSyncService(iSvcId, aHead, &tTmtpInput{aData, iConn}, fNotify)
+         }
          if aHead.From != "" && aHead.Id != "" {
             aSvc.queue.postAck(aHead.Id)
          }
-         fNotify(aFn, aToAll)
       }
       if aPos > aHeadEnd + aHead.DataLen {
          aPos = int64(copy(aBuf, aBuf[aHeadEnd + aHead.DataLen : aPos]))

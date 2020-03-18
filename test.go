@@ -111,6 +111,7 @@ func crashTest(iSvc string, iOp string) {
 }
 
 func test() int {
+   pSl.SetSyncPeriodNode(1 * time.Second)
    sTestWebAddr = sHttpSrvr.Addr; if sTestWebAddr[0] == ':' { sTestWebAddr = "localhost"+ sTestWebAddr }
    aDir := "test-run/" + sTestDate[1:]
    var err error

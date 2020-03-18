@@ -90,6 +90,13 @@ func ftmpFfn   (iSvc, iTid       string) string { return dirTemp(iSvc) +"ffninde
 func ftmpAdrsbk(iSvc, iPos, iQid string) string { return dirTemp(iSvc) +"adrsbk_"+ iPos +"_"+
                                                          url.QueryEscape(iQid) }
 
+func ftmpSyncLog (iSvc       string) string { return dirTemp(iSvc) +"synclog" }
+func ftmpSyncLogQ(iSvc, iQid string) string { return dirTemp(iSvc) +"synclog_"+ iQid }
+// this may have ".tmp" appended
+func ftmpSyncAck (iSvc, iId  string) string { return dirTemp(iSvc) +"syncack_"+ iId }
+// this has either ".tmp" or a decimal string appended
+func ftmpSyncUpdt(iSvc, iCid string) string { return dirTemp(iSvc) +"syncupdt_"+ iCid +"_" }
+
 var kCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
 var sCrashFn func(string, string)
@@ -104,6 +111,7 @@ type GlobalSet interface {
 
 type tService struct {
    updt sync.RWMutex // protect entire service during node replication
+   nodeUpdt sync.Mutex // protect node sync log
    adrsbk tAdrsbk
    index pBleve.Index
    toNode tToNode
@@ -153,6 +161,7 @@ type tHeader2 struct {
    Cc []tCcEl `json:",omitempty"`
    ConfirmId string `json:",omitempty"`
    ConfirmPosted string `json:",omitempty"`
+   NodeSync bool `json:",omitempty"`
    noAttachSize bool
 }
 
@@ -190,12 +199,16 @@ type tHeaderFor struct { Id string; Type int8 }
 const ( _ int8 = iota; eForUser; eForGroupAll; eForGroupExcl; eForSelf )
 
 type Update struct {
+   log int8 // values eLog*
+   logPos int64
+   LogThreadId string `json:",omitempty"`
+   LogOp string `json:",omitempty"`
    Op string
    Config *struct {
       HistoryLen int
       Addr string
       LoginPeriod int
-   }
+   } `json:",omitempty"`
    Thread *struct {
       Id string
       Alias string
@@ -205,63 +218,67 @@ type Update struct {
       Attach []tHeader2Attach
       FormFill map[string]string
       New int8
-   }
+   } `json:",omitempty"`
    Touch *struct {
       ThreadId, MsgId string
       TagId string
+      TagName string `json:",omitempty"`
       Act int8
-   }
+   } `json:",omitempty"`
    Forward *struct {
       ThreadId string
       Cc []tCcEl
       Qid string
-   }
+   } `json:",omitempty"`
    Ping *struct {
       Alias string
       To string
       Text string
       Gid string
       Qid string
-   }
+   } `json:",omitempty"`
    Accept *struct {
       Qid string
-   }
+   } `json:",omitempty"`
    Adrsbk *struct {
       Type int8
       Term string
-   }
+   } `json:",omitempty"`
    Ohi *struct {
       Alias string
       Uid string
-   }
+   } `json:",omitempty"`
    Notice *struct {
       MsgId string
-   }
+   } `json:",omitempty"`
    Tag *struct {
       Name string
-   }
+      Id string `json:",omitempty"`
+   } `json:",omitempty"`
    Navigate *struct {
       History int
       Label string
       ThreadId, MsgId string
-   }
+   } `json:",omitempty"`
    Tab *struct {
       Type int8
       Term string
       PosFor int8
       Pos int
-   }
+   } `json:",omitempty"`
    Sort *struct {
       Type string
       Field string
-   }
+   } `json:",omitempty"`
    Node *struct {
       Addr string
       Pin string
       Newnode string
-   }
-   Test *UpdateTest
+   } `json:",omitempty"`
+   Test *UpdateTest `json:",omitempty"`
 }
+
+const ( _ int8 = iota; eLogRetry; eLogNone )
 
 type UpdateTest struct {
    Request []string
@@ -276,7 +293,7 @@ type SendRecord struct {
 const (
    eSrecThread = 't'; eSrecFwd = 'f'; eSrecCfm = 'c'
    eSrecPing = 'p'; eSrecOhi = 'o'; eSrecAccept = 'a'
-   eSrecNode = 'n'
+   eSrecNode = 'n'; eSrecSync = 's'
 )
 
 type Msg map[string]interface{}
@@ -347,6 +364,17 @@ func (o *tCrcWriter) Write(i []byte) (int, error) {
 }
 
 func (o *tCrcWriter) clear() { o.sum = 0 }
+
+type tReadCounter struct {
+   r io.Reader
+   c *int64
+}
+
+func (o *tReadCounter) Read(iBuf []byte) (int, error) {
+   aLen, err := o.r.Read(iBuf)
+   *o.c += int64(aLen)
+   return aLen, err
+}
 
 func storeFile(iPath string, iData interface{}) error {
    aTemp := iPath + ".tmp"
