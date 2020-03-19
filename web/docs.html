@@ -226,6 +226,15 @@ Replicas provide automatic backup of account data, and access to it from multipl
 [not yet implemented]
 </p>
 
+<p>Private content (e.g. message tags, message seen status, the last-seen notice, ohi-to contacts, 
+pinned tabs, and account configuration) is kept in sync across your replicas. 
+Synchronization updates are distributed every two minutes. 
+Synchronization of message drafts and invite drafts is 
+[not yet implemented].
+Peer-to-peer synchronization between replicas residing on the same LAN/WLAN is 
+[not yet implemented].
+</p>
+
 <p>To create a replica, open the <span uk-icon="cog"></span> menu above the accounts panel 
 on the destination device, 
 and click the <span uk-icon="laptop"></span><span uk-icon="arrow-left"></span> button. 
@@ -695,6 +704,10 @@ Blank forms are fillable only in the preview panel of the draft editor.
 
 <p>A message may be assigned any number of predefined and user-defined tags, 
 which allow threads and messages to be found via tag searches.
+When a tag is sync'd to account replicas, on any device where that tag name is 
+already in use by an account not replicated locally, 
+the tag's name on that device will be changed to <i>tagname&nbsp;[account<sup>N</sup>]</i> 
+(see also <a href="#repl">Replicas</a>).
 </p>
 
 <p>To set or clear a tag, open the message to be tagged, and use 
