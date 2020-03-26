@@ -345,13 +345,6 @@ func _runTar(iSvc string, iW *io.PipeWriter, iNode *tNode, iToNode *tToNode) {
 
    aDir, err := readDirFis(dirSvc(iSvc))
    if err != nil { quit(err) }
-   for a := range aDir { // tag conflict could prevent replication; send it first
-       if aDir[a].Name() != "tag" { continue }
-       aFi := aDir[a]
-       copy(aDir[1:a+1], aDir[0:a])
-       aDir[0] = aFi
-       break
-   }
    for _, aFi := range aDir {
       if aFi.Name() == "temp" || aFi.Name() == "sendq" { continue }
       if aFi.IsDir() {
