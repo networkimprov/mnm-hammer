@@ -327,7 +327,7 @@ func _reindex(iCfg *tSvcConfig, iBi pBleve.Index) {
    aDir, err := readDirNames(dirThread(iCfg.Name))
    if err != nil { quit(err) }
    if len(aDir) > 0 {
-      fmt.Printf("Indexing %d threads...", len(aDir))
+      fmt.Printf("_reindex %s: Indexing %d threads...", iCfg.Name, len(aDir))
    }
    for _, aFn := range aDir {
       if strings.ContainsRune(aFn[1:], '_') { continue }
