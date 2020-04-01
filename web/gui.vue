@@ -241,7 +241,7 @@
                style="color:#1e87f0; font-size:110%; vertical-align:text-top; cursor:pointer"
                title="Toggle ohi-from panel">&nbsp;o/</span>
          <span uk-icon="laptop" class="dropdown-icon"
-               title="Replicas">&nbsp;</span>
+               :title="'Replicas for <%.TitleJs%>'">&nbsp;</span>
          <mnm-nodes/>
          &nbsp;
          <span uk-icon="push" class="dropdown-icon"
