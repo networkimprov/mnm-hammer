@@ -16,6 +16,7 @@ import (
    "encoding/json"
    "os"
    "crypto/rand"
+   "sort"
    "strconv"
    "strings"
    "archive/tar"
@@ -121,8 +122,6 @@ func MakeNode(iR io.Reader) error {
       fmt.Printf("MakeNode: removed incomplete instance of %s\n", aSvc)
    }
    makeTreeService(aTemp)
-   err = os.Mkdir(fileIndex(aTemp), 0700) //todo in makeTreeService?
-   if err != nil { quit(err) }
    fmt.Printf("MakeNode: replicating %s\n", aSvc)
 
    for {
@@ -303,12 +302,22 @@ func _runTar(iSvc string, iW *io.PipeWriter, iNode *tNode, iToNode *tToNode) {
    if err != nil { return }
 
    fPut := func(cPath string) error {
-      err := aTf.WriteHeader(&aHead)
-      if err != nil { return err }
       cFd, err := os.Open(cPath)
       if err != nil { quit(err) }
       defer cFd.Close()
-      cLen, err := io.Copy(aTf, cFd)
+      var cLen int64
+      if aHead.Typeflag == '_' {
+         cDl := newDraftlessThread(cFd)
+         aHead.Typeflag = tar.TypeReg
+         aHead.Size = cDl.size()
+         err = aTf.WriteHeader(&aHead)
+         if err != nil { return err }
+         cLen, err = cDl.copy(aTf)
+      } else {
+         err = aTf.WriteHeader(&aHead)
+         if err != nil { return err }
+         cLen, err = io.Copy(aTf, cFd)
+      }
       if err != nil { return err } //todo only network error
       if cLen != aHead.Size {
          quit(tError("size mismatch"))
@@ -318,25 +327,37 @@ func _runTar(iSvc string, iW *io.PipeWriter, iNode *tNode, iToNode *tToNode) {
    }
    var fSub func(string)error
    fSub = func(cName string) error {
+      cHeadType := byte(tar.TypeReg)
       cDir, err := readDirFis(dirSvc(iSvc) + cName)
       if err != nil { quit(err) }
+      sort.Slice(cDir, func(ccA, ccB int)bool { return cDir[ccA].Name() > cDir[ccB].Name() })
       for _, cFi := range cDir {
          cPath := cName +"/"+ cFi.Name()
          if cFi.IsDir() {
+            if cName == "attach" && cFi.Name()[0] == '_' { continue }
+            // doesn't omit attach/sub/ with only draft-owned files
             aHead = tar.Header{Name: cPath, Typeflag: tar.TypeDir, Mode: int64(cFi.Mode())}
             err = aTf.WriteHeader(&aHead)
             if err != nil { return err }
             if cName == "attach" { continue }
             err = fSub(cPath)
          } else {
+            if cName == "thread" { //todo revert this when thread draft sync added
+               cPos := strings.IndexByte(cFi.Name(), '_')
+               if cPos > 0 {
+                  cHeadType = '_'
+               }
+               if cPos >= 0 { continue }
+            }
             cPathHead := cPath
             if strings.HasPrefix(cPath, "form/") {
                cPathHead, err = url.QueryUnescape(cPath)
                if err != nil { quit(err) }
             }
             aHead = tar.Header{Name: cPathHead, Size: cFi.Size(),
-                               ModTime: cFi.ModTime(), Typeflag: tar.TypeReg, Mode: int64(cFi.Mode())}
+                               ModTime: cFi.ModTime(), Typeflag: cHeadType, Mode: int64(cFi.Mode())}
             err = fPut(dirSvc(iSvc) + cPath)
+            cHeadType = tar.TypeReg
          }
          if err != nil { return err }
       }
@@ -346,7 +367,8 @@ func _runTar(iSvc string, iW *io.PipeWriter, iNode *tNode, iToNode *tToNode) {
    aDir, err := readDirFis(dirSvc(iSvc))
    if err != nil { quit(err) }
    for _, aFi := range aDir {
-      if aFi.Name() == "temp" || aFi.Name() == "sendq" { continue }
+      if aFi.Name() == "temp" || aFi.Name() == "sendq" ||
+         aFi.Name() == "ping-draft" || aFi.Name() == "index.bleve" { continue }
       if aFi.IsDir() {
          err = fSub(aFi.Name())
       } else if aFi.Name() == "config" {
@@ -376,6 +398,7 @@ func _runTar(iSvc string, iW *io.PipeWriter, iNode *tNode, iToNode *tToNode) {
    var aIno uint64
    for a := range aAtc {
       if strings.HasPrefix(aAtc[a].path, kNodeFlagUpload) { continue }
+      if aAtc[a].path[0] == '_' || strings.IndexByte(aAtc[a].path[17:], '_') == 12 { continue }
       if aAtc[a].inode != aIno {
          aIno = aAtc[a].inode
          aHead = tar.Header{Name: fmt.Sprintf("temp/%d", aAtc[a].inode), Size: aAtc[a].size,

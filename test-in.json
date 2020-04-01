@@ -475,6 +475,53 @@
       "cs": "sort_select.a" },
    "Name": "open.a"
 },{
+   "Updt": {"Op":"thread_save", "Thread":{
+                 "New":2, "Alias":"Blue", "Subject":"unreplicated",
+                 "Attach":[{"Name":"upload/BlueFile.txt"}] }},
+   "Result": {
+      "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
+              "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"unreplicated",
+                         "Attach":[{"Name":"u:BlueFile.txt"}] },
+              "msg_data":"" }] ,
+      "ml": [{"Id":"*midm", "From":"",     "Alias":"",        "Date":"*d", "Subject":"unreplicated", "Seen":".", "Queued":false},
+             {"Id":"*mid",  "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"reply ohi",    "Seen":"", "Queued":false},
+             {"Id":"*mid",  "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi",          "Seen":".", "Queued":false}] ,
+      "al": [{"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*midm", "File":"*", "Date":"*d"},
+             {"Name":"Blue.original", "Size":416, "MsgId":"*mid",  "File":"*", "Date":"*d"},
+             {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*mid",  "File":"*", "Date":"*d"}] ,
+      "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
+             {"Id":"*mid", "Unread":true, "Subject":"unreplicated", "SubjectWas":"ohi",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] }
+},{
+   "Updt": {"Op":"thread_save", "Thread":{
+                 "New":1, "Alias":"Blue", "Subject":"unreplicated",
+                 "Attach":[{"Name":"upload/BlueFile.txt"}] }},
+   "Result": {
+      "mo": [{"From":"self", "Id":"*midt", "Len":0, "Posted":"draft",
+              "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"unreplicated",
+                         "Attach":[{"Name":"u:BlueFile.txt"}],
+                         "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
+                                "Date":"*d", "Note":"author", "Subscribe":true}] },
+              "msg_data":"" }] ,
+      "tl": [{"Id":"*midt", "Subject":"unreplicated",
+              "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":""},
+             {"Id":"*mid", "Unread":true, "Subject":"to forward",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
+             {"Id":"*mid", "Unread":true, "Subject":"unreplicated", "SubjectWas":"ohi",
+              "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
+      "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"unreplicated", "Seen":".", "Queued":false}] ,
+      "cl": [[],
+             [{"Who":"Blue#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
+               "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
+      "al": [{"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] ,
+      "cs": {"Thread":"*midt",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
+             "History":{"Prev":true, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"ffn:mnmnotmail.github.io/registry/test1_recv"}],
+                        "Pinned":[{"Term":"-- -+ohi +"}], "Type":1},
+             "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
+},{
    "Updt": {"Op":"node_add", "Node":{"Addr":"localhost", "Pin":"localpin", "Newnode":"later"}},
    "Result": {
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
@@ -485,14 +532,14 @@
       "cn": {"Addr":"localhost:8123", "Pin":"*", "Xfer":0} }
 },{
    "Updt": {"Op":"test", "Test":{"Request":["cf", "cn"]}},
-   "Poll": 4,
+   "Poll": 6,
    "Result": {
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
              "NodeSet":[{"Name":"first", "Status":97, "Local":true},
                         {"Name":"early", "Status":97},
                         {"Name":"later", "Status":97}] } ,
-      "cn": {"Addr":"localhost:8123", "Pin":"*", "Xfer":">138300"} }
+      "cn": {"Addr":"localhost:8123", "Pin":"*", "Xfer":">4800"} }
 },{
    "Client": {"Name":"Blue2", "SvcId":"Blue.later"},
    "Updt": {"Op":"open"},

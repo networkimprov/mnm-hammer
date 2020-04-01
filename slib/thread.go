@@ -485,23 +485,31 @@ func touchThread(iSvc string, iUpdt *Update) bool {
       aTempOk = ftmpTc(iSvc, aId.tid(), iUpdt.Touch.MsgId, aId.lms())
    }
    aTemp := aTempOk + ".tmp"
-   var err error
 
    aDoor := _getThreadDoor(iSvc, iUpdt.Touch.ThreadId)
    aDoor.Lock(); defer aDoor.Unlock()
    if aDoor.renamed { return false }
 
+   var err error
    var aTd, aFd *os.File
    aIdx, aCc := []tIndexEl{}, []tCcEl{}
    aIdxN := -1
    var aPos int64
 
    aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
-   if err != nil { quit(err) }
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+      fmt.Printf("touchThread %s: threadid not found %s\n", iSvc, iUpdt.Touch.ThreadId)
+      return false
+   }
    defer aFd.Close()
    aPos = _readIndex(aFd, &aIdx, &aCc)
    for aIdxN = 0; aIdxN < len(aIdx); aIdxN++ {
       if aIdx[aIdxN].Id == iUpdt.Touch.MsgId { break }
+   }
+   if aIdxN == len(aIdx) {
+      fmt.Printf("touchThread %s: msgid not found %s\n", iSvc, iUpdt.Touch.MsgId)
+      return false
    }
    switch iUpdt.Touch.Act {
    case 's':
@@ -1572,6 +1580,45 @@ func _writeMsg(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) (*tMsgH
    iEl.Size, err = iTd.Seek(0, io.SeekCurrent)
    if err != nil { quit(err) }
    return &aHead, nil
+}
+
+type tDraftless struct {
+   fd *os.File
+   bufIdx, bufCc []byte
+   pos int64
+}
+
+func newDraftlessThread(iFd *os.File) *tDraftless {
+   o := tDraftless{fd:iFd}
+   var aIdx []tIndexEl
+   var aCc []tCcEl
+   o.pos = _readIndex(o.fd, &aIdx, &aCc)
+   aIdx2 := aIdx[:0]
+   for a := range aIdx {
+      if aIdx[a].Offset == -1 { continue }
+      aIdx2 = append(aIdx2, aIdx[a])
+   }
+   var err error
+   o.bufIdx, err = json.Marshal(aIdx2)
+   if err != nil { quit(err) }
+   o.bufCc, err = json.Marshal(aCc)
+   if err != nil { quit(err) }
+   return &o
+}
+
+func (o *tDraftless) size() int64 { return o.pos + int64(len(o.bufIdx) + len(o.bufCc)) + 16 }
+
+func (o *tDraftless) copy(iW io.Writer) (int64, error) {
+   _, err := o.fd.Seek(0, io.SeekStart)
+   if err != nil { quit(err) }
+   aLen1, err := io.CopyN(iW, o.fd, o.pos)
+   if err != nil { return aLen1, err }
+   aLen2, err := iW.Write(o.bufIdx)
+   if err != nil { return aLen1 + int64(aLen2), err }
+   aLen3, err := iW.Write(o.bufCc)
+   if err != nil { return aLen1 + int64(aLen2 + aLen3), err }
+   aLen4, err := iW.Write([]byte(fmt.Sprintf("%08x%08x", aLen2, aLen3)))
+   return aLen1 + int64(aLen2 + aLen3 + aLen4), err
 }
 
 func _makeQid(iType byte, iTid, iLms string) string { return string(iType) + iTid +"_"+ iLms }
