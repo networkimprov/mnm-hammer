@@ -1648,14 +1648,21 @@ func _getThreadDoor(iSvc string, iTid string) *tThreadDoor {
 }
 
 func completeThread(iSvc string, iTempOk string) {
-   var err error
    aRec := _parseFtmp(iTempOk)
    if len(aRec) != 5 {
       fmt.Fprintf(os.Stderr, "completeThread: unexpected file %s%s\n", dirTemp(iSvc), iTempOk)
       return
    }
-   fmt.Printf("complete %s\n", iTempOk)
+   var err error
    var aFd, aTd *os.File
+   aTd, err = os.Open(dirTemp(iSvc) + iTempOk)
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+      fmt.Printf("complete %s already removed\n", iTempOk)
+      return
+   }
+   defer aTd.Close()
+   fmt.Printf("complete %s\n", iTempOk)
    if aRec.op() == "sc" || aRec.op() == "nr" || aRec.tid() != "" && aRec.tid() != aRec.mid() {
       aTid := aRec.tid(); if aTid == "" { aTid = "_"+ aRec.lms() }
       aFd, err = os.OpenFile(dirThread(iSvc) + aTid, os.O_RDWR, 0600)
@@ -1664,9 +1671,6 @@ func completeThread(iSvc string, iTempOk string) {
       _, err = aFd.Seek(aRec.pos(), io.SeekStart)
       if err != nil { quit(err) }
    }
-   aTd, err = os.Open(dirTemp(iSvc)+iTempOk)
-   if err != nil { quit(err) }
-   defer aTd.Close()
    fMsgHead := func() *tMsgHead {
       cMh := _readMsgHead(aTd)
       aTd.Seek(0, io.SeekStart)
