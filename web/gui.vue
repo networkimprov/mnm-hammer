@@ -1789,19 +1789,33 @@
                </tr></table></li>
          <li>
             <form onsubmit="return false"
-                  style="width:70%; margin: 0 auto; display:table">
-               <input v-model="draft.to"
-                      placeholder="To (<%.aliasMin%>+ characters)" type="text"
-                      style="width:calc(50% - 1.5em)">
-               <div style="width:calc(50% - 1.5em); display:inline-block; vertical-align:top">
+                  style="width:76%; margin: 0 auto; display:table">
+               <span @click="(hasGroup = !hasGroup) || (draft.gid = '')"
+                     title="Include group in invite"
+                     class="uk-link"><span uk-icon="world"></span></span>
+               <div :class="{'vishide': !hasGroup}"
+                    style="width:calc(50% - 2em); display:inline-block; vertical-align:top">
                   <input v-model="draft.gid"
-                         placeholder="Group (opt. <%.aliasMin%>+)" type="text"
+                         name="gid" autocomplete="off" type="text"
+                         placeholder="Group (<%.aliasMin%>+)"
                          class="width100">
                   <br>
-                  <mnm-adrsbkinput @keyup.enter.native="setGid($event.target)"
+                  <mnm-adrsbkinput @keyup.enter.native="setField('gid', $event.target)"
                                    @keydown.enter.native.prevent=""
                                    :type="2"
-                                   placeholder="Search groups"
+                                   placeholder="Choose group"
+                                   class="width100"/>
+               </div>
+               <div style="width:calc(50% - 2em); display:inline-block; vertical-align:top">
+                  <input v-model="draft.to"
+                         name="to" autocomplete="off" type="text"
+                         placeholder="To (<%.aliasMin%>+ characters)"
+                         class="width100">
+                  <mnm-adrsbkinput v-show="hasGroup"
+                                   @keyup.enter.native="setField('to', $event.target)"
+                                   @keydown.enter.native.prevent=""
+                                   :type="1"
+                                   placeholder="Choose contact"
                                    class="width100"/>
                </div>
                <button @click="startPing()"
@@ -1809,6 +1823,9 @@
                        title="New draft invitation"
                        class="btn-icon"><span uk-icon="pencil"></span></button>
             </form>
+            <div v-show="mnm._data.ps.length === 0"
+                 style="margin-top:0.5em; text-align:center; font-style:italic"
+                 >To draft an invitation to someone, add their alias here.</div>
             <table class="uk-table uk-table-small" style="margin:0">
                <tr><th>To / (Group)</th> <th></th> <th>Message</th> <th></th></tr>
                <tr v-for="a in mnm._data.ps" :key="rowId(a)">
@@ -1862,7 +1879,10 @@
                        style="width:calc(50% - 0.5em)"
                        class="btn-icontxt">o/</button>
             </form>
-            <table class="uk-table uk-table-small">
+            <div v-show="mnm._data.ot.length === 0"
+                 style="margin-top:0.5em; text-align:center; font-style:italic"
+                 >To notify a contact whenever you're online, add them here.</div>
+            <table class="uk-table uk-table-small" style="margin:0">
                <tr><th>Date</th> <th>To</th> <th></th></tr>
                <tr v-for="aOhi in mnm._data.ot">
                   <td><mnm-date v-if="aOhi.Date !== 'pending'"
@@ -1882,7 +1902,7 @@
 </script><script>
    Vue.component('mnm-adrsbk', {
       template: '#mnm-adrsbk',
-      data: function() { return {draft:{to:'', gid:''}, toSave:{}} },
+      data: function() { return {draft:{to:'', gid:''}, toSave:{}, hasGroup:false} },
       computed: {
          mnm: function() { return mnm },
          validDraft: function() {
@@ -1898,16 +1918,16 @@
       },
       methods: {
          rowId: function(iRec) { return iRec.Alias +'\0'+ (iRec.Gid || '') },
-         setGid: function(iInput) {
+         setField: function(iKey, iInput) {
             if (iInput.value) {
-               this.draft.gid = iInput.value;
+               this.draft[iKey] = iInput.value;
                iInput.value = '';
             }
-            iInput.form.elements[1].focus();
+            iInput.form.elements[iKey].focus();
          },
          startPing: function() {
             mnm.PingSave({alias:mnm._data.cf.Alias, to:this.draft.to, gid:this.draft.gid});
-            this.draft.to = this.draft.gid = '';
+            this.draft.to = '';
          },
          timer: function(iRec, iText) {
             var aKey = this.rowId(iRec);
