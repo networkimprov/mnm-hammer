@@ -77,8 +77,7 @@ func ftmpDd(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"ds_"+ iTid 
 func ftmpFr(iSvc, iTid       string) string { return dirTemp(iSvc) +"fr_"+ iTid +"_"+ iTid +"__" }
 func ftmpFn(iSvc, iTid       string) string { return dirTemp(iSvc) +"fn_"+ iTid +"___" }
 func ftmpFs(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"fs_"+ iTid +"__"+ iLms +"_" }
-func ftmpTc(iSvc, iTid, iMid,
-                        iLms string) string { return dirTemp(iSvc) +"nr_"+ iTid +"_"+ iMid +"_"+ iLms +"_" }
+func ftmpTc(iSvc, iTid, iLms string) string { return dirTemp(iSvc) +"nr_"+ iTid +"__"+ iLms +"_" }
 
 func ftmpFwdS(iSvc, iTid string) string { return dirTemp(iSvc) + iTid +"_fwd.tmp" }
 func ftmpFwdD(iSvc, iTid string) string { return dirTemp(iSvc) +"forward_"+ iTid }

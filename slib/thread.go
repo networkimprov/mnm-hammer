@@ -479,10 +479,10 @@ func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *
 
 func touchThread(iSvc string, iUpdt *Update) bool {
    aOrig := dirThread(iSvc) + iUpdt.Touch.ThreadId
-   aTempOk := ftmpTc(iSvc, iUpdt.Touch.ThreadId, iUpdt.Touch.MsgId, "")
+   aTempOk := ftmpTc(iSvc, iUpdt.Touch.ThreadId, "")
    if iUpdt.Touch.ThreadId[0] == '_' {
       aId := parseLocalId(iUpdt.Touch.ThreadId)
-      aTempOk = ftmpTc(iSvc, aId.tid(), iUpdt.Touch.MsgId, aId.lms())
+      aTempOk = ftmpTc(iSvc, aId.tid(), aId.lms())
    }
    aTemp := aTempOk + ".tmp"
 
