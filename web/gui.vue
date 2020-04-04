@@ -220,7 +220,7 @@
    <div :class="{vishide: mnm._isLocal}"
         class="uk-clearfix">
       <span class="uk-text-large">
-         <span uk-icon="world"></span>
+         <span uk-icon="star" title="Placeholder for site logo"></span>
          <%html .Title%>
       </span>
       <div class="uk-float-right">
