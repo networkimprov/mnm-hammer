@@ -1,30 +1,39 @@
 ### mnm is not mail
 
-Email allows anyone, anywhere, claiming any identity to send you any content, any number of times.  
-_mnm does not._
+<img width="300" hspace="32" align="right" src="https://user-images.githubusercontent.com/458838/65545951-535f6980-decb-11e9-8f46-6122198097b0.png">  
 
-Email is a cybercrime gateway.<img width="300" align="right" src="https://user-images.githubusercontent.com/458838/65545951-535f6980-decb-11e9-8f46-6122198097b0.png">  
-_mnm is not._
+To those battling cybercrime, __email is a jungle__. 
+It allows anyone, anywhere, claiming any identity to send you any content, any number of times. 
 
-mnm is a far safer way to correspond with people you know, 
-and make contact with those you don't. See [_How It Works_](Howitworks.md).
+To the rest of us, preoccupied with effective communication and productivity, __email is a desert__.
 
-mnm also offers capabilities missing in traditional email, including:  
+We've been adopting instant messaging, discussion boards, wikis, and other options for two decades. 
+But email remains ubiquitous, because it's __decentralized__ and rests on __open standards__. 
+
+To all who agree that it's time to retire email, the mnm project is building a legitimate replacement: 
+a client (see below), a [server](https://github.com/networkimprov/mnm), and 
+a [simple protocol](https://github.com/networkimprov/mnm/blob/master/Protocol.md) between them. 
+
+mnm has two major goals.
+
+1. To provide a far safer correspondence model, where you:  
+\+ choose the organizations/sites that relay your correspondence  
+\+ select which members of a site can correspond with you  
+\+ always know from which site a message originated  
+\+ can block anyone with whom you've made contact  
+\+ may leave a site and never see traffic from it again  
+See [_How It Works_](Howitworks.md) for diagrams of the model.
+
+2. To offer capabilities missing in traditional email, including:  
 \+ forms/surveys whose results are collected into tables  
 \+ data-driven charts via [a JS chart library TBD]  
 \+ slide deck layouts  
+\+ hashtags and private tags  
 \+ hyperlinks to messages &amp; other threads  
-\+ easy addition of recipients to existing threads  
 \+ message formatting &amp; layout via Markdown (aka CommonMark)  
+\+ many more features to foster efficiency, creativity, focus, and understanding  
 
-mnm is a TMTP client. 
-See [_Why TMTP?_](https://github.com/networkimprov/mnm/blob/master/Rationale.md) 
-and the [mnm relay server](https://github.com/networkimprov/mnm). 
-
-This version of mnm is a localhost web app, 
-i.e. it runs on personal devices and its GUI appears in a browser. 
-
-Complete documentation is provided within the app. 
+Further reading: [_Why TMTP?_](https://github.com/networkimprov/mnm/blob/master/Rationale.md) 
 
 
 ### Status
