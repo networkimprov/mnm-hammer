@@ -22,6 +22,9 @@ table { border-spacing: 0; }
 .uk-tab > li > a {
    cursor: default;
 }
+.uk-dropdown {
+   min-width: unset;
+}
 
 body {
    background-color: #f0f8f5;
@@ -65,14 +68,27 @@ body {
    text-align: center;
 }
 
-.vishide {
-   visibility: hidden;
+.vishide { visibility: hidden }
+.overxhide { overflow-x: hidden }
+.width100 { width: 100% }
+.width60v { width: 60vw }
+.height75v { height: 75vh }
+
+.widthmin40 {
+   width:     40vw;
+   min-width: 40em;
 }
-.overxhide {
-   overflow-x: hidden;
+.widthmin33 {
+   width:     33.33vw;
+   min-width: 33.33em;
 }
-.width100 {
-   width: 100%;
+.widthmin25 {
+   width:     25vw;
+   min-width: 25em;
+}
+.widthmin20 {
+   width:     20vw;
+   min-width: 20em;
 }
 
 input[type=text], textarea {
@@ -128,7 +144,6 @@ input[type=text], textarea {
    position: relative; bottom: -2px;
 }
 .dropdown-scroll {
-   min-width: unset; /* fix uk-dropdown */
    padding: 1em;
    padding-right: 0;
 }

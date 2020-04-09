@@ -382,7 +382,7 @@
          <div ref="doc"
               uk-dropdown="mode:click; offset:2; pos:bottom-right"
               onshow="this.firstElementChild.contentWindow.mnm_resetScroll()"
-              class="uk-width-3-5 menu-bg dropdown-scroll" style="height:75vh">
+              class="width60v height75v menu-bg dropdown-scroll">
             <iframe src="/w/docs.html" style="width:100%; height:100%"></iframe></div>
       </div>
    </div>
@@ -635,7 +635,7 @@
 
 <script type="text/x-template" id="mnm-cc">
    <div uk-dropdown="mode:click; offset:2"
-        class="uk-width-1-3 menu-bg dropdown-scroll">
+        class="widthmin33 menu-bg dropdown-scroll">
       <div class="dropdown-scroll-item">
          <form onsubmit="this.reset(); return false"
                style="margin-bottom:0.5em">
@@ -747,7 +747,7 @@
 
 <script type="text/x-template" id="mnm-attach">
    <div uk-dropdown="mode:click; offset:2"
-        class="uk-width-1-3 menu-bg dropdown-scroll"
+        class="widthmin33 menu-bg dropdown-scroll"
         @hidden="$refs.viewer.close()" @click="$refs.viewer.close()">
       <ul uk-tab class="dropdown-scroll-item"><li style="display:none"></li>
          <li v-for="aKey in ['Date','Name','Size']"
@@ -1425,7 +1425,7 @@
 
 <script type="text/x-template" id="mnm-files">
    <div uk-dropdown="mode:click; offset:2" :toggle="toggle"
-        class="uk-width-1-3 menu-bg dropdown-scroll"
+        class="widthmin33 menu-bg dropdown-scroll"
         :class="{'message-edit':toggle}"
         @hidden="$refs.viewer.close()" @click="$refs.viewer.close()">
       <form :action="'/t/+' + encodeURIComponent(upname)"
@@ -1493,7 +1493,7 @@
 
 <script type="text/x-template" id="mnm-forms">
    <div uk-dropdown="mode:click; offset:2" :toggle="toggle"
-        class="uk-width-1-3 menu-bg dropdown-scroll"
+        class="widthmin33 menu-bg dropdown-scroll"
         :class="{'message-edit':toggle}"
         @hidden="revClose" @click="revClose">
       <form :action="'/f/+' + encodeURIComponent(upname)"
@@ -1695,7 +1695,7 @@
 <script type="text/x-template" id="mnm-notice">
    <div uk-dropdown="mode:click" :toggle="toggle"
         @show="showErr = !svc && mnm._data.errorFlag && !(mnm._data.errorFlag = false)"
-        class="uk-width-1-4 menu-bg dropdown-scroll">
+        class="widthmin25 menu-bg dropdown-scroll">
       <button v-if="!svc"
               @click="showErr = !showErr"
               :disabled="!mnm._data.errors.length"
@@ -1758,7 +1758,7 @@
 
 <script type="text/x-template" id="mnm-adrsbk">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
-        class="uk-width-2-5 menu-bg dropdown-scroll">
+        class="widthmin40 menu-bg dropdown-scroll">
       <ul uk-tab class="uk-child-width-expand dropdown-scroll-item" style="margin-top:0"
           @click.prevent>
          <li><a href="#">{{mnm._data.pf.length || null}} invites </a></li>
@@ -1982,7 +1982,7 @@
 
 <script type="text/x-template" id="mnm-nodes">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
-        class="uk-width-1-5 menu-bg dropdown-scroll">
+        class="widthmin20 menu-bg dropdown-scroll">
       <form onsubmit="return false" @submit="name = ''"
             class="dropdown-scroll-item">
          <span v-show="mnm._data.cn.Xfer > 0"
@@ -2058,7 +2058,7 @@
 
 <script type="text/x-template" id="mnm-svcadd">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
-        class="uk-width-1-5 menu-bg dropdown-static"
+        class="widthmin20 menu-bg dropdown-static"
         @hidden="addr = name = alias = lpin = loginperiod = null">
       <div class="uk-float-right uk-text-small">ADD ACCOUNT</div>
       <form :action="'/v/+' + encodeURIComponent(name)"
@@ -2096,7 +2096,7 @@
 
 <script type="text/x-template" id="mnm-svccfg">
    <div uk-dropdown="mode:click; offset:-4; pos:left-top"
-        class="uk-width-1-5 menu-bg dropdown-static">
+        class="widthmin20 menu-bg dropdown-static">
       <div class="uk-float-right uk-text-small">SETTINGS</div>
       <form onsubmit="return false">
          <button @click="sendUpdate"
@@ -2146,7 +2146,7 @@
 
 <script type="text/x-template" id="mnm-settings">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
-        class="uk-width-1-5 menu-bg dropdown-static">
+        class="widthmin20 menu-bg dropdown-static">
       <div class="uk-text-right uk-text-small">SETTINGS</div>
       <form action="/l/" method="POST"
             onsubmit="mnm.Upload(this); return false;"
