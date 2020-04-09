@@ -48,6 +48,13 @@ func (o *tToNode) url(iSvc string) string {
    return "http://"+ o.Addr +"/n/"+ url.PathEscape(iSvc) +"?"+ url.QueryEscape(o.Pin)
 }
 
+type tPathInode struct {
+   path string
+   inode uint64
+   size int64
+   modtime time.Time
+}
+
 type tNodeAddr struct { Addr, Pin string }
 
 func GetPinNode(iAddr string) tNodeAddr {
@@ -394,7 +401,7 @@ func _runTar(iSvc string, iW *io.PipeWriter, iNode *tNode, iToNode *tToNode) {
       }
       if err != nil { return }
    }
-   aAtc := getAllAttach(iSvc)
+   aAtc := _getAttachInodes(iSvc)
    var aIno uint64
    for a := range aAtc {
       if strings.HasPrefix(aAtc[a].path, kNodeFlagUpload) { continue }
@@ -421,6 +428,39 @@ func _runTar(iSvc string, iW *io.PipeWriter, iNode *tNode, iToNode *tToNode) {
    err = aTf.Close()
    if err != nil { return }
    err = iW.Close()
+}
+
+func _getAttachInodes(iSvc string) []tPathInode {
+   aDir, err := readDirNames(dirAttach(iSvc))
+   if err != nil { quit(err) }
+   aList := make([]tPathInode, 0, 2*len(aDir)) //todo find average attachments/thread
+   for a := range aDir {
+      var aSub []os.FileInfo
+      aSub, err = readDirFis(dirAttach(iSvc) + aDir[a])
+      if err != nil { quit(err) }
+      for _, aFi := range aSub {
+         var aId uint64
+         aId, err = getInode(dirAttach(iSvc) + aDir[a], aFi)
+         if err != nil { quit(err) }
+         aList = append(aList, tPathInode{aDir[a] +"/"+ aFi.Name(), aId, aFi.Size(), aFi.ModTime()})
+      }
+   }
+   sort.Slice(aList, func(cA, cB int)bool { return aList[cA].inode < aList[cB].inode })
+
+   aDirUp, err := readDirFis(kUploadDir)
+   if err != nil { quit(err) }
+   for _, aFi := range aDirUp {
+      var aId uint64
+      aId, err = getInode(kUploadDir, aFi)
+      if err != nil { quit(err) }
+      aPos := sort.Search(len(aList), func(c int)bool { return aList[c].inode >= aId })
+      if aPos < len(aList) && aList[aPos].inode == aId {
+         aList = append(aList, tPathInode{})
+         copy(aList[aPos+1:], aList[aPos:])
+         aList[aPos] = tPathInode{kNodeFlagUpload + aFi.Name(), aId, aFi.Size(), aFi.ModTime()}
+      }
+   }
+   return aList
 }
 
 func completeNode(iSvc string, iUpdt *Update, iNode *tNode) error {
