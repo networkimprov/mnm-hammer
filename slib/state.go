@@ -287,10 +287,10 @@ func (o *ClientState) _addThread(iId string) {
    }
 }
 
-func (o *ClientState) openMsg(iMsgId string, iBool bool) {
+func (o *ClientState) openMsg(iMsgId string, iBool, iAlways bool) {
    o.Lock(); defer o.Unlock()
    aT := o.Thread[o.History[o.Hpos]]
-   if aT.Tabs.PosFor != ePosForDefault || aT.Tabs.Pos != 0 {
+   if !iAlways && (aT.Tabs.PosFor != ePosForDefault || aT.Tabs.Pos != 0) {
       return
    }
    aT.Open[iMsgId] = iBool

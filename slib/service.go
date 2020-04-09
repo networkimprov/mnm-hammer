@@ -772,7 +772,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          }
          aResult = []string{"tl", "cs", "cl", "al", "_t", "ml", "mo"}
       } else if iUpdt.Thread.New == eNewReply {
-         iState.openMsg(iUpdt.Thread.Id, true)
+         iState.openMsg(iUpdt.Thread.Id, true, true)
          aTid := iState.getThread()
          aFn = func(c *ClientState) []string {
             if c.getThread() == aTid { return aResult }
@@ -801,7 +801,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          aResult = []string{"tl", "cs", "cl", "al", "_t", "ml", "mo"}
       } else {
          aFn = func(c *ClientState) []string {
-            c.openMsg(iUpdt.Thread.Id, false)
+            c.openMsg(iUpdt.Thread.Id, false, true)
             if c.getThread() == aTid { return aResult }
             return nil
          }
@@ -826,7 +826,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       aChg := false
       iUpdt.LogOp = "thread_seen_sync"
       syncUpdtNode(iSvc, iUpdt, iState, func() error {
-         iState.openMsg(iUpdt.Touch.MsgId, true)
+         iState.openMsg(iUpdt.Touch.MsgId, true, false)
          aChg = touchThread(iSvc, iUpdt)
          if !aChg { return tError("") } // no sync
          return nil
@@ -845,7 +845,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       }
       aResult = []string{"tl", "ml"}
    case "thread_close":
-      iState.openMsg(iUpdt.Touch.MsgId, false)
+      iState.openMsg(iUpdt.Touch.MsgId, false, false)
       // no result
    case "thread_tag":
       if iUpdt.log == 0 {
