@@ -791,6 +791,8 @@
          markdown: function(iFile) {
             var aPair = iFile.File.split('_', 2);
             var aRef = aPair[0].length === 12 ? 'this_'+ aPair[1] : iFile.File;
+            aRef = aRef.replace(/%/g, '%25').replace(/ /g, '%20')
+                       .replace(/\(/g, '%28').replace(/\)/g, '%29');
             //todo mnm-draft validate attachment & message refs
             var aTxt;
             if (aPair[1].charAt(0) === 'f') {
@@ -2434,8 +2436,7 @@
       if (aHref[1].charAt(0) === '#') {
          iTokens[iIdx].attrs.push(['onclick', "mnm.NavigateLink(this.innerText,this.href);return false"]);
       } else if (!sUrlStart.test(aHref[1])) {
-         var aParam = aHref[1].replace(/^this_/, iEnv.thisVal+'_');
-         aHref[1] = '?ad=' + encodeURIComponent(aParam);
+         aHref[1] = '?ad='+ aHref[1].replace(/^this_/, iEnv.thisVal +'_');
          iTokens[iIdx].attrs.push(['download', '']);
          //todo add download icon and viewer
       }
@@ -2446,14 +2447,14 @@
    mnm._mdi.renderer.rules.image = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       var aAlt = iSelf.renderInlineAsText(iTokens[iIdx].children, iOptions, iEnv);
       var aSrc = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('src')];
-      var aParam = aSrc[1].replace(/^this_/, iEnv.thisVal+'_');
+      var aParam = aSrc[1].replace(/^this_/, iEnv.thisVal +'_');
       if (aAlt.charAt(0) === '?') {
          if (!iEnv.formview)
             iEnv.formview = new mnm._FormViews(iEnv);
-         var aId = iEnv.formview.make(aParam);
+         var aId = iEnv.formview.make(decodeURIComponent(aParam));
          return '<component'+ iSelf.renderAttrs({attrs:[['id',aId]]}) +'></component>';
       }
-      aSrc[1] = '?an=' + encodeURIComponent(aParam);
+      aSrc[1] = '?an='+ aParam;
       return sMdiRenderImg(iTokens, iIdx, iOptions, iEnv, iSelf);
    };
 
