@@ -458,8 +458,9 @@
                   uk-icon="plus-circle" title="Add account"></span>
             <div>
                a) Fill out the form:<div style="margin-left: 1.1em">
-                  <i>Title</i> is your private label for the account,<br>
-                  <i>Name/Alias</i> is how other members know you.</div>
+                  <i>Site Address</i> is provided by the site admin,<br>
+                  <i>Your Name/Alias</i> is how others know you,<br>
+                  <i>Account Title</i> is a private label.</div>
                b) To submit, click
                   <button class="btn-icon"><span uk-icon="forward"></span></button>
             </div>
@@ -2070,16 +2071,19 @@
          <button :disabled="!(name  && name.length  >= <%.serviceMin%> &&
                               alias && alias.length >= <%.aliasMin%> &&
                               addr && !isNaN(loginperiod))"
-                 title="Register new account at service"
+                 title="Register new account"
                  class="btn-icon"><span uk-icon="forward"></span></button>
-         <input v-model="name"
-                placeholder="Title (<%.serviceMin%>+ characters)" type="text"
+         <input v-model="addr"
+                placeholder="Site Address" type="text"
+                title="Starts with '+' or '=' and may end with ':number'"
                 class="width100">
          <input v-model="alias"
-                placeholder="Name/Alias (<%.aliasMin%>+ characters)" type="text"
+                placeholder="Your Name/Alias (<%.aliasMin%>+ characters)" type="text"
+                title="Name by which other site members know you"
                 class="width100">
-         <input v-model="addr"
-                placeholder="Net Address (+host:port)" type="text"
+         <input v-model="name"
+                placeholder="Account Title (<%.serviceMin%>+ characters)" type="text"
+                title="Private label for the new account"
                 class="width100">
          <!--todo input v-model="lpin"
                 @input="loginperiod = mnm._stringToSeconds($event.target.value)"
@@ -2112,9 +2116,10 @@
                       @input="historylen = parseInt($event.target.value || '-1')"
                       placeholder="4 to 1024" type="text"
                       class="width100"></td></tr>
-            <tr><td>Net<br>Address </td><td>{{mnm._data.cf.Addr  }}<br>
+            <tr><td>Site<br>Address </td><td>{{mnm._data.cf.Addr  }}<br>
                <input v-model="addr"
-                      placeholder="+host:port" type="text"
+                      type="text"
+                      title="Starts with '+' or '=' and may end with ':number'"
                       class="width100"></td></tr>
             <!--todo tr><td>Login Period   </td><td>{{mnm._secondsToString(mnm._data.cf.LoginPeriod)}}<br>
                <input v-model="lpin"
