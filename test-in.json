@@ -205,7 +205,7 @@
       "al": "thread_save.c" }
 },{
    "Updt": {"Op":"test", "Test":{"Request":["tl"]}},
-   "Poll": 4,
+   "Poll": 6,
    "Result": {
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward",
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
@@ -532,7 +532,7 @@
       "cn": {"Addr":"localhost:8123", "Pin":"*", "Xfer":0} }
 },{
    "Updt": {"Op":"test", "Test":{"Request":["cf", "cn"]}},
-   "Poll": 6,
+   "Poll": 9,
    "Result": {
       "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
              "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
