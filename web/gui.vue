@@ -2070,7 +2070,8 @@
          <input type="hidden" name="filename" :value="JSON.stringify($data)">
          <button :disabled="!(name  && name.length  >= <%.serviceMin%> &&
                               alias && alias.length >= <%.aliasMin%> &&
-                              addr && !isNaN(loginperiod))"
+                              addr  && addr.length  >= 2 && (addr[0] === '+' || addr[0] === '=') &&
+                              !isNaN(loginperiod))"
                  title="Register new account"
                  class="btn-icon"><span uk-icon="forward"></span></button>
          <input v-model="addr"
