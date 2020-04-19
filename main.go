@@ -82,10 +82,17 @@ func mainResult() int {
    defer func() { if err != nil { fmt.Fprintf(os.Stderr, "mainResult: %v\n", err) } }()
 
    sServices["local"] = tService{ccs: newClientConns()}
-   sNetAddr = _getNetAddress()
 
    if sTestHost != "" && sHttpSrvr.Addr == ":http" {
       sHttpSrvr.Addr = ":8123"
+   }
+   if sHttpSrvr.Addr[0] == ':' {
+      sNetAddr = _getNetAddress()
+      if sHttpSrvr.Addr != ":http" {
+         sNetAddr += sHttpSrvr.Addr
+      }
+   } else {
+      sNetAddr = sHttpSrvr.Addr
    }
    aLsn, err := net.Listen("tcp", sHttpSrvr.Addr)
    if err != nil { return 1 }
