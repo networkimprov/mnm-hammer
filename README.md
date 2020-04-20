@@ -38,28 +38,31 @@ Further reading: [_Why TMTP?_](https://github.com/networkimprov/mnm/blob/master/
 
 ### Status
 
+[_20 April 2020_ - v0.7](https://github.com/networkimprov/mnm-hammer/releases/latest)
+is released for Windows 7+ & MacOS & Linux. It has been tested with Chrome & Firefox.  
+_New:_ slide deck layouts, replication to multiple PCs, simplified startup.
+
 _20 October 2019_ -
-v0.6 is released for Windows 7/8/10 & MacOS & Linux. It has been tested with Chrome & Firefox.  
-_New:_ search, message tags, file viewer, UI colors, logo, and more. Fixes a panic and many UI flaws.  
-[Release details](https://github.com/networkimprov/mnm-hammer/releases/latest)
+v0.6 is released for Windows 7+ & MacOS & Linux. It has been tested with Chrome & Firefox.  
+_New:_ search, message tags, file viewer, UI colors, logo, and more. Fixes many UI flaws.
 
 _29 May 2019_ -
 v0.5 is released. It fixes a panic on Windows, but is otherwise identical to v0.4.
 
 _25 May 2019_ -
-v0.4 is released. It has been tested on Windows 7 & MacOS & Linux, but only with Firefox.  
+v0.4 is released. It has been tested on Windows 7 & MacOS & Linux, with Firefox.  
 _New:_ Windows support. Fixes a crash-recovery failure, and a TMTP handling error.
 
 _13 May 2019_ -
-v0.3 is released. It has only been tested on Linux & MacOS, with Firefox.  
+v0.3 is released. It has been tested on Linux & MacOS, with Firefox.  
 _New:_ tooltips on menu icons. Fixes a panic, and a handful of UI flaws.
 
 _07 May 2019_ -
-v0.2 is released. It has only been tested on Linux & MacOS, with Firefox.  
+v0.2 is released. It has been tested on Linux & MacOS, with Firefox.  
 _New:_ a tour with cartoons covering essential features.
 
 _19 April 2019_ -
-v0.1 is released. It has only been tested on Linux & MacOS, with Firefox.
+v0.1 is released. It has been tested on Linux & MacOS, with Firefox.
 
 
 ### Quick Start
@@ -72,15 +75,15 @@ To run your own service, see the [mnm TMTP server](https://github.com/networkimp
 #### _Windows_ &bull; [MacOS](#macos) &bull; [Linux](#linux)
 
 1. Download & save  
-a) Click [mnm-app-windows-amd64-v0.6.0.zip](https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0/mnm-app-windows-amd64-v0.6.0.zip).  
+a) Click [mnm-app-windows-amd64-v0.7.0.zip](https://github.com/networkimprov/mnm-hammer/releases/download/v0.7.0/mnm-app-windows-amd64-v0.7.0.zip).  
 b) Open the browser downloads menu, find the above file and click "Open File".  
-c) Drag the item `mnm-app-v0.6.0` to the `Downloads` folder in the left-hand pane.
+c) Drag the item `mnm-app-v0.7.0` to the `Downloads` folder in the left-hand pane.
 
 1. If a previous version is running  
 a) Go to its log window and press _Ctrl-C_ and then _Y_ to stop it.
 
 1. Start app  
-a) Open the `mnm-app-v0.6.0` folder now in `Downloads`, and double-click `App.cmd`.  
+a) Open the `mnm-app-v0.7.0` folder now in `Downloads`, and double-click `App.cmd`.  
 b) You'll see a notice, "The publisher could not be verified..." Click "Run".  
 c) You'll see a system notice, "Do you want to allow ...?" Click "Yes".  
 +&nbsp; You'll see the mnm log window.  
@@ -95,14 +98,14 @@ a) Right-click [localhost:8123](http://localhost:8123/), and select "Open link i
 #### _MacOS_
 
 1. Download & save  
-a) Click [mnm-app-macos-v0.6.0.tgz](https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0/mnm-app-macos-v0.6.0.tgz).  
+a) Click [mnm-app-macos-v0.7.0.tgz](https://github.com/networkimprov/mnm-hammer/releases/download/v0.7.0/mnm-app-macos-v0.7.0.tgz).  
 b) Open the browser downloads menu, find the file above and click "Open File".
 
 1. If a previous version is running  
 a) Go to its log window and press _Ctrl-C_ to stop it, then close the window.
 
 1. Start app  
-a) Open the `mnm-app-v0.6.0` folder now in `Downloads`, Ctrl-click on `App`, and select "Open".  
+a) Open the `mnm-app-v0.7.0` folder now in `Downloads`, Ctrl-click on `App`, and select "Open".  
 b) You'll see a notice, "_App_ is from an unidentified developer..." Click "Open".  
 +&nbsp; You'll see the mnm log window.  
 +&nbsp; If you have a previous version in `Downloads`, it will offer to update it.  
@@ -116,14 +119,14 @@ a) Ctrl-click (or two-finger tap) [localhost:8123](http://localhost:8123/), and 
 #### _Linux_
 
 1. Download & save  
-a) Click [mnm-app-linux-amd64-v0.6.0.tgz](https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0/mnm-app-linux-amd64-v0.6.0.tgz).  
-b) Extract the downloaded file, e.g. `tar xzf mnm-app-linux-amd64-v0.6.0.tgz`
+a) Click [mnm-app-linux-amd64-v0.7.0.tgz](https://github.com/networkimprov/mnm-hammer/releases/download/v0.7.0/mnm-app-linux-amd64-v0.7.0.tgz).  
+b) Extract the downloaded file, e.g. `tar xzf mnm-app-linux-amd64-v0.7.0.tgz`
 
 1. If a previous version is running  
 a) Go to its log window and press _Ctrl-C_ to stop it.
 
 1. Start app  
-a) Open the extracted `mnm-app-v0.6.0` folder, and double-click `App`.  
+a) Open the extracted `mnm-app-v0.7.0` folder, and double-click `App`.  
 +&nbsp; You'll see the mnm log window.  
 +&nbsp; If you have a previous version in the parent folder, it will offer to update it.  
 +&nbsp; If the app fails, it will offer to restart it.  
@@ -208,7 +211,7 @@ Ref: https://www.elastic.co/blog/code-coverage-for-your-golang-system-tests
 
 ### License
 
-   Copyright 2018, 2019 Liam Breck  
+   Copyright 2018, 2020 Liam Breck  
    Published at https://github.com/networkimprov/mnm-hammer
 
    This Source Code Form is subject to the terms of the Mozilla Public  
