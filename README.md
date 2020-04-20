@@ -64,87 +64,90 @@ v0.1 is released. It has only been tested on Linux & MacOS, with Firefox.
 
 ### Quick Start
 
-If you haven't received an invitation to join a TMTP service, you can set up your own.
-See the [mnm relay server](https://github.com/networkimprov/mnm).
-
 You'll need Firefox or Chrome. (I endorse [Firefox](https://www.mozilla.org/en-US/firefox/) :-)
+
+You'll need an invitation to a TMTP service. 
+To run your own service, see the [mnm TMTP server](https://github.com/networkimprov/mnm).
 
 #### _Windows_ &bull; [MacOS](#macos) &bull; [Linux](#linux)
 
-1. Download & save latest preview  
-[mnm-app-windows-amd64-v0.6.0.zip](https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0/mnm-app-windows-amd64-v0.6.0.zip)
+1. Download & save  
+a) Click [mnm-app-windows-amd64-v0.6.0.zip](https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0/mnm-app-windows-amd64-v0.6.0.zip).  
+b) Open the browser downloads menu, find the above file and click "Open File".  
+c) Drag the item `mnm-app-v0.6.0` to the `Downloads` folder in the left-hand pane.
 
-1. Unpack download  
-a) Open the browser downloads menu, find the above file and click "Open File".  
-b) Drag the item "mnm-hammer-v0.6.0" to the Downloads folder in the left-hand pane.  
-c) Open the Windows menu (bottom-left on screen), right-click "Command Prompt", and select "Run as administrator".  
-d) You'll see a warning "Do you want to allow the following program..."; click "Yes".  
-e) In the command window, enter `cd %UserProfile%\Downloads\mnm-hammer-v0.6.0`  
-
-1. If upgrading, move the data from a prior release  
-a) Stop the prior app if it's running.  
-b) Enter `move ..\mnm-hammer-vX.Y.Z\store .\store` &:: &nbsp;_X.Y.Z_ is a prior release, e.g. `0.5.0`  
+1. If a previous version is running  
+a) Go to its log window and press _Ctrl-C_ and then _Y_ to stop it.
 
 1. Start app  
-Note: the app currently logs much of its traffic with the browser to the command window.  
-a) Enter `mnm-hammer.exe`  
-b) If you see a Windows Firewall warning, check "Public networks...", then click "Allow access".  
-
-   To stop the app, type `Ctrl-C`  
+a) Open the `mnm-app-v0.6.0` folder now in `Downloads`, and double-click `App.cmd`.  
+b) You'll see a notice, "The publisher could not be verified..." Click "Run".  
+c) You'll see a system notice, "Do you want to allow ...?" Click "Yes".  
++&nbsp; You'll see the mnm log window.  
++&nbsp; If you have a previous version in `Downloads`, it will offer to update it.  
++&nbsp; If the app fails, it will offer to restart it.  
++&nbsp; To stop the app, press _Ctrl-C_ and then _Y_ (closes the window).
 
 1. Connect Firefox or Chrome  
-Open a browser tab, go to `localhost`.  
+a) Right-click [localhost:8123](http://localhost:8123/), and select "Open link in new tab".  
++&nbsp; You'll see the landing page, with a tour.
 
 #### _MacOS_
 
-1. Download & save latest preview  
-[mnm-app-macos-v0.6.0.tgz](https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0/mnm-app-macos-v0.6.0.tgz)
+1. Download & save  
+a) Click [mnm-app-macos-v0.6.0.tgz](https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0/mnm-app-macos-v0.6.0.tgz).  
+b) Open the browser downloads menu, find the file above and click "Open File".
 
-1. Unpack download  
-a) Open the browser downloads menu, find the file above and click "Open File".  
-b) In the Finder, open the Go menu and select Utilities.  
-c) In the Utilities list, double-click Terminal.  
-d) In the terminal window, enter `cd ~/Downloads/mnm-hammer-v0.6.0`  
-
-1. If upgrading, replicate the data from a prior release  
-a) Stop the prior app if it's running.  
-b) Enter `sudo ditto ../mnm-hammer-vX.Y.Z/store ./store` # _X.Y.Z_ is a prior release, e.g. `0.5.0`  
+1. If a previous version is running  
+a) Go to its log window and press _Ctrl-C_ to stop it, then close the window.
 
 1. Start app  
-Note: the app currently logs much of its traffic with the browser to the terminal window.  
-a) Enter `sudo ./mnm-hammer` # starts http on port 80  
-or  
-a) Enter `./mnm-hammer --http :Port` # _Port_ is a number over 1027  
-
-   To stop the app, type `Ctrl-C`  
+a) Open the `mnm-app-v0.6.0` folder now in `Downloads`, Ctrl-click on `App`, and select "Open".  
+b) You'll see a notice, "_App_ is from an unidentified developer..." Click "Open".  
++&nbsp; You'll see the mnm log window.  
++&nbsp; If you have a previous version in `Downloads`, it will offer to update it.  
++&nbsp; If the app fails, it will offer to restart it.  
++&nbsp; To stop the app, press _Ctrl-C_, then close the window.
 
 1. Connect Firefox or Chrome  
-Open a browser tab, go to `localhost` (or `localhost:Port` if specified above).  
+a) Ctrl-click (or two-finger tap) [localhost:8123](http://localhost:8123/), and select "Open link in new tab".  
++&nbsp; You'll see the landing page, with a tour.
 
 #### _Linux_
 
-1. Download & save latest preview  
-[mnm-app-linux-amd64-v0.6.0.tgz](https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0/mnm-app-linux-amd64-v0.6.0.tgz)
+1. Download & save  
+a) Click [mnm-app-linux-amd64-v0.6.0.tgz](https://github.com/networkimprov/mnm-hammer/releases/download/v0.6.0/mnm-app-linux-amd64-v0.6.0.tgz).  
+b) Extract the downloaded file, e.g. `tar xzf mnm-app-linux-amd64-v0.6.0.tgz`
 
-1. Unpack download  
-a) `cd the_relevant_directory` # use appropriate name  
-b) `tar xzf mnm-app-linux-amd64-v0.6.0.tgz`  
-c) `cd mnm-hammer-v0.6.0`  
-
-1. If you're upgrading, replicate the data from a prior release  
-a) Stop the prior app if it's running.  
-b) `sudo cp -a ../mnm-hammer-vX.Y.Z/store .` # _X.Y.Z_ is a prior release, e.g. `0.5.0`  
+1. If a previous version is running  
+a) Go to its log window and press _Ctrl-C_ to stop it.
 
 1. Start app  
-Note: the app currently logs much of its traffic with the browser to the terminal window.  
-a) `sudo ./mnm-hammer` # starts http on port 80  
-or  
-a) `./mnm-hammer --http :port`  
-
-   To stop the app, type `Ctrl-C`  
+a) Open the extracted `mnm-app-v0.6.0` folder, and double-click `App`.  
++&nbsp; You'll see the mnm log window.  
++&nbsp; If you have a previous version in the parent folder, it will offer to update it.  
++&nbsp; If the app fails, it will offer to restart it.  
++&nbsp; To stop the app, press _Ctrl-C_ (closes the window).
 
 1. Connect Firefox or Chrome  
-Open a browser tab, go to `localhost` (or `localhost:port` if specified above).  
+a) Right-click [localhost:8123](http://localhost:8123/), and select "Open link in new tab".  
++&nbsp; You'll see the landing page, with a tour.
+
+
+### Installation Notes
+
+On Windows, the app needs Administrator privileges to create symlinks and configure the firewall. 
+`App.cmd` creates the firewall configuration. To inspect it, run:  
+`netsh advfirewall firewall show rule name=mnm-hammer verbose`
+
+To start the app using a different TCP port, run:  
+MacOS & Linux (as any user): `./mnm-hammer -http :8123`  
+Windows (as administrator): `mnm-hammer.exe -http :8123`
+
+Updating from a previous version moves the folder `mnm-app-v0.X.0/store` to the new version, 
+and leaves the previous version otherwise untouched. 
+Launching `App.cmd` or `App` in the previous version will offer to update to it, 
+moving the `store` folder back again (not recommended).
 
 
 ### Version Numbering

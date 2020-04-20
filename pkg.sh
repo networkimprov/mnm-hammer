@@ -14,36 +14,36 @@ bins=(
    'GOOS=windows GOARCH=amd64'
 )
 
-app="$(basename "$PWD")"
-files=("$app" LICENSE formspec test-in.json web/*.* web/img/*.*)
-
 go build
-ver=($("./$app" --version))
-
-echo "packaging ${ver[@]} with:"
-ls -sd "${files[@]}"
-
-ln -s "$app" "../$app-${ver[-2]}" || test -L "../$app-${ver[-2]}"
-files=($(printf "$app-${ver[-2]}/%s " "${files[@]}"))
+app="$(basename "$PWD")"
+appdir=mnm-app
+files=("$app" App LICENSE formspec test-in.json web/*.* web/img/*.*)
 fileswin=("${files[@]}")
 fileswin[0]+=.exe
+fileswin[1]+=.cmd
+ver=($("./$app" --version))
+symln="$appdir-${ver[-2]}"
+
+ln -s "$app" "../$symln" || test -L "../$symln"
 
 for pf in "${bins[@]}"; do
    export $pf
+   echo -n "--- ${ver[@]} $GOOS-$GOARCH: build"
    go build -a
-   echo -n "$GOOS-$GOARCH built "
-   dst="$app/mnm-app-$GOOS-$GOARCH-${ver[-2]}"
+   echo " & package ---"
+   dst="$app/$appdir-$GOOS-$GOARCH-${ver[-2]}"
    if [ $GOOS = windows ]; then
-      (cd ..; zip -rq "$dst.zip" "${fileswin[@]}")
-      zip -dq ../"$dst.zip" '*/web/gui.*'
+      ls -sd "${fileswin[@]}"
+      (cd ..; zip -rq "$dst.zip" "${fileswin[@]/#/$symln/}")
+      (cd ..; zip -dq "$dst.zip" '*/web/gui.*')
       rm "$app.exe"
    else
-      (cd ..; tar -czf "$dst.tgz" "${files[@]}")
+      ls -sd "${files[@]}"
+      (cd ..; tar -czf "$dst.tgz" "${files[@]/#/$symln/}")
    fi
-   echo "& packaged"
 done
 
-rm "../$app-${ver[-2]}"
+rm "../$symln"
 
 GOOS='' GOARCH='' go build
 
