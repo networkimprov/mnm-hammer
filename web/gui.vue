@@ -790,17 +790,18 @@
       methods: {
          listSort: function(i) { return mnm._listSort('al', i) },
          markdown: function(iFile) {
-            var aPair = iFile.File.split('_', 2);
-            var aRef = aPair[0].length === 12 ? 'this_'+ aPair[1] : iFile.File;
+            var aSep = iFile.File.indexOf('_')
+            var aFile = iFile.File.substring(aSep + 1);
+            var aRef = aSep === 12 ? 'this_'+ aFile : iFile.File;
             aRef = aRef.replace(/%/g, '%25').replace(/ /g, '%20')
                        .replace(/\(/g, '%28').replace(/\)/g, '%29');
             //todo mnm-draft validate attachment & message refs
             var aTxt;
-            if (aPair[1].charAt(0) === 'f') {
+            if (aFile[0] === 'f') {
                aTxt = '![?]('+ aRef +')';
             } else {
-               var aDot = aPair[1].lastIndexOf('.');
-               var aExt = aDot < 0 ? '' : aPair[1].substring(++aDot);
+               var aDot = aFile.lastIndexOf('.');
+               var aExt = aDot < 0 ? '' : aFile.substring(aDot + 1);
                switch (aExt.toLowerCase()) {
                case 'jpg': case 'jpeg': case 'png': case 'gif': case 'svg':
                   aTxt = '!['+ aExt +']('+ aRef +')';
