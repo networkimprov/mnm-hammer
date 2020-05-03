@@ -142,25 +142,35 @@ of parchment, to imply a sense of permanence.
 Input fields have a white background for emphasis.
 </p>
 
-<p><b>Controls</b>.
-Dropdown menus <span uk-icon="bell"></span> 
-are indicated by a simple drawing (icon) without a border. 
-Hyperlinks <a onclick="return false"><span uk-icon="mail"></span></a> 
-which open a browser tab or alter a view appear as text or an icon in blue. 
-(Note that mnm does not touch the browser history.) 
-Option tabs [tab here] 
-which alter a view have a title in all-caps [will change] 
-and show a blue underscore on the current tab, plus &times; if it's closable. 
-Buttons <button onclick="return false" class="btn-icon"
-        title="Description of action"><span uk-icon="forward"></span></button> 
-which change the state of the system appear as an icon on a 
-button background, and display help text when the mouse hovers on them. 
-Popup menus <span class="draftmenu-sample draftmenu">etc &#x25BD;</span> 
-which carry variable contents show &#x25BD; when they contain multiple items. 
-<i>To</i> and <i>Group</i> input fields pop up a keyboard-navigable menu 
-<span class="adrsbkmenu" style="display:inline-block"><span class="adrsbkmenu-select">etc</span></span> 
-of aliases or groups matching the input text. 
-</p>
+<b>Controls</b>.
+<table style="border-spacing:0 0.5em"><tr>
+<td><span uk-icon="bell"></span></td>
+<td>Feature menus are indicated by an icon without a border.</td>
+</tr><tr>
+<td><a onclick="return false"><span uk-icon="mail"></span></a></td>
+<td>Hyperlinks, which open a browser tab or alter a view, appear as text or an icon in blue. 
+    (Note that mnm does not touch the browser history.)</td>
+</tr><tr>
+<td><span style="color:#888; border-bottom:1px solid #1e87f0; font-size:0.875rem; cursor:default"
+          >&nbsp;TAB &times;&nbsp;</span></td>
+<td>Tabs, which alter a panel or sort a list, have a title in all-caps 
+    and show a blue underscore on the current tab.</td>
+</tr><tr>
+<td><button onclick="return false" class="btn-icon"
+            title="Description of action"><span uk-icon="forward"></span></button></td>
+<td>Buttons, which change the state of the app, have an icon 
+    and display help text when the mouse hovers on them.</td>
+</tr><tr>
+<td style="padding-right:0.5em"><span class="draftmenu-sample draftmenu">etc&nbsp;&#x25BD;</span></td>
+<td>Input menus show &#x25BD; when they contain multiple items.
+    When open, an item may be removed by its &times; button.</td>
+</tr><tr>
+<td><input value="etc" type="text" style="width:2.7em"><br>
+    <span class="adrsbkmenu" style="display:inline-block">
+       <span class="adrsbkmenu-select">etc</span></span></td>
+<td><i>To</i> and <i>Group</i> input fields pop up a keyboard-navigable menu 
+    of aliases or groups matching the input text.</td>
+</tr></table>
 
 <p>An mnm app optimized for small screens is ... 
 [not yet implemented].
