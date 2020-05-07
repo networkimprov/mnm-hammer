@@ -959,7 +959,7 @@
                                     Subject:  aMo.SubHead.Subject, suUpdt:false});
             var aToSave = mnm._data.toSave[this.msgid];
             if (!iNoTimer && !aToSave.timer)
-               aToSave.timer = setTimeout(fDing, 2000, this);
+               aToSave.timer = setTimeout(fDing, mnm._saveWaitTime, this);
             return aToSave;
             function fDing(that) {
                aToSave.timer = null;
@@ -1659,7 +1659,7 @@
                   return;
                var aKey = this.setName+'.'+this.fileId;
                if (!(aKey in this.toSave))
-                  this.toSave[aKey] = {timer:setTimeout(fDing, 2000, this), data:''};
+                  this.toSave[aKey] = {timer:setTimeout(fDing, mnm._saveWaitTime, this), data:''};
                this.toSave[aKey].data = mnm._data.fo;
                function fDing(that) {
                   that.$refs.save.value = that.toSave[aKey].data;
@@ -1937,7 +1937,7 @@
             var aKey = this.rowId(iRec);
             if (!(aKey in this.toSave)) {
                this.toSave[aKey] = {alias:iRec.MyAlias, to:iRec.Alias, gid:iRec.Gid};
-               setTimeout(fDing, 2000, this.toSave);
+               setTimeout(fDing, mnm._saveWaitTime, this.toSave);
             }
             this.toSave[aKey].text = iText;
             function fDing(cMap) {
@@ -2325,6 +2325,7 @@
    var sChange = 0;
    var sTemp = {ml:null, mo:null};
 
+   mnm._saveWaitTime = 12*1000; // milliseconds
    mnm._isLocal = '<%.TitleJs%>' === 'local';
    mnm._mdi = markdownit();
    mnm._lastPreview = '';
