@@ -41,7 +41,7 @@
       When it's back up, reload this tab.<br>
       <button onclick="location.reload()"
               title="Reload this tab"
-              class="btn-icon"><span uk-icon="refresh"></span></button>
+              class="btn btn-icon"><span uk-icon="refresh"></span></button>
    </div></div>
 
 <script type="text/x-template" id="mnm-main">
@@ -77,7 +77,7 @@
          &nbsp;
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
                  title="New thread draft"
-                 class="btn-icon"><span uk-icon="pencil"></span></button>
+                 class="btn btn-icon"><span uk-icon="pencil"></span></button>
          <button onclick="this.blur(); mnm.NavigateHistory(-1)"
                  :disabled="!cs.History || !cs.History.Prev"
                  class="uk-button uk-button-link">
@@ -133,7 +133,7 @@
                   <button v-if="aMsg.From === '' && !aMsg.Queued"
                           @click="mnm.ThreadDiscard(aMsg.Id)"
                           title="Discard draft"
-                          class="btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
+                          class="btn btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
                   <div v-else-if="!aMsg.Queued"
                        class="uk-float-right">
                      <a @click.prevent="mnm._toClipboard('[msg_link](#'+ cs.Thread +'&'+ aMsg.Id +')')"
@@ -141,7 +141,7 @@
                         :href="'#'+ cs.Thread +'&'+ aMsg.Id"><span uk-icon="link"></span></a>
                      <button @click="mnm.ThreadReply(getReplyTemplate(aMsg))"
                              title="New reply draft"
-                             class="btn-icon"><span uk-icon="comment"></span></button>
+                             class="btn btn-icon"><span uk-icon="comment"></span></button>
                   </div>
                   <div @click.stop="$refs.tagset.open(aMsg.Id, $event.currentTarget)"
                        title="Message tags"
@@ -462,7 +462,7 @@
                   <i>Your Name/Alias</i> is how others know you,<br>
                   <i>Account Title</i> is a private label.</div>
                b) To submit, click
-                  <button class="btn-icon"><span uk-icon="forward"></span></button>
+                  <button class="btn btn-icon"><span uk-icon="forward"></span></button>
             </div>
             <div style="margin: 0.5em 0">
                <b>2.</b> Inform others of your <i>Name/Alias</i> by phone, etc.</div>
@@ -493,10 +493,10 @@
                   uk-icon="users" title="Contacts"></span>
             <div>
                a) Enter the contact's alias, click
-                  <button class="btn-icon"><span uk-icon="pencil"></span></button><br>
+                  <button class="btn btn-icon"><span uk-icon="pencil"></span></button><br>
                b) Add a message to the draft.<br>
                c) To send, click
-                  <button class="btn-icon"><span uk-icon="forward"></span></button><br>
+                  <button class="btn btn-icon"><span uk-icon="forward"></span></button><br>
             </div>
          </div>
          <div v-show="count === 1"
@@ -521,7 +521,7 @@
                <img src="/w/img/tour-sendthread.png">
             </div>
             <div><b>1.</b> To start a thread, click
-               <button class="btn-icon"><span uk-icon="pencil"></span></button>
+               <button class="btn btn-icon"><span uk-icon="pencil"></span></button>
                (next to <span uk-icon="icon:arrow-left; ratio:1.6"></span
                        ><span uk-icon="icon:arrow-right; ratio:1.6"></span>)</div>
             <b>2.</b> Click the recipients icon, then<br>
@@ -537,7 +537,7 @@
                a) Fill in the <i>Subject</i> field.<br>
                b) Write a message (Markdown is allowed).<br>
                c) To send, click
-               <button class="btn-icon"><span uk-icon="forward"></span></button>
+               <button class="btn btn-icon"><span uk-icon="forward"></span></button>
                (above <i>Subject</i>)<br>
             </div>
          </div>
@@ -548,12 +548,12 @@
                <img src="/w/img/tour-sendreply.png">
             </div>
             Select a message to reply to, click
-            <button class="btn-icon"><span uk-icon="comment"></span></button>, then<br>
+            <button class="btn btn-icon"><span uk-icon="comment"></span></button>, then<br>
             <span></span>
             <div>
                a) Write a message (<i>Subject</i> is optional).<br>
                b) To send, click
-                  <button class="btn-icon"><span uk-icon="forward"></span></button><br>
+                  <button class="btn btn-icon"><span uk-icon="forward"></span></button><br>
             </div>
          </div>
          <div v-show="count === 4"
@@ -569,7 +569,7 @@
                a) Enter a contact's alias in the <i>Forward to</i> field.<br>
                b) Select the contact in the menu, hit enter.<br>
                c) To forward, click
-                  <button class="btn-icon"><span uk-icon="forward"></span></button><br>
+                  <button class="btn btn-icon"><span uk-icon="forward"></span></button><br>
             </div>
          </div>
          <div v-show="count === 5"
@@ -652,20 +652,20 @@
             <button @click="addUser"
                     :disabled="!(alias && alias in mnm._data.adrsbkmenuId)"
                     title="Add contact"
-                    class="btn-icon btn-floatr"><span uk-icon="list"></span></button>
+                    class="btn btn-icon btn-floatr"><span uk-icon="list"></span></button>
          </form>
          <button v-show="!ccSet"
                  @click="mnm.ForwardSend(tid, mnm._data.cl[0][0].Qid)"
                  :disabled="ccSet || !mnm._data.cl[ccSet].length"
                  title="Forward thread to new recipients"
                  style="margin-right:0.5em"
-                 class="btn-icon"><span uk-icon="forward"></span></button>
+                 class="btn btn-icon"><span uk-icon="forward"></span></button>
          <div v-for="(aUser, aI) in menu" :key="aUser.Who"
               :title="aUser.Note"
               class="cc-new">{{
             aUser.Who
           }}<button @click="dropUser(aI)"
-                    class="btn-iconx">&times;</button>
+                    class="btnx"><span>&times;</span></button>
          </div>
          <br v-show="!menu.length">
       </div>
@@ -768,7 +768,7 @@
             <mnm-date :iso="aFile.Date" ymd="md" hms="hm"/>
             <!--todo button :title="aFile.File.charAt(17) === 'u' ? 'Copy to attachable files'
                                                           : 'Copy to blank forms'"
-                    class="btn-icon">
+                    class="btn btn-icon">
                <span :uk-icon="aFile.File.charAt(17) === 'u' ? 'push' : 'file-edit'"></span></button>
             &nbsp;-->
             <a :href="'?ad=' + encodeURIComponent(aFile.File)" download
@@ -836,7 +836,7 @@
          <button @click="mnm.TagAdd(newName)"
                  :disabled="!newName || mnm._data.g.find(function(c) { return c.Name === newName })"
                  title="New tag"
-                 class="btn-icon"><span uk-icon="list"></span></button>
+                 class="btn btn-icon"><span uk-icon="list"></span></button>
       </form>
    </div>
 </script><script>
@@ -884,7 +884,7 @@
          <button @click="send"
                  :disabled="mnm._data.ml.length < 2 && !subject"
                  title="Send draft"
-                 class="btn-icon btn-alignt"><span uk-icon="forward"></span></button>
+                 class="btn btn-icon btn-alignt"><span uk-icon="forward"></span></button>
          <span v-if="mnm._data.cl[1].length < 2"
                class="draft-recip" :class="{'draft-recip-new': mnm._data.ml.length === 1}"
                >[self]</span>
@@ -1330,7 +1330,7 @@
          <button @click="startReply"
                  :disabled="!parent.formreply || parent.formreply === 'Q'"
                  title="New reply draft with form below"
-                 class="btn-icon btn-floatr"><span uk-icon="commenting"></span></button>
+                 class="btn btn-icon btn-floatr"><span uk-icon="commenting"></span></button>
       </div>
       <plugin-vfg @model-updated="onInput"
                   :schema="formDef" :model="formState"
@@ -1446,9 +1446,9 @@
             <button @click="vis = false" type="submit"
                     :disabled="!upname"
                     title="Copy to attachable files"
-                    class="btn-icon"><span uk-icon="push"></span></button>
+                    class="btn btn-icon"><span uk-icon="push"></span></button>
             <button @click="vis = false" type="reset"
-                    class="btn-iconx">&times;</button>
+                    class="btnx"><span>&times;</span></button>
          </div>
       </form>
       <ul uk-tab class="dropdown-scroll-item" style="margin-top:0"><li style="display:none"></li>
@@ -1463,7 +1463,7 @@
             <button v-if="toggle"
                     @click="$emit('attach', 'upload/'+aFile.Name)"
                     title="Attach file"
-                    class="btn-iconsym"><mnm-paperclip/></button>
+                    class="btn btn-icon"><mnm-paperclip/></button>
             <a :href="'/t/=' + encodeURIComponent(aFile.Name)" download
                title="Download file">
                <span uk-icon="download">&nbsp;</span></a>
@@ -1480,7 +1480,7 @@
                      onsubmit="mnm.Upload(this); return false;"
                      style="display:inline!important">
                   <button title="Erase file"
-                          class="btn-iconred"><span uk-icon="trash"></span></button>
+                          class="btn btn-iconred"><span uk-icon="trash"></span></button>
                </form>
             </div>
          </li></ul>
@@ -1513,7 +1513,7 @@
          <button @click="upname = ''"
                  :disabled="!validName(upname.split('.'))"
                  title="New form"
-                 class="btn-icon"><span uk-icon="pencil"></span></button>
+                 class="btn btn-icon"><span uk-icon="pencil"></span></button>
       </form>
       <ul uk-tab class="dropdown-scroll-item" style="margin-top:0"><li style="display:none"></li>
          <li v-for="aKey in ['Date','Name']"
@@ -1527,7 +1527,7 @@
             <button v-if="toggle"
                     @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
                     title="Attach form"
-                    class="btn-iconsym"><mnm-paperclip/></button>
+                    class="btn btn-icon"><mnm-paperclip/></button>
             <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.currentTarget)"
                :ref="aSet.Name+'.'+aFile.Id" href="#">
                <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
@@ -1537,7 +1537,7 @@
                   style="float:right">
                <button @click="revDelete(aSet.Name,aFile.Id)"
                        title="Erase form"
-                       class="btn-iconred"><span uk-icon="trash"></span></button>
+                       class="btn btn-iconred"><span uk-icon="trash"></span></button>
             </form>
          </li></template></ul>
       <div v-show="setName"
@@ -1578,7 +1578,7 @@
             <button @click="dupShow = dupname"
                     :disabled="!validName([].concat(setName,dupname.split('.')))"
                     title="Duplicate form"
-                    class="btn-icon"><span uk-icon="copy"></span></button>
+                    class="btn btn-icon"><span uk-icon="copy"></span></button>
          </form>
       </div>
    </div>
@@ -1711,7 +1711,7 @@
               @click="mnm.NoticeSeen(mnm._data.nlo[0].MsgId)"
               :disabled="!mnm._data.nlo.length || mnm._data.nlo[0].Seen > 0"
               title="Mark all as seen"
-              class="btn-icon btn-floatr dropdown-scroll-item"><span uk-icon="check"></span></button>
+              class="btn btn-icon btn-floatr dropdown-scroll-item"><span uk-icon="check"></span></button>
       <div style="min-height:2em; font-style:oblique; color:#1e87f0"><!--uk-light workaround-->
          <span v-for="aType in [['i', 'invites']]"
                v-show="!showErr"
@@ -1786,7 +1786,7 @@
                      <button v-else-if="aPing.Qid"
                              @click="mnm.InviteAccept(aPing.Qid)"
                              title="Accept group invite"
-                             class="btn-icon"><span uk-icon="forward"></span></button>
+                             class="btn btn-icon"><span uk-icon="forward"></span></button>
                   </td>
                   <td>{{aPing.Text}}</td>
                   <td><mnm-pingresponse :ping="aPing"/></td>
@@ -1825,7 +1825,7 @@
                <button @click="startPing()"
                        :disabled="!validDraft"
                        title="New draft invitation"
-                       class="btn-icon"><span uk-icon="pencil"></span></button>
+                       class="btn btn-icon"><span uk-icon="pencil"></span></button>
             </form>
             <div v-show="mnm._data.ps.length === 0"
                  style="margin-top:0.5em; text-align:center; font-style:italic"
@@ -1840,7 +1840,7 @@
                       <button v-else
                               @click="mnm.PingSend(a.Qid)"
                               title="Send invitation"
-                              class="btn-icon"><span uk-icon="forward"></span></button></td>
+                              class="btn btn-icon"><span uk-icon="forward"></span></button></td>
                   <td><textarea @input="timer(a, $event.target.value)"
                                 :disabled="a.Queued"
                                 cols="40" rows="3" maxlength="120"
@@ -1848,7 +1848,7 @@
                   <td><button v-if="!a.Queued"
                               @click="mnm.PingDiscard({to:a.Alias, gid:a.Gid})"
                               title="Discard draft"
-                              class="btn-iconred"><span uk-icon="trash"></span></button></td>
+                              class="btn btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
          <li>
             <table class="uk-table uk-table-small">
@@ -1881,7 +1881,7 @@
                        disabled
                        title="Notify contact when you're online"
                        style="width:calc(50% - 0.5em)"
-                       class="btn-icontxt">o/</button>
+                       class="btn btn-icontxt"><span>o/</span></button>
             </form>
             <div v-show="mnm._data.ot.length === 0"
                  style="margin-top:0.5em; text-align:center; font-style:italic"
@@ -1899,7 +1899,7 @@
                   <td><button @click="mnm.OhiDrop(aOhi.Uid)"
                               :disabled="aOhi.Date === 'pending'"
                               title="Stop notifying contact"
-                              class="btn-iconred"><span uk-icon="trash"></span></button></td>
+                              class="btn btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
       </ul>
    </div>
@@ -1948,7 +1948,7 @@
          setOhiTo: function(iInput) {
             var aOk = iInput.value && iInput.value in mnm._data.adrsbkmenuId;
             iInput.form.elements[1].disabled = !aOk;
-            iInput.form.elements[1].innerText = aOk ? 'o/ '+ iInput.value : 'o/';
+            iInput.form.elements[1].firstChild.innerText = aOk ? 'o/ '+ iInput.value : 'o/';
             iInput.form.elements[1].value = aOk ? mnm._data.adrsbkmenuId[iInput.value] : '';
          },
       },
@@ -2007,7 +2007,7 @@
          <button @click="mnm.NodeAdd(mnm._data.cn.Addr, mnm._data.cn.Pin, name)"
                  :disabled="anyInProgress || !mnm._data.cn.Addr || !validPin || !validName"
                  :title="'Replicate <%.TitleJs%>'"
-                 class="btn-icon btn-floatr"><span uk-icon="laptop"></span></button>
+                 class="btn btn-icon btn-floatr"><span uk-icon="laptop"></span></button>
       </form>
       <div style="margin-top:0.5em" class="dropdown-scroll-list">
          <div v-for="aNode in mnm._data.cf.NodeSet" :key="aNode.Name">
@@ -2019,7 +2019,7 @@
                        @click="mnm.NodeAdd(mnm._data.cn.Addr, mnm._data.cn.Pin, aNode.Name)"
                        :disabled="!mnm._data.cn.Addr || !validPin"
                        :title="'Replicate <%.TitleJs%>'"
-                       class="btn-icon"><span uk-icon="laptop"></span></button>
+                       class="btn btn-icon"><span uk-icon="laptop"></span></button>
                {{status(aNode.Status)}}
             </div>
          </div></div>
@@ -2074,7 +2074,7 @@
                               addr  && addr.length  >= 2 && (addr[0] === '+' || addr[0] === '=') &&
                               !isNaN(loginperiod))"
                  title="Register new account"
-                 class="btn-icon"><span uk-icon="forward"></span></button>
+                 class="btn btn-icon"><span uk-icon="forward"></span></button>
          <input v-model="addr"
                 placeholder="Site Address" type="text"
                 title="Starts with '+' or '=' and may end with ':number'"
@@ -2111,7 +2111,7 @@
                  :disabled="!(addr || historylen >= 0 || loginperiod >= 0)
                             || isNaN(historylen) || isNaN(loginperiod)"
                  title="Update settings"
-                 class="btn-icon"><span uk-icon="forward"></span></button>
+                 class="btn btn-icon"><span uk-icon="forward"></span></button>
          <table class="svccfg">
             <tr><td>Thread History </td><td>{{mnm._data.cf.HistoryLen}}<br>
                <input v-model="hlin"
@@ -2161,8 +2161,8 @@
             onsubmit="mnm.Upload(this); return false;"
             style="float:left">
          <button title="Accept replicas"
-                 class="btn-icon"><span uk-icon="laptop"></span><span uk-icon="arrow-left"></span>
-         </button></form>
+                 class="btn btn-icon" style="padding-left:4px">
+            <span uk-icon="laptop"></span><span uk-icon="arrow-left"></span></button></form>
       <div style="margin-left:3.5em">
          <span v-show="!mnm._data.l.Pin"
                >(not accepting replicas)</span>
