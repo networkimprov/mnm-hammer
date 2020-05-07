@@ -91,10 +91,14 @@ body {
    min-width: 20em;
 }
 
-input[type=text], textarea {
-   font-family: Monaco, monospace;
+input[type=text],
+textarea {
+   font-family: "Courier New", monospace;
    font-size: 82%;
    box-sizing: border-box;
+}
+textarea {
+   line-height: 1.25;
 }
 
 .search-box {
@@ -250,7 +254,7 @@ input[type=text], textarea {
 .cc-new {
    display: inline-block;
    margin-right: 0.5em;
-   font-family: Monaco, monospace;
+   font-family: "Courier New", monospace;
    font-size: 82%;
    color: black;
 }
@@ -379,7 +383,7 @@ input[type=text], textarea {
    font-size: 82%;
 }
 .draft-recip-new {
-   font-family: Monaco, monospace;
+   font-family: "Courier New", monospace;
 }
 .draft-minsubject {
    display: block;
@@ -452,7 +456,7 @@ input[type=text], textarea {
    padding: 0.25em 0.5em;
    cursor: default;
    background: lightgray;
-   font-family: Monaco, monospace;
+   font-family: "Courier New", monospace;
    font-size: 82%;
    color: black;
 }
