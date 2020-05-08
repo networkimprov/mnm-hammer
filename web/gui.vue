@@ -109,7 +109,9 @@
                 title="Find messages with phrase"
                 class="width100 search-box"></div>
    </div>
-   <div uk-height-viewport="offset-top:true; offset-bottom:true"
+   <div @scroll="msglistGetScroll"
+        ref="msglist"
+        uk-height-viewport="offset-top:true; offset-bottom:true"
         class="firefox-minheight-fix uk-overflow-auto message-bg message-list"
         style="position:relative">
       <mnm-viewer ref="viewer" :noparent="true"/>
@@ -918,6 +920,7 @@
              :class="{'draft-minsubject': mnm._data.ml.length > 1 && !subjShow && !subject}">
       <mnm-textresize @input.native="textAdd"
                       @click.native.stop="clickPreview"
+                      @resize="$root.msglistSetScroll"
                       :src="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
                       placeholder="Message text, Markdown OK. Ctrl-J to preview!"
                       class="width100"/>
@@ -1260,8 +1263,9 @@
       updated: function() { this.resize() },
       methods: {
          resize: function() {
-            this.$el.style.height = 'auto';
+            this.$el.style.height = 'auto'; // causes scrolling parent to zero scrollTop
             this.$el.style.height = this.$el.scrollHeight+4 + 'px';
+            this.$emit('resize');
          },
       },
    });
@@ -1561,8 +1565,11 @@
             <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
                <div class="pane-scroller message-bg" style="min-height:1px">
                   <plugin-vfg :schema="formDef" :model="{}" :options="{}"/></div
-              ><div class="pane-scroller">
+              ><div @scroll="codePos = $refs.codepane.scrollTop"
+                    ref="codepane"
+                    class="pane-scroller">
                   <mnm-textresize @input.native="editCode"
+                                  @resize="$refs.codepane.scrollTop = codePos"
                                   :src="mnm._data.fo"
                                   ref="code"
                                   class="width100"/></div>
@@ -1588,7 +1595,7 @@
       template: '#mnm-forms',
       props: {toggle:String},
       data: function() {
-         return {upname:'', dupname:'', setName:'', fileId:'', codeShow:false, dupShow:'',
+         return {upname:'', dupname:'', setName:'', fileId:'', codePos:0, codeShow:false, dupShow:'',
                  editTop:'', editRight:'', formDef:null, parseError:'', toSave:{}};
       },
       computed: {
@@ -1635,6 +1642,7 @@
             this.fileId = iRev;
             this.editTop = iEl.offsetTop + 'px';
             this.editRight = (iEl.offsetParent.offsetWidth - iEl.offsetLeft) +'px';
+            this.codePos = 0;
             this.codeShow = false;
             this.dupname = '';
          },
@@ -2325,6 +2333,7 @@
 ;(function() {
    var sChange = 0;
    var sTemp = {ml:null, mo:null};
+   var sMsglistPos = 0;
 
    mnm._saveWaitTime = 12*1000; // milliseconds
    mnm._isLocal = '<%.TitleJs%>' === 'local';
@@ -2352,6 +2361,12 @@
       template: '#mnm-main',
       data: mnm._data,
       methods: {
+         msglistGetScroll: function() {
+            sMsglistPos = sApp.$refs.msglist.scrollTop;
+         },
+         msglistSetScroll: function() {
+            sApp.$refs.msglist.scrollTop = sMsglistPos;
+         },
          tabSearch: function(iText, iState) {
             if (iText.length === 0)
                return;
@@ -2760,6 +2775,7 @@
 
    mnm.ThreadChange = function() {
       sChange = 1;
+      sMsglistPos = 0;
       mnm._lastPreview = '';
    };
 
