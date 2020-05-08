@@ -912,13 +912,14 @@
              @focus="subjShow = true"
              @click.stop="clickPreview"
              :value="subject"
+             :title="mnm._data.ml.length === 1 || subjShow ? '' : 'Edit subject'"
              :placeholder="mnm._data.ml.length === 1 ? 'Subject' : subjShow ? 'Re' : ''" type="text"
              class="width100"
              :class="{'draft-minsubject': mnm._data.ml.length > 1 && !subjShow && !subject}">
       <mnm-textresize @input.native="textAdd"
                       @click.native.stop="clickPreview"
                       :src="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
-                      placeholder="Ctrl-J to Preview"
+                      placeholder="Message text, Markdown OK. Ctrl-J to preview!"
                       class="width100"/>
    </div>
 </script><script>
