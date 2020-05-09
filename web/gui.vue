@@ -405,7 +405,7 @@
                            @hide.native="mnm.NoticeClose()"
                            offset="-4" pos="left-top"/><!--todo single notice menu-->
                <a :href="'/'+encodeURIComponent(aSvc.Name)"
-                  :target="mnm._isLocal ? '_self' : 'mnm_'+aSvc.Name">{{aSvc.Name}}</a>
+                  :target="mnm._isLocal ? '_self' : 'mnm_svc_'+ aSvc.Name">{{aSvc.Name}}</a>
             </template>
          </li></ul>
    </div>
@@ -2236,7 +2236,7 @@
         style="position:absolute; z-index:3" :style="{top:editTop, right:editRight, left:editLeft}"
         @click.stop>
       <a v-show="kind !== 'form'"
-         :href="src" :target="'mnm_atc_<%.TitleJs%>'"
+         :href="src" :target="'mnm_'+ file"
          title="Open file in new tab">
          <span uk-icon="expand"></span></a>
       <div class="uk-text-small viewer-name dropdown-scroll-item">{{title}}</div>
@@ -2287,10 +2287,10 @@
       methods: {
          close: function() { this.kind = '' },
          open: function(iSvc, iId, iEl, iRhs) {
-            this.file = iId;
+            this.file = (iSvc ? 'atc_<%.TitleJs%>_' : 'upl_') + iId;
             this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
             this.src = (iSvc ? '?an=' : '/t/') + encodeURIComponent(iId);
-            this.editTop = iEl.offsetTop + 'px';
+            this.editTop = iEl.offsetTop +'px';
             if (iRhs)
                this.editLeft = (iEl.offsetLeft + 20) +'px'; // 20 == icon width
             else
@@ -2789,7 +2789,7 @@
       }
    });
 
-   window.name = 'mnm_<%.TitleJs%>';
+   window.name = 'mnm_svc_<%.TitleJs%>';
    window.onload = mnm.Connect;
    window.onerror = function(iMsg /*etc*/) { mnm.Err(iMsg) };
 
