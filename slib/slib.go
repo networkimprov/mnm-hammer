@@ -206,6 +206,7 @@ type Update struct {
    Config *struct {
       HistoryLen int
       Addr string
+      Alias string
       LoginPeriod int
    } `json:",omitempty"`
    Thread *struct {
@@ -292,7 +293,7 @@ type SendRecord struct {
 const (
    eSrecThread = 't'; eSrecFwd = 'f'; eSrecCfm = 'c'
    eSrecPing = 'p'; eSrecOhi = 'o'; eSrecAccept = 'a'
-   eSrecNode = 'n'; eSrecSync = 's'
+   eSrecAlias = 'l'; eSrecNode = 'n'; eSrecSync = 's'
 )
 
 type Msg map[string]interface{}

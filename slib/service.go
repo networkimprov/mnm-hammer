@@ -379,6 +379,13 @@ func dropTabService(iSvc string, iPos int) {
    if err != nil { quit(err) }
 }
 
+func sendAliasService(iW io.Writer, iSvc string, iQid, iId string) error {
+   aHead, err := json.Marshal(Msg{"Op":3, "Id":iId, "Newalias":iQid})
+   if err != nil { quit(err) }
+   err = writeHeaders(iW, aHead, nil)
+   return err
+}
+
 func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
    var aFn func(io.Writer, string, string, string) error
    switch iSrec.Id[0] {
@@ -388,6 +395,7 @@ func SendService(iW io.Writer, iSvc string, iSrec *SendRecord) error {
    case eSrecThread: aFn = sendDraftThread
    case eSrecFwd:    aFn = sendFwdDraftThread
    case eSrecCfm:    aFn = sendFwdConfirmThread
+   case eSrecAlias:  aFn = sendAliasService
    case eSrecNode:   aFn = sendUserEditNode
    case eSrecSync:   aFn = sendSyncNode
    default:
@@ -423,24 +431,36 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       aNewCfg.Node = iHead.NodeId
       if iHead.Error != "" {
          aNewCfg.Alias = ""
-         aNewCfg.Error = "["+ iHead.Error[len("AddAlias: alias "):] +"]"
+         aNewCfg.Error = iHead.Error
+         aFn, aResult = fAll, []string{"cf", "_e", iHead.Error}
       } else {
          storeSelfAdrsbk(iSvc, aNewCfg.Alias, aNewCfg.Uid)
+         aFn, aResult = fAll, []string{"cf"}
       }
       err = _updateConfig(aNewCfg)
       if err != nil {
          fmt.Fprintf(os.Stderr, "HandleTmtpService %s: %s %s\n", iSvc, iHead.Op, err.Error())
          return fErr, nil
       }
-      aFn, aResult = fAll, []string{"cf"}
    case "login":
       fmt.Printf("HandleTmtpService %s: login %s\n", iSvc, iHead.Node)
    case "info":
       setFromOhi(iSvc, iHead)
       aFn, aResult = fAll, []string{"of"}
    case "user":
-      if iHead.NewAlias != "" { break } //todo
       aCfg := GetConfigService(iSvc)
+      if iHead.NewAlias != "" {
+         if aCfg.Alias != "" {
+            err = tError("unexpected newalias: "+ iHead.NewAlias)
+            fmt.Fprintf(os.Stderr, "HandleTmtpService %s: %s\n", iSvc, err)
+            return fErr, nil
+         }
+         aCfg.Error = ""
+         aCfg.Alias = iHead.NewAlias //todo support multiple aliases
+         _updateConfig(aCfg)
+         aFn, aResult = fAll, []string{"cf"}
+         break
+      }
       a := aCfg.findNode(iHead.NewNode)
       if a >= 0 {
          if aCfg.NodeSet[a].Status != eNodePending &&
@@ -549,6 +569,14 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       iHead.Id = iHead.Id[1:]
       aId := parseLocalId(iHead.Id)
       switch aQid[0] {
+      case eSrecAlias:
+         if iHead.Error != "" {
+            aCfg := GetConfigService(iSvc)
+            aCfg.Error = iHead.Error
+            _updateConfig(aCfg)
+            aFn, aResult = fAll, []string{"cf"}
+         }
+         dropQueue(iSvc, aQid)
       case eSrecNode:
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"_e", iHead.Error}
@@ -702,25 +730,40 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
 
    switch iUpdt.Op {
    case "open":
+      aResult = []string{"cf", "cn", "of", "ot", "ps", "pt", "pf", "gl",
+                         "tl", "cs", "cl", "al", "_t", "ml", "mo",
+                         "/v", "/t", "/f", "/g", "/l",
+                         "_e", ""}
+      aLen := len(aResult) - 2
       if iSvc == "local" {
-         aFn, aResult = fOne, []string{"/v", "/t", "/f", "/g", "/l"}
+         aFn, aResult = fOne, aResult[15:aLen]
       } else {
-         aFn, aResult = fOne, []string{"cf", "cn", "of", "ot", "ps", "pt", "pf", "gl",
-                                       "tl", "cs", "cl", "al", "_t", "ml", "mo",
-                                       "/v", "/t", "/f", "/g", "/l"}
+         aCfg := GetConfigService(iSvc)
+         if aCfg.Error != "" {
+            aLen += 2
+            aResult[aLen-1] = aCfg.Error
+         }
+         aFn, aResult = fOne, aResult[:aLen]
       }
    case "config_update":
       aNewCfg := GetConfigService(iSvc)
-      if iUpdt.Config.HistoryLen >= 4 && iUpdt.Config.HistoryLen <= 1024 {
-         aNewCfg.HistoryLen = iUpdt.Config.HistoryLen
-         iState.setHistoryMax(aNewCfg.HistoryLen)
-      }
-      if iUpdt.Config.Addr != "" && (iUpdt.Config.Addr[0] == '+' || iUpdt.Config.Addr[0] == '=') {
+      if iUpdt.Config.Addr != "" {
+         if iUpdt.Config.Addr[0] != '+' && iUpdt.Config.Addr[0] != '=' {
+            err = tError("address requires prefix + or =")
+            return fErr, nil
+         }
          aNewCfg.Verify = iUpdt.Config.Addr[0] == '+'
          aNewCfg.Addr = iUpdt.Config.Addr[1:]
       }
+      if iUpdt.log == 0 && iUpdt.Config.Alias != "" {
+         addQueue(iSvc, eSrecAlias, iUpdt.Config.Alias)
+      }
       if iUpdt.Config.LoginPeriod >= 0 {
          aNewCfg.LoginPeriod = iUpdt.Config.LoginPeriod
+      }
+      if iUpdt.Config.HistoryLen >= 4 && iUpdt.Config.HistoryLen <= 1024 {
+         aNewCfg.HistoryLen = iUpdt.Config.HistoryLen
+         iState.setHistoryMax(aNewCfg.HistoryLen)
       }
       syncUpdtNode(iSvc, iUpdt, iState, func() error {
          err = _updateConfig(aNewCfg)
