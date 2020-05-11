@@ -534,7 +534,6 @@ textarea {
 }
 
 .svccfg tr td {
-   vertical-align: top;
    padding: 0.5em 0;
 }
 .svccfg tr td:nth-child(2) {

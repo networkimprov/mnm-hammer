@@ -1832,13 +1832,21 @@
                                    class="width100"/>
                </div>
                <button @click="startPing()"
-                       :disabled="!validDraft"
+                       :disabled="!validDraft || mnm._data.cf.Error || !mnm._data.cf.Uid"
                        title="New draft invitation"
                        class="btn btn-icon"><span uk-icon="pencil"></span></button>
             </form>
             <div v-show="mnm._data.ps.length === 0"
-                 style="margin-top:0.5em; text-align:center; font-style:italic"
-                 >To draft an invitation to someone, add their alias here.</div>
+                 style="margin-top:0.5em; text-align:center; font-style:italic">
+               <span v-if="!mnm._data.cf.Uid"
+                     style="color:crimson"
+                     >Open the <span uk-icon="settings"></span> menu and check the Site Address!</span>
+               <span v-else-if="mnm._data.cf.Error"
+                     style="color:crimson"
+                     >Open the <span uk-icon="settings"></span> menu and update your Alias!</span>
+               <template v-else
+                         >To draft an invitation to someone, add their alias here.</template>
+            </div>
             <table class="uk-table uk-table-small" style="margin:0">
                <tr><th>To / (Group)</th> <th></th> <th>Message</th> <th></th></tr>
                <tr v-for="a in mnm._data.ps" :key="rowId(a)">
@@ -2117,36 +2125,47 @@
       <div class="uk-float-right uk-text-small">SETTINGS</div>
       <form onsubmit="return false">
          <button @click="sendUpdate"
-                 :disabled="!(addr || historylen >= 0 || loginperiod >= 0)
+                 :disabled="!(addr || alias || historylen >= 0 || loginperiod >= 0)
                             || isNaN(historylen) || isNaN(loginperiod)"
                  title="Update settings"
                  class="btn btn-icon"><span uk-icon="forward"></span></button>
          <table class="svccfg">
-            <tr><td>Thread History </td><td>{{mnm._data.cf.HistoryLen}}<br>
+            <tr><td>Thread history</td><td>
+               {{mnm._data.cf.HistoryLen}}
                <input v-model="hlin"
                       @input="historylen = parseInt($event.target.value || '-1')"
-                      placeholder="4 to 1024" type="text"
+                      placeholder="Length (4 to 1024)" type="text"
                       class="width100"></td></tr>
-            <tr><td>Site<br>Address </td><td>{{mnm._data.cf.Addr  }}<br>
-               <input v-model="addr"
-                      type="text"
+            <tr><td>Site</td><td>
+               {{mnm._data.cf.Addr}}
+               <input v-if="!mnm._data.cf.Uid"
+                      v-model="addr"
+                      placeholder="Site Address" type="text"
                       title="Starts with '+' or '=' and may end with ':number'"
-                      class="width100"></td></tr>
+                      class="width100">
+               <div v-else
+                    >{{mnm._data.cf.Verify ? 'V' : 'Not v'}}erified</div></td></tr>
             <!--todo tr><td>Login Period   </td><td>{{mnm._secondsToString(mnm._data.cf.LoginPeriod)}}<br>
                <input v-model="lpin"
                       @input="loginperiod = toSeconds($event.target.value)"
                       placeholder="New days:hh:mm:ss" size="25" type="text"></td></tr -->
-            <tr><td>Verify host    </td><td>{{mnm._data.cf.Verify}}</td></tr>
-            <tr><td>Alias          </td><td>{{mnm._data.cf.Alias ||
-                                              mnm._data.cf.Error }}</td></tr>
-            <tr><td>Uid            </td><td>{{mnm._data.cf.Uid   }}</td></tr>
+            <tr><td>Alias<br>{{mnm._data.cf.Error && '(taken)'}}</td><td>
+               <input v-if="mnm._data.cf.Uid && !mnm._data.cf.Alias"
+                      v-model="alias"
+                      placeholder="Your Name/Alias (<%.aliasMin%>+ chars)" type="text"
+                      title="Name by which other site members know you"
+                      class="width100">
+               {{mnm._data.cf.Alias ||
+                 mnm._data.cf.Error.slice('AddAlias: alias '.length, -' already taken'.length)}}</td></tr>
+            <tr><td>Uid</td><td>
+               {{mnm._data.cf.Uid}}</td></tr>
          </table>
       </form>
    </div>
 </script><script>
    Vue.component('mnm-svccfg', {
       template: '#mnm-svccfg',
-      data: function() { return {hlin:null, addr:null, lpin:null, historylen:-1, loginperiod:-1} },
+      data: function() { return {hlin:null, addr:null, alias:null, lpin:null, historylen:-1, loginperiod:-1} },
       computed: { mnm: function() { return mnm } },
       methods: {
          toSeconds: function(i) {
