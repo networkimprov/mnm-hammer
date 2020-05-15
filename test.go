@@ -509,7 +509,13 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
       }
    case "node_add":
       if iUpdt.Node.Addr == "localhost" {
-         iUpdt.Node.Addr = sNetAddr
+         if sHttpSrvr.Addr[0] == ':' {
+            if sHttpSrvr.Addr != ":http" {
+               iUpdt.Node.Addr += sHttpSrvr.Addr
+            }
+         } else {
+            iUpdt.Node.Addr = sHttpSrvr.Addr
+         }
       }
       if iUpdt.Node.Pin == "localpin" {
          iUpdt.Node.Pin = sTestNodePin
