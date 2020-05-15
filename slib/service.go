@@ -274,11 +274,6 @@ func GetCfService(iSvc string) interface{} {
    return aCfg
 }
 
-func GetCnService(iSvc string) interface{} {
-   aSvc := getService(iSvc)
-   return aSvc.toNode
-}
-
 func makeNodeConfigService(iSvc string, iNode *tNode) *tSvcConfig {
    aCfg := GetConfigService(iSvc)
    aCfg.Node = iNode.NodeId

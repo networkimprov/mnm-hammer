@@ -586,7 +586,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       err = sServiceTmpl.Execute(iResp, aParams)
    case "cs": aResult = aState.GetSummary()
    case "cf": aResult = pSl.GetCfService(aSvcId)
-   case "cn": aResult = pSl.GetCnService(aSvcId)
+   case "cn": aResult = pSl.GetCnNode(aSvcId)
    case "nl": aResult = pSl.GetIdxNotice(aSvcId)
    case "ps": aResult = pSl.GetDraftAdrsbk(aSvcId)
    case "pt": aResult = pSl.GetSentAdrsbk(aSvcId)

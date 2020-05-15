@@ -235,6 +235,12 @@ func _checkSvcPath(iPath string) (string, error) {
    return iPath, nil
 }
 
+func GetCnNode(iSvc string) interface{} {
+   type tCn struct{ Addr, Pin string; Xfer int64 }
+   aSvc := getService(iSvc)
+   return &tCn{aSvc.toNode.Addr, aSvc.toNode.Pin, aSvc.toNode.Xfer} //todo possible race?
+}
+
 func createNode(iSvc string, iUpdt *Update, iNode *tNode) error {
    if iNode.Status != eNodePending && iNode.Status != eNodeAllowed {
       return tError("node status: "+ string(iNode.Status))
