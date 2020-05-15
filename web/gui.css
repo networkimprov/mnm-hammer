@@ -307,7 +307,13 @@ textarea {
    margin-left: 2.5em;
    width: 55%;
    line-height: 1.75;
+   overflow-wrap: break-word;
    border-bottom: 1px solid burlywood;
+}
+.message-subhead .message-attach::after { /*todo add a general-use class for this */
+   clear: right; /* increase height to enclose float-right children */
+   content: "";
+   display: table;
 }
 
 .message {
