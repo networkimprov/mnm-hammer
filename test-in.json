@@ -47,8 +47,8 @@
    "Updt": {"Op":"node_add", "Node":{"Addr":"localhost", "Pin":"localpin", "Newnode":"early"}},
    "Poll": 3,
    "Result": {
-      "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
-             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+      "cf": {"Name":"Blue", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
+             "Uid":"*uid", "Alias":"Blue#td",
              "NodeSet":[{"Name":"first", "Status":97, "Local":true},
                         {"Name":"early", "Status":97}] } ,
       "cn": {"Addr":"localhost:8123", "Pin":"*", "Xfer":">100"} },
@@ -524,8 +524,8 @@
 },{
    "Updt": {"Op":"node_add", "Node":{"Addr":"localhost", "Pin":"localpin", "Newnode":"later"}},
    "Result": {
-      "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
-             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+      "cf": {"Name":"Blue", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
+             "Uid":"*uid", "Alias":"Blue#td",
              "NodeSet":[{"Name":"first", "Status":97, "Local":true},
                         {"Name":"early", "Status":97},
                         {"Name":"later", "Status":112, "Qid":"*"}] } ,
@@ -534,8 +534,8 @@
    "Updt": {"Op":"test", "Test":{"Request":["cf", "cn"]}},
    "Poll": 9,
    "Result": {
-      "cf": {"Name":"Blue", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
-             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+      "cf": {"Name":"Blue", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
+             "Uid":"*uid", "Alias":"Blue#td",
              "NodeSet":[{"Name":"first", "Status":97, "Local":true},
                         {"Name":"early", "Status":97},
                         {"Name":"later", "Status":97}] } ,
@@ -558,8 +558,8 @@
       "pt": "open.a" ,
       "pf": "open.a" ,
       "gl": "open.a" ,
-      "cf": {"Name":"Blue.later", "Description":"", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
-             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+      "cf": {"Name":"Blue.later", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
+             "Uid":"*uid", "Alias":"Blue#td",
              "NodeSet":[{"Name":"first", "Status":97},
                         {"Name":"early", "Status":97},
                         {"Name":"later", "Status":97, "Local":true}] } ,
@@ -577,16 +577,16 @@
 },{
    "Updt": {"Op":"config_update", "Config":{"HistoryLen":88, "LoginPeriod":99}},
    "Result": {
-      "cf": {"Name":"Blue", "Description":"", "HistoryLen":88, "LoginPeriod":99, "Addr":"*", "Verify":"**",
-             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+      "cf": {"Name":"Blue", "HistoryLen":88, "LoginPeriod":99, "Addr":"*", "Verify":"**",
+             "Uid":"*uid", "Alias":"Blue#td",
              "NodeSet":[{"Name":"first", "Status":97, "Local":true},
                         {"Name":"early", "Status":97},
                         {"Name":"later", "Status":97}] } }
 },{
    "Updt": {"Op":"config_update", "Config":{"Addr":"orig", "LoginPeriod":0}},
    "Result": {
-      "cf": {"Name":"Blue", "Description":"", "HistoryLen":88, "LoginPeriod":0, "Addr":"*", "Verify":"**",
-             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+      "cf": {"Name":"Blue", "HistoryLen":88, "LoginPeriod":0, "Addr":"*", "Verify":"**",
+             "Uid":"*uid", "Alias":"Blue#td",
              "NodeSet":[{"Name":"first", "Status":97, "Local":true},
                         {"Name":"early", "Status":97},
                         {"Name":"later", "Status":97}] } }
@@ -611,8 +611,8 @@
                           "MsgId":"*mid", "Gid":"Gold-G#tdg", "Qid":"*", "Response":"**"}}] ,
       "pf": "open.b" ,
       "gl": "open.b" ,
-      "cf": {"Name":"Blue.early", "Description":"", "HistoryLen":88, "LoginPeriod":0, "Addr":"*", "Verify":"**",
-             "Uid":"*uid", "Alias":"Blue#td", "Node":"*",
+      "cf": {"Name":"Blue.early", "HistoryLen":88, "LoginPeriod":0, "Addr":"*", "Verify":"**",
+             "Uid":"*uid", "Alias":"Blue#td",
              "NodeSet":[{"Name":"first", "Status":97},
                         {"Name":"early", "Status":97, "Local":true},
                         {"Name":"later", "Status":97}] } ,
@@ -659,7 +659,7 @@
 }],
 "Orders": [{
    "Updt": {"Op":"test", "Test":{"Request":["pf", "nl"]}},
-   "Poll": 3,
+   "Poll": 5,
    "Result": {
       "pf":[{"Type":4, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td", "Uid":"*uid", "MsgId":"*mid"}] ,
       "nl": [{"Type":"i", "Alias":"Blue#td", "MsgId":"*mid", "Date":"*d", "Seen":0}] }

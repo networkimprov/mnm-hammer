@@ -1350,14 +1350,15 @@ func _revCc(iCc []tCcEl, iHead *Header) {
 }*/
 
 func _updateSearchDoc(iSvc string, iCfg *tSvcConfig, iTid string, iFd *os.File, iI tIndexer) {
-   if iCfg == nil { iCfg = GetConfigService(iSvc) }
-   aSelf := iCfg.Alias
+   if iCfg == nil {
+      iCfg = GetConfigService(iSvc)
+   }
    aLastSubjectN, aHasDraft := -1, false
    var aIdx []tIndexEl
    _readIndex(iFd, &aIdx, nil)
    aDoc := &tSearchDoc{id: iTid, OrigDate: aIdx[0].Date, OrigAuthor: aIdx[0].Alias}
    for a := range aIdx {
-      if aIdx[a].Alias != "" && aIdx[a].Alias != aSelf {
+      if aIdx[a].Alias != "" && aIdx[a].Alias != iCfg.Alias {
          aDoc.Author.addUnique(aIdx[a].Alias)
       }
       if aIdx[a].Subject != "" || a == 0 {

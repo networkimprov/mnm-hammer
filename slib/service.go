@@ -32,14 +32,14 @@ var sMsgToSelfFn func(string, *Header)
 
 type tSvcConfig struct {
    Name string
-   Description string
+   Description string `json:",omitempty"`
    HistoryLen int
    LoginPeriod int // seconds
    Addr string // for tls.Dial()
    Verify bool // for tls.Config
-   Uid string
    Alias string
-   Node string
+   Uid string
+   Node string `json:",omitempty"`
    NodeSet []tNode
    Error string `json:",omitempty"` // from "registered" message
 }
@@ -53,14 +53,7 @@ type tNode struct {
 }
 
 const ( eNodePending = 'p'; eNodeSent = 's'; eNodeAllowed = 'l'
-        eNodeReady = 'r'; eNodeActive = 'a'; eNodeDefunct = 'd' )
-
-func (o *tSvcConfig) findNode(i string) int {
-   for a := range o.NodeSet {
-      if o.NodeSet[a].Name == i { return a }
-   }
-   return -1
-}
+        eNodeReady = 'r'; eNodeActive = 'a'; eNodeDefunct = 'd' ) // reserve 0xFF
 
 func initServices(iSs func(string), iMts func(string, *Header)) {
    sServiceStartFn, sMsgToSelfFn = iSs, iMts
@@ -256,6 +249,66 @@ func getService(iSvc string) *tService {
    return sServices[iSvc]
 }
 
+func _editConfig(iSvc string, iFn func(*tSvcConfig)error) {
+   aSvc := getService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   err := iFn(&aSvc.config)
+   if err == nil {
+      err = storeFile(fileCfg(iSvc), &aSvc.config)
+      if err != nil { quit(err) }
+   }
+}
+
+func _findNode(iSvc string, iName string) *tNode {
+   aSvc := getService(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   for a := range aSvc.config.NodeSet {
+      if aSvc.config.NodeSet[a].Name == iName {
+         aNode := aSvc.config.NodeSet[a]
+         return &aNode
+      }
+   }
+   return nil
+}
+
+func _addNode(iSvc string, iNode *tNode) {
+   _editConfig(iSvc, func(cCfg *tSvcConfig) error {
+      for a := range cCfg.NodeSet {
+         if cCfg.NodeSet[a].Name == iNode.Name {
+            quit(tError("node name already exists: "+ iNode.Name))
+         }
+      }
+      cCfg.NodeSet = append(cCfg.NodeSet, *iNode)
+      if iNode.Status != eNodeActive {
+         return nil
+      }
+      a := len(cCfg.NodeSet) - 1
+      if a > 0 && (cCfg.NodeSet[a-1].Status == eNodePending || cCfg.NodeSet[a-1].Status == eNodeSent) {
+         cCfg.NodeSet[a], cCfg.NodeSet[a-1] = cCfg.NodeSet[a-1], cCfg.NodeSet[a]
+      }
+      return nil
+   })
+}
+
+func _updateNode(iSvc string, iNode *tNode) {
+   _editConfig(iSvc, func(cCfg *tSvcConfig) error {
+      a := -1
+      for a = 0; a < len(cCfg.NodeSet); a++ {
+         if cCfg.NodeSet[a].Name == iNode.Name { break }
+      }
+      cCfg.NodeSet[a] = *iNode
+      if iNode.Status == 0xFF {
+         cCfg.NodeSet = cCfg.NodeSet[:a + copy(cCfg.NodeSet[a:], cCfg.NodeSet[a+1:])]
+      }
+      return nil
+   })
+}
+
+func _dropNode(iSvc string, iNode *tNode) {
+   iNode.Status = 0xFF
+   _updateNode(iSvc, iNode)
+}
+
 func GetConfigService(iSvc string) *tSvcConfig {
    if iSvc == "local" {
       return &tSvcConfig{Name:"local"}
@@ -263,20 +316,27 @@ func GetConfigService(iSvc string) *tSvcConfig {
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    aCfg := aSvc.config
-   aCfg.NodeSet = append([]tNode{}, aCfg.NodeSet...)
+   aCfg.NodeSet = nil
    return &aCfg
 }
 
 func GetCfService(iSvc string) interface{} {
-   aCfg := GetConfigService(iSvc)
+   aSvc := getService(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   aCfg := aSvc.config
+   aCfg.Node = ""
+   aCfg.NodeSet = append([]tNode{}, aCfg.NodeSet...)
    aV := "="; if aCfg.Verify { aV = "+" }
    aCfg.Addr = aV + aCfg.Addr
-   return aCfg
+   return &aCfg
 }
 
 func makeNodeConfigService(iSvc string, iNode *tNode) *tSvcConfig {
-   aCfg := GetConfigService(iSvc)
+   aSvc := getService(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   aCfg := aSvc.config
    aCfg.Node = iNode.NodeId
+   aCfg.NodeSet = append([]tNode{}, aCfg.NodeSet...)
    for a := range aCfg.NodeSet {
       aCfg.NodeSet[a].Local = aCfg.NodeSet[a].Name == iNode.Name
       if aCfg.NodeSet[a].Local {
@@ -284,7 +344,7 @@ func makeNodeConfigService(iSvc string, iNode *tNode) *tSvcConfig {
          aCfg.NodeSet[a].NodeId = ""
       }
    }
-   return aCfg
+   return &aCfg
 }
 
 func getUriService(iSvc string) string {
@@ -330,20 +390,6 @@ func makeTreeService(iSvc string) {
       err = os.Symlink("empty", aFile)
       if err != nil && !os.IsExist(err) { quit(err) }
    }
-}
-
-func _updateConfig(iCfg *tSvcConfig) error {
-   var err error
-   aSvc := getService(iCfg.Name)
-   if aSvc == nil {
-      return tError(iCfg.Name + " not found")
-   }
-   aSvc.Lock(); defer aSvc.Unlock()
-   aSvc.config = *iCfg
-   aSvc.config.NodeSet = append([]tNode{}, iCfg.NodeSet...)
-   err = storeFile(fileCfg(iCfg.Name), iCfg)
-   if err != nil { quit(err) }
-   return nil
 }
 
 func getTabsService(iSvc string) []tTermEl {
@@ -421,47 +467,48 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
    case "tmtprev":
       //todo
    case "registered":
-      aNewCfg := GetConfigService(iSvc)
-      aNewCfg.Uid = iHead.Uid
-      aNewCfg.Node = iHead.NodeId
+      var aAlias, aUid string
+      _editConfig(iSvc, func(cCfg *tSvcConfig) error {
+         cCfg.Uid, cCfg.Node = iHead.Uid, iHead.NodeId
+         if iHead.Error != "" {
+            cCfg.Alias = ""
+            cCfg.Error = iHead.Error
+         }
+         aAlias, aUid = cCfg.Alias, cCfg.Uid
+         return nil
+      })
       if iHead.Error != "" {
-         aNewCfg.Alias = ""
-         aNewCfg.Error = iHead.Error
          aFn, aResult = fAll, []string{"cf", "_e", iHead.Error}
-      } else {
-         storeSelfAdrsbk(iSvc, aNewCfg.Alias, aNewCfg.Uid)
-         aFn, aResult = fAll, []string{"cf"}
+         break
       }
-      err = _updateConfig(aNewCfg)
-      if err != nil {
-         fmt.Fprintf(os.Stderr, "HandleTmtpService %s: %s %s\n", iSvc, iHead.Op, err.Error())
-         return fErr, nil
-      }
+      storeSelfAdrsbk(iSvc, aAlias, aUid) //todo check for this on init
+      aFn, aResult = fAll, []string{"cf"}
    case "login":
       fmt.Printf("HandleTmtpService %s: login %s\n", iSvc, iHead.Node)
    case "info":
       setFromOhi(iSvc, iHead)
       aFn, aResult = fAll, []string{"of"}
    case "user":
-      aCfg := GetConfigService(iSvc)
       if iHead.NewAlias != "" {
-         if aCfg.Alias != "" {
-            err = tError("unexpected newalias: "+ iHead.NewAlias)
-            fmt.Fprintf(os.Stderr, "HandleTmtpService %s: %s\n", iSvc, err)
-            return fErr, nil
-         }
-         aCfg.Error = ""
-         aCfg.Alias = iHead.NewAlias //todo support multiple aliases
-         _updateConfig(aCfg)
+         _editConfig(iSvc, func(cCfg *tSvcConfig) error {
+            if cCfg.Alias != "" {
+               err = tError("unexpected newalias: "+ iHead.NewAlias)
+               fmt.Fprintf(os.Stderr, "HandleTmtpService %s: %s\n", iSvc, err)
+               return err
+            }
+            cCfg.Error = ""
+            cCfg.Alias = iHead.NewAlias //todo support multiple aliases
+            return nil
+         })
+         if err != nil { return fErr, nil }
          aFn, aResult = fAll, []string{"cf"}
          break
       }
-      a := aCfg.findNode(iHead.NewNode)
-      if a >= 0 {
-         if aCfg.NodeSet[a].Status != eNodePending &&
-            aCfg.NodeSet[a].Status != eNodeSent {
+      aNd := _findNode(iSvc, iHead.NewNode)
+      if aNd != nil {
+         if aNd.Status != eNodePending && aNd.Status != eNodeSent {
             fmt.Fprintf(os.Stderr, "HandleTmtpService %s: user node %s already '%c'\n",
-                                   iSvc, iHead.NewNode, aCfg.NodeSet[a].Status)
+                                   iSvc, iHead.NewNode, aNd.Status)
             break
          }
          go func(cQid, cNewNode, cNodeId string) { // start "_node" after ack received
@@ -471,35 +518,26 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
                //todo break on dropped service connection
             }
             sMsgToSelfFn(iSvc, &Header{Op:"_node", NewNode:cNewNode, NodeId:cNodeId})
-         }(aCfg.NodeSet[a].Qid, iHead.NewNode, iHead.NodeId)
-         aCfg.NodeSet[a].Status = eNodeAllowed
-         aCfg.NodeSet[a].Qid = ""
-         aCfg.NodeSet[a].NodeId = iHead.NodeId
+         }(aNd.Qid, iHead.NewNode, iHead.NodeId)
+         aNd.Status, aNd.NodeId, aNd.Qid = eNodeAllowed, iHead.NodeId, ""
+         _updateNode(iSvc, aNd)
       } else {
-         aCfg.NodeSet = append(aCfg.NodeSet, tNode{Name:iHead.NewNode, Status:eNodeActive})
-         a = len(aCfg.NodeSet) - 1
-         if a > 0 && (aCfg.NodeSet[a-1].Status == eNodePending ||
-                      aCfg.NodeSet[a-1].Status == eNodeSent) {
-            aCfg.NodeSet[a], aCfg.NodeSet[a-1] = aCfg.NodeSet[a-1], aCfg.NodeSet[a]
-         }
+         _addNode(iSvc, &tNode{Name:iHead.NewNode, Status:eNodeActive})
       }
-      _updateConfig(aCfg)
       aFn, aResult = fAll, []string{"cf"}
    case "_node": // via sMsgToSelfFn
-      aCfg := GetConfigService(iSvc)
-      a := aCfg.findNode(iHead.NewNode)
-      if a < 0 {
+      aNd := _findNode(iSvc, iHead.NewNode)
+      if aNd == nil {
          quit(tError("_node message for unknown Newnode: "+ iHead.NewNode))
       }
-      err = replicateNode(iSvc, &aCfg.NodeSet[a])
+      err = replicateNode(iSvc, aNd)
       if err != nil { return fErr, nil }
-      aCfg.NodeSet[a].Status = eNodeReady
-      _updateConfig(aCfg)
-      err = completeNode(iSvc, nil, &aCfg.NodeSet[a])
+      aNd.Status = eNodeReady
+      _updateNode(iSvc, aNd)
+      err = completeNode(iSvc, nil, aNd)
       if err != nil { return fErr, nil }
-      aCfg.NodeSet[a].Status = eNodeActive
-      aCfg.NodeSet[a].NodeId = ""
-      _updateConfig(aCfg)
+      aNd.Status, aNd.NodeId = eNodeActive, ""
+      _updateNode(iSvc, aNd)
       aFn, aResult = fAll, []string{"cf", "cn"}
    case "ohi":
       updateFromOhi(iSvc, iHead)
@@ -566,9 +604,10 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       switch aQid[0] {
       case eSrecAlias:
          if iHead.Error != "" {
-            aCfg := GetConfigService(iSvc)
-            aCfg.Error = iHead.Error
-            _updateConfig(aCfg)
+            _editConfig(iSvc, func(cCfg *tSvcConfig) error {
+               cCfg.Error = iHead.Error
+               return nil
+            })
             aFn, aResult = fAll, []string{"cf"}
          }
          dropQueue(iSvc, aQid)
@@ -576,14 +615,13 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"_e", iHead.Error}
          } else {
-            aCfg := GetConfigService(iSvc)
-            a := aCfg.findNode(aId.info())
-            if a < 0 {
+            aNd := _findNode(iSvc, aId.info())
+            if aNd == nil {
                quit(tError("ack for unknown node: "+ aId.info()))
             }
-            if aCfg.NodeSet[a].Status == eNodePending {
-               aCfg.NodeSet[a].Status = eNodeSent
-               _updateConfig(aCfg)
+            if aNd.Status == eNodePending {
+               aNd.Status = eNodeSent
+               _updateNode(iSvc, aNd)
                aFn, aResult = fAll, []string{"cf"}
             }
          }
@@ -741,30 +779,30 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          aFn, aResult = fOne, aResult[:aLen]
       }
    case "config_update":
-      aNewCfg := GetConfigService(iSvc)
-      if iUpdt.Config.Addr != "" {
-         if iUpdt.Config.Addr[0] != '+' && iUpdt.Config.Addr[0] != '=' {
-            err = tError("address requires prefix + or =")
-            return fErr, nil
-         }
-         aNewCfg.Verify = iUpdt.Config.Addr[0] == '+'
-         aNewCfg.Addr = iUpdt.Config.Addr[1:]
+      if iUpdt.Config.Addr != "" && iUpdt.Config.Addr[0] != '+' && iUpdt.Config.Addr[0] != '=' {
+         err = tError("address requires prefix + or =")
+         return fErr, nil
       }
       if iUpdt.log == 0 && iUpdt.Config.Alias != "" {
          addQueue(iSvc, eSrecAlias, iUpdt.Config.Alias)
       }
-      if iUpdt.Config.LoginPeriod >= 0 {
-         aNewCfg.LoginPeriod = iUpdt.Config.LoginPeriod
-      }
-      if iUpdt.Config.HistoryLen >= 4 && iUpdt.Config.HistoryLen <= 1024 {
-         aNewCfg.HistoryLen = iUpdt.Config.HistoryLen
-         iState.setHistoryMax(aNewCfg.HistoryLen)
-      }
       syncUpdtNode(iSvc, iUpdt, iState, func() error {
-         err = _updateConfig(aNewCfg)
-         return err
+         _editConfig(iSvc, func(cCfg *tSvcConfig) error {
+            if iUpdt.Config.Addr != "" {
+               cCfg.Verify = iUpdt.Config.Addr[0] == '+'
+               cCfg.Addr = iUpdt.Config.Addr[1:]
+            }
+            if iUpdt.Config.LoginPeriod >= 0 {
+               cCfg.LoginPeriod = iUpdt.Config.LoginPeriod
+            }
+            if iUpdt.Config.HistoryLen >= 4 && iUpdt.Config.HistoryLen <= 1024 {
+               cCfg.HistoryLen = iUpdt.Config.HistoryLen
+               iState.setHistoryMax(cCfg.HistoryLen)
+            }
+            return nil
+         })
+         return nil
       })
-      if err != nil { return fErr, nil }
       aFn, aResult = fAll, []string{"cf"}
    case "ohi_add", "ohi_drop":
       editOhi(iSvc, iUpdt)
@@ -974,30 +1012,25 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       iState.setSort(iUpdt.Sort.Type, iUpdt.Sort.Field)
       aFn, aResult = fOne, []string{"cs"}
    case "node_add":
-      aCfg := GetConfigService(iSvc)
-      a := aCfg.findNode(iUpdt.Node.Newnode)
-      aIsNew := a < 0
+      aNd := _findNode(iSvc, iUpdt.Node.Newnode)
+      aIsNew := aNd == nil
       if aIsNew {
-         a = len(aCfg.NodeSet)
-         aCfg.NodeSet = append(aCfg.NodeSet, tNode{Name:iUpdt.Node.Newnode, Status:eNodePending,
-                                                   Qid:makeLocalId(iUpdt.Node.Newnode)})
-         _updateConfig(aCfg)
+         aNd = &tNode{Name:iUpdt.Node.Newnode, Status:eNodePending, Qid:makeLocalId(iUpdt.Node.Newnode)}
+         _addNode(iSvc, aNd)
       }
-      if aCfg.NodeSet[a].Status != eNodeReady {
-         err = createNode(iSvc, iUpdt, &aCfg.NodeSet[a])
+      if aNd.Status != eNodeReady {
+         err = createNode(iSvc, iUpdt, aNd)
          if err != nil {
             if aIsNew {
-               aCfg.NodeSet = aCfg.NodeSet[:a]
-               _updateConfig(aCfg)
+               _dropNode(iSvc, aNd)
             }
             return fErr, nil
          }
       } else {
-         err = completeNode(iSvc, iUpdt, &aCfg.NodeSet[a])
+         err = completeNode(iSvc, iUpdt, aNd)
          if err != nil { return fErr, nil }
-         aCfg.NodeSet[a].Status = eNodeActive
-         aCfg.NodeSet[a].NodeId = ""
-         _updateConfig(aCfg)
+         aNd.Status, aNd.NodeId = eNodeActive, ""
+         _updateNode(iSvc, aNd)
       }
       aFn, aResult = fAll, []string{"cf", "cn"}
    case "test":
