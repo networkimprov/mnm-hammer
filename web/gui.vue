@@ -1849,21 +1849,21 @@
             </div>
             <table class="uk-table uk-table-small" style="margin:0">
                <tr><th>To / (Group)</th> <th></th> <th>Message</th> <th></th></tr>
-               <tr v-for="a in mnm._data.ps" :key="rowId(a)">
-                  <td>{{a.Alias}}<br>{{a.Gid && '('+a.Gid+')'}}</td>
-                  <td><span v-if="a.Queued"
+               <tr v-for="aRec in mnm._data.ps" :key="rowId(aRec)">
+                  <td>{{aRec.Alias}}<br>{{aRec.Gid && '('+aRec.Gid+')'}}</td>
+                  <td><span v-if="aRec.Queued"
                             title="Awaiting link to server"
                             uk-icon="bolt"></span>
                       <button v-else
-                              @click="mnm.PingSend(a.Qid)"
+                              @click="sendPing(aRec)"
                               title="Send invitation"
                               class="btn btn-icon"><span uk-icon="forward"></span></button></td>
-                  <td><textarea @input="timer(a, $event.target.value)"
-                                :disabled="a.Queued"
-                                cols="40" rows="3" maxlength="120"
-                                >{{toSave[rowId(a)] || a.Text}}</textarea></td>
-                  <td><button v-if="!a.Queued"
-                              @click="mnm.PingDiscard({to:a.Alias, gid:a.Gid})"
+                  <td><textarea @input="editPing(aRec, $event.target.value)"
+                                :value="(mnm._data.toSavePs[rowId(aRec)] || aRec).Text"
+                                :disabled="aRec.Queued"
+                                cols="40" rows="3" maxlength="120"></textarea></td>
+                  <td><button v-if="!aRec.Queued"
+                              @click="mnm.PingDiscard({to:aRec.Alias, gid:aRec.Gid})"
                               title="Discard draft"
                               class="btn btn-iconred"><span uk-icon="trash"></span></button></td>
                </tr></table></li>
@@ -1923,7 +1923,7 @@
 </script><script>
    Vue.component('mnm-adrsbk', {
       template: '#mnm-adrsbk',
-      data: function() { return {draft:{to:'', gid:''}, toSave:{}, hasGroup:false} },
+      data: function() { return {draft:{to:'', gid:''}, hasGroup:false} },
       computed: {
          mnm: function() { return mnm },
          validDraft: function() {
@@ -1950,17 +1950,27 @@
             mnm.PingSave({alias:mnm._data.cf.Alias, to:this.draft.to, gid:this.draft.gid});
             this.draft.to = '';
          },
-         timer: function(iRec, iText) {
+         editPing: function(iRec, iText) {
             var aKey = this.rowId(iRec);
-            if (!(aKey in this.toSave)) {
-               this.toSave[aKey] = {alias:iRec.MyAlias, to:iRec.Alias, gid:iRec.Gid};
-               setTimeout(fDing, mnm._saveWaitTime, this.toSave);
+            if (!(aKey in mnm._data.toSavePs))
+               Vue.set(mnm._data.toSavePs, aKey, {timer:null, Text:''});
+            var aToSave = mnm._data.toSavePs[aKey];
+            if (!aToSave.timer)
+               aToSave.timer = setTimeout(fDing, mnm._saveWaitTime);
+            aToSave.Text = iText;
+            function fDing() {
+               aToSave.timer = null;
+               mnm.PingSave({text:aToSave.Text, alias:iRec.MyAlias, to:iRec.Alias, gid:iRec.Gid});
             }
-            this.toSave[aKey].text = iText;
-            function fDing(cMap) {
-               mnm.PingSave(cMap[aKey]);
-               delete cMap[aKey];
+         },
+         sendPing: function(iRec) {
+            var aToSave = mnm._data.toSavePs[this.rowId(iRec)];
+            if (aToSave && aToSave.timer) {
+               clearTimeout(aToSave.timer);
+               aToSave.timer = null;
+               mnm.PingSave({text:aToSave.Text, alias:iRec.MyAlias, to:iRec.Alias, gid:iRec.Gid});
             }
+            mnm.PingSend(iRec.Qid);
          },
          setOhiTo: function(iInput) {
             var aOk = iInput.value && iInput.value in mnm._data.adrsbkmenuId;
@@ -2371,6 +2381,7 @@
    // per service
       cf:{NodeSet:[]}, cn:{}, tl:[], ffn:'', // ffn derived from tl
       ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
+      toSavePs:{}, // populated locally //todo rename toSave -> toSaveMo
    // per thread
       cl:[[],[]], al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
       toSave:{}, draftRefs:{}, // populated locally
@@ -2706,7 +2717,7 @@
 
       switch (i) {
       case 'cf': case 'cn': case 'cl': case 'al': case 'ml':
-      case 'ps': case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
+      case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
       case 't' : case 'f' : case 'v' : case 'g': case 'l': case 'nlo':
          if (i === 'f' && iEtc) {
             mnm._data.fo = iData;
@@ -2722,6 +2733,21 @@
             if (aData.Sort[a] !== mnm._data.cs.Sort[a])
                sApp.$refs[a].listSort(aData.Sort[a]);
          mnm._data.cs = aData;
+         break;
+      case 'ps':
+         var aPs = JSON.parse(iData);
+         for (var aK in mnm._data.toSavePs) {
+            if (!mnm._data.toSavePs[aK].timer) {
+               Vue.delete(mnm._data.toSavePs, aK);
+            } else {
+               var aEl = aPs.find(function(c) { return sApp.$refs.adrsbk.rowId(c) === aK });
+               if (!aEl || aEl.Queued) {
+                  clearTimeout(mnm._data.toSavePs[aK].timer);
+                  Vue.delete(mnm._data.toSavePs, aK);
+               }
+            }
+         }
+         mnm._data.ps = aPs;
          break;
       case 'tl':
          var aData = JSON.parse(iData);
