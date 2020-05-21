@@ -2255,7 +2255,7 @@
         style="position:absolute; z-index:3" :style="{top:editTop, right:editRight, left:editLeft}"
         @click.stop>
       <a v-show="kind !== 'form'"
-         :href="src" :target="'mnm_'+ file"
+         :href="src" :target="(src[0] === '/' ? 'mnm_upl_' : 'mnm_atc_<%.TitleJs%>_') + file"
          title="Open file in new tab">
          <span uk-icon="expand"></span></a>
       <div class="uk-text-small viewer-name dropdown-scroll-item">{{title}}</div>
@@ -2306,7 +2306,7 @@
       methods: {
          close: function() { this.kind = '' },
          open: function(iSvc, iId, iEl, iRhs) {
-            this.file = (iSvc ? 'atc_<%.TitleJs%>_' : 'upl_') + iId;
+            this.file = iId;
             this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
             this.src = (iSvc ? '?an=' : '/t/') + encodeURIComponent(iId);
             this.editTop = iEl.offsetTop +'px';
