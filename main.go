@@ -572,6 +572,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    if sTestHost == "" {
       fmt.Printf("runService %s: op %s id %s\n", aSvcId, aOp_Id[0], aCid)
    }
+   iResp.Header().Set("Content-Type", "text/plain; charset=utf-8")
    var aResult interface{}
 
    switch aOp_Id[0] {
@@ -580,9 +581,9 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          aClientId = &http.Cookie{Name: "clientid", Value: fmt.Sprint(time.Now().UTC().UnixNano())}
          http.SetCookie(iResp, aClientId)
       }
-      aParams := pSl.GetConstants(tMsg{"Title":aSvcId, "Addr":sHttpSrvr.Addr,
-                    // Vue chokes on v-*="...'\"'"
-                    "TitleJs": strings.ReplaceAll(template.JSEscapeString(aSvcId), `"`, `x22`)})
+      iResp.Header().Set("Content-Type", "text/html; charset=utf-8")
+      aSvcIdJs := strings.ReplaceAll(template.JSEscapeString(aSvcId), `"`, `x22`) // avoid v-attr="'\"'"
+      aParams := pSl.GetConstants(tMsg{"Title":aSvcId, "TitleJs":aSvcIdJs, "Addr":sHttpSrvr.Addr})
       err = sServiceTmpl.Execute(iResp, aParams)
    case "cs": aResult = aState.GetSummary()
    case "cf": aResult = pSl.GetCfService(aSvcId)
@@ -600,7 +601,6 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "tl":
       err = pSl.WriteResultSearch(iResp, aSvcId, aState)
    case "mo":
-      iResp.Header().Set("Content-Type", "text/plain; charset=utf-8")
       err = pSl.WriteMessagesThread(iResp, aSvcId, aState, "")
    case "mn":
       if aOp_Id[1] == "" {
@@ -608,26 +608,31 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          break
       }
       err = pSl.WriteMessagesThread(iResp, aSvcId, aState, aOp_Id[1])
+   case "fn":
+      err = pSl.WriteTableFilledForm(iResp, aSvcId, aOp_Id[1])
    case "an", "ad":
       if aOp_Id[0] == "ad" {
          aSaveName := url.QueryEscape(aOp_Id[1][strings.IndexByte(aOp_Id[1], '_')+3 :])
          iResp.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''"+ aSaveName)
       }
+      iResp.Header().Del("Content-Type") // let ServeFile() infer type
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
       http.ServeFile(iResp, iReq, pSl.GetPathAttach(aSvcId, aState, aOp_Id[1]))
-   case "fn":
-      err = pSl.WriteTableFilledForm(iResp, aSvcId, aOp_Id[1])
    default:
-      if err == nil { err = tError("unknown op") }
+      if err == nil {
+         err = tError("unknown op")
+      }
    }
    if err != nil {
+      fmt.Fprintf(os.Stderr, "runService %s: op %s %s\n", aSvcId, aOp_Id[0], err)
       iResp.WriteHeader(http.StatusNotAcceptable)
       aResult = err.Error()
-      fmt.Fprintf(os.Stderr, "runService %s: op %s %s\n", aSvcId, aOp_Id[0], err.Error())
    }
    if aResult != nil {
       err = json.NewEncoder(iResp).Encode(aResult)
-      if err != nil { fmt.Fprintf(os.Stderr, "runService %s: %s\n", aSvcId, err.Error()) }
+      if err != nil {
+         fmt.Fprintf(os.Stderr, "runService %s: %s\n", aSvcId, err)
+      }
    }
 }
 
