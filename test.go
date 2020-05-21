@@ -24,6 +24,7 @@ import (
    "sync"
    "time"
    "net/url"
+   "unicode/utf16"
    pWs "github.com/gorilla/websocket"
    pSl "github.com/networkimprov/mnm-hammer/slib"
 )
@@ -47,6 +48,7 @@ var sTestDateGid = time.Now().Format(":"+kTestDateF+".000")
 var sTestExit = false
 
 type tTestClient struct {
+   CountUtf8 []tTestSteppedRead
    Formspec map[string]interface{} // one for all clients
    Version string
 
@@ -71,6 +73,40 @@ type tTestClient struct {
       Name string
       Client *struct { Name, SvcId string }
    }
+}
+
+type tTestSteppedRead struct {
+   In []tTestQuoted
+   Out []string
+   pos int
+}
+
+type tTestQuoted string
+
+func (o *tTestQuoted) UnmarshalJSON(iBuf []byte) error {
+   iBuf = bytes.ReplaceAll(iBuf, []byte{'\\','\\'}, []byte{'\\'})
+   aS, err := strconv.Unquote(string(iBuf))
+   if err != nil { return err }
+   *o = tTestQuoted(aS)
+   return nil
+}
+
+func (o *tTestSteppedRead) inSum() int64 {
+   var aLen int
+   for a := range o.In { aLen += len(o.In[a]) }
+   return int64(aLen)
+}
+
+func (o *tTestSteppedRead) Read(iBuf []byte) (int, error) {
+   if o.pos >= len(o.In) {
+      return 0, io.EOF
+   }
+   aStep := o.In[o.pos]
+   o.pos++
+   if len(iBuf) < len(aStep) {
+      quit(tError("buffer too small"))
+   }
+   return copy(iBuf, aStep), nil
 }
 
 type tTestContext struct {
@@ -153,6 +189,10 @@ func test() int {
       aResultLib = nil
    }
 
+   if !_algorithms(&aClients[0]) {
+      return 33
+   }
+
    if sTestVerify != "" {
       aDir, err = _setupTestVerify(aClients) // triggers receipt of msgs pending from -crash run
       if err != nil {
@@ -212,6 +252,25 @@ func test() int {
       }
    }()
    return -1
+}
+
+func _algorithms(iClient *tTestClient) bool {
+   aSet := iClient.CountUtf8
+   aBuf := bytes.Buffer{}
+   for a := range aSet {
+      aUtf8 := pSl.NewCountUtf8(&aSet[a], aSet[a].inSum())
+      _, err := io.Copy(&aBuf, aUtf8)
+      if err != nil { quit(err) }
+      aOut := strings.Join(aSet[a].Out, "")
+      aOutLen := int64(len(utf16.Encode([]rune(aOut))))
+      if string([]rune(aBuf.String())) != aOut || aUtf8.Utf16Len() != aOutLen {
+         fmt.Fprintf(os.Stderr, "CountUtf8 mismatch\n  expect %d %s\n  got    %d %s\n",
+                                aOutLen, aOut, aUtf8.Utf16Len(), aBuf.String())
+         return false
+      }
+      aBuf.Reset()
+   }
+   return true
 }
 
 func _setupTestDir(iDir string, iClients []tTestClient) bool {

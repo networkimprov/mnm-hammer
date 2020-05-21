@@ -1,6 +1,21 @@
 [{
 
 "Version": "0.8.0",
+
+"CountUtf8": [{
+   "In":  ["\\xf0\\x9f\\x8f\\x81",          "\\xf0\\x9f", "\\x8f\\x81",
+           "\\xf0", "\\x9f\\x8f\\x81",      "\\xf0\\x9f\\x8f", "\\x81",
+           "\\xc0\\xf0\\x9f\\x8f\\x81",     "\\xf0\\x9f\\x8f\\x81\\xc0",
+           "\\xc0\\xf0", "\\x9f\\x8f\\x81", "\\xf0\\x9f\\x8f", "\\x81\\xc0"],
+   "Out": ["\ud83c\udfc1\ud83c\udfc1",
+           "\ud83c\udfc1\ud83c\udfc1",
+           "\ufffd\ud83c\udfc1\ud83c\udfc1\ufffd",
+           "\ufffd\ud83c\udfc1\ud83c\udfc1\ufffd"]
+},{
+   "In":  ["p\\u00d7p", "pp\\xc0\\xe0\\xf0", "\\xff\\xff", "pp"],
+   "Out": ["p\u00d7ppp\ufffd\ufffd\ufffd\ufffd\ufffdpp"]
+}],
+
 "Formspec": {"ffn":"mnmnotmail.github.io/registry/test1", "spec":[
   {"name":"nr", "status":"required",   "type":"number" },
   {"name":"so", "status":"optional",   "type":"string" },
