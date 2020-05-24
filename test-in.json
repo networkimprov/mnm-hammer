@@ -71,7 +71,7 @@
 },{
    "Updt": {"Op":"thread_save", "Thread":{"New":1, "Alias":"Blue", "Subject":"ohi"}},
    "Result": {
-      "mo": [{"From":"self", "Id":"*midt", "Len":0, "Posted":"draft",
+      "mo": [{"From":"self", "Id":"*midt", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"author", "Subscribe":true}] },
@@ -92,7 +92,7 @@
    "Updt": {"Op":"thread_save", "Thread":{
                  "Id":"last", "Alias":"Blue", "Subject":"ohi there", "Data":"one"}},
    "Result": {
-      "mn": [{"From":"self", "Id":"*midt", "Len":3, "Posted":"draft",
+      "mn": [{"From":"self", "Id":"*midt", "Len":3, "Size":3, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi there",
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"author", "Subscribe":true}] },
@@ -138,7 +138,7 @@
                  "Attach":[{"Name":"upload/BlueFile.txt"},
                            {"Name":"form/Blue.original"}] }},
    "Result": {
-      "mo": [{"From":"self", "Id":"*midt", "Len":0, "Posted":"draft",
+      "mo": [{"From":"self", "Id":"*midt", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
                          "Attach":[{"Name":"u:BlueFile.txt"},
                                    {"Name":"f:Blue.original",
@@ -170,10 +170,10 @@
                  "Attach":[{"Name":"upload/BlueFile.txt"},
                            {"Name":"form/Blue.original"},
                            {"Name":"form_fill/Blue.original", "FfKey":"lastfile"}],
-                 "Data":"all good and true words",
+                 "Data":"all good and true words\u00d7",
                  "FormFill":{"lastfile":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
    "Result": {
-      "mn": [{"From":"self", "Id":"*midt", "Len":23, "Posted":"draft",
+      "mn": [{"From":"self", "Id":"*midt", "Len":24, "Size":25, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
                          "Attach":[{"Name":"u:BlueFile.txt"},
                                    {"Name":"f:Blue.original",
@@ -184,7 +184,7 @@
                                 "Date":"*d", "Note":"author", "Subscribe":true},
                                {"Who":"Gold#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"initial recipient", "Subscribe":true}] },
-              "msg_data":"all good and true words",
+              "msg_data":"all good and true words\u00d7",
               "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
       "cl": "thread_save.b" ,
       "al": "thread_save.b" }
@@ -206,7 +206,7 @@
              "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
-      "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
+      "mn": [{"From":"self", "Id":"*midm", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
       "al": [{"Name":"Blue.original", "Size":416, "MsgId":"*mid", "File":"*", "Date":"*d"},
@@ -238,7 +238,7 @@
 },{
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
-      "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Posted":"*d",
+      "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Size":0, "Posted":"*d",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"to forward",
                          "Attach":[{"Name":"u:Gold/File.txt", "Size":26},
                                    {"Name":"r:Blue.original", "Size":33,
@@ -294,7 +294,7 @@
 },{
    "Updt": {"Op":"tab_add", "Tab":{"Type":0, "Term":"#Todo"}},
    "Result": {
-      "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Posted":"*d",
+      "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Size":0, "Posted":"*d",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
       "cs": {"Thread":"*mid",
@@ -305,14 +305,14 @@
 },{
    "Updt": {"Op":"navigate_history", "Navigate":{"History":-1}},
    "Result": {
-      "mo": [{"From":"*uid", "Id":"*mid", "Len":23, "Posted":"*d",
+      "mo": [{"From":"*uid", "Id":"*mid", "Len":24, "Size":25, "Posted":"*d",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"ohi",
                          "Attach":[{"Name":"u:BlueFile.txt", "Size":26},
                                    {"Name":"f:Blue.original", "Size":416,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"},
                                    {"Name":"r:Blue.original", "Size":33,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}] },
-              "msg_data":"all good and true words" }] ,
+              "msg_data":"all good and true words\u00d7" }] ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"reply ohi", "Seen":"", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
       "cs": {"Thread":"*mid",
@@ -344,7 +344,7 @@
 },{
    "Updt": {"Op":"tab_add", "Tab":{"Type":0, "Term":":reply ohi"}},
    "Result": {
-      "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Posted":"*d",
+      "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Size":0, "Posted":"*d",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"reply ohi",
                          "Attach":[{"Name":"r:Blue.original", "Size":33,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}] },
@@ -494,7 +494,7 @@
                  "New":2, "Alias":"Blue", "Subject":"unreplicated",
                  "Attach":[{"Name":"upload/BlueFile.txt"}] }},
    "Result": {
-      "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
+      "mn": [{"From":"self", "Id":"*midm", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"unreplicated",
                          "Attach":[{"Name":"u:BlueFile.txt"}] },
               "msg_data":"" }] ,
@@ -513,7 +513,7 @@
                  "New":1, "Alias":"Blue", "Subject":"unreplicated",
                  "Attach":[{"Name":"upload/BlueFile.txt"}] }},
    "Result": {
-      "mo": [{"From":"self", "Id":"*midt", "Len":0, "Posted":"draft",
+      "mo": [{"From":"self", "Id":"*midt", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"unreplicated",
                          "Attach":[{"Name":"u:BlueFile.txt"}],
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
@@ -719,14 +719,14 @@
 },{
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
-      "mo": [{"From":"*uid", "Id":"*mid", "Len":23, "Posted":"*d",
+      "mo": [{"From":"*uid", "Id":"*mid", "Len":24, "Size":25, "Posted":"*d",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"ohi",
                          "Attach":[{"Name":"u:BlueFile.txt", "Size":26},
                                    {"Name":"f:Blue.original", "Size":416,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"},
                                    {"Name":"r:Blue.original", "Size":33,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}] },
-              "msg_data":"all good and true words" }] ,
+              "msg_data":"all good and true words\u00d7" }] ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
@@ -751,7 +751,7 @@
               "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"reply ohi", "Seen":".", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
-      "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
+      "mn": [{"From":"self", "Id":"*midm", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"reply ohi",
                          "Attach":[{"Name":"r:Blue.original", "FfKey":"*", "Size":33,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}] },
@@ -769,7 +769,7 @@
                            {"Name":"form_fill/Blue.original", "FfKey":"0123456789ab_f:Blue.original"}],
                  "FormFill":{"0123456789ab_f:Blue.original":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
    "Result": {
-      "mo": [{"From":"self", "Id":"*midt", "Len":0, "Posted":"draft",
+      "mo": [{"From":"self", "Id":"*midt", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"", "Subject":"to forward",
                          "Attach":[{"Name":"u:Gold/File.txt"},
                                    {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
@@ -810,7 +810,7 @@
       "tl": "poll_ack.b" ,
       "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] ,
-      "mn": [{"From":"self", "Id":"*midm", "Len":0, "Posted":"draft",
+      "mn": [{"From":"self", "Id":"*midm", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
       "al": [{"Name":"Gold/File.txt", "Size":26, "MsgId":"*mid", "File":"*", "Date":"*d"}] }
