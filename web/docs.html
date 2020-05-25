@@ -716,8 +716,21 @@ Filled-form attachments display a <span uk-icon="file-edit"></span> icon.
 Pending attachments in forwarded threads display a <span uk-icon="bolt"></span> icon.
 </p>
 
-<p>The <i>Subject</i> field, if given, appears as <i>Re: text</i>.
+<p>The <i>Subject</i> field appears as <i>Re: text</i>, if present.
 The Body displays <span uk-icon="comment"></span> if it's empty. 
+</p>
+
+<p>Both the <i>Subject</i> and Body may contain Unicode characters, 
+however the typeface in use typically won't include a rendering of every possible character.
+To accommodate commonly written characters that are omitted in many typefaces, 
+the mnm app varies the typeface within a message [not yet implemented].
+Any invalid representations of Unicode that occur are altered by the browser to 
+one or more <tt>&#xfffd;</tt> symbols.
+To explore the Unicode universe, visit 
+<a target="_blank" href="http://www.amp-what.com/">&amp;what;</a>.
+</p>
+
+<p>To change the typeface of a message, [not yet implemented].
 </p>
 
 <p>To reply to a message, click the <span uk-icon="comment"></span> button to the right 
