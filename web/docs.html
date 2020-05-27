@@ -716,11 +716,11 @@ Filled-form attachments display a <span uk-icon="file-edit"></span> icon.
 Pending attachments in forwarded threads display a <span uk-icon="bolt"></span> icon.
 </p>
 
-<p>The <i>Subject</i> field appears as <i>Re: text</i>, if present.
-The Body displays <span uk-icon="comment"></span> if it's empty. 
+<p>The <i>Subject</i> field appears as <i>Re: etc</i>, if present.
+The <i>Message text</i> displays <span uk-icon="comment"></span> if it's empty. 
 </p>
 
-<p>Both the <i>Subject</i> and Body may contain Unicode characters, 
+<p>Both the <i>Subject</i> and <i>Message text</i> may contain Unicode characters, 
 however the typeface in use typically won't include a rendering of every possible character.
 To accommodate commonly written characters that are omitted in many typefaces, 
 the mnm app varies the typeface within a message [not yet implemented].
@@ -775,15 +775,19 @@ use the <span uk-icon="hashtag"></span> menu next to the message panel search bo
 
 <p>Starting a new thread or a reply within an existing thread opens a draft editor. 
 Its input fields are the Attachment list (optional), 
-the <i>Subject</i> (optional for replies), and a Body (optional). 
+the <i>Subject</i> (optional for replies), and the <i>Message text</i> (optional). 
 The <i>Subject</i> (a.k.a. <i>Re</i>) is minimized on replies by default; 
-to edit it, click the thin white bar above the Body field. 
+to edit it, click the thin white bar above the <i>Message text</i> field. 
 Edits to all fields are automatically saved. 
-The <i>Subject</i> and Body are saved every few seconds. 
+The <i>Subject</i> and <i>Message text</i> are saved every few seconds. 
 </p>
 
-<p>To preview the Body as it would look to recipients, press Ctrl-J. 
-To hide the preview panel, press Ctrl-J again or click anywhere outside the draft. 
+<p>To preview the <i>Message text</i> as it would look to recipients, press <tt>Ctrl-J</tt>. 
+The preview panel always appears in the same position, even if there are multiple open drafts 
+in the current message list.
+A panel that scrolls with the message list is [not yet implemented].
+To hide the preview panel, press <tt>Ctrl-J</tt> again or click anywhere outside the draft's 
+<i>Message text</i> or <i>Subject</i>. 
 </p>
 
 <p>To preview all slides in a slide deck, click the &Lang;. . .&Rang; hyperlink on the preview panel. 
@@ -807,7 +811,7 @@ If no recipients are enlisted, the draft indicates <i>[self]</i>.
 <span uk-icon="file-edit"></span> icon (below the <span uk-icon="trash"></span> button) 
 to open the appropriate menu, 
 then attach an item by clicking its <span class="paperclip">&#128206;</span> button. 
-To display an image or blank form in the Body, see <a href="#mark">Markdown</a>. 
+To display an image or blank form in the <i>Message text</i>, see <a href="#mark">Markdown</a>. 
 </p>
 
 <p>To drop an entry in the Attachment list, click the list's pop-up menu to reveal its contents, 
@@ -817,7 +821,7 @@ then click the &times; button for the target item.
 <p>To add/drop a filled-form result to/from the Attachment list, click the 
 <i>attach fill</i> checkbox above the form in the preview panel. 
 If adding a result, also fill in the form fields. 
-(Requires a blank form in the Body; see <a href="#mark">Markdown</a>.) 
+(Requires a blank form in the <i>Message text</i>; see <a href="#mark">Markdown</a>.) 
 </p>
 
 <p>To send a draft, click its <span uk-icon="forward"></span> button. 
@@ -831,7 +835,7 @@ by the <span uk-icon="bolt"></span> icon to the right of the header.
 
 <h4 id="mark">8e. Markdown</h4>
 
-<p>The message Body supports Markdown, a widely used plain-text shorthand 
+<p>The <i>Message text</i> supports Markdown, a widely used plain-text shorthand 
 for essential rich-text HTML features. 
 Markdown avoids the unpredictable behavior of browser WYSIWYG editors. 
 Consult the <a target="_blank" href="http://commonmark.org/help/">CommonMark Reference</a> 
@@ -849,7 +853,7 @@ without the recipient's consent.
 <br>For a file attached to a previous message, write: <tt>![<i>alt</i>](<i>file_ref</i>)</tt>
 <br>To obtain the code above, open the <span class="paperclip">&#128206;</span> menu, 
 click the <span uk-icon="link"></span> hyperlink for the target file, then paste the 
-string into a message Body. 
+string into your <i>Message text</i>. 
 <tt>alt</tt> is any desired text. 
 </p>
 
@@ -861,7 +865,7 @@ message in the current thread.
 <br>For a form attached to a previous message, write: <tt>![?](<i>form_ref</i>)</tt>
 <br>To obtain the code above, open the <span class="paperclip">&#128206;</span> menu, 
 click the <span uk-icon="link"></span> hyperlink for the target form, then paste the 
-string into a message Body. 
+string into your <i>Message text</i>. 
 </p>
 
 <p><b>Hyperlinks</b> may reference a remote site, or a file attached to a message 
@@ -876,7 +880,7 @@ References to relative URLs are disallowed.
 <br>To obtain the attachment code above, use the <span class="paperclip">&#128206;</span> menu 
 as previously described. 
 To obtain the message code above, open the target message, click the <span uk-icon="link"></span> hyperlink 
-to the right of the header, then paste the string into a message Body. 
+to the right of the header, then paste the string into your <i>Message text</i>. 
 <tt>text</tt> is any desired text. 
 </p>
 

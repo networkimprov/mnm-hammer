@@ -108,6 +108,12 @@
                 :placeholder="' \u2315'" type="text"
                 title="Find messages with phrase"
                 class="width100 search-box"></div>
+      <div v-for="aCmp in draftRefs" :key="aCmp.msgid"
+           style="align-self:flex-end">
+         <!-- uk-dropdown toggled by icon in msg-list repositions on update -->
+         <div :id="'pv_'+aCmp.msgid"></div>
+         <mnm-draftpv :draft="aCmp"/>
+      </div>
    </div>
    <div @scroll="msglistGetScroll"
         ref="msglist"
@@ -217,7 +223,6 @@
                  :toggle="'#t_'+aCmp.msgid" pos="right-top"/>
       <mnm-forms @attach="aCmp.atcAdd(arguments[0])"
                  :toggle="'#f_'+aCmp.msgid" pos="right-top"/>
-      <mnm-draftpv :draft="aCmp"/>
    </span>
    <div :class="{vishide: mnm._isLocal}"
         class="uk-clearfix">
@@ -908,7 +913,6 @@
                title="Attach files"></span
         ><span uk-icon="file-edit" class="dropdown-icon" :id="'f_'+msgid"
                title="Attach blank forms"></span>
-         <span :id="'pv_'+msgid"></span>
       </div>
       <input @input="subjAdd"
              @focus="subjShow = true"
@@ -1058,7 +1062,7 @@
 </script>
 
 <script type="text/x-template" id="mnm-draftpv">
-   <div uk-dropdown="mode:click; pos:right-top" :toggle="'#pv_'+draft.msgid"
+   <div uk-dropdown="mode:click; pos:right-top; offset:3"
         :id="'pp_'+draft.msgid"
         class="draft-preview message-bg"
         onwheel="return mnm._canScroll(this, event.deltaY)">
