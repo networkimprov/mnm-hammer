@@ -658,7 +658,11 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
       // nothing to do
    case "test":
       _applyLastId(&iUpdt.Test.ThreadId,     &aApply, iCtx.lastId, "tl")
-      if iUpdt.Test.Notice != nil {
+      if len(iUpdt.Test.Request) >= 2 {
+         if iUpdt.Test.Request[0] == "mn" { // assume Request[1] is valid
+            _applyLastId(&iUpdt.Test.Request[1], &aApply, iCtx.lastId, "ml")
+         }
+      } else if iUpdt.Test.Notice != nil {
          aNow := time.Now().UTC()
          for a := range iUpdt.Test.Notice {
             aN, err := strconv.Atoi(iUpdt.Test.Notice[a].Date)

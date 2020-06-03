@@ -238,12 +238,7 @@
 },{
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
-      "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Size":0, "Posted":"*d",
-              "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"to forward",
-                         "Attach":[{"Name":"u:Gold/File.txt", "Size":26},
-                                   {"Name":"r:Blue.original", "Size":33,
-                                    "Ffn":"mnmnotmail.github.io/registry/test1"}] },
-              "msg_data":"" }] ,
+      "mo": [] ,
       "ml": "poll_confirm.a" ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
@@ -257,32 +252,41 @@
                "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":false}] ] ,
       "al": [{"Name":"Gold/File.txt", "Size":26, "MsgId":"*mid", "File":"*", "Date":"*d"}] }
 },{
+   "Updt": {"Op":"test", "Test":{"Request":["mn", "2ndlast"]}},
+   "Result": {
+      "mn": [{"From":"*uid", "Id":"*mid", "Len":0, "Size":0, "Posted":"*d",
+              "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"to forward",
+                         "Attach":[{"Name":"u:Gold/File.txt", "Size":26},
+                                   {"Name":"r:Blue.original", "Size":33,
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}] },
+              "msg_data":"" }] }
+},{
    "Updt": {"Op":"thread_open", "Touch":{"Act":115, "ThreadId":"last", "MsgId":"last"}},
    "Result": {
       "tl": "poll_delivery.a" ,
-      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"*d",
-              "Queued":false},
-             {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
-              "Queued":false}] },
+      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"",
+              "Seen":"", "Queued":false},
+             {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward",
+              "Seen":"*d", "Queued":false}] },
    "Name": "thread_open.a"
 },{
    "Updt": {"Op":"thread_tag", "Touch":{"MsgId":"last", "Act":116, "TagId":"Todo"}},
    "Result": {
       "/g": [{"Name":"flag", "Id":"*d"  },
              {"Name":"Todo", "Id":"Todo"}] ,
-      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"*d",
-              "Queued":false, "Tags":["Todo"]},
-             {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
-              "Queued":false}] },
+      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"",
+              "Seen":"", "Queued":false, "Tags":["Todo"]},
+             {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward",
+              "Seen":"*d", "Queued":false}] },
    "Name": "thread_tag.a"
 },{
    "Updt": {"Op":"thread_tag", "Touch":{"MsgId":"last", "Act":116, "TagId":"flag"}},
    "Result": {
       "/g": "thread_tag.a" ,
-      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"*d",
-              "Queued":false, "Tags":["Todo", "*d"]},
-             {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
-              "Queued":false}] }
+      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"",
+              "Seen":"", "Queued":false, "Tags":["Todo", "*d"]},
+             {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward",
+              "Seen":"*d", "Queued":false}] }
 },{
    "Updt": {"Op":"thread_tag", "Touch":{"MsgId":"last", "Act":117, "TagId":"flag"}},
    "Result": {
@@ -719,14 +723,7 @@
 },{
    "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Result": {
-      "mo": [{"From":"*uid", "Id":"*mid", "Len":24, "Size":25, "Posted":"*d",
-              "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"ohi",
-                         "Attach":[{"Name":"u:BlueFile.txt", "Size":26},
-                                   {"Name":"f:Blue.original", "Size":416,
-                                    "Ffn":"mnmnotmail.github.io/registry/test1"},
-                                   {"Name":"r:Blue.original", "Size":33,
-                                    "Ffn":"mnmnotmail.github.io/registry/test1"}] },
-              "msg_data":"all good and true words\u00d7" }] ,
+      "mo": [] ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":"", "Queued":false}] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
@@ -741,6 +738,17 @@
       "al": [{"Name":"Blue.original", "Size":416, "MsgId":"*mid", "File":"*", "Date":"*d"},
              {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] },
    "Name": "navigate_thread.a"
+},{
+   "Updt": {"Op":"test", "Test":{"Request":["mn", "last"]}},
+   "Result": {
+      "mn": [{"From":"*uid", "Id":"*mid", "Len":24, "Size":25, "Posted":"*d",
+              "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"ohi",
+                         "Attach":[{"Name":"u:BlueFile.txt", "Size":26},
+                                   {"Name":"f:Blue.original", "Size":416,
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"},
+                                   {"Name":"r:Blue.original", "Size":33,
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}] },
+              "msg_data":"all good and true words\u00d7" }] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{
                  "New":2, "Alias":"Gold", "Subject":"reply ohi",

@@ -259,23 +259,29 @@ func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    return err
 }
 
-//todo return open-msg map
-func loadThread(iSvc string, iId string) string {
+func loadThread(iSvc string, iId string) tOpenState {
+   if iId[0] == '_' {
+      return tOpenState{iId:true}
+   }
    aDoor := _getThreadDoor(iSvc, iId)
    aDoor.RLock(); defer aDoor.RUnlock()
-   if aDoor.renamed { return "" }
+   if aDoor.renamed { quit(tError("unreachable")) }
 
+   var aIdx []tIndexEl
    aFd, err := os.Open(dirThread(iSvc) + iId)
    if err != nil { quit(err) }
    defer aFd.Close()
-   var aIdx []tIndexEl
    _ = _readIndex(aFd, &aIdx, nil)
-   for a := len(aIdx)-1; a >= 0; a-- {
+
+   aOpen := tOpenState{}
+   aMax := 4 //todo make configurable
+   for a := len(aIdx)-1; a >= 0 && aMax > 0; a-- {
       if aIdx[a].Seen != "" {
-         return aIdx[a].Id
+         aOpen[aIdx[a].Id] = true
+         aMax--
       }
    }
-   return aIdx[0].Id
+   return aOpen
 }
 
 func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, error) {
