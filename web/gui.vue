@@ -235,7 +235,7 @@
                :title="'Notices for <%.TitleJs%>'">
             <span v-show="mnm._data.errorFlag"
                   style="color:crimson">!</span>
-            {{nlNotSeen}}<!---->
+            {{svcSelf.NoticeN || null}}<!---->
          </span>
          <mnm-notice ref="notice"
                      @beforeshow.native="mnm.NoticeOpen('<%.TitleJs%>')"
@@ -266,7 +266,11 @@
          <li v-for="(aTerm, aI) in mnm._tabsStdService"
              :class="{'uk-active': cs.SvcTabs.PosFor === 0 && cs.SvcTabs.Pos === aI}">
             <a @click.prevent="mnm.TabSelect({type:cs.SvcTabs.Type, posfor:0, pos:aI})"
-               href="#">{{aTerm.Label || aTerm.Term}}</a>
+               href="#">
+               <span v-if="aTerm.Term === 'Unread'"
+                     >{{svcSelf.UnreadN || null}}</span>
+               {{aTerm.Label || aTerm.Term}}<!---->
+            </a>
          </li></ul>
       <span>
          <span title="Search by tag"
@@ -2480,9 +2484,8 @@
             });
             return aList;
          },
-         nlNotSeen: function() {
-            var aSvc = mnm._data.v.find(function(c) { return c.Name === '<%.TitleJs%>' });
-            return aSvc && aSvc.NoticeN || null;
+         svcSelf: function() {
+            return mnm._data.v.find(function(c) { return c.Name === '<%.TitleJs%>' }) || {};
          },
          ffnCol: function() {
             if (!mnm._data.ffn) return {};
