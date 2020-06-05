@@ -2094,18 +2094,21 @@
 <script type="text/x-template" id="mnm-svcadd">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
         class="widthmin20 menu-bg dropdown-static"
-        @hidden="addr = name = alias = lpin = loginperiod = null">
+        @hidden="addr = name = alias = sent = lpin = loginperiod = null">
       <div class="uk-float-right uk-text-small">ADD ACCOUNT</div>
       <form :action="'/v/+' + encodeURIComponent(name)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); return false;">
          <input type="hidden" name="filename" :value="JSON.stringify($data)">
-         <button :disabled="!(name  && name.length  >= <%.serviceMin%> &&
+         <button @click="sent = true"
+                 :disabled="!(name  && name.length  >= <%.serviceMin%> && nameUnused &&
                               alias && alias.length >= <%.aliasMin%> &&
                               addr  && addr.length  >= 2 && (addr[0] === '+' || addr[0] === '=') &&
                               !isNaN(loginperiod))"
                  title="Register new account"
                  class="btn btn-icon"><span uk-icon="forward"></span></button>
+         <span v-show="sent && name && !nameUnused"
+               class="uk-text-small">Done!</span>
          <input v-model="addr"
                 placeholder="Site Address" type="text"
                 title="Starts with '+' or '=' and may end with ':number'"
@@ -2128,8 +2131,12 @@
 </script><script>
    Vue.component('mnm-svcadd', {
       template: '#mnm-svcadd',
-      data: function() { return {addr:null, name:null, alias:null, lpin:null, loginperiod:null} },
-      computed: { mnm: function() { return mnm } },
+      data: function() { return {addr:null, name:null, alias:null, sent:null, lpin:null, loginperiod:null} },
+      computed: {
+         nameUnused: function() {
+            return !mnm._data.v.find(function(c){ return c.Name === this.name }, this);
+         },
+      },
    });
 </script>
 
