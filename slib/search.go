@@ -202,6 +202,16 @@ func _i2slice(i interface{}) []interface{} { // bleve stores string for input []
    }
 }
 
+func countUnreadSearch(iSvc string) int {
+   aQb := pBleve.NewBoolFieldQuery(true)
+   aQb.SetField("Unread")
+   aSr := pBleve.NewSearchRequestOptions(aQb, 0, 0, false)
+   aBi := getService(iSvc).index
+   aSet, err := aBi.Search(aSr)
+   if err != nil { quit(err) }
+   return int(aSet.Total)
+}
+
 type tTermSites pBsearch.TermLocationMap
 
 var kTermSitesEmpty = tTermSites{}

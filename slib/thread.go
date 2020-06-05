@@ -343,6 +343,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
       fClean()
       return "", err
    }
+   aIncrUnread := true
    if aThreadId == aMsgId {
       if aNewCc != nil { //todo handle invalid/missing SubHead.Cc
          aCc = aNewCc
@@ -360,6 +361,12 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
       }
       defer aFd.Close()
       aPos = _readIndex(aFd, &aIdx, &aCc)
+      for a := range aIdx {
+         if aIdx[a].Seen == "" {
+            aIncrUnread = false
+            break
+         }
+      }
       aIdxN := len(aIdx)
       if aCid != "" {
          for aIdxN = range aIdx {
@@ -373,8 +380,10 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
          }
          if aIdx[aIdxN].Size == aEl.Size && aIdx[aIdxN].Checksum == aEl.Checksum {
             aIdx[aIdxN].ForwardBy = ""
+            aIncrUnread = false
          } else {
             aIdx[aIdxN].ForwardBy += ", confirm failed"
+            aIdx[aIdxN].Seen = ""
          }
       } else {
          aIdx = append(aIdx, tIndexEl{})
@@ -415,7 +424,9 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
    } else {
       _completeStoreReceived(iSvc, path.Base(aTempOk), aFd, aTd, aMh, aNewCc)
    }
-
+   if aIncrUnread {
+      incrUnreadService(iSvc)
+   }
    aKind := "msg"; if aThreadId == aMsgId { aKind = "thread" }
    return aKind, nil
 }
@@ -517,10 +528,18 @@ func touchThread(iSvc string, iUpdt *Update) bool {
       fmt.Printf("touchThread %s: msgid not found %s\n", iSvc, iUpdt.Touch.MsgId)
       return false
    }
+   aDecrUnread := false
    switch iUpdt.Touch.Act {
    case 's':
       if aIdx[aIdxN].Seen != "" {
          return false
+      }
+      aDecrUnread = true
+      for a := range aIdx {
+          if a != aIdxN && aIdx[a].Seen == "" {
+             aDecrUnread = false
+             break
+          }
       }
       aIdx[aIdxN].Seen = dateRFC3339()
    case 't':
@@ -553,6 +572,9 @@ func touchThread(iSvc string, iUpdt *Update) bool {
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    _completeTouch(iSvc, path.Base(aTempOk), aFd, aTd)
+   if aDecrUnread {
+      decrUnreadService(iSvc)
+   }
    return true
 }
 
@@ -1027,6 +1049,7 @@ func storeFwdReceivedThread(iSvc string, iHead *Header, iR io.Reader) error {
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    _completeStoreFwdReceived(iSvc, path.Base(aTempOk), aTd)
+   incrUnreadService(iSvc)
    return nil
 }
 

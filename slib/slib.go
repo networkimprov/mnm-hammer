@@ -121,6 +121,7 @@ type tService struct {
    notice []tNoticeEl
    fromOhi tOhi
    tabs []tTermEl
+   unreadCount int
    doors map[string]tDoor // shared by *Thread & *FilledForm
    // fileOhi(svc), not cached
 }

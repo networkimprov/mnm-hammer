@@ -145,19 +145,15 @@ func startAllService() {
    }
 }
 
-type tServiceEl struct {
-   Name string
-   NoticeN int
-}
-
 func (tGlobalService) GetIdx() interface{} {
+   type tSvcEl struct { Name string; NoticeN, UnreadN int }
    sServicesDoor.RLock(); defer sServicesDoor.RUnlock()
-   aS := make([]tServiceEl, 0, len(sServices))
+   aS := make([]tSvcEl, 0, len(sServices))
    for aK, aV := range sServices {
       aV.RLock()
       aN := -1
       for aN = 0; aN < len(aV.notice) && aV.notice[aN].Seen != 0; aN++ {}
-      aS = append(aS, tServiceEl{Name:aK, NoticeN: len(aV.notice) - aN})
+      aS = append(aS, tSvcEl{Name:aK, NoticeN: len(aV.notice) - aN, UnreadN: aV.unreadCount})
       aV.RUnlock()
    }
    sort.Slice(aS, func(cA, cB int) bool { return aS[cA].Name < aS[cB].Name })
@@ -353,6 +349,33 @@ func getUriService(iSvc string) string {
    return aSvc.config.Addr +"/"+ aSvc.config.Alias +"/"
 }
 
+func _initUnreadCount(iSvc string) {
+   aSvc := getService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock() //todo handle with atomics?
+   if aSvc.unreadCount >= 0 {
+      return
+   }
+   aSvc.unreadCount = countUnreadSearch(iSvc)
+}
+
+func incrUnreadService(iSvc string) {
+   aSvc := getService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   if aSvc.unreadCount >= 0 {
+      aSvc.unreadCount++
+   }
+}
+
+func decrUnreadService(iSvc string) {
+   aSvc := getService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   if aSvc.unreadCount > 0 {
+      aSvc.unreadCount--
+   } else if aSvc.unreadCount == 0 {
+      quit(tError("cannot decrement zero"))
+   }
+}
+
 func getDoorService(iSvc string, iId string, iMake func()tDoor) tDoor {
    aSvc := getService(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
@@ -371,7 +394,7 @@ func checkNameService(iName string) bool {
 }
 
 func _newService(iCfg *tSvcConfig) *tService {
-   aSvc := &tService{tabs: []tTermEl{}, doors: make(map[string]tDoor)}
+   aSvc := &tService{tabs: []tTermEl{}, unreadCount: -1, doors: make(map[string]tDoor)}
    if iCfg != nil {
       aSvc.config = *iCfg
       aSvc.index = openIndexSearch(iCfg)
@@ -578,13 +601,13 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          return fErr, nil
       }
       if aGot == "thread" {
-         aFn, aResult = fAll, []string{"pt", "pf", "tl"}
+         aFn, aResult = fAll, []string{"pt", "pf", "tl", "/v"}
       } else if aGot == "msg" {
          aFn = func(c *ClientState) []string {
             if c.getThread() == iHead.SubHead.ThreadId { return aResult }
-            return aResult[:3]
+            return aResult[:4]
          }
-         aResult = []string{"pt", "pf", "tl", "al", "ml"}
+         aResult = []string{"pt", "pf", "tl", "/v", "al", "ml"}
       }
    case "notify":
       err = storeFwdNotifyThread(iSvc, iHead, iR)
@@ -771,6 +794,8 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if iSvc == "local" {
          aFn, aResult = fOne, aResult[15:aLen]
       } else {
+         //todo aToAll return []string{"/v"} to update .UnreadN everywhere? (also thread_open & delivery)
+         _initUnreadCount(iSvc)
          aCfg := GetConfigService(iSvc)
          if aCfg.Error != "" {
             aLen += 2
@@ -910,16 +935,16 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if !aChg { break }
       aFn = func(c *ClientState) []string {
          if c.getThread() == iUpdt.Touch.ThreadId { return aResult }
-         return aResult[:1]
+         return aResult[:2]
       }
-      aResult = []string{"tl", "ml"}
+      aResult = []string{"tl", "/v", "ml"}
    case "thread_seen_sync":
       touchThread(iSvc, iUpdt)
       aFn = func(c *ClientState) []string {
          if c.getThread() == iUpdt.Touch.ThreadId { return aResult }
-         return aResult[:1]
+         return aResult[:2]
       }
-      aResult = []string{"tl", "ml"}
+      aResult = []string{"tl", "/v", "ml"}
    case "thread_close":
       iState.openMsg(iUpdt.Touch.MsgId, false, false)
       // no result
