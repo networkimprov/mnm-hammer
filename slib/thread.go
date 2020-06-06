@@ -1336,10 +1336,10 @@ func _getFwd(iSvc string, iTid string, iOpt string) []tFwdEl {
 
 func _updateCc(iSvc string, iCc []tCcEl, iOmitSelf bool) []tCcEl {
    aCfg := GetConfigService(iSvc)
+   aDate := dateRFC3339() //todo obtain from service or ntp prior to send
    for a := range iCc {
       iOmitSelf = iOmitSelf || iCc[a].WhoUid == aCfg.Uid
-      if iCc[a].Date != "" { continue }
-      iCc[a].Date = dateRFC3339()
+      iCc[a].Date = aDate
       iCc[a].ByUid = aCfg.Uid
       iCc[a].By = aCfg.Alias
       iCc[a].Subscribe = true
@@ -1348,7 +1348,7 @@ func _updateCc(iSvc string, iCc []tCcEl, iOmitSelf bool) []tCcEl {
       iCc = append([]tCcEl{{tCcElCore:tCcElCore{
                             Who: aCfg.Alias, WhoUid: aCfg.Uid,
                             By:  aCfg.Alias, ByUid:  aCfg.Uid,
-                            Date: dateRFC3339(), Note: "author", Subscribe: true}}},
+                            Date: aDate, Note: "author", Subscribe: true}}},
                    iCc...)
    }
    return iCc
@@ -1384,7 +1384,8 @@ func _updateSearchDoc(iSvc string, iCfg *tSvcConfig, iTid string, iFd *os.File, 
    }
    aLastSubjectN, aHasDraft := -1, false
    var aIdx []tIndexEl
-   _readIndex(iFd, &aIdx, nil)
+   var aCc []tCcEl
+   _readIndex(iFd, &aIdx, &aCc)
    aDoc := &tSearchDoc{id: iTid, OrigDate: aIdx[0].Date, OrigAuthor: aIdx[0].Alias}
    for a := range aIdx {
       if aIdx[a].Alias != "" && aIdx[a].Alias != iCfg.Alias {
@@ -1404,6 +1405,9 @@ func _updateSearchDoc(iSvc string, iCfg *tSvcConfig, iTid string, iFd *os.File, 
          aDoc.LastDate, aDoc.LastAuthor = aIdx[a].Date, aIdx[a].Alias
       }
       aDoc.Unread = aDoc.Unread || aIdx[a].Seen == ""
+   }
+   for a := 1; a < len(aCc) && aCc[a].Date == aCc[0].Date; a++ {
+      aDoc.OrigCc.addUnique(aCc[a].Who)
    }
    aSubj := aIdx[aLastSubjectN].Subject; if aSubj == "" { aSubj = aIdx[0].Subject }
    for a := range aDoc.Subject {

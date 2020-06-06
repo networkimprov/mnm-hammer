@@ -26,12 +26,13 @@ import (
    pBsearch   "github.com/blevesearch/bleve/search"
 )
 
-var kSearchIndexRev = []byte("0.6")
+var kSearchIndexRev = []byte("0.8")
 
 type tSearchEl struct {
    Id string
    Subject string
    SubjectWas string `json:",omitempty"`
+   OrigCc []string
    OrigDate, LastDate string
    OrigAuthor, LastAuthor string
    Unread bool `json:",omitempty"`
@@ -42,6 +43,7 @@ type tSearchDoc struct {
    Subject tStrings
    Author tStrings // excludes self
    Tag tStrings
+   OrigCc tStrings
    OrigAuthor, LastAuthor string
    OrigDate, LastDate string
    LastSubjectN int // ref to Subject item
@@ -124,9 +126,13 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       aSubject := _i2slice(aHit.Fields["Subject"])
       //aAuthor  := _i2slice(aHit.Fields["Author"])
       //aTag     := _i2slice(aHit.Fields["Tag"])
+      aOrigCc  := _i2slice(aHit.Fields["OrigCc"])
+      aOrigCcSet := make([]string, len(aOrigCc))
+      for a := range aOrigCc { aOrigCcSet[a] = aOrigCc[a].(string) }
       aLastSubjectN := int(aHit.Fields["LastSubjectN"].(float64))
       aList = append(aList, tSearchEl{Id:         aHit.ID,
                                       Subject:    aSubject[aLastSubjectN].(string),
+                                      OrigCc:     aOrigCcSet,
                                       OrigDate:   aHit.Fields["OrigDate"].(string),
                                       LastDate:   aHit.Fields["LastDate"].(string),
                                       OrigAuthor: aHit.Fields["OrigAuthor"].(string),
@@ -198,6 +204,7 @@ func _makeWordsQuery(iWords string) pBquery.Query {
 func _i2slice(i interface{}) []interface{} { // bleve stores string for input []string{s}
    switch aV := i.(type) {
    case []interface{}: return aV
+   case nil:           return nil
    default:            return []interface{}{aV}
    }
 }
@@ -309,6 +316,7 @@ func openIndexSearch(iCfg *tSvcConfig) pBleve.Index {
    aThread.AddFieldMappingsAt("Subject", aFtext)
    aThread.AddFieldMappingsAt("Author", aFtext)
    aThread.AddFieldMappingsAt("Tag", aKtext)
+   aThread.AddFieldMappingsAt("OrigCc", aNtext)
    aThread.AddFieldMappingsAt("OrigDate", aNtext)
    aThread.AddFieldMappingsAt("LastDate", aNtext)
    aThread.AddFieldMappingsAt("OrigAuthor", aNtext)
