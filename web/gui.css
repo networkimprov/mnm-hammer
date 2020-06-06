@@ -212,6 +212,9 @@ textarea {
 .thread-unread {
    font-weight: bold;
 }
+.thread-origcc {
+   font-style: italic;
+}
 
 .viewer {
    min-width: 16em;

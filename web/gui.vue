@@ -348,7 +348,12 @@
             </div>
             <div class="uk-width-auto">
                <mnm-date :iso="aRow.OrigDate"/></div>
-            <div class="uk-width-1-6 overxhide">{{aRow.OrigAuthor}}</div>
+            <div v-if="aRow.OrigAuthor !== mnm._data.cf.Alias"
+                 class="uk-width-1-6 overxhide">{{aRow.OrigAuthor}}</div>
+            <div v-else
+                 :title="'Initial recipient'+ (aRow.OrigCc.length ? 's:\n'+ aRow.OrigCc.join('\n')
+                                                                  : ': this account')"
+                 class="uk-width-1-6 overxhide thread-origcc">{{aRow.OrigCc[0] || 'self'}}</div>
          </div></template>
       <div style="margin-top:1em">
          <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
