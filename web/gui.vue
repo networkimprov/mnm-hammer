@@ -234,7 +234,7 @@
          <span uk-icon="bell" class="dropdown-icon" style="font-weight:bold"
                :title="'Notices for <%.TitleJs%>'">
             <span v-show="mnm._data.errorFlag"
-                  style="color:crimson">!</span>
+                  style="color:crimson" uk-icon="warning"></span>
             {{svcSelf.NoticeN || null}}<!---->
          </span>
          <mnm-notice ref="notice"
