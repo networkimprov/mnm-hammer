@@ -347,7 +347,7 @@
                   >&nbsp;f. {{aRow.SubjectWas}}</i>
             </div>
             <div class="uk-width-auto">
-               <mnm-date :iso="aRow.OrigDate"/></div>
+               <mnm-date :iso="aRow.OrigDate" ymd="_md"/></div>
             <div v-if="aRow.OrigAuthor !== mnm._data.cf.Alias"
                  class="uk-width-1-6 overxhide">{{aRow.OrigAuthor}}</div>
             <div v-else
@@ -633,10 +633,16 @@
       template: '#mnm-date',
       props: {iso:String, ymd:String, hms:String},
       computed: {
-         local: function() { return luxon.DateTime.fromISO(this.iso) },
+         dt: function() { return luxon.DateTime.fromISO(this.iso) },
          text: function() {
-            var aDate = this.local.toString();
-            var aD = aDate.substring(this.ymd === 'md' ? 5 : 0, 10);
+            var aMd = this.ymd === 'md';
+            if (this.ymd === '_md') {
+               var aNow = luxon.DateTime.utc();
+               aMd = this.dt.year === aNow.year ||
+                     this.dt.year === aNow.year-1 && this.dt.month >= aNow.month+10;
+            }
+            var aDate = this.dt.toString();
+            var aD = aDate.substring(aMd ? 5 : 0, 10);
             if (aD.charAt(0) === '0')
                aD = '\u2007' + aD.substr(1);
             if (!this.hms)
@@ -644,7 +650,7 @@
             return aD +' '+ aDate.substring(11, this.hms === 'hm' ? 16 : 19);
          },
          title: function() {
-            return this.local.toLocaleString(luxon.DateTime.DATETIME_FULL_WITH_SECONDS);
+            return this.dt.toLocaleString(luxon.DateTime.DATETIME_FULL_WITH_SECONDS);
          },
       },
    });
