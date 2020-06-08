@@ -1875,12 +1875,15 @@
                             uk-icon="bolt"></span>
                       <button v-else
                               @click="sendPing(aRec)"
+                              :disabled="(mnm._data.toSavePs[rowId(aRec)] || aRec).Text.length >
+                                         <%.pingTextMax%>"
                               title="Send invitation"
                               class="btn btn-icon"><span uk-icon="forward"></span></button></td>
                   <td><textarea @input="editPing(aRec, $event.target.value)"
                                 :value="(mnm._data.toSavePs[rowId(aRec)] || aRec).Text"
                                 :disabled="aRec.Queued"
-                                cols="40" rows="3" maxlength="120"></textarea></td>
+                                cols="40" rows="3" maxlength="<%.pingTextMax%>"
+                                class="pingtext"></textarea></td>
                   <td><button v-if="!aRec.Queued"
                               @click="mnm.PingDiscard({to:aRec.Alias, gid:aRec.Gid})"
                               title="Discard draft"

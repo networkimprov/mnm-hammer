@@ -538,6 +538,12 @@ textarea {
    margin-top: 10px;
 }
 
+.pingtext {
+   resize: vertical;
+   min-height: 4em;
+   max-height: 40vh;
+}
+
 .pingresponse {
    white-space: nowrap;
 }
