@@ -317,6 +317,7 @@ func GetConstants(iMap map[string]interface{}) map[string]interface{} {
    // keys uncapitalized
    iMap["serviceMin"] = kServiceNameMin
    iMap["aliasMin"] = 8
+   iMap["pingTextMax"] = kPingTextMax
    iMap["tabsStdService"] = kTabsStdService
    iMap["tabsStdThread"] = kTabsStdThread
    return iMap

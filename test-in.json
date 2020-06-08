@@ -115,11 +115,13 @@
 },{
    "Updt": {"Op":"ping_save", "Ping":{"Alias":"Blue", "To":"Gold"}},
    "Result": {
-      "ps": [{"Type":1, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*"}] }
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
+              "Qid":"*", "Text":""}] }
 },{
    "Updt": {"Op":"ping_send", "Ping":{"Qid":"last"}},
    "Result": {
-      "ps": [{"Type":1, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*", "Queued":true}] }
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
+              "Qid":"*", "Text":"", "Queued":true}] }
 },{
    "Updt": {"Op":"test", "Test":{"Request":["pf", "nl"]}},
    "Poll": 3,
@@ -690,7 +692,8 @@
 },{
    "Updt": {"Op":"ping_save", "Ping":{"Alias":"Gold", "To":"Blue"}},
    "Result": {
-      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td", "Qid":"*"}] }
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "MyAlias":"Gold#td",
+              "Qid":"*", "Text":""}] }
 },{
    "Updt": {"Op":"ping_discard", "Ping":{"To":"Blue"}},
    "Result": {
@@ -698,11 +701,13 @@
 },{
    "Updt": {"Op":"ping_save", "Ping":{"Alias":"Gold", "To":"Blue", "Gid":"Gold-G"}},
    "Result": {
-      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#tdg", "MyAlias":"Gold#td", "Qid":"*"}] }
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#tdg", "MyAlias":"Gold#td",
+              "Qid":"*", "Text":""}] }
 },{
    "Updt": {"Op":"ping_send", "Ping":{"Qid":"last"}},
    "Result": {
-      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#tdg", "MyAlias":"Gold#td", "Qid":"*", "Queued":true}] }
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Blue#td", "Gid":"Gold-G#tdg", "MyAlias":"Gold#td",
+              "Qid":"*", "Text":"", "Queued":true}] }
 },{
    "Updt": {"Op":"test", "Test":{"Request":["tl"]}},
    "Poll": 4,

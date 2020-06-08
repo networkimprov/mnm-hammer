@@ -20,6 +20,7 @@ import (
    "net/url"
 )
 
+const kPingTextMax = 120 //todo 140 when .DataHead dropped// UTF-16 units
 const kUidUnknown = "\x00unknown"
 
 type tAdrsbk struct {
@@ -526,6 +527,7 @@ func completeAdrsbk(iSvc string, iTmp string) {
 func GetDraftAdrsbk(iSvc string) interface{} {
    type tAdrsbkElOut struct {
       tAdrsbkEl
+      Text string // hides tAdrsbkEl.Text
       Queued bool `json:",omitempty"`
    }
    var aMap map[string]*tAdrsbkElOut
