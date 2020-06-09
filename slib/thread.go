@@ -214,6 +214,28 @@ func WriteMessagesThread(iW io.Writer, iSvc string, iState *ClientState, iId str
    return nil
 }
 
+func getAttachThread(iSvc string, iTid string, iIdx *[]tIndexElCore, iDir *[]os.FileInfo) error {
+   aDoor := _getThreadDoor(iSvc, iTid)
+   aDoor.RLock(); defer aDoor.RUnlock()
+   if aDoor.renamed {
+      return os.ErrNotExist
+   }
+   var err error
+   *iDir, err = readDirFis(dirAttach(iSvc) + iTid)
+   if err != nil {
+      if !os.IsNotExist(err) { quit(err) }
+      return err
+   }
+   if len(*iDir) == 0 {
+      return os.ErrNotExist
+   }
+   aFd, err := os.Open(dirThread(iSvc) + iTid)
+   if err != nil { quit(err) }
+   _readIndex(aFd, iIdx, nil)
+   aFd.Close()
+   return nil
+}
+
 func sendDraftThread(iW io.Writer, iSvc string, iDraftId, iId string) error {
    aFd, err := os.Open(dirThread(iSvc) + iDraftId)
    if err != nil {

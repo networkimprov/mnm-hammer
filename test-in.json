@@ -164,8 +164,8 @@
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false},
               {"Who":"Gold#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"initial recipient", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"Blue.original", "Size":416, "MsgId":"*midt", "File":"*", "Date":"*d"},
-             {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] },
+      "al": [{"File":"Blue.original", "Size":416, "Who":"", "MsgId":"*midt", "Id":"*", "Date":"*d"},
+             {"File":"BlueFile.txt",  "Size":26,  "Who":"", "MsgId":"*midt", "Id":"*", "Date":"*d"}] },
    "Name": "thread_save.b"
 },{
    "Updt": {"Op":"thread_save", "Thread":{
@@ -213,8 +213,8 @@
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
-      "al": [{"Name":"Blue.original", "Size":416, "MsgId":"*mid", "File":"*", "Date":"*d"},
-             {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] },
+      "al": [{"File":"Blue.original", "Size":416, "Who":"Blue#td", "MsgId":"*mid", "Id":"*", "Date":"*d"},
+             {"File":"BlueFile.txt",  "Size":26,  "Who":"Blue#td", "MsgId":"*mid", "Id":"*", "Date":"*d"}] },
    "Name": "thread_save.c"
 },{
    "Updt": {"Op":"thread_discard", "Thread":{"Id":"last"}},
@@ -254,7 +254,7 @@
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false},
               {"Who":"Blue#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"add Blue", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"Gold/File.txt", "Size":26, "MsgId":"*mid", "File":"*", "Date":"*d"}] }
+      "al": [{"File":"Gold/File.txt", "Size":26, "Who":"Gold#td", "MsgId":"*mid", "Id":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"test", "Test":{"Request":["mn", "2ndlast"]}},
    "Result": {
@@ -512,9 +512,9 @@
       "ml": [{"Id":"*midm", "From":"",     "Alias":"",        "Date":"*d", "Subject":"no replica", "Seen":".", "Queued":false},
              {"Id":"*mid",  "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"reply ohi",  "Seen":"", "Queued":false},
              {"Id":"*mid",  "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi",        "Seen":".", "Queued":false}] ,
-      "al": [{"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*midm", "File":"*", "Date":"*d"},
-             {"Name":"Blue.original", "Size":416, "MsgId":"*mid",  "File":"*", "Date":"*d"},
-             {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*mid",  "File":"*", "Date":"*d"}] ,
+      "al": [{"File":"BlueFile.txt",  "Size":26,  "Who":"",        "MsgId":"*midm", "Id":"*", "Date":"*d"},
+             {"File":"Blue.original", "Size":416, "Who":"Blue#td", "MsgId":"*mid",  "Id":"*", "Date":"*d"},
+             {"File":"BlueFile.txt",  "Size":26,  "Who":"Blue#td", "MsgId":"*mid",  "Id":"*", "Date":"*d"}] ,
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"to forward", "OrigCc":[],
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Gold#td"},
              {"Id":"*mid", "Unread":true, "Subject":"no replica", "SubjectWas":"ohi", "OrigCc":["Gold#td"],
@@ -540,7 +540,7 @@
       "cl": [[],
              [{"Who":"Blue#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*midt", "File":"*", "Date":"*d"}] ,
+      "al": [{"File":"BlueFile.txt", "Size":26, "Who":"", "MsgId":"*midt", "Id":"*", "Date":"*d"}] ,
       "cs": {"Thread":"*midt",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
              "History":{"Prev":true, "Next":false},
@@ -745,8 +745,8 @@
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false},
               {"Who":"Gold#td", "By":"Blue#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"initial recipient", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"Blue.original", "Size":416, "MsgId":"*mid", "File":"*", "Date":"*d"},
-             {"Name":"BlueFile.txt",  "Size":26,  "MsgId":"*mid", "File":"*", "Date":"*d"}] },
+      "al": [{"File":"Blue.original", "Size":416, "Who":"Blue#td", "MsgId":"*mid", "Id":"*", "Date":"*d"},
+             {"File":"BlueFile.txt",  "Size":26,  "Who":"Blue#td", "MsgId":"*mid", "Id":"*", "Date":"*d"}] },
    "Name": "navigate_thread.a"
 },{
    "Updt": {"Op":"test", "Test":{"Request":["mn", "last"]}},
@@ -808,7 +808,7 @@
       "cl": [[],
              [{"Who":"Gold#td", "By":"Gold#td", "WhoUid":"*uid", "ByUid":"*uid",
                "Date":"*d", "Note":"author", "Subscribe":true, "Queued":false}] ] ,
-      "al": [{"Name":"Gold/File.txt", "Size":26, "MsgId":"*midt", "File":"*", "Date":"*d"}] }
+      "al": [{"File":"Gold/File.txt", "Size":26, "Who":"", "MsgId":"*midt", "Id":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {
@@ -831,7 +831,7 @@
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
-      "al": [{"Name":"Gold/File.txt", "Size":26, "MsgId":"*mid", "File":"*", "Date":"*d"}] }
+      "al": [{"File":"Gold/File.txt", "Size":26, "Who":"Gold#td", "MsgId":"*mid", "Id":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {

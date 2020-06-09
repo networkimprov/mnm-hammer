@@ -19,6 +19,7 @@ import (
    "encoding/json"
    "net"
    "os"
+   "sort"
    "strconv"
    "strings"
    "sync"
@@ -120,7 +121,7 @@ type tTestContext struct {
 type tTestLastId map[string]*tTestAnyId // key is service op
 
 type tTestAnyId []struct {
-   Id, Qid, Uid, File string
+   Id, Qid, Uid string
 }
 
 func init() {
@@ -592,7 +593,7 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
       if iUpdt.Thread.FormFill != nil {
          aFf := iUpdt.Thread.FormFill["lastfile"]
          if aFf != "" {
-            aFileId := (*iCtx.lastId["al"])[0].File
+            aFileId := (*iCtx.lastId["al"])[0].Id
             delete(iUpdt.Thread.FormFill, "lastfile")
             iUpdt.Thread.FormFill[aFileId] = aFf
             for a := range iUpdt.Thread.Attach {
@@ -692,12 +693,18 @@ func _applyLastId(iField, iMsg *string, iLastId tTestLastId, iType string) {
    }
    aSet := *iLastId[iType]
    switch iType {
-   case "tl", "ml": *iField = aSet[a].Id
-   case "cl", "ps": *iField = aSet[a].Qid
-   case "al":       *iField = aSet[a].File
-   case "pf":       if *iField == "lastqid" { *iField = aSet[a].Qid
-                    } else                  { *iField = aSet[a].Uid }
-   default:         return
+   case "tl", "ml", "al":
+      *iField = aSet[a].Id
+   case "cl", "ps":
+      *iField = aSet[a].Qid
+   case "pf":
+      if *iField == "lastqid" {
+         *iField = aSet[a].Qid
+      } else {
+         *iField = aSet[a].Uid
+      }
+   default:
+      return
    }
    aAmp := ""; if *iMsg != "" { aAmp = " & " }
    *iMsg += aAmp + *iField
@@ -767,6 +774,13 @@ func _runTestService(iCtx *tTestContext, iOp, iId string, iExpect interface{},
       aGot, err = _parseMessageStream(aResult.Bytes())
    } else {
       err = json.Unmarshal(aResult.Bytes(), &aGot)
+      if iOp == "al" {
+         aLid := *iCtx.lastId[iOp]
+         sort.Slice(aLid, func(cA, cB int)bool { return aLid[cA].Id < aLid[cB].Id })
+         aS := aGot.([]interface{})
+         sort.Slice(aS, func(cA, cB int)bool { return aS[cA].(map[string]interface{})["Id"].(string) <
+                                                      aS[cB].(map[string]interface{})["Id"].(string) })
+      }
    }
    if err != nil { return }
 

@@ -22,22 +22,19 @@ const kSuffixRecv = "_recv"
 const kSuffixSent = "_sent"
 
 
-type tAttachEl struct {
-   Name, MsgId, File string
-   Size int64
-   Date string
-}
-
 type tFfnIndex map[string]string
 
-func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
+func GetIdxAttach(iSvc string, iState *ClientState) interface{} {
+   type tAttachEl struct { Id, File, MsgId, Date, Who string; Size int64 }
+
    aId := iState.getThread()
    if aId == "" {
       return []tAttachEl{}
    }
-   aDir, err := readDirFis(dirAttach(iSvc) + aId)
+   var aIdx []tIndexElCore
+   var aDir []os.FileInfo
+   err := getAttachThread(iSvc, aId, &aIdx, &aDir)
    if err != nil {
-      if !os.IsNotExist(err) { quit(err) }
       return []tAttachEl{}
    }
    aSend := make([]tAttachEl, 0, len(aDir))
@@ -47,19 +44,23 @@ func GetIdxAttach(iSvc string, iState *ClientState) []tAttachEl {
       aFile, err = url.QueryUnescape(aFi.Name())
       if err != nil { quit(err) }
       aPair := strings.SplitN(aFile, "_", 2)
-      a := len(aSend)
-      aSend = append(aSend, tAttachEl{File: aFile, Size: aFi.Size(),
-                                      Name: aPair[1][2:], // omit x: tag
-                                      Date: aFi.ModTime().UTC().Format(time.RFC3339)})
+      aEl := tAttachEl{Id: aFile, Size: aFi.Size(),
+                       MsgId: aPair[0], File: aPair[1][2:], // omit x: tag
+                       Date: aFi.ModTime().UTC().Format(time.RFC3339)}
       if aId[0] == '_' {
-         aSend[a].MsgId = aId
+         aEl.MsgId = aId
       } else if len(aPair[0]) == 12 { //todo codify
-         aSend[a].MsgId = aId + "_" + aPair[0]
-      } else {
-         aSend[a].MsgId = aPair[0]
+         aEl.MsgId = aId + "_" + aPair[0]
       }
+      aN := -1
+      for aN = 0; aN < len(aIdx) && aIdx[aN].Id != aEl.MsgId; aN++ {}
+      if aN >= len(aIdx) {
+         quit(tError("index missing attachment msgid "+ aEl.MsgId))
+      }
+      aEl.Who = aIdx[aN].Alias
+      aSend = append(aSend, aEl)
    }
-   sort.Slice(aSend, func(cA, cB int)bool { return aSend[cA].File < aSend[cB].File })
+   sort.Slice(aSend, func(cA, cB int)bool { return aSend[cA].Date > aSend[cB].Date })
    return aSend
 }
 
