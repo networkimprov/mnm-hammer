@@ -773,35 +773,36 @@
         class="widthmin33 menu-bg dropdown-scroll"
         @hidden="$refs.viewer.close()" @click="$refs.viewer.close()">
       <ul uk-tab class="dropdown-scroll-item"><li style="display:none"></li>
-         <li v-for="aKey in ['Date','Name','Size']"
+         <li v-for="aKey in ['Date','Who','File','Size']"
              :class="{'uk-active': aKey === mnm._data.cs.Sort.al}">
             <a @click.prevent="mnm.SortSelect('al', aKey)" href="#">{{aKey}}</a>
          </li></ul>
       <mnm-viewer ref="viewer"/>
       <ul class="uk-list uk-list-divider dropdown-scroll-list">
-         <li v-for="aFile in mnm._data.al" :key="aFile.File">
+         <li v-for="aFile in mnm._data.al" :key="aFile.Id">
             <a @click.prevent="markdown(aFile)"
                title="Copy markdown to clipboard"
-               :href="'#@'+ aFile.File"><span uk-icon="link"></span></a>
+               :href="'#@'+ aFile.Id"><span uk-icon="link"></span></a>
             <a onclick="mnm.NavigateLink('Attached', this.href); return false"
                title="Find message with attachment"
                :href="'#'+ mnm._data.cs.Thread +'&'+ aFile.MsgId"
                :class="{vishide: aFile.MsgId.charAt(0) === '_'}"><span uk-icon="mail"></span></a>
-            <mnm-date :iso="aFile.Date" ymd="md" hms="hm"/>
-            <!--todo button :title="aFile.File.charAt(17) === 'u' ? 'Copy to attachable files'
+            <mnm-date :iso="aFile.Date" ymd="md"/>
+            <div :title="aFile.Who" class="attach-who">{{aFile.Who}}</div>
+            <!--todo button :title="aFile.Id.charAt(17) === 'u' ? 'Copy to attachable files'
                                                           : 'Copy to blank forms'"
                     class="btn btn-icon">
-               <span :uk-icon="aFile.File.charAt(17) === 'u' ? 'push' : 'file-edit'"></span></button>
+               <span :uk-icon="aFile.Id.charAt(17) === 'u' ? 'push' : 'file-edit'"></span></button>
             &nbsp;-->
-            <a :href="'?ad=' + encodeURIComponent(aFile.File)" download
+            <a :href="'?ad=' + encodeURIComponent(aFile.Id)" download
                title="Download attachment">
-               <span uk-icon="download">&nbsp;</span></a>
-            <span v-if="!mnm._viewerType('svc', aFile.File)">
-               &nbsp;<span class="icon-blank"></span>{{aFile.Name}}</span>
+               <span uk-icon="download"></span></a>
+            <span v-if="!mnm._viewerType('svc', aFile.Id)">
+               <span class="icon-blank"></span>{{aFile.File}}</span>
             <a v-else
-               @click.stop.prevent="$refs.viewer.open('svc', aFile.File, $event.currentTarget)"
-               :href="'?an=' + encodeURIComponent(aFile.File)">
-               <span uk-icon="triangle-left">&nbsp;</span>{{aFile.Name}}</a>
+               @click.stop.prevent="$refs.viewer.open('svc', aFile.Id, $event.currentTarget)"
+               :href="'?an=' + encodeURIComponent(aFile.Id)">
+               <span uk-icon="triangle-left"></span>{{aFile.File}}</a>
             <div class="uk-float-right">{{aFile.Size}}</div>
          </li></ul>
    </div>
@@ -812,9 +813,9 @@
       methods: {
          listSort: function(i) { return mnm._listSort('al', i) },
          markdown: function(iFile) {
-            var aSep = iFile.File.indexOf('_')
-            var aFile = iFile.File.substring(aSep + 1);
-            var aRef = aSep === 12 ? 'this_'+ aFile : iFile.File;
+            var aSep = iFile.Id.indexOf('_')
+            var aFile = iFile.Id.substring(aSep + 1);
+            var aRef = aSep === 12 ? 'this_'+ aFile : iFile.Id;
             aRef = aRef.replace(/%/g, '%25').replace(/ /g, '%20')
                        .replace(/\(/g, '%28').replace(/\)/g, '%29');
             //todo mnm-draft validate attachment & message refs
@@ -829,7 +830,7 @@
                   aTxt = '!['+ aExt +']('+ aRef +')';
                   break;
                default:
-                  aTxt = '['+ iFile.Name +']('+ aRef +')';
+                  aTxt = '['+ iFile.File +']('+ aRef +')';
                }
             }
             mnm._toClipboard(aTxt);

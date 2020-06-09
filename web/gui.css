@@ -198,6 +198,15 @@ textarea {
    padding: 1em;
 }
 
+.attach-who {
+   width: 15%;
+   display: inline-block;
+   vertical-align: top;
+   overflow-x: hidden;
+   white-space: pre;
+   word-break: keep-all;
+}
+
 .thread-row {
    margin: 0 !important; /* override uk-grid */
    padding: 0.25em 0;
