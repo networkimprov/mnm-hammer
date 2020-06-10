@@ -1642,13 +1642,13 @@
          },
          listSort: function(i) {
             mnm._data.cs.Sort.f = i;
-            mnm._data.f.sort(function(cA, cB) {
-               if (i === 'Name')
-                  return cA.Name < cB.Name ? -1 : 1;
-               if (i === 'Date')
-                  return cA.Revs[0].Date > cB.Revs[0].Date ? -1 : 1;
-               return 0;
-            });
+            mnm._data.f.sort(i === 'Date'
+               ? function(cA, cB) { return cA.Revs[0].Date > cB.Revs[0].Date ? -1 :
+                                           cA.Revs[0].Date < cB.Revs[0].Date ? 1 : 0 }
+               : function(cA, cB) { return cA[i].localeCompare(cB[i], undefined, {sensitivity:'base'}) ||
+                                           (cA.Revs[0].Date > cB.Revs[0].Date ? -1 :
+                                            cA.Revs[0].Date < cB.Revs[0].Date ? 1 : 0) }
+            );
          },
          revOpen: function(iSet, iRev, iEl) {
             var aKey = iSet+'.'+iRev;
@@ -2668,16 +2668,16 @@
    }
 
    mnm._listSort = function(iName, iKey) {
-      var aTmp;
       var aList = iName === 'cl' ? mnm._data.cl[1] : mnm._data[iName];
       mnm._data.cs.Sort[iName] = iKey;
-      aList.sort(function(cA, cB) {
-         if (iKey === 'Date')
-            aTmp = cA, cA = cB, cB = aTmp;
-         if (cA[iKey] <= cB[iKey])
-            return -1;
-         return 1;
-      });
+      aList.sort(iKey === 'Date'
+         ? function(cA, cB) { return cA.Date > cB.Date ? -1 : cA.Date < cB.Date ? 1 : 0 }
+         : iKey === 'Size'
+         ? function(cA, cB) { return cA.Size > cB.Size ? -1 : cA.Size < cB.Size ? 1 :
+                                     cA.Date > cB.Date ? -1 : cA.Date < cB.Date ? 1 : 0 }
+         : function(cA, cB) { return cA[iKey].localeCompare(cB[iKey], undefined, {sensitivity:'base'}) ||
+                                     (cA.Date > cB.Date ? -1 : cA.Date < cB.Date ? 1 : 0) }
+      );
    };
 
    mnm._toClipboard = function(iRef) {
