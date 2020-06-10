@@ -431,12 +431,32 @@ textarea {
    font-style: inherit !important; /* fix disabled italics */
 }
 
+.ohilink {
+   color: #1e87f0;
+   font-size: 18px;
+   line-height: 1;
+   vertical-align: middle;
+   cursor: pointer;
+   user-select: none;
+}
+
 .paperclip {
-   font-size: 120%;
-   vertical-align: sub;
+   font-size: 20px;
+   line-height: 1;
+   vertical-align: -2px;
+   user-select: none;
 }
 .btn > .paperclip {
-   vertical-align: 0.1em;
+   font-size: 19px;
+   vertical-align: 2px;
+   color: #555;
+}
+
+.questionbox {
+   font-size: 26px;
+   line-height: 1;
+   vertical-align: -5px;
+   user-select: none;
 }
 
 .icon-blank {

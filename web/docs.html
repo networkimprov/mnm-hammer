@@ -435,17 +435,17 @@ select the <i>Ohi To</i> tab, and click the <span uk-icon="trash"></span> button
 <h3 id="upld">5. Attachable Files</h3>
 
 <p>Files to be attached to outgoing messages are first added to the 
-<span uk-icon="push"></span> menu. 
+<span uk-icon="file-text"></span> menu. 
 A file may be safely removed from the menu after it's been attached, 
 but leaving it there doesn't consume any extra storage space. 
 </p>
 
-<p>To upload a file, open the <span uk-icon="push"></span> menu, click the <i>Browse</i> button and 
+<p>To upload a file, open the <span uk-icon="file-text"></span> menu, click the <i>Browse</i> button and 
 select a file, amend the upload name as necessary, and click the <span uk-icon="push"></span> button. 
 </p>
 
 <p>To copy a file attachment from the most-recently selected thread to the 
-<span uk-icon="push"></span> menu, open the <span class="paperclip">&#128206;</span> menu 
+<span uk-icon="file-text"></span> menu, open the <span class="paperclip">&#x1f4ce;</span> menu 
 and click the attachment's <span uk-icon="push"></span> button. 
 [not yet implemented]
 </p>
@@ -523,12 +523,12 @@ and <tt>model</tt> variables in a form definition, may not begin with <tt>$</tt>
 as mnm uses that symbol internally. 
 </p>
 
-<p>To create a blank form, open the <span uk-icon="file-edit"></span> menu and
+<p>To create a blank form, open the <span class="questionbox">&#x2370;</span> menu, 
 enter a family name and optional revision name (separated by ".") 
-in the <span uk-icon="pencil"></span> form. 
+in the <i>New Type</i> field, and click the <span uk-icon="pencil"></span> button. 
 </p>
 
-<p>To edit a new or existing form, open the <span uk-icon="file-edit"></span> menu 
+<p>To edit a new or existing form, open the <span class="questionbox">&#x2370;</span> menu 
 and click its <span uk-icon="triangle-left"></span>formname hyperlink to open the form editor. 
 Next click the <tt>{...}</tt> hyperlink to switch to code view, and begin editing. 
 Click <tt>{...}</tt> again to preview changes. 
@@ -542,8 +542,8 @@ in the <span uk-icon="copy"></span> form at the bottom of the editor panel.
 </p>
 
 <p>To copy a blank form attachment from the most-recently selected thread to the 
-<span uk-icon="file-edit"></span> menu, open the <span class="paperclip">&#128206;</span> menu 
-and click the attachment's <span uk-icon="file-edit"></span> button. 
+<span class="questionbox">&#x2370;</span> menu, open the <span class="paperclip">&#x1f4ce;</span> menu 
+and click the attachment's <span uk-icon="push"></span> button. 
 [not yet implemented]
 </p>
 
@@ -657,16 +657,16 @@ While a newly-opened message is loading, <span uk-icon="future"></span> is displ
 </p>
 
 <p>All attachments received or sent in messages of the thread (except filled-form results) 
-are listed in the <span class="paperclip">&#128206;</span> menu. 
+are listed in the <span class="paperclip">&#x1f4ce;</span> menu. 
 The list may be sorted using the <i>Date</i>, <i>Who</i>, <i>File</i>, and <i>Size</i> tabs. 
 </p>
 
-<p>To view the message that delivered an item in the <span class="paperclip">&#128206;</span> menu, 
+<p>To view the message that delivered an item in the <span class="paperclip">&#x1f4ce;</span> menu, 
 click the <span uk-icon="mail"></span> hyperlink for the item,
 which creates a <b>&#x2992;</b>&nbsp;<i>Attached</i> tab above the message list.
 </p>
 
-<p>To download a file in the <span class="paperclip">&#128206;</span> menu, 
+<p>To download a file in the <span class="paperclip">&#x1f4ce;</span> menu, 
 click its <span uk-icon="download"></span> hyperlink. 
 To preview a file or form, click its name hyperlink. 
 Attachments that can be previewed display a <span uk-icon="triangle-left"></span> icon. 
@@ -711,7 +711,7 @@ If the original copy does not match the forwarded version, the sender's name is 
 </p>
 
 <p>Open messages display the list of attachments, if any, immediately below the header. 
-To close the list, click the 1<span class="paperclip">&#128206;</span> icon.
+To close the list, click the 1<span class="paperclip">&#x1f4ce;</span> icon.
 </p>
 
 <p>To download a file attachment, click its <span uk-icon="download"></span> hyperlink. 
@@ -813,10 +813,10 @@ To remove a recipient from the list, click the &times; button for the target ite
 If no recipients are enlisted, the draft indicates <i>[self]</i>.
 </p>
 
-<p>To attach a file or blank form, click the <span uk-icon="push"></span> or 
-<span uk-icon="file-edit"></span> icon (below the <span uk-icon="trash"></span> button) 
+<p>To attach a file or blank form, click the <span uk-icon="file-text"></span> or 
+<span class="questionbox">&#x2370;</span> icon (below the <span uk-icon="trash"></span> button) 
 to open the appropriate menu, 
-then attach an item by clicking its <span class="paperclip">&#128206;</span> button. 
+then attach an item by clicking its <span class="paperclip">&#x1f4ce;</span> button. 
 To display an image or blank form in the <i>Message text</i>, see <a href="#mark">Markdown</a>. 
 </p>
 
@@ -857,7 +857,7 @@ without the recipient's consent.
 
 <p>For a file in the Attachment list, write:          <tt>![<i>alt</i>](this_u:<i>file_name</i>)</tt>
 <br>For a file attached to a previous message, write: <tt>![<i>alt</i>](<i>file_ref</i>)</tt>
-<br>To obtain the code above, open the <span class="paperclip">&#128206;</span> menu, 
+<br>To obtain the code above, open the <span class="paperclip">&#x1f4ce;</span> menu, 
 click the <span uk-icon="link"></span> hyperlink for the target file, then paste the 
 string into your <i>Message text</i>. 
 <tt>alt</tt> is any desired text. 
@@ -869,7 +869,7 @@ message in the current thread.
 
 <p>For a form in the Attachment list, write:          <tt>![?](this_f:<i>form_name</i>)</tt>
 <br>For a form attached to a previous message, write: <tt>![?](<i>form_ref</i>)</tt>
-<br>To obtain the code above, open the <span class="paperclip">&#128206;</span> menu, 
+<br>To obtain the code above, open the <span class="paperclip">&#x1f4ce;</span> menu, 
 click the <span uk-icon="link"></span> hyperlink for the target form, then paste the 
 string into your <i>Message text</i>. 
 </p>
@@ -883,7 +883,7 @@ References to relative URLs are disallowed.
 <br>For a file in the Attachment list, write:         <tt>[<i>text</i>](this_u:<i>file_name</i>)</tt>
 <br>For a file attached to a previous message, write: <tt>[<i>text</i>](<i>file_ref</i>)</tt>
 <br>For a previous message in any thread, write:      <tt>[<i>text</i>](<i>msg_ref</i>)</tt>
-<br>To obtain the attachment code above, use the <span class="paperclip">&#128206;</span> menu 
+<br>To obtain the attachment code above, use the <span class="paperclip">&#x1f4ce;</span> menu 
 as previously described. 
 To obtain the message code above, open the target message, click the <span uk-icon="link"></span> hyperlink 
 to the right of the header, then paste the string into your <i>Message text</i>. 

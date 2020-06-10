@@ -245,17 +245,17 @@
                :title="'Contacts for <%.TitleJs%>'">&nbsp;</span>
          <mnm-adrsbk ref="adrsbk"/>
          <span @mousedown="ohiFrom = !ohiFrom"
-               style="color:#1e87f0; font-size:110%; vertical-align:text-top; cursor:pointer"
+               class="ohilink"
                title="Toggle ohi-from panel">&nbsp;o/</span>
          <span uk-icon="laptop" class="dropdown-icon"
                :title="'Replicas for <%.TitleJs%>'">&nbsp;</span>
          <mnm-nodes/>
          &nbsp;
-         <span uk-icon="push" class="dropdown-icon"
+         <span uk-icon="file-text" class="dropdown-icon"
                title="Attachable files">&nbsp;</span>
          <mnm-files ref="t" pos="bottom-right"/>
-         <span uk-icon="file-edit" class="dropdown-icon"
-               title="Blank forms">&nbsp;</span>
+         <span class="dropdown-icon"
+               title="Blank forms">&nbsp;<mnm-questionbox/></span>
          <mnm-forms ref="f" pos="bottom-right"/>
          &nbsp;
       </div>
@@ -789,10 +789,9 @@
                :class="{vishide: aFile.MsgId.charAt(0) === '_'}"><span uk-icon="mail"></span></a>
             <mnm-date :iso="aFile.Date" ymd="md"/>
             <div :title="aFile.Who" class="attach-who">{{aFile.Who}}</div>
-            <!--todo button :title="aFile.Id.charAt(17) === 'u' ? 'Copy to attachable files'
-                                                          : 'Copy to blank forms'"
-                    class="btn btn-icon">
-               <span :uk-icon="aFile.Id.charAt(17) === 'u' ? 'push' : 'file-edit'"></span></button>
+            <!--todo button @click=""
+                    :title="'Copy to '+ (aFile.Id[17] === 'u' ? 'attachable files' : 'blank forms')"
+                    class="btn btn-icon"><span uk-icon="push"></span></button>
             &nbsp;-->
             <a :href="'?ad=' + encodeURIComponent(aFile.Id)" download
                title="Download attachment">
@@ -925,10 +924,10 @@
          </div>
       </div>
       <div style="float:right; margin-top:-1.7em;">
-         <span uk-icon="push" class="dropdown-icon" :id="'t_'+msgid"
+         <span uk-icon="file-text" class="dropdown-icon" :id="'t_'+msgid"
                title="Attach files"></span
-        ><span uk-icon="file-edit" class="dropdown-icon" :id="'f_'+msgid"
-               title="Attach blank forms"></span>
+        ><span class="dropdown-icon" :id="'f_'+msgid"
+               title="Attach blank forms"><mnm-questionbox/></span>
       </div>
       <input @input="subjAdd"
              @focus="subjShow = true"
@@ -2249,10 +2248,18 @@
 </script>
 
 <script type="text/x-template" id="mnm-paperclip">
-   <span class="paperclip">&#128206;</span>
+   <span class="paperclip">&#x1f4ce;</span>
 </script><script>
    Vue.component('mnm-paperclip', {
       template: '#mnm-paperclip',
+   });
+</script>
+
+<script type="text/x-template" id="mnm-questionbox">
+   <span class="questionbox">&#x2370;</span>
+</script><script>
+   Vue.component('mnm-questionbox', {
+      template: '#mnm-questionbox',
    });
 </script>
 
