@@ -871,7 +871,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if c == iState { return aResult }
             return aResult[:1]
          }
-         aResult = []string{"tl", "cs", "cl", "al", "_t", "ml", "mo"}
+         aResult = []string{"tl", "cs", "al", "_T", "cl", "ml", "mo"}
       } else if iUpdt.Thread.New == eNewReply {
          iState.openMsg(iUpdt.Thread.Id, true, true)
          aTid := iState.getThread()

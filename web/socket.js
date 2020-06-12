@@ -181,8 +181,8 @@
                mnm.Render('nameset', null, aObj.slice(a+1));
                break;
             }
-            if (aObj[a] === '_t')
-               mnm.ThreadChange();
+            if (aObj[a] === '_t' || aObj[a] === '_T')
+               mnm.ThreadChange(aObj[a] === '_T');
             else if (aObj[a] === '_e')
                mnm.Err(aObj[++a]);
             else if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')

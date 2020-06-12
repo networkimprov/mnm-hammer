@@ -526,7 +526,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
                _verifyNameList(aOps[1+a1:], iTc.Orders[a].Result[aOp], aPrefix +" "+ aOp)
                break
             }
-            if aOp == "_t" { continue }
+            if aOp == "_t" || aOp == "_T" { continue }
             if aOp == "mn" || aOp == "an" || aOp == "fn" {
                a1++
                aId = aOps[a1]
