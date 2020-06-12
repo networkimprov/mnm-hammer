@@ -1537,6 +1537,7 @@
       <form :action="'/f/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); this.reset(); return false;"
+            @reset="upname = ''"
             class="dropdown-scroll-item">
          <div class="uk-float-right uk-text-small">BLANK FORMS</div>
          <input type="hidden" name="filename"
@@ -1544,8 +1545,7 @@
          <input v-model="upname"
                 placeholder="New Type" type="text"
                 style="width:60%">
-         <button @click="upname = ''"
-                 :disabled="!validName(upname.split('.'))"
+         <button :disabled="!validName(upname.split('.'))"
                  title="New form"
                  class="btn btn-icon"><span uk-icon="pencil"></span></button>
       </form>
