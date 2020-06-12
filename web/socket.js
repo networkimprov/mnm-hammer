@@ -145,7 +145,7 @@
       _xhr('an', iId);
    };
 
-   mnm.Upload = function(iForm) {
+   mnm.Upload = function(iForm, iCb) {
       if (iForm.method.toLowerCase() !== 'post' || !iForm.action)
          throw new Error('mnm.Upload: requires method=POST and valid action');
       var aXhr = new XMLHttpRequest();
@@ -153,6 +153,8 @@
          mnm.Log('post '+ iForm.action +' '+ aXhr.responseText);
          if (aXhr.status !== 200)
             mnm.Err(aXhr.responseText);
+         else if (iCb)
+            iCb();
       };
       aXhr.open('POST', iForm.action);
       aXhr.send(new FormData(iForm));

@@ -1458,11 +1458,11 @@
         @hidden="$refs.viewer.close()" @click="$refs.viewer.close()">
       <form :action="'/t/+' + encodeURIComponent(upname)"
             method="POST" enctype="multipart/form-data"
-            onsubmit="mnm.Upload(this); this.reset(); return false;"
+            onsubmit="mnm.Upload(this, this.parentNode._cb); this.reset(); return false;"
             class="dropdown-scroll-item">
          <div class="uk-float-right uk-text-small">ATTACHABLE FILES</div>
-         <input @input="vis = !!(upname = $event.target.value.substr(12))" type="file"
-                name="filename" required>
+         <input @input="vis = !!(upname = $event.target.value.substr(12))"
+                type="file" name="filename" required>
          <div :class="{vishide: !vis}" style="margin-top:0.5em">
             <input v-model="upname"
                    placeholder="Alt Name" type="text"
@@ -1470,7 +1470,11 @@
             <button @click="vis = false" type="submit"
                     :disabled="!upname"
                     title="Copy to attachable files"
-                    class="btn btn-icon"><span uk-icon="push"></span></button>
+                    class="btn btn-icon">
+               <mnm-paperclip v-if="toggle"/>
+               <span v-else
+                     uk-icon="push"></span>
+            </button>
             <button @click="vis = false" type="reset"
                     class="btnx"><span>&times;</span></button>
          </div>
@@ -1516,6 +1520,12 @@
       data: function() { return {upname:'', vis:false} },
       computed: { mnm: function() { return mnm } },
       methods: { listSort: function(i) { return mnm._listSort('t', i) } },
+      mounted: function() {
+         if (!this.toggle)
+            return;
+         var that = this;
+         this.$el._cb = function() { that.$emit('attach', 'upload/'+ that.upname) };
+      },
    });
 </script>
 
