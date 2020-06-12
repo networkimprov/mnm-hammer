@@ -2408,6 +2408,7 @@
 <script>
 ;(function() {
    var sChange = 0;
+   var sChangeNew = false;
    var sTemp = {ml:null, mo:null};
    var sMsglistPos = 0;
 
@@ -2771,6 +2772,10 @@
             mnm._data[i] = JSON.parse(iData);
             if (mnm._data.cs.Sort[i])
                sApp.$refs[i].listSort(mnm._data.cs.Sort[i]);
+            if (sChangeNew && i === 'cl') {
+               sChangeNew = false;
+               Vue.nextTick(function() { UIkit.dropdown(sApp.$refs.cl.$el).show() });
+            }
          }
          break;
       case 'cs':
@@ -2864,7 +2869,9 @@
       }
    };
 
-   mnm.ThreadChange = function() {
+   mnm.ThreadChange = function(iIsNew) {
+      if (iIsNew)
+         sChangeNew = true;
       sChange = 1;
       sMsglistPos = 0;
       mnm._lastPreview = '';
