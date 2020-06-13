@@ -490,10 +490,10 @@ textarea {
    min-width: 4em;
    float: left;
    box-sizing: border-box;
-   border-radius: 4px;
+   border-radius: 3px;
    padding: 0.25em 0.5em;
    cursor: default;
-   background: lightgray;
+   background-color: #f5f5f5;
    font-family: "Courier New", monospace;
    font-size: 82%;
    color: black;
@@ -501,18 +501,19 @@ textarea {
 .draftmenu-sample {
    min-width: 0;
    float: none;
-   border: 1px solid dimgray;
-   line-height: 90%;
+   border: 1px solid #c8c8c8;
+   background-color: #e8e8e8;
+   line-height: 1.2;
    display: inline-block;
 }
 .draftmenu-shown {
    border: 1px solid transparent;
    min-height: 100%;
-   box-shadow: 0 5px 12px rgba(0,0,0,0.15);
-   filter: brightness(105%);
+   box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+   filter: brightness(102%);
 }
 .draftmenu-hiddn {
-   border: 1px solid dimgray;
+   border: 1px solid #d4d4d4;
    height: 100%;
    overflow: hidden;
 }
@@ -525,7 +526,7 @@ textarea {
    font-size: 80%;
    position: relative; bottom: -4px;
 }
-.draftmenu-hiddn .draftmenu-x { visibility: hidden; }
+.draftmenu-hiddn > span:not(:only-child) > .draftmenu-x { visibility: hidden; }
 .draftmenu-shown .draftmenu-v { display: none; }
 
 .pane-clip {
