@@ -16,7 +16,7 @@ import (
 )
 
 var kSortDefault = tSummarySort{Cc:"Who", Atc:"Date", Upload:"Date", Form:"Date"}
-var kSvcTabsDefault = []tTermEl{{"All",""}, {"Unread",""}, {"#Todo",""}, {"FFT",""}}
+var kSvcTabsDefault = []tTermEl{{"All",""}, {"Unread",""}, {"#Todo",""}}
 var kThreadTabsDefault = []tTermEl{{"Open",""}, {"All",""}}
 var kTabsStdService, kTabsStdThread string
 const kTabLabelMax = 64

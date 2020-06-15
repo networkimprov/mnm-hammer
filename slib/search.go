@@ -16,8 +16,6 @@ import (
    "os"
    "sort"
    "strings"
-   "time"
-   "net/url"
 
    pBkeyword  "github.com/blevesearch/bleve/analysis/analyzer/keyword"
    pBleve     "github.com/blevesearch/bleve"
@@ -74,21 +72,6 @@ var kResultFields = []string{"*"} //todo list fields?
 func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
    var err error
    aTabType, aTabVal := iState.getSvcTab()
-   if aTabType == ePosForDefault && aTabVal == "FFT" {
-      var aDir []os.FileInfo
-      aDir, err = readDirFis(dirForm(iSvc))
-      if err != nil { quit(err) }
-      aList := make([]tSearchEl, 0, len(aDir))
-      for _, aFi := range aDir {
-         var aId string
-         aId, err = url.QueryUnescape(aFi.Name())
-         if err != nil { quit(err) }
-         aList = append(aList, tSearchEl{Id: aId, LastDate: aFi.ModTime().UTC().Format(time.RFC3339)})
-      }
-      sort.Slice(aList, func(cA, cB int)bool { return aList[cA].Id < aList[cB].Id })
-      err = json.NewEncoder(iW).Encode(aList)
-      return err
-   }
    if aTabType == ePosForTerms && strings.HasPrefix(aTabVal, "ffn:") {
       aFfn := aTabVal[4:]
       _, err = iW.Write([]byte(`{"Ffn":`))

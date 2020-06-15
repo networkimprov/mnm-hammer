@@ -497,6 +497,8 @@
       "cl": "navigate_history.a" ,
       "al": "navigate_history.a" ,
       "mo": "navigate_history.a" ,
+      "fl": [{"Id":"mnmnotmail.github.io/registry/test1_recv", "Date":"*d"},
+             {"Id":"mnmnotmail.github.io/registry/test1_sent", "Date":"*d"}] ,
       "tl": "poll_delivery.a" ,
       "cs": "sort_select.a" },
    "Name": "open.a"
@@ -594,6 +596,7 @@
       "cl": [[], []] ,
       "al": [] ,
       "mo": [] ,
+      "fl": "open.a" ,
       "tl": "open.a" ,
       "cs": {"Thread":"none",
              "History":{"Prev":false, "Next":false},
@@ -647,6 +650,7 @@
       "cl": [[], []] ,
       "al": [] ,
       "mo": [] ,
+      "fl": "open.b" ,
       "tl": "open.b" ,
       "cs": "open.b" },
    "Name": "open.c"

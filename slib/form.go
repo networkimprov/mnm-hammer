@@ -210,6 +210,21 @@ func _insertBlank(iName, iRev string, iDate string) {
    }
 }
 
+func GetIdxFilledForm(iSvc string) interface{} {
+   type _tFfEl struct { Id, Date string }
+   aDir, err := readDirFis(dirForm(iSvc))
+   if err != nil { quit(err) }
+   aList := make([]_tFfEl, len(aDir))
+   for a := range aDir {
+      var aId string
+      aId, err = url.QueryUnescape(aDir[a].Name())
+      if err != nil { quit(err) }
+      aList[a] = _tFfEl{Id: aId, Date: aDir[a].ModTime().UTC().Format(time.RFC3339)}
+   }
+   sort.Slice(aList, func(cA, cB int)bool { return aList[cA].Date > aList[cB].Date })
+   return aList
+}
+
 func WriteTableFilledForm(iW io.Writer, iSvc string, iFft string) error {
    var err error
    aDoor := _getFormDoor(iSvc, iFft)

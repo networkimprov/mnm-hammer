@@ -589,6 +589,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    case "cf": aResult = pSl.GetCfService(aSvcId)
    case "cn": aResult = pSl.GetCnNode(aSvcId)
    case "nl": aResult = pSl.GetIdxNotice(aSvcId)
+   case "fl": aResult = pSl.GetIdxFilledForm(aSvcId)
    case "ps": aResult = pSl.GetDraftAdrsbk(aSvcId)
    case "pt": aResult = pSl.GetSentAdrsbk(aSvcId)
    case "pf": aResult = pSl.GetReceivedAdrsbk(aSvcId)

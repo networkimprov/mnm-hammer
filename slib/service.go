@@ -601,13 +601,13 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          return fErr, nil
       }
       if aGot == "thread" {
-         aFn, aResult = fAll, []string{"pt", "pf", "tl", "/v"}
+         aFn, aResult = fAll, []string{"pt", "pf", "fl", "tl", "/v"}
       } else if aGot == "msg" {
          aFn = func(c *ClientState) []string {
             if c.getThread() == iHead.SubHead.ThreadId { return aResult }
-            return aResult[:4]
+            return aResult[:5]
          }
-         aResult = []string{"pt", "pf", "tl", "/v", "al", "ml"}
+         aResult = []string{"pt", "pf", "fl", "tl", "/v", "al", "ml"}
       }
    case "notify":
       err = storeFwdNotifyThread(iSvc, iHead, iR)
@@ -687,16 +687,16 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
             aFn = func(c *ClientState) []string {
                c.renameThread(iHead.Id, iHead.MsgId)
                if c.getThread() == iHead.MsgId { return aResult }
-               return aResult[1:3]
+               return aResult[1:4]
             }
          } else {
             aFn = func(c *ClientState) []string {
                c.renameMsg(aId.tid(), iHead.Id, iHead.MsgId)
                if c.getThread() == aId.tid() { return aResult }
-               return aResult[1:3]
+               return aResult[1:4]
             }
          }
-         aResult = []string{"cs", "tl", "pf", "cl", "al", "ml", "mn", iHead.MsgId}
+         aResult = []string{"cs", "fl", "tl", "pf", "cl", "al", "ml", "mn", iHead.MsgId}
       case eSrecFwd:
          if iHead.Error != "" {
             aFn = func(c *ClientState) []string {
@@ -787,12 +787,12 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
    switch iUpdt.Op {
    case "open":
       aResult = []string{"cf", "cn", "of", "ot", "ps", "pt", "pf", "gl",
-                         "tl", "cs", "cl", "al", "_t", "ml", "mo",
+                         "fl", "tl", "cs", "cl", "al", "_t", "ml", "mo",
                          "/v", "/t", "/f", "/g", "/l",
                          "_e", ""}
       aLen := len(aResult) - 2
       if iSvc == "local" {
-         aFn, aResult = fOne, aResult[15:aLen]
+         aFn, aResult = fOne, aResult[16:aLen]
       } else {
          //todo aToAll return []string{"/v"} to update .UnreadN everywhere? (also thread_open & delivery)
          _initUnreadCount(iSvc)
