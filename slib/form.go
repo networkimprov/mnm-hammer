@@ -352,8 +352,8 @@ func _validateType(iResult *[]byte, iParent string, iField interface{}, iEl *tSp
 func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHeader2Attach,
                     iR io.Reader) error {
    var err error
-   aFn := ftmpAtc(iSvc, iMsgId, iFile.Name)
-   aFd, err := os.OpenFile(aFn, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+   aTemp := ftmpAtc(iSvc, iMsgId, iFile.Name)
+   aFd, err := os.OpenFile(aTemp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aFd.Close()
 
@@ -361,8 +361,11 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
    aFi, err = os.Lstat(fileForm(iSvc, iFile.Ffn + iSuffix))
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aPos := int64(0); if err == nil { aPos = aFi.Size() - 1 }
-   aSep := '[';      if err == nil { aSep = ',' }
-   _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x%c\n\n", aPos, aPos, aSep))) // 2 copies for safety
+   _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x%s", aPos, aPos, iSuffix))) // 2 copies for safety
+   if err != nil { quit(err) }
+
+   aDelim := []byte{',','\n','\n'}; if aPos == 0 { aDelim[0] = '[' }
+   _, err = aFd.Write(aDelim)
    if err != nil { quit(err) }
 
    var aBuf bytes.Buffer
@@ -381,7 +384,7 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
       fmt.Fprintf(os.Stderr, "tempFilledForm %s: received bad json for %s\n", iSvc, iFile.Ffn+iSuffix)
       aBytes, err = json.Marshal(aBuf.String())
       if err != nil { quit(err) }
-      _, err = aFd.Seek(32, io.SeekStart)
+      _, err = aFd.Seek(int64(2*16 + len(iSuffix) + len(aDelim)), io.SeekStart)
       if err != nil { quit(err) }
       aCw.clear()
       _, err = aTee.Write([]byte(fmt.Sprintf(`{"$text":%s`, aBytes)))
@@ -407,32 +410,36 @@ func removeTempFilledForm(iSvc string, iMsgId string, iFile *tHeader2Attach) {
    if err != nil && !os.IsNotExist(err) { quit(err) }
 }
 
-func storeFilledForm(iSvc string, iMsgId string, iSuffix string, iFile *tHeader2Attach) bool {
-   var err error
-   aDoor := _getFormDoor(iSvc, iFile.Ffn + iSuffix)
-   aDoor.Lock(); defer aDoor.Unlock()
-   aFn := ftmpAtc(iSvc, iMsgId, iFile.Name)
-   aTd, err := os.Open(aFn)
+func storeFilledForm(iSvc string, iMsgId string, iFile *tHeader2Attach) bool {
+   aTemp := ftmpAtc(iSvc, iMsgId, iFile.Name)
+   aTd, err := os.Open(aTemp)
    if err != nil {
       if !os.IsNotExist(err) { quit(err) }
       fmt.Fprintf(os.Stderr, "storeFilledForm %s: missing %s, assume it was appended to %s\n",
-                             iSvc, iFile.Name, iFile.Ffn + iSuffix)
+                             iSvc, iFile.Name, iFile.Ffn +"_...")
       return false
    }
    defer aTd.Close()
-   aBuf := make([]byte, 32)
-   _, err = aTd.Read(aBuf)
+   aBuf := make([]byte, 2*16 + len(kSuffixSent))
+   aLen, err := aTd.Read(aBuf)
    if err != nil { quit(err) }
+   if aLen != len(aBuf) {
+      quit(tError("incomplete header in "+ aTemp))
+   }
    var aPos [2]uint64
-   for a, _ := range aPos {
+   for a := range aPos {
       aPos[a], err = strconv.ParseUint(string(aBuf[a*16:(a+1)*16]), 16, 64)
       if err != nil { quit(err) }
    }
    if aPos[0] != aPos[1] {
-      quit(tError(fmt.Sprintf("position values do not match in %s", aFn)))
+      quit(tError("position values do not match in "+ aTemp))
       //todo recovery instructions
    }
-   aPath := fileForm(iSvc, iFile.Ffn + iSuffix)
+   aSuffix := string(aBuf[2*16:])
+
+   aDoor := _getFormDoor(iSvc, iFile.Ffn + aSuffix)
+   aDoor.Lock(); defer aDoor.Unlock()
+   aPath := fileForm(iSvc, iFile.Ffn + aSuffix)
    _, err = os.Lstat(aPath)
    if err != nil && !os.IsNotExist(err) { quit(err) }
    aDoSync := err != nil

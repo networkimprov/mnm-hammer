@@ -19,7 +19,7 @@ import (
 )
 
 const kSuffixRecv = "_recv"
-const kSuffixSent = "_sent"
+const kSuffixSent = "_sent" // must be same length
 
 
 type tFfnIndex map[string]string
@@ -111,12 +111,13 @@ func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
    if err != nil {
       fmt.Fprintf(os.Stderr, "tempReceivedAttach %s: %s %s\n", iSvc, iHead.Posted, err.Error())
    }
+   aSuffix := kSuffixRecv; if iHead.From == GetConfigService(iSvc).Uid { aSuffix = kSuffixSent }
    aDoSync := false
    for _, aFile := range iHead.SubHead.Attach {
       aDoSync = true
       if _isFormFill(aFile.Name) {
          aTid := iHead.SubHead.ThreadId; if aTid == "" { aTid = iHead.Id }
-         err = tempFilledForm(iSvc, aTid, iHead.Id, kSuffixRecv, &aFile, iR)
+         err = tempFilledForm(iSvc, aTid, iHead.Id, aSuffix, &aFile, iR)
          if err != nil {
             return err
          }
@@ -266,11 +267,10 @@ func _updateFfnIndex(iSvc string, iRec tComplete, iIdx tFfnIndex, iSubHead *tHea
 }
 
 func _storeFormAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
-   aSuffix := kSuffixRecv; if iRec.lms() != "" { aSuffix = kSuffixSent }
    aDoSync := false
    for _, aFile := range iSubHead.Attach {
       if !_isFormFill(aFile.Name) { continue }
-      aOk := storeFilledForm(iSvc, iRec.mid(), aSuffix, &aFile)
+      aOk := storeFilledForm(iSvc, iRec.mid(), &aFile)
       aDoSync = aDoSync || aOk
    }
    if aDoSync {
