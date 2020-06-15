@@ -273,15 +273,26 @@
             </a>
          </li></ul>
       <span>
+         <span v-show="fl.length" x--todo="switch to v-if when uk-dropdown replaced"
+               title="Filled form results"
+               uk-icon="database" class="dropdown-icon"></span>
+         <div uk-dropdown="mode:click; offset:5; pos:bottom-left"
+              class="menu-bg dropdown-scroll">
+            <div class="dropdown-scroll-list">
+               <div v-for="aTbl in fl" :key="aTbl.Id">
+                  <mnm-date :iso="aTbl.Date"/>
+                  <a @click.prevent="tabSearch('ffn:'+aTbl.Id, cs.SvcTabs)" href="#">{{aTbl.Id}}</a>
+               </div>
+            </div></div>
          <span title="Search by tag"
                uk-icon="hashtag" class="dropdown-icon"></span> &nbsp;
-         <div uk-dropdown="mode:click; offset:2; pos:left-top"
+         <div uk-dropdown="mode:click; offset:5; pos:bottom-left"
               class="menu-bg dropdown-scroll">
             <div class="dropdown-scroll-list">
                <div v-for="aTag in g" :key="aTag.Id">
                   <a @click.prevent="tabSearch('#'+aTag.Name, cs.SvcTabs)" href="#">{{aTag.Name}}</a>
-               </div></div>
-         </div>
+               </div>
+            </div></div>
       </span>
       <div class="uk-width-1-2">
          <input @keyup.enter="tabSearch($event.target.value, cs.SvcTabs)"
@@ -322,15 +333,6 @@
                </td>
             </tr>
          </table></template>
-      <template v-else-if="cs.SvcTabs.PosFor === 0 && mnm._tabsStdService[cs.SvcTabs.Pos].Term === 'FFT'">
-         <div v-for="aRow in tl" :key="aRow.Id"
-              @click="tabSearch('ffn:'+aRow.Id, cs.SvcTabs)"
-              uk-grid class="uk-grid-small thread-row">
-            <div class="uk-width-auto" style="padding:0">
-               <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
-            <div class="uk-width-expand">{{aRow.Id}}</div>
-            <!--todo more fields-->
-         </div></template>
       <template v-else>
          <div v-for="aRow in tl" :key="aRow.Id"
               @click="mnm.NavigateThread(aRow.Id)"
@@ -2428,7 +2430,7 @@
       errors: [], errorFlag: false,
    // per service
       cf:{NodeSet:[]}, cn:{}, tl:[], ffn:'', // ffn derived from tl
-      ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
+      fl:[], ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
       toSavePs:{}, // populated locally //todo rename toSave -> toSaveMo
    // per thread
       cl:[[],[]], al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
@@ -2764,8 +2766,8 @@
 
       switch (i) {
       case 'cf': case 'cn': case 'cl': case 'al': case 'ml':
-      case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
-      case 't' : case 'f' : case 'v' : case 'g': case 'l': case 'nlo':
+      case 'fl': case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
+      case 't' : case 'f' : case 'v' : case 'g' : case 'l' : case 'nlo':
          if (i === 'f' && iEtc) {
             mnm._data.fo = iData;
          } else {

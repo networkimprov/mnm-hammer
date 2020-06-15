@@ -563,11 +563,10 @@ the tabs above the list.
 <i>All</i> lists all threads. 
 <i>Unread</i> lists threads with messages that have not been opened. 
 <i>#Todo</i> lists threads with messages tagged as such. 
-<i>FFT</i> lists filled-form tables. 
 </p>
 
-<p>To create a tab listing all threads containing a specific tag, select the tag name from 
-the <span uk-icon="hashtag"></span> menu (see also <a href="#tags">Tags</a>). 
+<p>To view all threads containing a specific tag in a separate tab, open the 
+<span uk-icon="hashtag"></span> menu and click the tag's hyperlink (see also <a href="#tags">Tags</a>). 
 </p>
 
 <p>The search box creates a tab listing threads that match the entered query. 
@@ -575,6 +574,10 @@ To either require or disallow certain words in every thread of the result set,
 prefix any words in the query with <tt>+</tt> or <tt>-</tt>.
 To require a phrase in every thread of the result set, 
 append or prepend <tt>=</tt> to the entire query.
+</p>
+
+<p>For documentation of the <span uk-icon="database"></span> menu, see 
+<a href="#fftb">Filled-Form Tables</a>.
 </p>
 
 <p>To sort the thread list by the date of the initial message in each thread, click ... 
@@ -605,15 +608,18 @@ use the <span uk-icon="arrow-left"></span><span uk-icon="arrow-right"></span> hy
 
 <h4 id="fftb">7a. Filled-Form Tables</h4>
 
-<p>Both incoming and outgoing filled-form results are appended to filled-form tables, 
-which are listed under the <i>FFT</i> tab. 
+<p>Both received and sent filled-form results are appended to a table for the associated 
+form type (aka FFN).
+The filled-form tables are listed in the <span uk-icon="database"></span> menu, by date of last update. 
+This menu does not appear if no filled-form results have been recorded.
 See also <a href="#form">Blank Forms</a>. 
 </p>
 
-<p>To view a filled-form table in a thread panel tab, click its row in the <i>FFT</i> list. 
+<p>To view a filled-form table in a separate thread panel tab, open the 
+<span uk-icon="database"></span> menu and click the hyperlink for the table. 
 </p>
 
-<p>To view the thread &amp; message that delivered a filled-form table entry, 
+<p>To view the thread &amp; message that delivered a specific filled-form table entry, 
 click its <span uk-icon="mail"></span> hyperlink,
 which creates a <b>&#x2992;</b>&nbsp;<i>Form result</i> tab above the message list. 
 </p>
