@@ -80,7 +80,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       if err != nil { return err }
       _, err = iW.Write([]byte(`,"Table":`))
       if err != nil { return err }
-      err = WriteTableFilledForm(iW, iSvc, aFfn)
+      err = writeTableFilledForm(iW, iSvc, aFfn)
       if err != nil { return err }
       _, err = iW.Write([]byte{'}'})
       return err

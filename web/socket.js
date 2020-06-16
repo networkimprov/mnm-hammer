@@ -185,7 +185,7 @@
                mnm.ThreadChange(aObj[a] === '_T');
             else if (aObj[a] === '_e')
                mnm.Err(aObj[++a]);
-            else if (aObj[a] === 'mn' || aObj[a] === 'an' || aObj[a] === 'fn')
+            else if (aObj[a] === 'mn' || aObj[a] === 'an')
                _xhr(aObj[a], aObj[++a]);
             else {
                _xhr(aObj[a]);

@@ -225,7 +225,7 @@ func GetIdxFilledForm(iSvc string) interface{} {
    return aList
 }
 
-func WriteTableFilledForm(iW io.Writer, iSvc string, iFft string) error {
+func writeTableFilledForm(iW io.Writer, iSvc string, iFft string) error {
    var err error
    aDoor := _getFormDoor(iSvc, iFft)
    aDoor.RLock(); defer aDoor.RUnlock()

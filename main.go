@@ -609,8 +609,6 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          break
       }
       err = pSl.WriteMessagesThread(iResp, aSvcId, aState, aOp_Id[1])
-   case "fn":
-      err = pSl.WriteTableFilledForm(iResp, aSvcId, aOp_Id[1])
    case "an", "ad":
       if aOp_Id[0] == "ad" {
          aSaveName := url.QueryEscape(aOp_Id[1][strings.IndexByte(aOp_Id[1], '_')+3 :])

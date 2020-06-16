@@ -527,7 +527,7 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
                break
             }
             if aOp == "_t" || aOp == "_T" { continue }
-            if aOp == "mn" || aOp == "an" || aOp == "fn" {
+            if aOp == "mn" || aOp == "an" {
                a1++
                aId = aOps[a1]
             }
