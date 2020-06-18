@@ -75,6 +75,7 @@ func sizeDraftAttach(iSvc string, iSubHead *tHeader2, iId tLocalId) int64 {
    for a, aFile := range iSubHead.Attach {
       if _isFormFill(aFile.Name) {
          iSubHead.Attach[a].FfKey = ""
+         iSubHead.Attach[a].AllowAnyData = false
       } else {
          aFi, err := os.Lstat(fileAtc(iSvc, aTid, iId.lms(), aFile.Name))
          if err != nil { quit(err) }
@@ -112,12 +113,13 @@ func tempReceivedAttach(iSvc string, iHead *Header, iR io.Reader) error {
       fmt.Fprintf(os.Stderr, "tempReceivedAttach %s: %s %s\n", iSvc, iHead.Posted, err.Error())
    }
    aSuffix := kSuffixRecv; if iHead.From == GetConfigService(iSvc).Uid { aSuffix = kSuffixSent }
+   aFftSize := map[string]int64{}
    aDoSync := false
    for _, aFile := range iHead.SubHead.Attach {
       aDoSync = true
       if _isFormFill(aFile.Name) {
          aTid := iHead.SubHead.ThreadId; if aTid == "" { aTid = iHead.Id }
-         err = tempFilledForm(iSvc, aTid, iHead.Id, aSuffix, &aFile, iR)
+         err = tempFilledForm(iSvc, aTid, iHead.Id, aSuffix, &aFile, aFftSize, iR)
          if err != nil {
             return err
          }
@@ -191,11 +193,12 @@ func storeReceivedAttach(iSvc string, iSubHead *tHeader2, iRec tComplete) {
 
 func tempSentAttach(iSvc string, iHead *Header, iSd *os.File) {
    var err error
+   aFftSize := map[string]int64{}
    aDoSync := false
    for _, aFile := range iHead.SubHead.Attach {
       if !_isFormFill(aFile.Name) { continue }
       aDoSync = true
-      err = tempFilledForm(iSvc, iHead.SubHead.ThreadId, iHead.Id, kSuffixSent, &aFile, iSd)
+      err = tempFilledForm(iSvc, iHead.SubHead.ThreadId, iHead.Id, kSuffixSent, &aFile, aFftSize, iSd)
       if err != nil { quit(err) }
    }
    if aDoSync {
@@ -295,7 +298,7 @@ func validateDraftAttach(iSvc string, iSubHead *tHeader2, iId tLocalId, iFd *os.
          _, err = iFd.Read(aBuf)
          if err != nil { quit(err) }
          err = validateFilledForm(iSvc, aBuf, aFile.Ffn)
-         if err != nil { return err }
+         if err != nil && !aFile.AllowAnyData { return err }
          continue
       }
       if _isForm(aFile.Name) && aFile.Ffn[0] == '#' {
@@ -364,7 +367,7 @@ func writeFormFillAttach(iFd *os.File, iSubHead *tHeader2, iMap map[string]strin
          quit(tError("empty " + aFile.FfKey))
       }
       err = json.Unmarshal(aS, &struct{}{})
-      if err != nil { quit(err) }
+      if err != nil && !aFile.AllowAnyData { quit(err) }
       _, err = aTee.Write(aS)
       if err != nil { quit(err) }
       iEl.Size += int64(len(aS))
@@ -431,7 +434,7 @@ func writeStoredAttach(iW io.Writer, iSvc string, iSubHead *tHeader2) error {
    var err error
    for _, aFile := range iSubHead.Attach {
       if _isFormFill(aFile.Name) {
-         aLen, err = writeRowFilledForm(iW, iSvc, aFile.Ffn+kSuffixSent, iSubHead.ConfirmId)
+         aLen, err = writeRowFilledForm(iW, iSvc, aFile.Ffn+kSuffixSent, iSubHead.ConfirmId, aFile.Name)
       } else {
          var aFd *os.File
          aFd, err = os.Open(fileAtc(iSvc, iSubHead.ThreadId, iSubHead.ConfirmId, aFile.Name))

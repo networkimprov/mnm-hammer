@@ -170,6 +170,7 @@ type tHeader2Attach struct {
    Size int64 `json:",omitempty"`
    Ffn string `json:",omitempty"`
    FfKey string `json:",omitempty"` // only in draft
+   AllowAnyData bool `json:",omitempty"` // for testing
 }
 
 func (o *tHeader2) setupDraft(iThreadId string, i *Update, iSvc string) {

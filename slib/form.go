@@ -236,7 +236,8 @@ func writeTableFilledForm(iW io.Writer, iSvc string, iFft string) error {
    return err
 }
 
-func writeRowFilledForm(iW io.Writer, iSvc string, iFft string, iMsgId string) (int64, error) {
+func writeRowFilledForm(iW io.Writer, iSvc string, iFft string,
+                        iMsgId string, iName string) (int64, error) {
    var err error
    aDoor := _getFormDoor(iSvc, iFft)
    aDoor.RLock(); defer aDoor.RUnlock()
@@ -253,7 +254,10 @@ func writeRowFilledForm(iW io.Writer, iSvc string, iFft string, iMsgId string) (
    for aRow = nil; aDc.More(); aRow = nil {
       err = aDc.Decode(&aRow)
       if err != nil { quit(err) }
-      if aRow["$msgid"].(string) == iMsgId { break }
+      if aRow["$msgid"].(string) == iMsgId &&
+         (aRow["$name"] == nil || aRow["$name"].(string) == iName) { // nil test for pre-0.8
+         break
+      }
    }
    if aRow == nil {
       quit(fmt.Errorf("%s formfill table %s lacks msgid %s\n", iSvc, iFft, iMsgId))
@@ -365,23 +369,30 @@ func _validateType(iResult *[]byte, iParent string, iField interface{}, iEl *tSp
 }
 
 func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile *tHeader2Attach,
-                    iR io.Reader) error {
-   var err error
+                    iFftSize map[string]int64, iR io.Reader) error {
    aTemp := ftmpAtc(iSvc, iMsgId, iFile.Name)
    aFd, err := os.OpenFile(aTemp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
    if err != nil { quit(err) }
    defer aFd.Close()
 
    var aFi os.FileInfo
-   aFi, err = os.Lstat(fileForm(iSvc, iFile.Ffn + iSuffix))
-   if err != nil && !os.IsNotExist(err) { quit(err) }
-   aPos := int64(0); if err == nil { aPos = aFi.Size() - 1 }
+   aPos := iFftSize[iFile.Ffn + iSuffix]
+   if aPos == 0 {
+      // assume this is handling a server message, so is not concurrent with self or storeFilledForm()
+      aFi, err = os.Lstat(fileForm(iSvc, iFile.Ffn + iSuffix))
+      if err != nil {
+         if !os.IsNotExist(err) { quit(err) }
+      } else {
+         aPos = aFi.Size() - 1
+      }
+   }
    _, err = aFd.Write([]byte(fmt.Sprintf("%016x%016x%s", aPos, aPos, iSuffix))) // 2 copies for safety
    if err != nil { quit(err) }
 
    aDelim := []byte{',','\n','\n'}; if aPos == 0 { aDelim[0] = '[' }
    _, err = aFd.Write(aDelim)
    if err != nil { quit(err) }
+   aOffset := aPos + int64(len(aDelim))
 
    var aBuf bytes.Buffer
    var aCw tCrcWriter
@@ -402,18 +413,23 @@ func tempFilledForm(iSvc string, iThreadId, iMsgId string, iSuffix string, iFile
       _, err = aFd.Seek(int64(2*16 + len(iSuffix) + len(aDelim)), io.SeekStart)
       if err != nil { quit(err) }
       aCw.clear()
-      _, err = aTee.Write([]byte(fmt.Sprintf(`{"$text":%s`, aBytes)))
+      _, err = aTee.Write(append([]byte(`{"$text":`), aBytes...))
       if err != nil { quit(err) }
    } else if aBytes[1] == '}' {
       _, err = aTee.Write([]byte(`"$empty":true`))
       if err != nil { quit(err) }
    }
-   _, err = aTee.Write([]byte(fmt.Sprintf(`,"$threadid":"%s","$msgid":"%s","$offset":%d,"$size":%d`,
-                                          iThreadId, iMsgId, aPos+3, iFile.Size)))
+   aMtd := fmt.Sprintf(`,"$threadid":"%s","$msgid":"%s","$name":"%s","$offset":%d,"$size":%d`,
+                       iThreadId, iMsgId, iFile.Name, aOffset, iFile.Size)
+   _, err = aTee.Write([]byte(aMtd))
    if err != nil { quit(err) }
    aCw.Write([]byte{'}'}) // include closing '}' in checksum
    _, err = aFd.Write([]byte(fmt.Sprintf(`,"$checksum":%d}]`, aCw.sum)))
    if err != nil { quit(err) }
+
+   aFi, err = aFd.Stat()
+   if err != nil { quit(err) }
+   iFftSize[iFile.Ffn + iSuffix] = aPos + aFi.Size() - int64(2*16 + len(iSuffix) + 1) // omit ']'
 
    err = aFd.Sync()
    if err != nil { quit(err) }

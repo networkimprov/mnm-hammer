@@ -590,17 +590,12 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
             iUpdt.Thread.Cc[a].WhoUid = pSl.LookupAdrsbk(iCtx.svcId, iUpdt.Thread.Cc[a].Who)
          }
       }
-      if iUpdt.Thread.FormFill != nil {
-         aFf := iUpdt.Thread.FormFill["lastfile"]
-         if aFf != "" {
+      for a := range iUpdt.Thread.Attach {
+         if iUpdt.Thread.Attach[a].FfKey == "lastfile" {
             aFileId := (*iCtx.lastId["al"])[0].Id
+            iUpdt.Thread.Attach[a].FfKey = aFileId
+            iUpdt.Thread.FormFill[aFileId] = iUpdt.Thread.FormFill["lastfile"]
             delete(iUpdt.Thread.FormFill, "lastfile")
-            iUpdt.Thread.FormFill[aFileId] = aFf
-            for a := range iUpdt.Thread.Attach {
-               if iUpdt.Thread.Attach[a].FfKey == "lastfile" {
-                  iUpdt.Thread.Attach[a].FfKey = aFileId
-               }
-            }
          }
       }
       fallthrough

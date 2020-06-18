@@ -175,7 +175,7 @@
                            {"Name":"form/Blue.original"},
                            {"Name":"form_fill/Blue.original", "FfKey":"lastfile"}],
                  "Data":"all good and true words\u00d7",
-                 "FormFill":{"lastfile":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
+                 "FormFill":{"lastfile":"{\"nr\":101,\"or\":{\"anr\":[[1],[2]]}}"} }},
    "Result": {
       "mn": [{"From":"self", "Id":"*midt", "Len":24, "Size":25, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
@@ -189,7 +189,7 @@
                                {"Who":"Gold#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"initial recipient", "Subscribe":true}] },
               "msg_data":"all good and true words\u00d7",
-              "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
+              "form_fill":"{\"nr\":101,\"or\":{\"anr\":[[1],[2]]}}" }] ,
       "cl": "thread_save.b" ,
       "al": "thread_save.b" }
 },{
@@ -306,7 +306,11 @@
    "Updt": {"Op":"tab_add", "Tab":{"Type":0, "Term":"#Todo"}},
    "Result": {
       "mo": [{"From":"*uid", "Id":"*mid", "Len":0, "Size":0, "Posted":"*d",
-              "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":""},
+              "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"",
+                         "Attach":[{"Name":"r:Blue.second", "Size":33,
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"},
+                                   {"Name":"r:Blue.badata", "Size":33,
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"}] },
               "msg_data":"" }] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":2, "Terms":[{"Term":"#Todo"}], "Type":0},
@@ -419,11 +423,15 @@
 },{
    "Updt": {"Op":"tab_add", "Tab":{"Type":1, "Term":"ffn:mnmnotmail.github.io/registry/test1_recv"}},
    "Result": {
-      "tl": {"Ffn":"mnmnotmail.github.io/registry/test1_recv",
-             "Table":[{"nr":123, "or":{"anr":[[1],[2]]},
-                       "$threadid":"*mid", "$msgid":"*mid", "$offset":3, "$size":33, "$checksum":"**"},
-                      {"nr":123, "or":{"anr":[[1],[2]]},
-                       "$threadid":"*mid", "$msgid":"*mid", "$offset":"**", "$size":33, "$checksum":"**"}]} ,
+      "tl": {"Ffn":"mnmnotmail.github.io/registry/test1_recv", "Table":[
+                   {"nr":201, "or":{"anr":[[1],[2]]}, "$threadid":"*mid", "$msgid":"*mid",
+                    "$name":"r:Blue.original", "$offset":3, "$size":33, "$checksum":"**"},
+                   {"nr":202, "or":{"anr":[[1],[2]]}, "$threadid":"*mid", "$msgid":"*mid",
+                    "$name":"r:Blue.original", "$offset":"**", "$size":33, "$checksum":"**"},
+                   {"nr":203, "or":{"anr":[[1],[2]]}, "$threadid":"*mid", "$msgid":"*mid",
+                    "$name":"r:Blue.second", "$offset":"**", "$size":33, "$checksum":"**"},
+                   {"$text":"{\"nr\":204,\"or\":{\"anr\":[[1],[2]]}|", "$threadid":"*mid", "$msgid":"*mid",
+                    "$name":"r:Blue.badata", "$offset":"**", "$size":33, "$checksum":"**"} ]} ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[{"Term":"good"}], "Type":0},
              "History":{"Prev":false, "Next":true},
@@ -767,7 +775,7 @@
    "Updt": {"Op":"thread_save", "Thread":{
                  "New":2, "Alias":"Gold", "Subject":"reply ohi",
                  "Attach": [{"Name":"form_fill/Blue.original", "FfKey":"lastfile"}],
-                 "FormFill":{"lastfile":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
+                 "FormFill":{"lastfile":"{\"nr\":201,\"or\":{\"anr\":[[1],[2]]}}"} }},
    "Result": {
       "tl": [{"Id":"*mid", "Unread":true, "Subject":"reply ohi", "SubjectWas":"ohi", "OrigCc":["Gold#td"],
               "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
@@ -777,7 +785,7 @@
               "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"reply ohi",
                          "Attach":[{"Name":"r:Blue.original", "FfKey":"*", "Size":33,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}] },
-              "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
+              "msg_data":"", "form_fill":"{\"nr\":201,\"or\":{\"anr\":[[1],[2]]}}" }] ,
       "al": "navigate_thread.a" }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
@@ -789,7 +797,7 @@
                  "New":1, "Alias":"Gold", "Subject":"to forward", "Cc":[],
                  "Attach":[{"Name":"upload/Gold/File.txt"},
                            {"Name":"form_fill/Blue.original", "FfKey":"0123456789ab_f:Blue.original"}],
-                 "FormFill":{"0123456789ab_f:Blue.original":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}"} }},
+                 "FormFill":{"0123456789ab_f:Blue.original":"{\"nr\":202,\"or\":{\"anr\":[[1],[2]]}}"} }},
    "Result": {
       "mo": [{"From":"self", "Id":"*midt", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"", "Subject":"to forward",
@@ -798,7 +806,7 @@
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}],
                          "Cc":[{"Who":"Gold#td", "WhoUid":"*uid", "By":"Gold#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"author", "Subscribe":true}] },
-              "msg_data":"", "form_fill":"{\"nr\":123,\"or\":{\"anr\":[[1],[2]]}}" }] ,
+              "msg_data":"", "form_fill":"{\"nr\":202,\"or\":{\"anr\":[[1],[2]]}}" }] ,
       "tl": [{"Id":"*midt", "Subject":"to forward", "OrigCc":[],
               "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":""},
              {"Id":"*mid", "Unread":true, "Subject":"reply ohi", "SubjectWas":"ohi", "OrigCc":["Gold#td"],
@@ -827,14 +835,26 @@
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
    "Name": "poll_ack.b"
 },{
-   "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Gold"}},
+   "Updt": {"Op":"thread_save", "Thread":{
+                 "New":2, "Alias":"Gold",
+                 "Attach":[{"Name":"form_fill/Blue.second", "FfKey":"0123456789ab_f:Blue.second"},
+                           {"Name":"form_fill/Blue.badata", "FfKey":"0123456789ab_f:Blue.badata",
+                            "AllowAnyData":true}],
+                 "FormFill":{"0123456789ab_f:Blue.second":"{\"nr\":203,\"or\":{\"anr\":[[1],[2]]}}",
+                             "0123456789ab_f:Blue.badata":"{\"nr\":204,\"or\":{\"anr\":[[1],[2]]}|"} }},
    "Result": {
       "tl": "poll_ack.b" ,
       "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":".", "Queued":false}] ,
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Size":0, "Posted":"draft",
-              "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":""},
-              "msg_data":"" }] ,
+              "SubHead":{"Alias":"Gold#td", "ThreadId":"*mid", "Subject":"",
+                         "Attach":[{"Name":"r:Blue.second", "FfKey":"*", "Size":33,
+                                    "Ffn":"mnmnotmail.github.io/registry/test1"},
+                                   {"Name":"r:Blue.badata", "FfKey":"*", "Size":33,
+                                    "Ffn":"mnmnotmail.github.io/registry/test1",
+                                    "AllowAnyData":true}] },
+              "msg_data":"",
+              "form_fill":"{\"nr\":203,\"or\":{\"anr\":[[1],[2]]}}{\"nr\":204,\"or\":{\"anr\":[[1],[2]]}|" }] ,
       "al": [{"File":"Gold/File.txt", "Size":26, "Who":"Gold#td", "MsgId":"*mid", "Id":"*", "Date":"*d"}] }
 },{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
