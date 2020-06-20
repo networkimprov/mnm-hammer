@@ -93,6 +93,9 @@ body {
 
 input[type=text],
 textarea {
+   border: 1px solid;
+   border-color: #abadb3 #dbdfe6 #e3e9ef;
+   border-radius: 2px;
    font-family: "Courier New", monospace;
    font-size: 82%;
    box-sizing: border-box;
@@ -100,10 +103,14 @@ textarea {
 textarea {
    line-height: 1.25;
 }
+input[type=text]:focus,
+textarea:focus {
+   outline: none;
+}
 
 .search-box {
+   height: 100%;
    font-size: larger !important;
-   line-height: 1.36;
    color: #1e87f0;
 }
 
