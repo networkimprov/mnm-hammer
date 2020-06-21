@@ -2422,19 +2422,23 @@
    mnm._tabsStdThread = <%.tabsStdThread%>;
    mnm._data = {
    // global
-      v:[], g:[], l:{Pin:''}, t:[], f:[], fo:'', nlo:[], // fo populated by f requests
+      v:[], g:[], l:{Pin:''}, t:[], f:[], nlo:[],
+      fo:'', // populated by f requests
    // per client
       cs:{SvcTabs:{Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
       ohiFrom: !mnm._isLocal, //todo move to cs
       adrsbkmenuId: {},
       errors: [], errorFlag: false,
    // per service
-      cf:{NodeSet:[]}, cn:{}, tl:[], ffn:'', // ffn derived from tl
+      cf:{NodeSet:[]}, cn:{}, tl:[],
+      ffn:'', // derived from tl
       fl:[], ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
       toSavePs:{}, // populated locally //todo rename toSave -> toSaveMo
    // per thread
-      cl:[[],[]], al:[], ao:{}, ml:[], mo:{}, // ao populated by an requests
+      cl:[[],[]], al:[], ml:[], mo:{},
+      ao:{}, // populated by an requests
       toSave:{}, draftRefs:{}, // populated locally
+      msgSubjects:[], msgTitle:null, tagSet:{}, // populated from ml
    };
 
    var sApp = new Vue({
@@ -2483,52 +2487,50 @@
             var aT = mnm._data.cs.ThreadTabs;
             return aT ? [mnm._tabsStdThread, [], aT.Terms] : [];
          },
-         msgTitle: function() { // mirrors slib/thread.go _updateSearchDoc()
-            var aLastN = -1, aHasDraft = false;
-            for (var a = mnm._data.ml.length-1; a >= 0; --a) {
-               if (mnm._data.ml[a].From === '' || !aHasDraft) {
-                  aLastN = a;
-                  aHasDraft = mnm._data.ml[a].From === '';
-               }
-            }
-            if (aLastN === -1)
-               return null;
-            return mnm._data.ml[aLastN].Subject || this.msgSubjects[this.msgSubjects.length-1].name;
-         },
-         msgSubjects: function() {
-            var aList = [];
-            for (var a = mnm._data.ml.length-1; a >= 0; --a) {
-               var aM = mnm._data.ml[a];
-               if (aList.length === 0 || (aM.From !== '' && aM.Subject !== '' &&
-                                          !aList.find(function(c){ return c.name === aM.Subject })))
-                  aList.unshift({msgId:aM.Id, name: aM.Subject ||
-                     '\u25b8'+ (aM.From === '' ? 'Untitled Draft' : 'Subject Missing') +'\u25c2'});
-            }
-            return aList;
-         },
          msgTags: function() {
-            var aSet = {};
-            mnm._data.ml.forEach(function(cMsg) {
-               if (cMsg.Tags)
-                  cMsg.Tags.forEach(function(cId) { aSet[cId] = true });
-            });
             var aList = [];
             mnm._data.g.forEach(function(cTag) {
-               if (aSet[cTag.Id])
+               if (this.tagSet[cTag.Id])
                   aList.push(cTag);
-            });
+            }, this);
             return aList;
          },
          svcSelf: function() {
             return mnm._data.v.find(function(c) { return c.Name === '<%.TitleJs%>' }) || {};
          },
          ffnCol: function() {
-            if (!mnm._data.ffn) return {};
+            if (!mnm._data.ffn)
+               return {};
             var aSet = {};
             for (var a=0; a < mnm._data.tl.length; ++a)
                for (var aKey in mnm._data.tl[a])
                   aSet[aKey] = true;
             return aSet;
+         },
+      },
+      watch: {
+         ml: function() {
+            var aSubj = [];
+            var aLastN = -1, aHasDraft = false;
+            var aTagset = {};
+            for (var a = mnm._data.ml.length-1; a >= 0; --a) {
+               var aM = mnm._data.ml[a];
+               if (aSubj.length === 0 || (aM.From !== '' && aM.Subject !== '' &&
+                                          !aSubj.find(function(c){ return c.name === aM.Subject }))) {
+                  aSubj.unshift({msgId:aM.Id, name: aM.Subject ||
+                     '\u25b8'+ (aM.From === '' ? 'Untitled Draft' : 'Subject Missing') +'\u25c2'});
+               }
+               if (aM.From === '' || !aHasDraft) { // mirrors slib/thread.go _updateSearchDoc()
+                  aLastN = a;
+                  aHasDraft = aM.From === '';
+               }
+               if (aM.Tags)
+                  aM.Tags.forEach(function(cId) { aTagset[cId] = true });
+            }
+            this.msgSubjects = aSubj;
+            this.msgTitle = aLastN === -1 ? null
+                                          : mnm._data.ml[aLastN].Subject || aSubj[aSubj.length-1].name;
+            this.tagSet = aTagset;
          },
       },
    });
