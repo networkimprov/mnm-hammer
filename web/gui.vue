@@ -2515,8 +2515,8 @@
             var aTagset = {};
             for (var a = mnm._data.ml.length-1; a >= 0; --a) {
                var aM = mnm._data.ml[a];
-               if (aSubj.length === 0 || (aM.From !== '' && aM.Subject !== '' &&
-                                          !aSubj.find(function(c){ return c.name === aM.Subject }))) {
+               if (aSubj.length === 0 ||
+                   aM.Subject !== '' && !aSubj.find(function(c){ return c.name === aM.Subject })) {
                   aSubj.unshift({msgId:aM.Id, name: aM.Subject ||
                      '\u25b8'+ (aM.From === '' ? 'Untitled Draft' : 'Subject Missing') +'\u25c2'});
                }
