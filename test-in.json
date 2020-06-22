@@ -98,6 +98,9 @@
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"author", "Subscribe":true}] },
               "msg_data":"one" }] ,
+      "tl": [{"Id":"*midt", "Subject":"ohi there", "OrigCc":[],
+              "LastDate":"*d", "LastAuthor":"", "OrigDate":"*d", "OrigAuthor":""}] ,
+      "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi there", "Seen":".", "Queued":false}] ,
       "cl": "thread_save.a" ,
       "al": "thread_save.a" }
 },{

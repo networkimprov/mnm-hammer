@@ -864,7 +864,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          aTid := ""; if iUpdt.Thread.New == eNewReply { aTid = iState.getThread() }
          iUpdt.Thread.Id = makeLocalId(aTid)
       }
-      storeDraftThread(iSvc, iUpdt)
+      aSubjUpdt := storeDraftThread(iSvc, iUpdt)
       if iUpdt.Thread.New == eNewThread {
          iState.addThread(iUpdt.Thread.Id)
          aFn = func(c *ClientState) []string {
@@ -883,10 +883,15 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       } else { // may update msg from a threadid other than iState.getThread()
          aFn = func(c *ClientState) []string {
             if c.isOpen(iUpdt.Thread.Id) { return aResult }
+            if strings.HasPrefix(iUpdt.Thread.Id, c.getThread()) { return aResult[:len(aResult)-2] }
+            if aSubjUpdt { return aResult[:1] }
             return nil
          }
-         aResult = []string{"cl", "al", "mn", iUpdt.Thread.Id}
+         aResult = []string{"tl", "ml", "cl", "al", "mn", iUpdt.Thread.Id};
          if iUpdt.Thread.Id[0] != '_' {
+            aResult = append(aResult[:2], aResult[3:]...) // remove cl
+         }
+         if !aSubjUpdt {
             aResult = aResult[1:]
          }
       }
