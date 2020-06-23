@@ -920,6 +920,7 @@
                >+{{mnm._data.cl[1].length - 2}}</span>
          <div style="height:100%; position:absolute; left:13em; right:42px; top:0;">
             <mnm-draftmenu @drop="atcDrop"
+                           @pointerup.native.stop="clickPreview"
                            :list="mnm._data.mo[msgid].SubHead.Attach"
                            :getname="atcGetName" :getkey="atcGetKey"
                            :style="{float:'right'}"/>
@@ -933,14 +934,14 @@
       </div>
       <input @input="subjAdd"
              @focus="subjShow = true"
-             @click.stop="clickPreview"
+             @pointerup.stop="clickPreview"
              :value="subject"
              :title="mnm._data.ml.length === 1 || subjShow ? '' : 'Edit subject'"
              :placeholder="mnm._data.ml.length === 1 ? 'Subject' : subjShow ? 'Re' : ''" type="text"
              class="width100"
              :class="{'draft-minsubject': mnm._data.ml.length > 1 && !subjShow && !subject}">
       <mnm-textresize @input.native="textAdd"
-                      @click.native.stop="clickPreview"
+                      @pointerup.native.stop="clickPreview"
                       @resize="$root.msglistSetScroll"
                       :src="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
                       placeholder="Message text, Markdown OK. Ctrl-J to preview!"
@@ -972,8 +973,9 @@
             if (iEvent.ctrlKey && iEvent.key === 'j')
                mnm._lastPreview = iId;
          },
-         clickPreview: function() {
-            document.getElementById('pp_'+this.msgid).click();
+         clickPreview: function(iEvt) {
+            document.getElementById('pp_'+this.msgid).dispatchEvent(new PointerEvent('pointerup',
+               {bubbles:iEvt.bubbles, cancelable:iEvt.cancelable, composed:iEvt.composed}));
          },
          getToSave: function(iNoTimer) {
             var aMo = mnm._data.mo[this.msgid];
