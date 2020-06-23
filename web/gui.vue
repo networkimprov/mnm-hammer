@@ -1561,10 +1561,10 @@
          <li v-for="aFile in aSet.Revs" :key="aSet.Name+'.'+aFile.Id">
             <mnm-date :iso="aFile.Date" hms="hm"/>
             <button v-if="toggle"
-                    @click="$emit('attach', 'form/'+aSet.Name+'.'+aFile.Id)"
+                    @click="revAttach(aSet.Name, aFile.Id)"
                     title="Attach form"
                     class="btn btn-icon"><mnm-paperclip/></button>
-            <a @click.stop.prevent="revOpen(aSet.Name,aFile.Id,$event.currentTarget)"
+            <a @click.stop.prevent="revOpen(aSet.Name, aFile.Id, $event.currentTarget)"
                :ref="aSet.Name+'.'+aFile.Id" href="#">
                <span uk-icon="triangle-left">&nbsp;</span>{{aSet.Name}}.{{aFile.Id}}</a>
             <form v-if="!toggle"
@@ -1627,7 +1627,7 @@
       props: {toggle:String},
       data: function() {
          return {upname:'', dupname:'', setName:'', fileId:'', codePos:0, codeShow:false, dupShow:'',
-                 editTop:'', editRight:'', formDef:null, parseError:'', toSave:{}};
+                 editTop:'', editRight:'', formDef:null, parseError:''};
       },
       computed: {
          mnm: function() { return mnm },
@@ -1661,10 +1661,21 @@
                                             cA.Revs[0].Date < cB.Revs[0].Date ? 1 : 0) }
             );
          },
+         revAttach: function(iSet, iRev) {
+            var aKey = iSet+'.'+iRev;
+            var that = this;
+            if (aKey in mnm._data.toSaveFo) {
+               clearTimeout(mnm._data.toSaveFo[aKey].timer);
+               mnm._data.toSaveFo[aKey].fn(this, fEmit);
+            } else {
+               fEmit();
+            }
+            function fEmit() { that.$emit('attach', 'form/'+ aKey) }
+         },
          revOpen: function(iSet, iRev, iEl) {
             var aKey = iSet+'.'+iRev;
-            if (aKey in this.toSave) {
-               mnm._data.fo = this.toSave[aKey].data;
+            if (aKey in mnm._data.toSaveFo) {
+               mnm._data.fo = mnm._data.toSaveFo[aKey].data;
             } else {
                mnm._data.fo = '';
                mnm.FormOpen(aKey);
@@ -1682,9 +1693,9 @@
          },
          revDelete: function(iSet, iRev) {
             var aKey = iSet+'.'+iRev;
-            if (aKey in this.toSave) {
-               clearTimeout(this.toSave[aKey].timer);
-               delete this.toSave[aKey];
+            if (aKey in mnm._data.toSaveFo) {
+               clearTimeout(mnm._data.toSaveFo[aKey].timer);
+               delete mnm._data.toSaveFo[aKey];
             }
          },
          showCode: function() {
@@ -1698,14 +1709,15 @@
                if (this.parseError !== '')
                   return;
                var aKey = this.setName+'.'+this.fileId;
-               if (!(aKey in this.toSave))
-                  this.toSave[aKey] = {timer:setTimeout(fDing, mnm._saveWaitTime, this), data:''};
-               this.toSave[aKey].data = mnm._data.fo;
-               function fDing(that) {
-                  that.$refs.save.value = that.toSave[aKey].data;
+               if (!(aKey in mnm._data.toSaveFo))
+                  mnm._data.toSaveFo[aKey] = {timer: setTimeout(fDing, mnm._saveWaitTime, this),
+                                              fn:fDing, data:''};
+               mnm._data.toSaveFo[aKey].data = mnm._data.fo;
+               function fDing(that, cCb) {
+                  that.$refs.save.value = mnm._data.toSaveFo[aKey].data;
                   that.$refs.save.form.action = '/f/+' + encodeURIComponent(aKey);
-                  mnm.Upload(that.$refs.save.form); // assume save.value can be changed after this
-                  delete that.toSave[aKey];
+                  mnm.Upload(that.$refs.save.form, cCb); // assume save.value can be changed after this
+                  delete mnm._data.toSaveFo[aKey];
                }
             });
          },
@@ -2424,6 +2436,7 @@
    // global
       v:[], g:[], l:{Pin:''}, t:[], f:[], nlo:[],
       fo:'', // populated by f requests
+      toSaveFo:{}, // populated locally
    // per client
       cs:{SvcTabs:{Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
       ohiFrom: !mnm._isLocal, //todo move to cs
