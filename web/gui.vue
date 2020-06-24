@@ -1684,7 +1684,7 @@
             }
             this.setName = iSet;
             this.fileId = iRev;
-            this.editTop = iEl.offsetTop + 'px';
+            this.editTop = iEl.offsetTop - iEl.parentNode.parentNode.scrollTop + 'px';
             this.editRight = (iEl.offsetParent.offsetWidth - iEl.offsetLeft) +'px';
             this.codePos = 0;
             this.codeShow = false;
@@ -2382,7 +2382,7 @@
             this.file = iId;
             this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
             this.src = (iSvc ? '?an=' : '/t/') + encodeURIComponent(iId);
-            this.editTop = iEl.offsetTop +'px';
+            this.editTop = iEl.offsetTop - iEl.parentNode.parentNode.scrollTop +'px';
             if (iRhs)
                this.editLeft = (iEl.offsetLeft + 20) +'px'; // 20 == icon width
             else
