@@ -1603,6 +1603,7 @@
                     class="pane-scroller">
                   <mnm-textresize @input.native="editCode"
                                   @resize="$refs.codepane.scrollTop = codePos"
+                                  :disabled="!setName || !fileId"
                                   :src="mnm._data.fo"
                                   ref="code"
                                   class="width100"/></div>
