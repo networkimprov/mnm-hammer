@@ -2556,6 +2556,7 @@
       if (aHref[1].charAt(0) === '#') {
          iTokens[iIdx].attrs.push(['onclick', "mnm.NavigateLink(this.innerText,this.href);return false"]);
       } else if (!sUrlStart.test(aHref[1])) {
+         aHref[1] = encodeURIComponent(decodeURIComponent(aHref[1])); // mnm-viewer encoding is partial
          aHref[1] = '?ad='+ aHref[1].replace(/^this_/, iEnv.thisVal +'_');
          iTokens[iIdx].attrs.push(['download', '']);
          //todo add download icon and viewer
@@ -2567,14 +2568,14 @@
    mnm._mdi.renderer.rules.image = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       var aAlt = iSelf.renderInlineAsText(iTokens[iIdx].children, iOptions, iEnv);
       var aSrc = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('src')];
-      var aParam = aSrc[1].replace(/^this_/, iEnv.thisVal +'_');
+      var aParam = decodeURIComponent(aSrc[1]).replace(/^this_/, iEnv.thisVal +'_');
       if (aAlt.charAt(0) === '?') {
          if (!iEnv.formview)
             iEnv.formview = new mnm._FormViews(iEnv);
-         var aId = iEnv.formview.make(decodeURIComponent(aParam));
+         var aId = iEnv.formview.make(aParam);
          return '<component'+ iSelf.renderAttrs({attrs:[['id',aId]]}) +'></component>';
       }
-      aSrc[1] = '?an='+ aParam;
+      aSrc[1] = '?an='+ encodeURIComponent(aParam);
       return sMdiRenderImg(iTokens, iIdx, iOptions, iEnv, iSelf);
    };
 
