@@ -2778,6 +2778,7 @@
          if (++sChange === 2)
             return;
          sChange = 0;
+         mnm._data.ao = {};
          mnm._data.ml = sTemp.ml;
          iEtc         = sTemp.mo;
          i = 'mo';
