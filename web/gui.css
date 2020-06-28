@@ -238,7 +238,7 @@ textarea:focus {
 .viewer > a {
    position: absolute;
 }
-.viewer .viewer-name {
+.viewer > .viewer-name {
    float: right;
    white-space: pre;
    margin-left: 2em;
@@ -246,6 +246,11 @@ textarea:focus {
 }
 .viewer > div {
    clear: right;
+}
+.viewer img, /* todo checkerboard bg? */
+.viewer iframe,
+.viewer .viewer-form {
+   background-color: whitesmoke;
 }
 .viewer img,
 .viewer video,
@@ -260,14 +265,12 @@ textarea:focus {
    height: 25vh;
    display: block;
    margin: 0 auto;
-   background-color: whitesmoke;
 }
 .viewer .viewer-form {
    width: 25vw;
    min-width: 100%;
    max-height: 25vh;
    overflow-y: scroll;
-   background-color: whitesmoke;
 }
 
 .cc-new {

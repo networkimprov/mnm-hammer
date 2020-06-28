@@ -94,7 +94,7 @@
    };
 
    mnm.ThreadOpen = function(iId) {
-      _xhr('mn', iId, true) // sends thread_open from onload
+      _xhr('mn', iId, null, true) // sends thread_open from onload
    };
    mnm.ThreadClose = function(iId) {
       _wsSend({op:'thread_close', touch:{msgid:iId}})
@@ -138,11 +138,18 @@
       _wsSend({op:'node_add', node:{addr:iAddr, pin:iPin, newnode:iNewnode}})
    };
 
-   mnm.FormOpen = function(iId) {
+   mnm.FileForm = function(iId) {
       _xhr('/f', iId);
    };
-   mnm.AttachOpen = function(iId) {
+   mnm.FileBlob = function(iId, iCb) {
+      _xhr('/t', iId, iCb);
+   };
+
+   mnm.AttachForm = function(iId) {
       _xhr('an', iId);
+   };
+   mnm.AttachBlob = function(iId, iCb) {
+      _xhr('an', iId, iCb);
    };
 
    mnm.Upload = function(iForm, iCb) {
@@ -204,18 +211,24 @@
       };
    };
 
-   function _xhr(i, iId, iOpen) {
+   function _xhr(i, iId, iCb, iOpen) {
       ++sXhrPending;
       var aXhr = new XMLHttpRequest();
+      if (iCb)
+         aXhr.responseType = 'blob';
       aXhr.onload = function() {
          --sXhrPending;
          if (aXhr.status !== 200) {
-            mnm.Log('get '+ i +' '+ aXhr.responseText);
-            mnm.Err(aXhr.responseText);
+            var aTxt = iCb ? iId +' '+ aXhr.statusText : aXhr.responseText;
+            mnm.Log('get '+ i +' '+ aTxt);
+            mnm.Err(aTxt);
             return;
          }
          if (i !== 'mo' && i !== 'mn') {
-            mnm.Render(i, aXhr.responseText, iId);
+            if (iCb)
+               iCb(aXhr.response);
+            else
+               mnm.Render(i, aXhr.responseText, iId);
             return;
          }
          var aMap = {};

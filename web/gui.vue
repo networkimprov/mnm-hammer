@@ -1424,9 +1424,9 @@
    mnm._FormViews.prototype.make = function(iKey) {
       if (iKey in this.comp) {
          if (this.comp[iKey][0].formDef === this.env.parent.formDefBad)
-            mnm.AttachOpen(iKey);
+            mnm.AttachForm(iKey);
       } else {
-         mnm.AttachOpen(iKey);
+         mnm.AttachForm(iKey);
          this.comp[iKey] = [ new (Vue.component('mnm-formview'))({
             propsData: { file:iKey, fillMap:this.env.fillMap, parent:this.env.parent },
          }), null ];
@@ -1681,7 +1681,7 @@
                mnm._data.fo = mnm._data.toSaveFo[aKey].data;
             } else {
                mnm._data.fo = '';
-               mnm.FormOpen(aKey);
+               mnm.FileForm(aKey);
             }
             this.setName = iSet;
             this.fileId = iRev;
@@ -2329,39 +2329,39 @@
         style="position:absolute; z-index:3" :style="{top:editTop, right:editRight, left:editLeft}"
         @click.stop>
       <a v-show="kind !== 'form'"
-         :href="src" :target="(src[0] === '/' ? 'mnm_upl_' : 'mnm_atc_<%.TitleJs%>_') + file"
-         title="Open file in new tab">
-         <span uk-icon="expand"></span></a>
+         :href="url[kind] || ''"
+         :target="((url[kind] || '/')[0] === '/' ? 'mnm_upl_' : 'mnm_atc_<%.TitleJs%>_') + file"
+         title="Open file in new tab"
+         ><span uk-icon="expand"></span></a>
       <div class="uk-text-small viewer-name dropdown-scroll-item">{{title}}</div>
-      <div v-if="kind === 'form'"
-           class="viewer-form">
-         <div v-show="!(file in mnm._data.ao)"
-              class="uk-text-center">
-            <span uk-icon="future"></span></div>
-         <plugin-vfg v-show="file in mnm._data.ao"
-                     :schema="formDef" :model="{}" :options="{}"/>
-      </div>
-      <div v-else-if="kind === 'img'"
-           class="dropdown-scroll-item" style="background-color:whitesmoke"><!--todo checkerboard-->
-         <img :src="src"></div>
-      <div v-else-if="kind === 'video'"
-           class="dropdown-scroll-item">
-         <video :src="src" controls>Player not available.</video></div>
-      <div v-else-if="kind === 'audio'"
-           class="dropdown-scroll-item">
-         <audio :src="src" controls>Player not available.</audio></div>
-      <div v-show="kind === 'page'"
-           class="dropdown-scroll-item">
-         <iframe v-if="srcPage"
+      <div :class="{'dropdown-scroll-item': kind !== 'form', 'viewer-form': kind === 'form'}">
+         <template v-if="url.form !== undefined">
+            <div v-show="kind === 'form' && !(file in mnm._data.ao)"
+                 class="uk-text-center"><span uk-icon="future"></span></div>
+            <plugin-vfg v-show="kind === 'form' && (file in mnm._data.ao)"
+                        :schema="formDef" :model="{}" :options="{}"/>
+         </template>
+         <img v-if="url.img !== undefined"
+              v-show="kind === 'img'"
+              ref="img">
+         <video v-if="url.video !== undefined"
+                v-show="kind === 'video'"
+                ref="video" controls>Player not available.</video>
+         <audio v-if="url.audio !== undefined"
+                v-show="kind === 'audio'"
+                ref="audio" controls>Player not available.</audio>
+         <iframe v-if="url.page !== undefined"
+                 v-show="kind === 'page'"
                  x-load="$event.target.contentWindow.onbeforeunload = //todo prevent PDF.js error
-                    function(iEv) { iEv.currentTarget.history.replaceState(null, null, srcPage) }"
-                 :src="srcPage"></iframe></div>
+                    function(iEv) { iEv.currentTarget.history.replaceState(null, null, url.page) }"
+                 :src="url.page"></iframe>
+      </div>
    </div>
 </script><script>
    Vue.component('mnm-viewer', {
       template: '#mnm-viewer',
       props: {toggle:String, noparent:Boolean},
-      data: function() { return {file:'', kind:'', title:'', src:'', srcPage:'',
+      data: function() { return {file:'', kind:'', title:'', url:{},
                                  editTop:'', editRight:null, editLeft:null} },
       computed: {
          mnm: function() { return mnm },
@@ -2378,28 +2378,41 @@
          },
       },
       methods: {
-         close: function() { this.kind = '' },
+         close: function() {
+            if (!this.kind)
+               return
+            if (this.kind in this.$refs) {
+               URL.revokeObjectURL(this.$refs[this.kind].src);
+               this.$refs[this.kind].src = 'data:,';
+            }
+            this.kind = this.url[this.kind] = '';
+         },
          open: function(iSvc, iId, iEl, iRhs) {
-            this.file = iId;
-            this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
-            this.src = (iSvc ? '?an=' : '/t/') + encodeURIComponent(iId);
             this.editTop = iEl.offsetTop - iEl.parentNode.parentNode.scrollTop +'px';
             if (iRhs)
                this.editLeft = (iEl.offsetLeft + 20) +'px'; // 20 == icon width
             else
                this.editRight = (iEl.offsetParent.offsetWidth - iEl.offsetLeft) +'px';
+            this.close();
+            this.file = iId;
             this.kind = mnm._viewerType(iSvc, iId);
-            if (this.kind === 'page')
-               this.srcPage = this.src;
-            else if (this.kind === 'form' && !(iId in mnm._data.ao))
-               mnm.AttachOpen(iId);
+            this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
+            this.url[this.kind] = (iSvc ? '?an=' : '/t/') + encodeURIComponent(iId); //todo Vue.set?
+            if (this.kind === 'form') {
+               iSvc ? mnm.AttachForm(iId) : undefined;
+            } else if (this.kind !== 'page') {
+               iSvc ? mnm.AttachBlob(iId, fBlob) : mnm.FileBlob(iId, fBlob);
+               var aRef;
+               this.$nextTick(function() { aRef = this.$refs[this.kind] });
+               function fBlob(c) { aRef.src = URL.createObjectURL(c) }
+            }
          },
       },
       created: function() {
          if (!this.noparent)
             return;
          var that = this;
-         document.addEventListener('click', function() { that.kind = '' });
+         document.addEventListener('click', function() { that.close() });
       },
       components: { 'plugin-vfg': VueFormGenerator.component },
    });
