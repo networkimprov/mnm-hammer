@@ -146,8 +146,8 @@
    "Result": {
       "mo": [{"From":"self", "Id":"*midt", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
-                         "Attach":[{"Name":"u:BlueFile.txt"},
-                                   {"Name":"f:Blue.original",
+                         "Attach":[{"Name":"u:BlueFile.txt",  "IsNew":true},
+                                   {"Name":"f:Blue.original", "IsNew":true,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}],
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"author", "Subscribe":true},
@@ -182,8 +182,8 @@
    "Result": {
       "mn": [{"From":"self", "Id":"*midt", "Len":24, "Size":25, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"ohi",
-                         "Attach":[{"Name":"u:BlueFile.txt"},
-                                   {"Name":"f:Blue.original",
+                         "Attach":[{"Name":"u:BlueFile.txt",  "IsNew":true},
+                                   {"Name":"f:Blue.original", "IsNew":true,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"},
                                    {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}],
@@ -521,7 +521,7 @@
    "Result": {
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":"no replica",
-                         "Attach":[{"Name":"u:BlueFile.txt"}] },
+                         "Attach":[{"Name":"u:BlueFile.txt", "IsNew":true}] },
               "msg_data":"" }] ,
       "ml": [{"Id":"*midm", "From":"",     "Alias":"",        "Date":"*d", "Subject":"no replica", "Seen":".", "Queued":false},
              {"Id":"*mid",  "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"reply ohi",  "Seen":"", "Queued":false},
@@ -540,7 +540,7 @@
    "Result": {
       "mo": [{"From":"self", "Id":"*midt", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"", "Subject":"unreplicated",
-                         "Attach":[{"Name":"u:BlueFile.txt"}],
+                         "Attach":[{"Name":"u:BlueFile.txt", "IsNew":true}],
                          "Cc":[{"Who":"Blue#td", "WhoUid":"*uid", "By":"Blue#td", "ByUid":"*uid",
                                 "Date":"*d", "Note":"author", "Subscribe":true}] },
               "msg_data":"" }] ,
@@ -805,7 +805,7 @@
    "Result": {
       "mo": [{"From":"self", "Id":"*midt", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Gold#td", "ThreadId":"", "Subject":"to forward",
-                         "Attach":[{"Name":"u:Gold/File.txt"},
+                         "Attach":[{"Name":"u:Gold/File.txt", "IsNew":true},
                                    {"Name":"r:Blue.original", "FfKey":"*", "Size":33,
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}],
                          "Cc":[{"Who":"Gold#td", "WhoUid":"*uid", "By":"Gold#td", "ByUid":"*uid",

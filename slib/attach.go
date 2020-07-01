@@ -77,6 +77,7 @@ func sizeDraftAttach(iSvc string, iSubHead *tHeader2, iId tLocalId) int64 {
          iSubHead.Attach[a].FfKey = ""
          iSubHead.Attach[a].AllowAnyData = false
       } else {
+         iSubHead.Attach[a].IsNew = false
          aFi, err := os.Lstat(fileAtc(iSvc, aTid, iId.lms(), aFile.Name))
          if err != nil { quit(err) }
          iSubHead.Attach[a].Size = aFi.Size()
@@ -331,15 +332,19 @@ func setupDraftAttach(iSvc string, iTid string, i *Update) []tHeader2Attach {
       } else if strings.HasPrefix(aFile.Name, "form/") {
          aAtc[a].Ffn = _lookupFfn(iSvc, aFile.Name[5:])
          aAtc[a].Name = "f:" + aFile.Name[5:]
+         aAtc[a].IsNew = true
       } else if strings.HasPrefix(aFile.Name, "upload/") {
          aAtc[a].Name = "u:" + aFile.Name[7:]
+         aAtc[a].IsNew = true
+      } else {
+         aAtc[a].IsNew = false
       }
       if _isFormFill(aAtc[a].Name) {
          aAtc[a].Size = int64(len(i.Thread.FormFill[aFile.FfKey]))
       }
    }
-   defer func(){ i.Thread.Attach = nil }()
-   return i.Thread.Attach
+   i.Thread.Attach = nil
+   return aAtc
 }
 
 func _lookupFfn(iSvc string, iName string) string {
