@@ -1103,7 +1103,7 @@
                     @hasdeck="hasDeck = $event"
                     @formfill="draft.ffAdd.apply(draft, arguments)"
                     @toggle="draft.atcToggleFf.apply(draft, arguments)"
-                    :src="msg.msg_data" :msgid="draft.msgid" :allslides="allSlides"
+                    :src="msg.msg_data" :attach="attach" :msgid="draft.msgid" :allslides="allSlides"
                     :formfill="msg.form_fill" :atchasff="draft.atcHasFf"/>
    </div>
 </script><script>
@@ -1295,20 +1295,24 @@
 </script>
 
 <script type="text/x-template" id="mnm-markdown">
-   <div class="message" v-html="mdi.render(src, env)"></div>
+   <div class="message" v-html="html"></div>
 </script><script>
    Vue.component('mnm-markdown', {
       template: '#mnm-markdown',
-      props: {src:String, msgid:String, allslides:Boolean,
+      props: {src:String, attach:Array, msgid:String, allslides:Boolean,
               formfill:Object, formreply:[Object,String], atchasff:Function},
-      data: function() { return {hasDeck:false} },
-      computed: {
-         mdi: function() { return mnm._mdi },
-      },
+      data: function() { return {html:'', hasDeck:false} },
       watch: {
+         src: function() { this.html = mnm._mdi.render(this.src, this.env) },
+         attach: function() {
+            this.clearAttach();
+            this.html = mnm._mdi.render(this.src, this.env);
+            if (this.env.formview)
+               this.env.formview.reattach();
+         },
          allslides: function(i) {
             this.env.allSlides = i;
-            this.$forceUpdate();
+            this.html = mnm._mdi.render(this.src, this.env);
          },
          formfill: { deep: true, handler:
             function(iMap) {
@@ -1322,17 +1326,25 @@
       },
       created: function() {
          this.formDefBad = {fields:[ {type:"label",label:"file not found or invalid"} ]};
-         this.env = { allSlides:this.allslides, fillMap:{}, parent:this, formview:null,
+         this.env = { allSlides:this.allslides, imgsrc:{}, fillMap:{}, parent:this, formview:null,
                       thisVal: this.formreply && this.formreply !== 'Q' ? this.msgid
                                                                         : this.msgid.substr(-12) };
          if (this.formfill)
             for (var a in this.formfill)
                Vue.set(this.env.fillMap, a, this.formfill[a]);
+         this.html = mnm._mdi.render(this.src, this.env);
       },
       beforeDestroy: function() { if (this.env.formview) this.env.formview.destroy() },
+      destroyed:     function() { this.clearAttach() },
       mounted:       function() { this.onRender() },
       updated:       function() { this.onRender() },
       methods: {
+         clearAttach: function() {
+            for (var a in this.env.imgsrc) {
+               URL.revokeObjectURL(this.env.imgsrc[a]);
+               delete this.env.imgsrc[a];
+            }
+         },
          onRender: function() {
             if (this.env.formview)
                this.env.formview.remount();
@@ -1432,6 +1444,14 @@
          }), null ];
       }
       return 'fv_'+ this.env.parent.msgid +'_'+ iKey;
+   };
+   mnm._FormViews.prototype.reattach = function() {
+      for (var aKey in this.comp) {
+         if (aKey.indexOf('_') === 12) { //todo codify
+            Vue.delete(mnm._data.ao, aKey);
+            mnm.AttachForm(aKey);
+         }
+      }
    };
    mnm._FormViews.prototype.remount = function() {
       for (var a in this.comp) {
@@ -2589,7 +2609,18 @@
          var aId = iEnv.formview.make(aParam);
          return '<component'+ iSelf.renderAttrs({attrs:[['id',aId]]}) +'></component>';
       }
-      aSrc[1] = '?an='+ encodeURIComponent(aParam);
+      if (iEnv.thisVal.length === 16) { //todo codify
+         aSrc[1] = '?an='+ encodeURIComponent(aParam);
+      } else if (aParam in iEnv.imgsrc) {
+         aSrc[1] = iEnv.imgsrc[aParam];
+      } else {
+         aSrc[1] = 'data:,';
+         iTokens[iIdx].attrs.push(['id', 'pi_'+ aParam]);
+         mnm.AttachBlob(aParam, function(c) {
+            iEnv.imgsrc[aParam] = URL.createObjectURL(c);
+            document.getElementById('pi_'+ aParam).src = iEnv.imgsrc[aParam];
+         });
+      }
       return sMdiRenderImg(iTokens, iIdx, iOptions, iEnv, iSelf);
    };
 
@@ -2871,8 +2902,7 @@
             if (!aOrig[c]         || !iEtc.SubHead[c])         return true;
             if ( aOrig[c].length  !== iEtc.SubHead[c].length)  return true;
             if ( aOrig[c].length  === 0)                       return false;
-            if ( aOrig[c][0].Name === iEtc.SubHead[c][0].Name) return false; //todo full comparison?
-            return true;
+            return !!iEtc.SubHead[c][0].IsNew; //todo check all?
          }
          var aOrig = mnm._data.toSave[iEtc.Id];
          if (aOrig) {
