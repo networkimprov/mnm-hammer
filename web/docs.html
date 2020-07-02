@@ -473,14 +473,14 @@ and automatically appended to <a href="#fftb">Filled-Form Tables</a>.
 
 <p>Blank forms are grouped into families. 
 All forms in a family produce results containing the same set of fields (i.e. data type). 
-Form names have the format family_name.revision_name. 
+Form names have the format <tt><i>family.revision</i></tt>. 
 Each revision defines a variation of the form (e.g. for use with different audiences). 
-A family with more than one revision must also have a family_name.spec object. 
-A .spec object defines the data type produced by the family, and is used to validate 
+A family with more than one revision must also have a <tt><i>family.</i>spec</tt> object. 
+A blank form spec defines the data type produced by the family, and is used to validate 
 filled-form results. 
 </p>
 
-<p style="margin-bottom:0">The .spec object may contain a data type specification, 
+<p style="margin-bottom:0">A blank form spec may contain a data type specification, 
 or a filled-form name (FFN) that points into an online repository of specifications. 
 [In this release, any FFN lookup returns the contents of the file <i>formspec</i> in the app directory.]
 A data type specification is a JSON object with an array of field definitions. 
@@ -504,7 +504,7 @@ This example illustrates all the options:
 Vue Form Generator to render blank forms and produce results from user input. 
 See the <a target="_blank" href="https://icebob.gitbooks.io/vueformgenerator/content/schema.html"
 >VFG docs</a> covering form definition objects. 
-This example definition conforms to the above spec: 
+This example definition conforms to the above specification: 
 </p>
 
 <pre style="background-color:inherit; border:none; margin:0">{"fields":[
@@ -518,18 +518,19 @@ This example definition conforms to the above spec:
 ]}
 </pre>
 
-<p>Blank form field names, given by <tt>name</tt> variables in a .spec object, 
-and <tt>model</tt> variables in a form definition, may not begin with <tt>$</tt>, 
+<p>Blank form field names, given by <tt>name</tt> variables in a <tt>spec</tt> list, 
+and <tt>model</tt> variables in a form definition, may not begin with <tt>$</tt> (dollar sign), 
 as mnm uses that symbol internally. 
 </p>
 
 <p>To create a blank form, open the <span class="questionbox">&#x2370;</span> menu, 
 enter a family name and optional revision name (separated by ".") 
 in the <i>New Type</i> field, and click the <span uk-icon="pencil"></span> button. 
+For a blank form spec, use the revision name <tt>.spec</tt>.
 </p>
 
 <p>To edit a new or existing form, open the <span class="questionbox">&#x2370;</span> menu 
-and click its <span uk-icon="triangle-left"></span>formname hyperlink to open the form editor. 
+and click its <span uk-icon="triangle-left"></span> hyperlink to open the form editor. 
 Next click the <tt>{...}</tt> hyperlink to switch to code view, and begin editing. 
 Click <tt>{...}</tt> again to preview changes. 
 Edits are automatically saved, except when the code is not valid JSON. 

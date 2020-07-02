@@ -1565,7 +1565,7 @@
             class="dropdown-scroll-item">
          <div class="uk-float-right uk-text-small">BLANK FORMS</div>
          <input type="hidden" name="filename"
-                value='{"fields":[ {"label":"Untitled","model":"s","type":"input","inputType":"text"} ]}'>
+                :value="updata">
          <input v-model="upname"
                 placeholder="New Type" type="text"
                 style="width:60%">
@@ -1610,9 +1610,10 @@
             <span uk-icon="future"></span></div>
          <div v-show="mnm._data.fo"
               class="pane-clip" style="margin-top:-1.5em">
-            <span v-if="!toggle"
-                  @click="showCode"
-                  class="uk-link"><tt>{...}</tt></span>
+            <button v-if="!toggle"
+                    @click="showCode"
+                    :disabled="fileId === 'spec'"
+                    class="uk-button uk-button-link"><tt>{...}</tt></button>
             &nbsp;
             <div class="uk-text-right uk-text-small dropdown-scroll-item">&nbsp;{{parseError}}</div>
             <div class="pane-slider" :class="{'pane-slider-rhs':codeShow}">
@@ -1631,7 +1632,8 @@
          </div>
          <form action="/f/?" method="POST" enctype="multipart/form-data">
             <input ref="save" name="filename" value="" type="hidden"></form>
-         <form :action="'/f/*' + encodeURIComponent(setName+'.'+fileId) +
+         <form v-show="fileId !== 'spec'"
+               :action="'/f/*' + encodeURIComponent(setName+'.'+fileId) +
                            '+' + encodeURIComponent(dupname)" method="POST"
                onsubmit="mnm.Upload(this); return false;">
             <input v-model="dupname"
@@ -1654,6 +1656,11 @@
       },
       computed: {
          mnm: function() { return mnm },
+         updata: function() {
+            return this.upname.slice(-5) === '.spec'
+               ? '{"ffn":"mnmnotmail.github.io/registry/test1"}'
+               : '{"fields":[\n {"label":"Name", "model":"s",\n  "type":"input", "inputType":"text"}\n]}';
+         },
       },
       methods: {
          validName: function(iPair) {
@@ -1708,7 +1715,7 @@
             this.editTop = iEl.offsetTop - iEl.parentNode.parentNode.scrollTop + 'px';
             this.editRight = (iEl.offsetParent.offsetWidth - iEl.offsetLeft) +'px';
             this.codePos = 0;
-            this.codeShow = false;
+            this.codeShow = this.fileId === 'spec';
             this.dupname = '';
          },
          revClose: function() {
