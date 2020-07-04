@@ -35,7 +35,8 @@
 
 <input id="toclipboard" style="display:none">
 
-<div id="app-quit" style="display:none">
+<div id="app-quit" style="display:none"
+     onpointerup="event.stopPropagation()" onclick="event.stopPropagation()">
    <div class="app-alert">
       <p>The mnm app has quit.</p>
       When it's back up, reload this tab.<br>
@@ -2820,8 +2821,9 @@
    };
 
    mnm.Quit = function() {
-      document.body.click(); // close dropdowns
-      document.getElementById('app-quit').style.display = 'block';
+      var aEl = document.getElementById('app-quit');
+      aEl.style.display = 'block';
+      aEl.querySelector('button').focus();
    };
 
    mnm.Render = function(i, iData, iEtc) {
