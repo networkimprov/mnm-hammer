@@ -424,7 +424,7 @@
                            @beforeshow.native="mnm.NoticeOpen(aSvc.Name)"
                            @hide.native="mnm.NoticeClose()"
                            offset="-4" pos="left-top"/><!--todo single notice menu-->
-               <a :href="'/'+encodeURIComponent(aSvc.Name)"
+               <a :href="'/'+ encodeURIComponent(aSvc.Name) +(mnm._isLocal ? '#tour' : '')"
                   :target="mnm._isLocal ? '_self' : 'mnm_svc_'+ aSvc.Name">{{aSvc.Name}}</a>
             </template>
          </li></ul>
