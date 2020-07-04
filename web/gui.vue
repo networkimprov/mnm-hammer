@@ -336,13 +336,16 @@
       <template v-else>
          <div v-for="aRow in tl" :key="aRow.Id"
               @click="mnm.NavigateThread(aRow.Id)"
-              uk-grid class="uk-grid-small thread-row"
-              :style="{'background-color': aRow.Id === cs.Thread ? '#fff7cf' : null}"><!--todo class thread-row-thread-->
-            <div class="uk-width-auto" style="padding:0"
-                 :class="{'thread-unread': aRow.Unread}">
+              uk-grid class="uk-grid uk-grid-small thread"
+              :class="{'thread-current': aRow.Id === cs.Thread}">
+            <div class="uk-width-auto"
+                 :class="{'thread-unread': aRow.Unread, vishide: aRow.LastAuthor === ''}">
                <mnm-date :iso="aRow.LastDate" ymd="md"/></div>
             <div class="uk-width-1-6 overxhide"
-                 :class="{'thread-unread': aRow.Unread}">{{aRow.LastAuthor}}</div>
+                 :class="{'thread-unread': aRow.Unread, 'thread-self': aRow.LastAuthor === ''}"
+                 >{{aRow.LastAuthor || 'draft'}}</div>
+            <div class="uk-width-auto">{{aRow.Count <  1 ? '\u2007\u2007' :
+                                        (aRow.Count < 10 ? '\u2007' : '') + aRow.Count}}</div>
             <div class="uk-width-expand overxhide"
                  :title="aRow.Id">{{aRow.Subject}}<!---->
                <i v-show="aRow.SubjectWas"
@@ -355,7 +358,7 @@
             <div v-else
                  :title="'Initial recipient'+ (aRow.OrigCc.length ? 's:\n'+ aRow.OrigCc.join('\n')
                                                                   : ': this account')"
-                 class="uk-width-1-6 overxhide thread-origcc">{{aRow.OrigCc[0] || 'self'}}</div>
+                 class="uk-width-1-6 overxhide thread-self">{{aRow.OrigCc[0] || 'self'}}</div>
          </div></template>
       <div style="margin-top:1em">
          <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"

@@ -214,7 +214,7 @@ textarea:focus {
    word-break: keep-all;
 }
 
-.thread-row {
+.thread {
    margin: 0 !important; /* override uk-grid */
    padding: 0.25em 0;
    cursor: pointer;
@@ -222,13 +222,17 @@ textarea:focus {
    white-space: pre;
    word-break: keep-all;
 }
-.thread-row-thread {
-   background-color: wheat;
+.thread-current {
+   background-color: #fff7cf;
 }
-.thread-unread {
+.thread > div:first-child {
+   padding: 0;
+}
+.thread .thread-unread {
    font-weight: bold;
 }
-.thread-origcc {
+.thread .thread-self {
+   text-align: center;
    font-style: italic;
 }
 
