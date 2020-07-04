@@ -774,7 +774,7 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
    aClientId, _ := iReq.Cookie("clientid")
    aCc := aSvc.ccs.Get(aClientId.Value)
    if aCc != nil {
-      aCc.WriteMessage(pWs.TextMessage, []byte("new connection from same client"))
+      aCc.WriteJSON([]string{"_e", "new connection from same client"})
       aCc.conn.Close()
       aState = aCc.state
    } else {
