@@ -592,6 +592,12 @@ textarea:focus {
    white-space: nowrap;
 }
 
+.group-admin {
+   font-size: 125%;
+   line-height: 1;
+   cursor: default;
+}
+
 .svccfg tr td {
    padding: 0.5em 0;
 }

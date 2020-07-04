@@ -1963,7 +1963,8 @@
                   <td><mnm-date :iso="a.Date"/></td>
                   <td>{{a.Gid}}
                      <span v-if="a.Admin"
-                           class="uk-badge">A</span></td>
+                           title="Group administrator"
+                           class="group-admin">&#x24b6;</span></td>
                </tr></table></li>
          <li>
             <form onsubmit="this.reset(); return false;"
