@@ -28,6 +28,7 @@ var kSearchIndexRev = []byte("0.8")
 
 type tSearchEl struct {
    Id string
+   Count uint32
    Subject string
    SubjectWas string `json:",omitempty"`
    OrigCc []string
@@ -38,6 +39,7 @@ type tSearchEl struct {
 
 type tSearchDoc struct {
    id string
+   Count uint32
    Subject tStrings
    Author tStrings // excludes self
    Tag tStrings
@@ -114,6 +116,7 @@ func WriteResultSearch(iW io.Writer, iSvc string, iState *ClientState) error {
       for a := range aOrigCc { aOrigCcSet[a] = aOrigCc[a].(string) }
       aLastSubjectN := int(aHit.Fields["LastSubjectN"].(float64))
       aList = append(aList, tSearchEl{Id:         aHit.ID,
+                                      Count:      uint32(aHit.Fields["Count"].(float64)),
                                       Subject:    aSubject[aLastSubjectN].(string),
                                       OrigCc:     aOrigCcSet,
                                       OrigDate:   aHit.Fields["OrigDate"].(string),
@@ -296,6 +299,7 @@ func openIndexSearch(iCfg *tSvcConfig) pBleve.Index {
    aFbool := pBleve.NewBooleanFieldMapping()
 
    aThread := pBleve.NewDocumentMapping()
+   aThread.AddFieldMappingsAt("Count", aNnumr)
    aThread.AddFieldMappingsAt("Subject", aFtext)
    aThread.AddFieldMappingsAt("Author", aFtext)
    aThread.AddFieldMappingsAt("Tag", aKtext)

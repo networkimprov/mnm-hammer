@@ -1412,6 +1412,9 @@ func _updateSearchDoc(iSvc string, iCfg *tSvcConfig, iTid string, iFd *os.File, 
    var aCc []tCcEl
    _readIndex(iFd, &aIdx, &aCc)
    aDoc := &tSearchDoc{id: iTid, OrigDate: aIdx[0].Date, OrigAuthor: aIdx[0].Alias}
+   if aIdx[0].From == "" {
+      aDoc.OrigAuthor = iCfg.Alias
+   }
    for a := range aIdx {
       if aIdx[a].Alias != "" && aIdx[a].Alias != iCfg.Alias {
          aDoc.Author.addUnique(aIdx[a].Alias)
@@ -1428,6 +1431,9 @@ func _updateSearchDoc(iSvc string, iCfg *tSvcConfig, iTid string, iFd *os.File, 
       }
       if aIdx[a].From != "" || a == 0 {
          aDoc.LastDate, aDoc.LastAuthor = aIdx[a].Date, aIdx[a].Alias
+      }
+      if aIdx[a].From != "" {
+         aDoc.Count++
       }
       aDoc.Unread = aDoc.Unread || aIdx[a].Seen == ""
    }
