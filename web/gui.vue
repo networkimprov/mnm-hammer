@@ -1497,7 +1497,7 @@
                    style="width:60%">
             <button @click="vis = false" type="submit"
                     :disabled="!upname"
-                    title="Copy to attachable files"
+                    :title="toggle ? 'Attach file' : 'Copy to attachable files'"
                     class="btn btn-icon">
                <mnm-paperclip v-if="toggle"/>
                <span v-else
