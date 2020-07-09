@@ -740,7 +740,7 @@ func storeDraftThread(iSvc string, iUpdt *Update) bool {
    aTempOk := ftmpSd(iSvc, aId.tid(), aId.lms())
    aTemp := aTempOk + ".tmp"
    aData := strings.NewReader(iUpdt.Thread.Data)
-   aSubjUpdt := false
+   aNewSubjCc := false
    var err error
 
    aTid := aId.tid(); if aTid == "" { aTid = "_" + aId.lms() }
@@ -756,17 +756,18 @@ func storeDraftThread(iSvc string, iUpdt *Update) bool {
                    tIndexElCore{Id:iUpdt.Thread.Id, Date:dateRFC3339(), Subject:iUpdt.Thread.Subject}}
 
    if aId.tid() == "" {
-      aCc = _updateCc(iSvc, iUpdt.Thread.Cc, false)
-      iUpdt.Thread.Cc = aCc
+      iUpdt.Thread.Cc = _updateCc(iSvc, iUpdt.Thread.Cc, false)
       var aSd *os.File
       aSd, err = os.Open(aDraft)
       if err != nil {
          if !os.IsNotExist(err) { quit(err) }
       } else {
-         _readIndex(aSd, &aIdx, nil)
+         _readIndex(aSd, &aIdx, &aCc)
          aIdxN = 0
          aSd.Close()
+         aNewSubjCc = len(iUpdt.Thread.Cc) != len(aCc)
       }
+      aCc = iUpdt.Thread.Cc
    } else {
       aFd, err = os.OpenFile(aOrig, os.O_RDWR, 0600)
       if err != nil { quit(err) }
@@ -783,7 +784,7 @@ func storeDraftThread(iSvc string, iUpdt *Update) bool {
       aIdx = append(aIdx, aEl)
       aIdxN = len(aIdx)-1
    } else {
-      aSubjUpdt = aEl.Subject != aIdx[aIdxN].Subject
+      aNewSubjCc = aNewSubjCc || aEl.Subject != aIdx[aIdxN].Subject
       aEl.Tags = aIdx[aIdxN].Tags
       aIdx[aIdxN] = aEl
    }
@@ -804,7 +805,7 @@ func storeDraftThread(iSvc string, iUpdt *Update) bool {
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
    _completeStoreDraft(iSvc, path.Base(aTempOk), aFd, aTd, aMh)
-   return aSubjUpdt
+   return aNewSubjCc
 }
 
 func _completeStoreDraft(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead) {
