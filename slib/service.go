@@ -963,6 +963,9 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             addTag(iSvc, iUpdt.Touch.TagName, iUpdt.Touch.TagId)
          }
          touchThread(iSvc, iUpdt)
+         if strings.IndexByte(iUpdt.Touch.MsgId, '_') >= 0 { //todo drop on draft sync
+            return tError("")
+         }
          return nil
       })
       aFn = func(c *ClientState) []string {
