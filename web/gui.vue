@@ -1299,13 +1299,13 @@
 </script>
 
 <script type="text/x-template" id="mnm-markdown">
-   <div class="message" v-html="html"></div>
+   <div class="message" v-html="html" :key="rev"></div>
 </script><script>
    Vue.component('mnm-markdown', {
       template: '#mnm-markdown',
       props: {src:String, attach:Array, msgid:String, allslides:Boolean,
               formfill:Object, formreply:[Object,String], atchasff:Function},
-      data: function() { return {html:'', hasDeck:false} },
+      data: function() { return {html:'', rev:0, hasDeck:false} },
       watch: {
          src: function() { this.html = mnm._mdi.render(this.src, this.env) },
          attach: function() {
@@ -1313,6 +1313,7 @@
             this.html = mnm._mdi.render(this.src, this.env);
             if (this.env.formview)
                this.env.formview.reattach();
+            ++this.rev; // $forceUpdate() didn't work in 2.6.11
          },
          allslides: function(i) {
             this.env.allSlides = i;
@@ -1329,7 +1330,8 @@
          },
       },
       created: function() {
-         this.formDefBad = {fields:[ {type:"label",label:"file not found or invalid"} ]};
+         this.formDefNone = {fields:[{type:"label", label:"Form attachment missing."}]};
+         this.formDefBad  = {fields:[{type:"label", label:"Form code invalid."  }]};
          this.env = { allSlides:this.allslides, imgsrc:{}, fillMap:{}, parent:this, formview:null,
                       thisVal: this.formreply && this.formreply !== 'Q' ? this.msgid
                                                                         : this.msgid.substr(-12) };
@@ -1369,7 +1371,7 @@
       <div class="uk-clearfix">
          <label v-if="!parent.formreply">
             <input type="checkbox" @click="onFillAttach" :checked="atcHasFf"
-                   :disabled="formDef === parent.formDefBad">
+                   :disabled="formDef === parent.formDefNone || formDef === parent.formDefBad">
             attach fill</label>
          <button @click="startReply"
                  :disabled="!parent.formreply || parent.formreply === 'Q'"
@@ -1390,7 +1392,7 @@
          },
          formDef: function() {
             if (!(this.file in mnm._data.ao))
-               return {};
+               return this.parent.formDefNone;
             try {
                var aDef = JSON.parse(mnm._data.ao[this.file]);
             } catch(e) {
@@ -1438,10 +1440,7 @@
       this.comp = {};
    };
    mnm._FormViews.prototype.make = function(iKey) {
-      if (iKey in this.comp) {
-         if (this.comp[iKey][0].formDef === this.env.parent.formDefBad)
-            mnm.AttachForm(iKey);
-      } else {
+      if (!(iKey in this.comp)) {
          mnm.AttachForm(iKey);
          this.comp[iKey] = [ new (Vue.component('mnm-formview'))({
             propsData: { file:iKey, fillMap:this.env.fillMap, parent:this.env.parent },
@@ -1458,24 +1457,24 @@
       }
    };
    mnm._FormViews.prototype.remount = function() {
-      for (var a in this.comp) {
-         var aEl = document.getElementById('fv_'+ this.env.parent.msgid +'_'+ a);
+      for (var aKey in this.comp) {
+         var aEl = document.getElementById('fv_'+ this.env.parent.msgid +'_'+ aKey);
          if (!aEl) {
-            this.comp[a][0].$destroy();
-            delete this.comp[a];
+            this.comp[aKey][0].$destroy();
+            delete this.comp[aKey];
             continue;
          }
          if (aEl.tagName === 'DIV')
             continue;
-         if (this.comp[a][1])
-            aEl.parentNode.replaceChild(this.comp[a][1], aEl);
+         if (this.comp[aKey][1])
+            aEl.parentNode.replaceChild(this.comp[aKey][1], aEl);
          else
-            this.comp[a][1] = this.comp[a][0].$mount(aEl).$el;
+            this.comp[aKey][1] = this.comp[aKey][0].$mount(aEl).$el;
       }
    };
    mnm._FormViews.prototype.destroy = function() {
-      for (var a in this.comp)
-         this.comp[a][0].$destroy();
+      for (var aKey in this.comp)
+         this.comp[aKey][0].$destroy();
    };
 </script>
 
