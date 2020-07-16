@@ -138,18 +138,18 @@
       _wsSend({op:'node_add', node:{addr:iAddr, pin:iPin, newnode:iNewnode}})
    };
 
-   mnm.FileForm = function(iId) {
-      _xhr('/f', iId);
+   mnm.FileForm = function(iId, iCb) {
+      _xhr('/ft', iId, iCb);
    };
    mnm.FileBlob = function(iId, iCb) {
-      _xhr('/t', iId, iCb);
+      _xhr('/tb', iId, iCb);
    };
 
-   mnm.AttachForm = function(iId) {
-      _xhr('an', iId);
+   mnm.AttachForm = function(iId, iCb) {
+      _xhr('ant', iId, iCb);
    };
    mnm.AttachBlob = function(iId, iCb) {
-      _xhr('an', iId, iCb);
+      _xhr('anb', iId, iCb);
    };
 
    mnm.Upload = function(iForm, iCb) {
@@ -214,12 +214,14 @@
    function _xhr(i, iId, iCb, iOpen) {
       ++sXhrPending;
       var aXhr = new XMLHttpRequest();
-      if (iCb)
-         aXhr.responseType = 'blob';
+      if (iCb) {
+         aXhr.responseType = i[2] === 'b' ? 'blob' : '';
+         i = i.slice(0, 2);
+      }
       aXhr.onload = function() {
          --sXhrPending;
          if (aXhr.status !== 200) {
-            var aTxt = iCb ? iId +' '+ aXhr.statusText : aXhr.responseText;
+            var aTxt = iId +' '+ (aXhr.responseType === 'blob' ? aXhr.statusText : aXhr.responseText);
             mnm.Log('get '+ i +' '+ aTxt);
             mnm.Err(aTxt);
             return;

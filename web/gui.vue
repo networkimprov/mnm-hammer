@@ -1441,7 +1441,10 @@
    };
    mnm._FormViews.prototype.make = function(iKey) {
       if (!(iKey in this.comp)) {
-         mnm.AttachForm(iKey);
+         if (iKey.indexOf('_') !== 16) //todo codify
+            Vue.delete(mnm._data.ao, iKey);
+         if (!(iKey in mnm._data.ao))
+            mnm.AttachForm(iKey, function(c) { Vue.set(mnm._data.ao, iKey, c) });
          this.comp[iKey] = [ new (Vue.component('mnm-formview'))({
             propsData: { file:iKey, fillMap:this.env.fillMap, parent:this.env.parent },
          }), null ];
@@ -1450,10 +1453,10 @@
    };
    mnm._FormViews.prototype.reattach = function() {
       for (var aKey in this.comp) {
-         if (aKey.indexOf('_') === 12) { //todo codify
-            Vue.delete(mnm._data.ao, aKey);
-            mnm.AttachForm(aKey);
-         }
+         if (aKey.indexOf('_') === 16) //todo codify
+            continue;
+         Vue.delete(mnm._data.ao, aKey);
+         mnm.AttachForm(aKey, function(c) { Vue.set(mnm._data.ao, aKey, c) });
       }
    };
    mnm._FormViews.prototype.remount = function() {
@@ -1711,7 +1714,7 @@
                mnm._data.fo = mnm._data.toSaveFo[aKey].data;
             } else {
                mnm._data.fo = '';
-               mnm.FileForm(aKey);
+               mnm.FileForm(aKey, function(c) { mnm._data.fo = c });
             }
             this.setName = iSet;
             this.fileId = iRev;
@@ -2430,7 +2433,7 @@
             this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
             this.url[this.kind] = (iSvc ? '?an=' : '/t/') + encodeURIComponent(iId); //todo Vue.set?
             if (this.kind === 'form') {
-               iSvc ? mnm.AttachForm(iId) : undefined;
+               iSvc ? mnm.AttachForm(iId, function(c) { Vue.set(mnm._data.ao, iId, c) }) : undefined;
             } else if (this.kind !== 'page') {
                iSvc ? mnm.AttachBlob(iId, fBlob) : mnm.FileBlob(iId, fBlob);
                var aRef;
@@ -2844,16 +2847,12 @@
       case 'cf': case 'cn': case 'cl': case 'al': case 'ml':
       case 'fl': case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
       case 't' : case 'f' : case 'v' : case 'g' : case 'l' : case 'nlo':
-         if (i === 'f' && iEtc) {
-            mnm._data.fo = iData;
-         } else {
-            mnm._data[i] = JSON.parse(iData);
-            if (mnm._data.cs.Sort[i])
-               sApp.$refs[i].listSort(mnm._data.cs.Sort[i]);
-            if (sChangeNew && i === 'cl') {
-               sChangeNew = false;
-               Vue.nextTick(function() { UIkit.dropdown(sApp.$refs.cl.$el).show() });
-            }
+         mnm._data[i] = JSON.parse(iData);
+         if (mnm._data.cs.Sort[i])
+            sApp.$refs[i].listSort(mnm._data.cs.Sort[i]);
+         if (sChangeNew && i === 'cl') {
+            sChangeNew = false;
+            Vue.nextTick(function() { UIkit.dropdown(sApp.$refs.cl.$el).show() });
          }
          break;
       case 'cs':
@@ -2887,9 +2886,6 @@
             mnm._data.tl = aData;
             mnm._data.ffn = '';
          }
-         break;
-      case 'an':
-         Vue.set(mnm._data.ao, iEtc, iData)
          break;
       case 'mo':
          for (var aK in mnm._data.mo)
