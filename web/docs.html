@@ -829,6 +829,8 @@ To display an image or blank form in the <i>Message text</i>, see <a href="#mark
 
 <p>To drop an entry in the Attachment list, click the list's pop-up menu to reveal its contents, 
 then click the &times; button for the target item. 
+If an entry in the Attachment list is referenced by <a href="#mark">Markdown</a> in 
+the <i>Message text</i>, dropping that list item disables the <span uk-icon="forward"></span> button. 
 </p>
 
 <p>To add/drop a filled-form result to/from the Attachment list, click the 
@@ -872,6 +874,7 @@ string into your <i>Message text</i>.
 
 <p><b>Blank Forms</b> must reference a form in the Attachment list, or one attached to a previous 
 message in the current thread. 
+Any blank form with a reference that's already in use is ignored.
 </p>
 
 <p>For a form in the Attachment list, write:          <tt>![?](this_f:<i>form_name</i>)</tt>

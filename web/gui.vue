@@ -910,7 +910,7 @@
    <div @keydown="keyAction('pv_'+msgid, $event)">
       <div style="position:relative; padding:1px;">
          <button @click="send"
-                 :disabled="mnm._data.ml.length < 2 && !subject"
+                 :disabled="missing !== 0 || mnm._data.ml.length < 2 && !subject"
                  title="Send draft"
                  class="btn btn-icon btn-alignt"><span uk-icon="forward"></span></button>
          <span v-if="mnm._data.cl[1].length < 2"
@@ -955,7 +955,7 @@
    Vue.component('mnm-draft', {
       template: '#mnm-draft',
       props: {msgid:String},
-      data: function() { return {subjShow: false} },
+      data: function() { return {subjShow: false, missing: 0} },
       computed: {
          mnm: function() { return mnm },
          subject: function() {
@@ -1105,6 +1105,7 @@
          <p><span uk-icon="comment"></span></p></div>
       <mnm-markdown v-show="msg.msg_data"
                     @hasdeck="hasDeck = $event"
+                    @missing="draft.missing = $event"
                     @formfill="draft.ffAdd.apply(draft, arguments)"
                     @toggle="draft.atcToggleFf.apply(draft, arguments)"
                     :src="msg.msg_data" :attach="attach" :msgid="draft.msgid" :allslides="allSlides"
@@ -1305,20 +1306,21 @@
       template: '#mnm-markdown',
       props: {src:String, attach:Array, msgid:String, allslides:Boolean,
               formfill:Object, formreply:[Object,String], atchasff:Function},
-      data: function() { return {html:'', rev:0, hasDeck:false} },
+      data: function() { return {html:'', rev:0, hasDeck:false, unattached:0} },
       watch: {
-         src: function() { this.html = mnm._mdi.render(this.src, this.env) },
+         src: 'toHtml',
          attach: function() {
             this.clearAttach();
-            this.html = mnm._mdi.render(this.src, this.env);
+            this.toHtml();
             if (this.env.formview)
                this.env.formview.reattach();
             ++this.rev; // $forceUpdate() didn't work in 2.6.11
          },
          allslides: function(i) {
             this.env.allSlides = i;
-            this.html = mnm._mdi.render(this.src, this.env);
+            this.toHtml();
          },
+         unattached: function(i) { this.$emit('missing', i) },
          formfill: { deep: true, handler:
             function(iMap) {
                for (var a in this.env.fillMap)
@@ -1338,13 +1340,21 @@
          if (this.formfill)
             for (var a in this.formfill)
                Vue.set(this.env.fillMap, a, this.formfill[a]);
-         this.html = mnm._mdi.render(this.src, this.env);
+         this.toHtml();
       },
       beforeDestroy: function() { if (this.env.formview) this.env.formview.destroy() },
       destroyed:     function() { this.clearAttach() },
       mounted:       function() { this.onRender() },
       updated:       function() { this.onRender() },
       methods: {
+         toHtml: function() {
+            this.unattached = 0;
+            this.html = mnm._mdi.render(this.src, this.env);
+         },
+         checkAttach: function(iFile) {
+            if (!this.attach.find(function(c) { return c.Name === iFile }))
+               ++this.unattached;
+         },
          clearAttach: function() {
             for (var a in this.env.imgsrc) {
                URL.revokeObjectURL(this.env.imgsrc[a]);
@@ -2598,14 +2608,16 @@
       },
    });
 
-   var sUrlStart = /^[A-Za-z][A-Za-z0-9+.\-]*:/;
+   var kUrlStart = /^[A-Za-z][A-Za-z0-9+.\-]*:/;
    mnm._mdi.renderer.rules.link_open = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       var aHref = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('href')];
       if (aHref[1].charAt(0) === '#') {
          iTokens[iIdx].attrs.push(['onclick', "mnm.NavigateLink(this.innerText,this.href);return false"]);
-      } else if (!sUrlStart.test(aHref[1])) {
-         aHref[1] = encodeURIComponent(decodeURIComponent(aHref[1])); // mnm-viewer encoding is partial
-         aHref[1] = '?ad='+ aHref[1].replace(/^this_/, iEnv.thisVal +'_');
+      } else if (!kUrlStart.test(aHref[1])) {
+         aHref[1] = decodeURIComponent(aHref[1]);
+         if (!_isDurableRef(aHref[1], iEnv.thisVal))
+            iEnv.parent.checkAttach(aHref[1].slice('this_'.length));
+         aHref[1] = '?ad='+ encodeURIComponent(aHref[1].replace(/^this_/, iEnv.thisVal +'_'));
          iTokens[iIdx].attrs.push(['download', '']);
          //todo add download icon and viewer
       }
@@ -2616,18 +2628,22 @@
    mnm._mdi.renderer.rules.image = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       var aAlt = iSelf.renderInlineAsText(iTokens[iIdx].children, iOptions, iEnv);
       var aSrc = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('src')];
-      var aParam = decodeURIComponent(aSrc[1]).replace(/^this_/, iEnv.thisVal +'_');
+      aSrc[1] = decodeURIComponent(aSrc[1]);
+      var aParam = aSrc[1].replace(/^this_/, iEnv.thisVal +'_');
       if (aAlt.charAt(0) === '?') {
+         if (!_isDurableRef(aSrc[1], iEnv.thisVal))
+            iEnv.parent.checkAttach(aSrc[1].slice('this_'.length));
          if (!iEnv.formview)
             iEnv.formview = new mnm._FormViews(iEnv);
          var aId = iEnv.formview.make(aParam);
          return '<component'+ iSelf.renderAttrs({attrs:[['id',aId]]}) +'></component>';
       }
-      if (iEnv.thisVal.length === 16) { //todo codify
+      if (_isDurableRef(aSrc[1], iEnv.thisVal)) {
          aSrc[1] = '?an='+ encodeURIComponent(aParam);
       } else if (aParam in iEnv.imgsrc) {
          aSrc[1] = iEnv.imgsrc[aParam];
       } else {
+         iEnv.parent.checkAttach(aSrc[1].slice('this_'.length));
          aSrc[1] = 'data:,';
          iTokens[iIdx].attrs.push(['id', 'pi_'+ aParam]);
          mnm.AttachBlob(aParam, function(c) {
@@ -2637,6 +2653,10 @@
       }
       return sMdiRenderImg(iTokens, iIdx, iOptions, iEnv, iSelf);
    };
+
+   function _isDurableRef(iRef, iThisVal) {
+      return iThisVal.length === 16 || iRef.slice(0, 5) !== 'this_';
+   }
 
    var kSlideMarkNum  = 3,
        kSlideMark     = ':'.charCodeAt(0),
