@@ -2859,8 +2859,11 @@
          sChange = 0;
          mnm._data.ao = {};
          mnm._data.ml = sTemp.ml;
-         iEtc         = sTemp.mo;
-         i = 'mo';
+         mnm._data.mo = sTemp.mo;
+         for (var aK in mnm._data.toSave)
+            if (!mnm._data.toSave[aK].timer)
+               Vue.delete(mnm._data.toSave, aK);
+         return;
       }
 
       switch (i) {
@@ -2911,9 +2914,6 @@
          for (var aK in mnm._data.mo)
             if (!(aK in iEtc))
                Vue.delete(mnm._data.mo, aK);
-         for (var aK in mnm._data.toSave)
-            if (!(aK in iEtc))
-               Vue.delete(mnm._data.toSave, aK);
          for (var aK in iEtc)
             if (!(aK in mnm._data.mo))
                Vue.set(mnm._data.mo, aK, iEtc[aK]);
