@@ -420,10 +420,10 @@ textarea:focus {
 }
 .draft-minsubject {
    display: block;
-   margin: 0 auto 0.2em;
+   margin: 0.4em auto 0.2em;
    width: 7em;
    height: 0.6em;
-   cursor: default;
+   cursor: pointer;
 }
 
 .draftpv {
