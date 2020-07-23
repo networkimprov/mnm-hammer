@@ -425,17 +425,64 @@ textarea:focus {
    height: 0.6em;
    cursor: default;
 }
-.draft-preview {
-   width: 40vw; /*todo match to messages panel width */
+
+.draftpv {
+   padding: 0;
+}
+.draftpv .draftpv-doctab,
+span.draftpv-doctab {
+   position: absolute; top: 0.3em; left: 1em;
+   height: 0.6em;
+   min-width: 6em;
+   box-sizing: border-box;
+   border: 1px solid lightgray;
+   border-bottom-style: none;
+   border-radius: 0.6em 0.6em 0 0;
+   background-color: #ffffdc;
+   cursor: pointer;
+}
+span.draftpv-doctab {
+   position: static;
+   display: inline-block;
+   min-width: 3.5em;
+}
+.draftpv .draftpv-doctab-on {
+   height: 0.9em;
+   background-color: inherit;
+   filter: brightness(99.5%);
+}
+.draftpv .draftpv-scroll {
+   width: 38.75vw; /*todo match to messages panel width */
    max-height: 75vh;
-   border-width: 1em 0;
+   border-width: 1.2em 0 1em;
    border-color: transparent;
    border-style: solid;
-   padding: 0.5em 1em;
+   padding: 0 1em;
    overflow: auto;
 }
-.draft-preview > div:first-child {
+.draftpv .draftpv-head {
    margin-bottom: 0.5em;
+}
+.draftpv .draftpv-doc {
+   float: left;
+   position: sticky; top: 0;
+   min-height: 23.5em;
+   border: 1px solid lightgray;
+   border-top-style: none;
+   margin-right: 0.5em;
+   background-color: #ffffdc;
+}
+.draftpv .draftpv-docset > div {
+   margin: 0.75em 0.5em;
+   font-family: "Courier New", monospace;
+   font-size: 82%;
+   line-height: 1.25;
+}
+.draftpv .draftpv-docset > div:first-child {
+   margin-top: 0;
+}
+.draftpv .draftpv-docset > div > span {
+   color: #1e87f0;
 }
 
 .vue-form-generator input:disabled {

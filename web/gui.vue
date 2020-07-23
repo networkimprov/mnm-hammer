@@ -112,8 +112,9 @@
       <div v-for="aCmp in draftRefs" :key="aCmp.msgid"
            style="align-self:flex-end">
          <!-- uk-dropdown toggled by icon in msg-list repositions on update -->
-         <div :id="'pv_'+aCmp.msgid"></div>
-         <mnm-draftpv :draft="aCmp"/>
+         <div :id="'pv_'+ aCmp.msgid"></div>
+         <mnm-draftpv :ref="'pv_'+ aCmp.msgid"
+                      :draft="aCmp"/>
       </div>
    </div>
    <div @scroll="msglistGetScroll"
@@ -948,7 +949,7 @@
                       @pointerup.native.stop="clickPreview"
                       @resize="$root.msglistSetScroll"
                       :src="(mnm._data.toSave[msgid] || mnm._data.mo[msgid]).msg_data"
-                      placeholder="Message text, Markdown OK. Ctrl-J to preview!"
+                      placeholder="Message text. Ctrl-J to preview, Ctrl-M for Markdown help!"
                       class="width100"/>
    </div>
 </script><script>
@@ -974,7 +975,7 @@
       beforeDestroy: function() { Vue.delete(mnm._data.draftRefs, this.msgid) },
       methods: {
          keyAction: function(iId, iEvent) {
-            if (iEvent.ctrlKey && iEvent.key === 'j')
+            if (iEvent.ctrlKey && (iEvent.key === 'j' || iEvent.key === 'm'))
                mnm._lastPreview = iId;
          },
          clickPreview: function(iEvt) {
@@ -1087,40 +1088,98 @@
 <script type="text/x-template" id="mnm-draftpv">
    <div uk-dropdown="mode:click; pos:right-top; offset:3"
         :id="'pp_'+draft.msgid"
-        class="draft-preview message-bg"
-        onwheel="return mnm._canScroll(this, event.deltaY)">
-      <div v-show="subject || attach || hasDeck">
-         <div v-show="attach"
-              style="float:left; margin-right:0.6em"
-              >{{attach && attach.length}}<mnm-paperclip/></div>
-         <div v-show="hasDeck"
-              style="float:right">
-            <a @click.prevent="allSlides = !allSlides"
-               title="Toggle all slides"
-               href="#">&Lang;. . .&Rang;</a></div>
-         <span v-show="subject"
-               >Re: {{subject}}</span>&nbsp;<!---->
+        class="draftpv message-bg">
+      <div @click="setDoc(!showDoc)"
+           :title="showDoc ? 'Close sidebar' : 'Markdown format options'"
+           class="draftpv-docset draftpv-doctab" :class="{'draftpv-doctab-on': showDoc}">
+         <div :style="{width: showDoc ? '19ch' : '0'}"></div></div>
+      <div onwheel="return mnm._canScroll(this, event.deltaY)"
+           class="draftpv-scroll">
+         <div v-if="hasDoc"
+              v-show="showDoc"
+              class="draftpv-doc">
+            <div style="text-align:center">
+               <button v-show="count > 0"
+                       @click="--count"
+                       class="uk-button uk-button-link"
+                       style="margin-right:1em">
+                  <span uk-icon="icon:triangle-left; ratio:1.4"></span></button>
+               <button v-show="count < 1"
+                       @click="++count"
+                       title="More"
+                       class="uk-button uk-button-link"
+                       style="margin-left:1em">
+                  <span uk-icon="icon:triangle-right; ratio:1.4"></span></button>
+            </div>
+            <div v-show="count === 0"
+                 class="draftpv-docset">
+               <div> [Link](http://...) <br>
+                     [Link](message<span uk-icon="link" title="See message banners"></span>) <br>
+                     [Link](file<span uk-icon="link" :title="'See paperclip menu \u{1f4ce}'"></span>) </div>
+               <div> `Code` <br> ~~Crossed out~~ <br>
+                     _Italic_ &nbsp;*Italic* <br> __Bold__ &nbsp;**Bold** <br> ___Wow___ ***Wow*** </div>
+               <div> ![Text](image<span uk-icon="link" :title="'See paperclip menu \u{1f4ce}'"></span>) </div>
+               <div> ![?](form<span uk-icon="link" :title="'See paperclip menu \u{1f4ce}'"></span>) </div>
+               <div> &gt; Quote section </div>
+               <div> ``` <br> Code section <br> ``` </div>
+               <div> Separate \ <br> lines </div>
+            </div>
+            <div v-show="count === 1"
+                 class="draftpv-docset">
+               <div> * List item <br> * List item </div>
+               <div> 1. List 1st <br> 2. List 2nd </div>
+               <div> | Column | Column | <br> | --- &nbsp;&nbsp; | --- &nbsp;&nbsp; | <br>
+                     | Cell &nbsp; | Cell &nbsp; | </div>
+               <div> ::: <br> Slide 1 <br> ::: <br> Slide 2 <br> :::&gt; </div>
+               <div> # Heading 1 <br> ## Heading 2 <br> ### Heading 3 </div>
+               <div> *** <i>Horizontal bar</i> </div>
+               <div> \C <i>No Markdown</i> </div>
+            </div>
+         </div>
+         <div v-show="subject || attach || hasDeck"
+              class="draftpv-head">
+            <div v-show="attach"
+                 style="float:left; margin-right:0.6em"
+                 >{{attach && attach.length}}<mnm-paperclip/></div>
+            <div v-show="hasDeck"
+                 style="float:right">
+               <a @click.prevent="allSlides = !allSlides"
+                  title="Toggle all slides"
+                  href="#">&Lang;. . .&Rang;</a></div>
+            <span v-show="subject"
+                  >Re: {{subject}}</span>&nbsp;<!---->
+         </div>
+         <div v-show="!msg.msg_data">
+            <p><span uk-icon="comment"></span></p></div>
+         <mnm-markdown v-show="msg.msg_data"
+                       @hasdeck="hasDeck = $event"
+                       @missing="draft.missing = $event"
+                       @formfill="draft.ffAdd.apply(draft, arguments)"
+                       @toggle="draft.atcToggleFf.apply(draft, arguments)"
+                       :src="msg.msg_data" :attach="attach" :msgid="draft.msgid" :allslides="allSlides"
+                       :formfill="msg.form_fill" :atchasff="draft.atcHasFf"/>
       </div>
-      <div v-show="!msg.msg_data">
-         <p><span uk-icon="comment"></span></p></div>
-      <mnm-markdown v-show="msg.msg_data"
-                    @hasdeck="hasDeck = $event"
-                    @missing="draft.missing = $event"
-                    @formfill="draft.ffAdd.apply(draft, arguments)"
-                    @toggle="draft.atcToggleFf.apply(draft, arguments)"
-                    :src="msg.msg_data" :attach="attach" :msgid="draft.msgid" :allslides="allSlides"
-                    :formfill="msg.form_fill" :atchasff="draft.atcHasFf"/>
    </div>
 </script><script>
    Vue.component('mnm-draftpv', {
       template: '#mnm-draftpv',
       props: {draft:Object},
-      data: function() { return {hasDeck:false, allSlides:false} },
+      data: function() { return {hasDeck:false, allSlides:false, hasDoc:false, showDoc:false, count:0} },
       computed: {
          subject: function() { return (mnm._data.toSave[this.draft.msgid] ||
                                        mnm._data.mo[this.draft.msgid].SubHead).Subject },
          msg: function() { return mnm._data.toSave[this.draft.msgid] || mnm._data.mo[this.draft.msgid] },
          attach: function() { return mnm._data.mo[this.draft.msgid].SubHead.Attach },
+      },
+      methods: {
+         isOpen: function() { return this.$el.classList.contains('uk-open') },
+         setDoc: function(i) {
+            this.hasDoc = true;
+            if (i === 0)
+               i = true, this.count = 0;
+            this.showDoc = (typeof i === 'boolean' ? i : !this.showDoc || ++this.count === 1) ||
+                           (this.count = 0, false);
+         },
       },
    });
 </script>
@@ -1773,7 +1832,7 @@
             if (!this.dupShow)
                return;
             this.$nextTick(function() {
-               var aEl = this.$refs[this.setName+'.'+this.dupShow];
+               var aEl = this.$refs[this.setName+'.'+this.dupShow]; // dynamic ref is array
                if (aEl) {
                   this.revOpen(this.setName, this.dupShow, aEl[0]);
                   this.dupShow = '';
@@ -2971,11 +3030,23 @@
    };
 
    window.addEventListener('keydown', function(iEvent) {
-      if (iEvent.ctrlKey && iEvent.key === 'j') {
+      if (iEvent.ctrlKey && (iEvent.key === 'j' || iEvent.key === 'm')) {
          iEvent.preventDefault();
-         if (mnm._lastPreview) {
-            var aEl = document.getElementById(mnm._lastPreview);
-            if (aEl) aEl.click();
+         if (!mnm._lastPreview)
+            return;
+         var aEl = document.getElementById(mnm._lastPreview);
+         if (!aEl)
+            return;
+         if (iEvent.key === 'j') {
+            aEl.click();
+         } else {
+            var aPv = sApp.$refs[mnm._lastPreview][0]; // dynamic ref is array
+            if (!aPv.isOpen()) {
+               aPv.setDoc(0);
+               aEl.click();
+            } else {
+               aPv.setDoc(null);
+            }
          }
       }
    });
