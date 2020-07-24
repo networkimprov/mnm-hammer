@@ -346,6 +346,7 @@ textarea:focus {
 .message {
    overflow-x: auto;
    overflow-wrap: break-word;
+   list-style: revert; /* undo uk-grid setting */
 }
 .message img {
    max-width: 100%;
@@ -373,7 +374,6 @@ textarea:focus {
    padding-left: 0.5em;
 }
 .message ul {
-   list-style: initial;
    margin: 0 0 20px 0;
 }
 .message table {
