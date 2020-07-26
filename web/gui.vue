@@ -18,9 +18,9 @@
    <script src="/w/uikit-30.min.js"></script>
    <script src="/w/uikit-icons-30.min.js"></script>
 
-   <script src="/w/vue-25.js"></script>
-   <script src="/w/markdown-it-84.js"></script>
-   <script src="/w/luxon-111.js"></script>
+   <script src="/w/vue-26.js"></script>
+   <script src="/w/markdown-it-11x.js"></script>
+   <script src="/w/luxon-1x.js"></script>
    <link  href="/w/vue-formgen-23.css" rel="stylesheet"/>
    <script src="/w/vue-formgen-23.js"></script>
 
