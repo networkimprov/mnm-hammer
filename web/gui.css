@@ -553,19 +553,32 @@ span.draftpv-doctab {
    float: left;
    box-sizing: border-box;
    border-radius: 3px;
-   padding: 0.25em 0.5em;
+   padding: 0.1em 0.5em 0.25em;
    cursor: default;
    background-color: #f5f5f5;
+   color: black;
+   line-height: 1.25;
+   position: relative;
+}
+.draftmenu-text {
+   vertical-align: 0.1em;
    font-family: "Courier New", monospace;
    font-size: 82%;
-   color: black;
+}
+.draftmenu [uk-icon] {
+   vertical-align: 0.1em;
+}
+.draftmenu .questionbox {
+   vertical-align: -0.1em;
+   font-size: calc(26px * 0.74);
+   line-height: 1;
 }
 .draftmenu-sample {
    min-width: 0;
    float: none;
    border: 1px solid #c8c8c8;
+   padding: 0.35em 0.5em;
    background-color: #e8e8e8;
-   line-height: 1.2;
    display: inline-block;
 }
 .draftmenu-shown {
@@ -580,16 +593,19 @@ span.draftpv-doctab {
    overflow: hidden;
 }
 .draftmenu-x {
-   float: right; margin-left:  0.50em;
-   font-family: initial;
+   float: right;
+   margin-left: 0.50em;
 }
 .draftmenu-v {
-   float: right; margin-left: -0.75em;
-   font-size: 80%;
-   position: relative; bottom: -4px;
+   position: absolute; right: 0.8em; bottom: 0.5em;
+   font-size: 65%;
 }
-.draftmenu-hiddn > span:not(:only-child) > .draftmenu-x { visibility: hidden; }
-.draftmenu-shown .draftmenu-v { display: none; }
+.draftmenu-hiddn > div:not(:only-child) > .draftmenu-x {
+   visibility: hidden;
+}
+.draftmenu-shown .draftmenu-v {
+   display: none;
+}
 
 .pane-clip {
    overflow-x: hidden;

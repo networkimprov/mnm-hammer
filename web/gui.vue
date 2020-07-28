@@ -927,7 +927,6 @@
             <mnm-draftmenu @drop="atcDrop"
                            @pointerup.native.stop="clickPreview"
                            :list="mnm._data.mo[msgid].SubHead.Attach"
-                           :getname="atcGetName" :getkey="atcGetKey"
                            :style="{float:'right'}"/>
          </div>
       </div>
@@ -1025,8 +1024,6 @@
                this.save(null, null, aToSave, null);
             mnm.ThreadSend(this.msgid);
          },
-         atcGetName: function(iEl) { return iEl.Name },
-         atcGetKey:  function(iEl) { return iEl.FfKey || iEl.Name },
          atcAdd: function(iPath) {
             var aAtc = mnm._data.mo[this.msgid].SubHead.Attach;
             aAtc = aAtc ? aAtc.slice() : [];
@@ -1306,19 +1303,23 @@
    <div v-show="list && list.length > 0"
         @click="draftMenu"
         class="draftmenu-hiddn draftmenu">
-      <span v-for="(aEl, aI) in list" :key="getkey ? getkey(aEl) : aEl">
-         {{getname ? getname(aEl) : aEl}}
-         <div v-if="aI === 0 && list.length > 1"
-              class="draftmenu-v">&#x25BD;</div>
+      <div v-if="list && list.length > 1"
+           class="draftmenu-v">&#x25BD;</div>
+      <div v-for="(aEl, aI) in list" :key="aEl.FfKey || aEl.Name">
+         <span v-if="aEl.Name[0] === 'u'"
+               uk-icon="file-text" ratio="0.82"></span>
+         <span v-else-if="aEl.Name[0] === 'r'"
+               uk-icon="file-edit" ratio="0.82"></span>
+         <mnm-questionbox v-else/>
+         <span class="draftmenu-text">{{aEl.Name.slice(2)}}</span>
          <div @click="$emit('drop', aI)"
               class="draftmenu-x">&times;</div>
-         <br>
-      </span>
+      </div>
    </div>
 </script><script>
    Vue.component('mnm-draftmenu', {
       template: '#mnm-draftmenu',
-      props: {list:Array, getname:Function, getkey:Function},
+      props: {list:Array},
       watch: {
          list: function() {
             // show menu if changed by any client
