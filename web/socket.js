@@ -228,7 +228,7 @@
          }
          if (i !== 'mo' && i !== 'mn') {
             if (iCb)
-               iCb(aXhr.response);
+               iCb(aXhr.response, iId);
             else
                mnm.Render(i, aXhr.responseText, iId);
             return;

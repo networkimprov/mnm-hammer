@@ -1526,7 +1526,7 @@
          if (aKey.indexOf('_') === 16) //todo codify
             continue;
          Vue.delete(mnm._data.ao, aKey);
-         mnm.AttachForm(aKey, function(c) { Vue.set(mnm._data.ao, aKey, c) });
+         mnm.AttachForm(aKey, function(c, cKey) { Vue.set(mnm._data.ao, cKey, c) });
       }
    };
    mnm._FormViews.prototype.remount = function() {
