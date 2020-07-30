@@ -880,16 +880,16 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             return nil
          }
          aResult = []string{"tl", "al", "ml", "mn", iUpdt.Thread.Id}
-      } else { // may update msg from a threadid other than iState.getThread()
+      } else {
+         // may update msg of a threadid other than iState.getThread()
          aFn = func(c *ClientState) []string {
-            if c.isOpen(iUpdt.Thread.Id) { return aResult }
-            if strings.HasPrefix(iUpdt.Thread.Id, c.getThread()) { return aResult[:len(aResult)-2] }
+            if strings.HasPrefix(iUpdt.Thread.Id, c.getThread()) { return aResult }
             if aInclTl { return aResult[:1] }
             return nil
          }
-         aResult = []string{"tl", "ml", "cl", "al", "mn", iUpdt.Thread.Id};
+         aResult = []string{"tl", "ml", "al", "mn", iUpdt.Thread.Id, "cl"};
          if iUpdt.Thread.Id[0] != '_' {
-            aResult = append(aResult[:2], aResult[3:]...) // remove cl
+            aResult = aResult[:5]
          }
          if !aInclTl {
             aResult = aResult[1:]
