@@ -2442,8 +2442,10 @@
          <template v-if="url.form !== undefined">
             <div v-show="kind === 'form' && !(file in mnm._data.ao)"
                  class="uk-text-center"><span uk-icon="future"></span></div>
-            <plugin-vfg v-show="kind === 'form' && (file in mnm._data.ao)"
+            <plugin-vfg v-show="kind === 'form' && (file in mnm._data.ao) && file.slice(-5) !== '.spec'"
                         :schema="formDef" :model="{}" :options="{}"/>
+            <tt v-show="kind === 'form' && (file in mnm._data.ao) && file.slice(-5) === '.spec'"
+                >{{mnm._data.ao[file]}}</tt>
          </template>
          <img v-if="url.img !== undefined"
               v-show="kind === 'img'"

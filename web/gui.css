@@ -274,8 +274,15 @@ textarea:focus {
 .viewer .viewer-form {
    width: 25vw;
    min-width: 100%;
+   min-height: 2.5em;
    max-height: 25vh;
    overflow-y: scroll;
+}
+.viewer tt {
+   margin: 0.5em;
+   font-family: "Courier New", monospace;
+   font-size: 82%;
+   line-height: 1.25;
 }
 
 .cc-new {
