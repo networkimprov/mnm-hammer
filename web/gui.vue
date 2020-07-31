@@ -2910,6 +2910,8 @@
       aEl.querySelector('button').focus();
    };
 
+   mnm.HasMoId = function(i) { return i in mnm._data.mo };
+
    mnm.Render = function(i, iData, iEtc) {
       if (i.charAt(0) === '/')
          i = i.substr(1);

@@ -21,7 +21,8 @@
    mnm.Err =
    mnm.Quit =
    mnm.Render =
-   mnm.ThreadChange = function(){};
+   mnm.HasMoId =
+   mnm.ThreadChange = null;
 
    mnm.ConfigUpdt = function(iObj) { // with addr, verify
       _wsSend({op:'config_update', config:iObj})
@@ -188,13 +189,16 @@
                mnm.Render('nameset', null, aObj.slice(a+1));
                break;
             }
-            if (aObj[a] === '_t' || aObj[a] === '_T')
-               mnm.ThreadChange(aObj[a] === '_T');
-            else if (aObj[a] === '_e')
-               mnm.Err(aObj[++a]);
-            else if (aObj[a] === 'mn' || aObj[a] === 'an')
-               _xhr(aObj[a], aObj[++a]);
-            else {
+            switch (aObj[a]) {
+            case '_t': case '_T':  mnm.ThreadChange(aObj[a] === '_T'); break;
+            case '_e':             mnm.Err(aObj[++a]);                 break;
+            case 'mn': case 'an':  _xhr(aObj[a], aObj[++a]);           break;
+            case '_m':
+               var aOld = aObj[++a], aNew = aObj[++a];
+               if (mnm.HasMoId(aOld === '' ? aNew : aOld))
+                  _xhr('mn', aNew);
+               break;
+            default:
                _xhr(aObj[a]);
                if (aObj[a] === '/v' && sNotice)
                   _xhr('nlo', sNotice);

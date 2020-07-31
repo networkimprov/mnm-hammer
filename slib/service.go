@@ -696,7 +696,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
                return aResult[1:4]
             }
          }
-         aResult = []string{"cs", "fl", "tl", "pf", "cl", "al", "ml", "mn", iHead.MsgId}
+         aResult = []string{"cs", "fl", "tl", "pf", "cl", "al", "ml", "_m", iHead.Id, iHead.MsgId}
       case eSrecFwd:
          if iHead.Error != "" {
             aFn = func(c *ClientState) []string {
@@ -876,7 +876,8 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          iState.openMsg(iUpdt.Thread.Id, true, true)
          aTid := iState.getThread()
          aFn = func(c *ClientState) []string {
-            if c.getThread() == aTid { return aResult }
+            if c == iState { return aResult }
+            if c.getThread() == aTid { return aResult[:3] }
             return nil
          }
          aResult = []string{"tl", "al", "ml", "mn", iUpdt.Thread.Id}
@@ -887,9 +888,9 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             if aInclTl { return aResult[:1] }
             return nil
          }
-         aResult = []string{"tl", "ml", "al", "mn", iUpdt.Thread.Id, "cl"};
+         aResult = []string{"tl", "ml", "al", "_m", "", iUpdt.Thread.Id, "cl"};
          if iUpdt.Thread.Id[0] != '_' {
-            aResult = aResult[:5]
+            aResult = aResult[:6]
          }
          if !aInclTl {
             aResult = aResult[1:]

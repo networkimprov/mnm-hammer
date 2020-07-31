@@ -512,8 +512,8 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
          continue
       }
       for aK, aV := range iTc.Orders[a].Result {
-         a1 := 0
-         for ; a1 < len(aOps) && aOps[a1] != aK; a1++ {}
+         a1 := -1
+         for a1 = 0; a1 < len(aOps) && !(aOps[a1] == aK || aK == "mn" && aOps[a1] == "_m"); a1++ {}
          if a1 == len(aOps) {
             fmt.Fprintf(os.Stderr, "%s missing result\n  expect %s %v\n", aPrefix, aK, aV)
          }
@@ -530,6 +530,11 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
             if aOp == "mn" || aOp == "an" {
                a1++
                aId = aOps[a1]
+               if aSum != nil { atomic.AddInt32(aSum, 1) }
+            } else if aOp == "_m" {
+               a1 += 2
+               aOp, aId = "mn", aOps[a1]
+               if aSum != nil { atomic.AddInt32(aSum, 2) }
             }
             aCtx.wg.Add(1)
             go _runTestService(&aCtx, aOp, aId, iTc.Orders[a].Result[aOp], aPrefix, aSum, aTryN)
