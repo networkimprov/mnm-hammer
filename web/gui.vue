@@ -908,7 +908,7 @@
 </script>
 
 <script type="text/x-template" id="mnm-draft">
-   <div @keydown="keyAction('pv_'+msgid, $event)">
+   <div @keydown="keyAction">
       <div style="position:relative; padding:1px;">
          <button @click="send"
                  :disabled="missing !== 0 || mnm._data.ml.length < 2 && !subject"
@@ -973,9 +973,9 @@
       created: function() { Vue.set(mnm._data.draftRefs, this.msgid, this) }, // $refs not reactive
       beforeDestroy: function() { Vue.delete(mnm._data.draftRefs, this.msgid) },
       methods: {
-         keyAction: function(iId, iEvent) {
+         keyAction: function(iEvent) {
             if (iEvent.ctrlKey && (iEvent.key === 'j' || iEvent.key === 'm'))
-               mnm._lastPreview = iId;
+               mnm._lastPreview = 'pv_'+ this.msgid;
          },
          clickPreview: function(iEvt) {
             document.getElementById('pp_'+this.msgid).dispatchEvent(new PointerEvent('pointerup',
@@ -3037,8 +3037,13 @@
    window.addEventListener('keydown', function(iEvent) {
       if (iEvent.ctrlKey && (iEvent.key === 'j' || iEvent.key === 'm')) {
          iEvent.preventDefault();
-         if (!mnm._lastPreview)
-            return;
+         if (!mnm._lastPreview) {
+            var aMsg = mnm._data.ml.find(function(c) { return c.From === '' && !c.Queued &&
+                                                              c.Id in mnm._data.mo });
+            if (!aMsg)
+               return;
+            mnm._lastPreview = 'pv_'+ aMsg.Id;
+         }
          var aEl = document.getElementById(mnm._lastPreview);
          if (!aEl)
             return;
