@@ -548,7 +548,6 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    // expects "/service[?op[=id]]"
    var err error
    aClientId, _ := iReq.Cookie("clientid")
-   aCid := ""; if aClientId != nil { aCid = aClientId.Value }
    var aState *pSl.ClientState
    aSvcId := iReq.URL.Path[1:]; if aSvcId == "" { aSvcId = "local" }
    aOp_Id := []string{"er", ""}
@@ -558,6 +557,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       if aSvc.ccs == nil {
          err = tError("service not found")
       } else if len(aQuery) >= 2 && kStateOp[aQuery[:2]] {
+         aCid := ""; if aClientId != nil { aCid = aClientId.Value }
          aCc := aSvc.ccs.Get(aCid)
          if aCc == nil {
             err = tError("no client connected to service")
@@ -570,7 +570,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       }
    }
    if sTestHost == "" {
-      fmt.Printf("runService %s: op %s id %s\n", aSvcId, aOp_Id[0], aCid)
+      fmt.Printf("runService %s: %s %s\n", aSvcId, aOp_Id[0], aOp_Id[1])
    }
    iResp.Header().Set("Content-Type", "text/plain; charset=utf-8")
    var aResult interface{}
@@ -636,6 +636,9 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
 }
 
 func runAbout(iResp http.ResponseWriter, iReq *http.Request) {
+   if sTestHost == "" {
+      fmt.Printf("runAbout %s %s\n", iReq.Method, iReq.URL.Path)
+   }
    err := json.NewEncoder(iResp).Encode(getAbout())
    if err != nil { fmt.Fprintf(os.Stderr, "runAbout: %s\n", err.Error()) }
 }
@@ -648,6 +651,9 @@ func getAbout() *tAbout {
 }
 
 func runNodeListen(iResp http.ResponseWriter, iReq *http.Request) {
+   if sTestHost == "" {
+      fmt.Printf("runNodeListen %s %s\n", iReq.Method, iReq.URL.Path)
+   }
    if iReq.Method == "POST" {
       aToAll := pSl.ListenNode()
       toAllClients(aToAll)
@@ -658,6 +664,9 @@ func runNodeListen(iResp http.ResponseWriter, iReq *http.Request) {
 }
 
 func runNodeRecv(iResp http.ResponseWriter, iReq *http.Request) {
+   if sTestHost == "" {
+      fmt.Printf("runNodeRecv %s %s?%s\n", iReq.Method, iReq.URL.Path, iReq.URL.RawQuery)
+   }
    // network peer is a separate mnm app instance
    aQuery, err := url.QueryUnescape(iReq.URL.RawQuery)
    if err != nil || !pSl.CheckPinNode(aQuery) {
@@ -686,6 +695,9 @@ func runNodeRecv(iResp http.ResponseWriter, iReq *http.Request) {
 }
 
 func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
+   if sTestHost == "" {
+      fmt.Printf("runGlobal %s %s\n", iReq.Method, iReq.URL.Path)
+   }
    var aSet pSl.GlobalSet
    switch iReq.URL.Path[1] {
    case 'f': aSet = pSl.BlankForm
@@ -755,6 +767,9 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
 }
 
 func runTag(iResp http.ResponseWriter, iReq *http.Request) {
+   if sTestHost == "" {
+      fmt.Printf("runTag %s %s\n", iReq.Method, iReq.URL.Path)
+   }
    err := json.NewEncoder(iResp).Encode(pSl.GetIdxTag())
    if err != nil { fmt.Fprintf(os.Stderr, "runTag: %v\n", err) }
 }
@@ -765,6 +780,7 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
    aSvcId := iReq.URL.Path[3:]; if aSvcId == "" { aSvcId = "local" }
    aSvc := getService(aSvcId)
    if aSvc.ccs == nil {
+      fmt.Fprintf(os.Stderr, "runWebsocket %s: not found\n", aSvcId)
       iResp.WriteHeader(http.StatusNotFound)
       iResp.Write([]byte("service not found: "+aSvcId))
       return
@@ -796,7 +812,7 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
          break
       }
       if sTestHost == "" {
-         fmt.Printf("runWebsocket %s: msg %s\n", aSvcId, string(aJson))
+         fmt.Printf("runWebsocket %s: %s\n", aSvcId, string(aJson))
       }
 
       var aUpdate pSl.Update

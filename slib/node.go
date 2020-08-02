@@ -557,7 +557,7 @@ func syncUpdtNode(iSvc string, iUpdt *Update, iState *ClientState, iFunc func()e
          if err != nil { quit(err) }
          err = syncDir(dirTemp(iSvc))
          if err != nil { quit(err) }
-fmt.Println("## log  ", aLogQ, iSvc)
+//todo fmt.Println("## log  ", aLogQ, iSvc)
       }
       defer aFd.Close()
 
@@ -603,7 +603,6 @@ func _startSyncTimer(iSvc string) {
    _ = time.AfterFunc(sNodeSyncPeriod, func() {
       //todo don't queue if no link to service; retry timer
       addQueue(iSvc, eSrecSync, aPath)
-fmt.Println("## queue", aPath, iSvc)
    })
 }
 
@@ -618,7 +617,7 @@ func sendSyncNode(iW io.Writer, iSvc string, iNodeQ, iId string) error {
       if err != nil { quit(err) }
    }
    aSvc.nodeUpdt.Unlock()
-fmt.Println("## send ", iNodeQ, iSvc, " log", aPath, err)
+//todo fmt.Println("## send ", iNodeQ, iSvc, " log", aPath, err)
 
    aFd, err := os.Open(dirTemp(iSvc) + iNodeQ)
    if err != nil { quit(err) }
@@ -661,7 +660,6 @@ func dropSyncNode(iSvc string, iNodeQ, iQid string, iComplete string) {
    dropQueue(iSvc, iQid)
    err = os.Remove(dirTemp(iSvc) + iNodeQ)
    if err != nil && !os.IsNotExist(err) { quit(err) }
-fmt.Println("## drop ", iNodeQ, iSvc)
    err = os.Remove(aTempOk)
    if err != nil { quit(err) }
 }

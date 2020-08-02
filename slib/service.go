@@ -507,7 +507,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       storeSelfAdrsbk(iSvc, aAlias, aUid) //todo check for this on init
       aFn, aResult = fAll, []string{"cf"}
    case "login":
-      fmt.Printf("HandleTmtpService %s: login %s\n", iSvc, iHead.Node)
+      //todo fmt.Printf("HandleTmtpService %s: login %s\n", iSvc, iHead.Node)
    case "info":
       setFromOhi(iSvc, iHead)
       aFn, aResult = fAll, []string{"of"}
