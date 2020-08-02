@@ -1,6 +1,6 @@
 ### mnm is not mail
 
-<img width="300" hspace="32" align="right" src="https://user-images.githubusercontent.com/458838/65545951-535f6980-decb-11e9-8f46-6122198097b0.png">  
+<img width="300" hspace="16" align="right" src="https://user-images.githubusercontent.com/458838/65545951-535f6980-decb-11e9-8f46-6122198097b0.png">  
 
 To those battling cybercrime, __email is a jungle__. 
 It allows anyone, anywhere, claiming any identity to send you any content, any number of times. 
