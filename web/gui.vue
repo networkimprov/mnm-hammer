@@ -985,25 +985,20 @@
             var aMo = mnm._data.mo[this.msgid];
             if (!(this.msgid in mnm._data.toSave))
                Vue.set(mnm._data.toSave, this.msgid,
-                       {timer:null, form_fill:aMo.form_fill,       ffUpdt:{},
-                                    msg_data: aMo.msg_data,        mdUpdt:false,
-                                    Subject:  aMo.SubHead.Subject, suUpdt:false});
+                       {timer:[], form_fill:aMo.form_fill,       ffUpdt:{},
+                                  msg_data: aMo.msg_data,        mdUpdt:false,
+                                  Subject:  aMo.SubHead.Subject, suUpdt:false});
             var aToSave = mnm._data.toSave[this.msgid];
-            if (!iNoTimer && !aToSave.timer)
-               aToSave.timer = setTimeout(fDing, mnm._saveWaitTime, this);
+            if (!iNoTimer)
+               mnm._autoSaveSet(aToSave.timer, fDing, this);
             return aToSave;
-            function fDing(that) {
-               aToSave.timer = null;
-               that.save(null, null, aToSave, aMo);
-            }
+            function fDing() { this.save(null, null, aToSave, aMo) }
          },
          save: function(iCc, iAttach, iToSave, iMo) {
             if (!iToSave) iToSave = this.getToSave(true);
             if (!iMo)     iMo = mnm._data.mo[this.msgid];
-            if (iToSave.timer) {
-               clearTimeout(iToSave.timer);
-               iToSave.timer = null;
-            }
+            if (iToSave.timer[0])
+               mnm._autoSaveClear(iToSave.timer);
             mnm.ThreadSave({
                Id:       this.msgid,
                Alias:               iMo.SubHead.Alias,
@@ -1020,7 +1015,7 @@
          },
          send: function() {
             var aToSave = mnm._data.toSave[this.msgid];
-            if (aToSave && aToSave.timer)
+            if (aToSave && aToSave.timer[0])
                this.save(null, null, aToSave, null);
             mnm.ThreadSend(this.msgid);
          },
@@ -1771,8 +1766,8 @@
             var aKey = iSet+'.'+iRev;
             var that = this;
             if (aKey in mnm._data.toSaveFo) {
-               clearTimeout(mnm._data.toSaveFo[aKey].timer);
-               mnm._data.toSaveFo[aKey].fn(this, fEmit);
+               mnm._autoSaveClear(mnm._data.toSaveFo[aKey].timer);
+               mnm._data.toSaveFo[aKey].fn.call(this, fEmit);
             } else {
                fEmit();
             }
@@ -1800,7 +1795,7 @@
          revDelete: function(iSet, iRev) {
             var aKey = iSet+'.'+iRev;
             if (aKey in mnm._data.toSaveFo) {
-               clearTimeout(mnm._data.toSaveFo[aKey].timer);
+               mnm._autoSaveClear(mnm._data.toSaveFo[aKey].timer);
                delete mnm._data.toSaveFo[aKey];
             }
          },
@@ -1816,13 +1811,14 @@
                   return;
                var aKey = this.setName+'.'+this.fileId;
                if (!(aKey in mnm._data.toSaveFo))
-                  mnm._data.toSaveFo[aKey] = {timer: setTimeout(fDing, mnm._saveWaitTime, this),
-                                              fn:fDing, data:''};
-               mnm._data.toSaveFo[aKey].data = mnm._data.fo;
-               function fDing(that, cCb) {
-                  that.$refs.save.value = mnm._data.toSaveFo[aKey].data;
-                  that.$refs.save.form.action = '/f/+' + encodeURIComponent(aKey);
-                  mnm.Upload(that.$refs.save.form, cCb); // assume save.value can be changed after this
+                  mnm._data.toSaveFo[aKey] = {timer:[], fn:fDing, data:''};
+               var aToSave = mnm._data.toSaveFo[aKey];
+               mnm._autoSaveSet(aToSave.timer, fDing, this);
+               aToSave.data = mnm._data.fo;
+               function fDing(cCb) {
+                  this.$refs.save.value = aToSave.data;
+                  this.$refs.save.form.action = '/f/+' + encodeURIComponent(aKey);
+                  mnm.Upload(this.$refs.save.form, cCb); // assume save.value can be changed after this
                   delete mnm._data.toSaveFo[aKey];
                }
             });
@@ -2106,21 +2102,18 @@
          editPing: function(iRec, iText) {
             var aKey = this.rowId(iRec);
             if (!(aKey in mnm._data.toSavePs))
-               Vue.set(mnm._data.toSavePs, aKey, {timer:null, Text:''});
+               Vue.set(mnm._data.toSavePs, aKey, {timer:[], Text:''});
             var aToSave = mnm._data.toSavePs[aKey];
-            if (!aToSave.timer)
-               aToSave.timer = setTimeout(fDing, mnm._saveWaitTime);
+            mnm._autoSaveSet(aToSave.timer, fDing, this);
             aToSave.Text = iText;
             function fDing() {
-               aToSave.timer = null;
                mnm.PingSave({text:aToSave.Text, alias:iRec.MyAlias, to:iRec.Alias, gid:iRec.Gid});
             }
          },
          sendPing: function(iRec) {
             var aToSave = mnm._data.toSavePs[this.rowId(iRec)];
-            if (aToSave && aToSave.timer) {
-               clearTimeout(aToSave.timer);
-               aToSave.timer = null;
+            if (aToSave && aToSave.timer[0]) {
+               mnm._autoSaveClear(aToSave.timer);
                mnm.PingSave({text:aToSave.Text, alias:iRec.MyAlias, to:iRec.Alias, gid:iRec.Gid});
             }
             mnm.PingSend(iRec.Qid);
@@ -2548,7 +2541,6 @@
    var sTemp = {ml:null, mo:null};
    var sMsglistPos = 0;
 
-   mnm._saveWaitTime = 12*1000; // milliseconds
    mnm._isLocal = '<%.TitleJs%>' === 'local';
    mnm._mdi = markdownit();
    mnm._lastPreview = '';
@@ -2859,6 +2851,25 @@
       );
    };
 
+   mnm._autoSaveSet = function(iTimers, iCb, iThis) {
+      if (iTimers[0])
+         clearTimeout(iTimers[0]);
+      iTimers[0] = setTimeout(fDing, 3*1000, 1);
+      if (!iTimers[1])
+         iTimers[1] = setTimeout(fDing, 12*1000, 0);
+      function fDing(cN) {
+         clearTimeout(iTimers[cN]);
+         iTimers[0] = iTimers[1] = null;
+         iCb.call(iThis);
+      }
+   };
+
+   mnm._autoSaveClear = function(iTimers) {
+      clearTimeout(iTimers[0]);
+      clearTimeout(iTimers[1]);
+      iTimers[0] = iTimers[1] = null;
+   };
+
    mnm._toClipboard = function(iRef) {
       var aEl = document.getElementById('toclipboard');
       aEl.value = iRef;
@@ -2925,7 +2936,7 @@
          mnm._data.ml = sTemp.ml;
          mnm._data.mo = sTemp.mo;
          for (var aK in mnm._data.toSave)
-            if (!mnm._data.toSave[aK].timer)
+            if (!mnm._data.toSave[aK].timer[0])
                Vue.delete(mnm._data.toSave, aK);
          return;
       }
@@ -2952,12 +2963,12 @@
       case 'ps':
          var aPs = JSON.parse(iData);
          for (var aK in mnm._data.toSavePs) {
-            if (!mnm._data.toSavePs[aK].timer) {
+            if (!mnm._data.toSavePs[aK].timer[0]) {
                Vue.delete(mnm._data.toSavePs, aK);
             } else {
                var aEl = aPs.find(function(c) { return sApp.$refs.adrsbk.rowId(c) === aK });
                if (!aEl || aEl.Queued) {
-                  clearTimeout(mnm._data.toSavePs[aK].timer);
+                  mnm._autoSaveClear(mnm._data.toSavePs[aK].timer);
                   Vue.delete(mnm._data.toSavePs, aK);
                }
             }
