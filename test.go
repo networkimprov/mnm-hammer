@@ -449,7 +449,7 @@ func _findOrder(iClients []tTestClient, iSvc string, iOrder string) (*tTestClien
 }
 
 type tJar []*http.Cookie
-func (o tJar) SetCookies(*url.URL, []*http.Cookie) {}
+func (o tJar) SetCookies(_ *url.URL, i []*http.Cookie) { copy(o, i) }
 func (o tJar) Cookies(*url.URL) []*http.Cookie { return o }
 
 func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {

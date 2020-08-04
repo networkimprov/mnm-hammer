@@ -578,7 +578,13 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
    switch aOp_Id[0] {
    case "": // service template
       if aClientId == nil {
-         aClientId = &http.Cookie{Name: "clientid", Value: fmt.Sprint(time.Now().UTC().UnixNano())}
+         aClientId = &http.Cookie{Name: "clientid", SameSite: http.SameSiteLaxMode,
+                                  Expires: time.Date(5678, 1, 2, 3, 4, 56, 78, time.UTC), //todo sooner?
+                                  Value: fmt.Sprint(time.Now().UTC().UnixNano())}
+         http.SetCookie(iResp, aClientId)
+      } else if aClientId.SameSite != http.SameSiteLaxMode { // drop after 0.8
+         aClientId.SameSite = http.SameSiteLaxMode
+         aClientId.Expires = time.Date(5678, 1, 2, 3, 4, 56, 78, time.UTC)
          http.SetCookie(iResp, aClientId)
       }
       iResp.Header().Set("Content-Type", "text/html; charset=utf-8")
