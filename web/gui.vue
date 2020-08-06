@@ -1407,7 +1407,7 @@
             this.html = mnm._mdi.render(this.src, this.env);
          },
          checkAttach: function(iFile) {
-            if (!this.attach.find(function(c) { return c.Name === iFile }))
+            if (!this.attach || !this.attach.find(function(c) { return c.Name === iFile }))
                ++this.unattached;
          },
          clearAttach: function() {
