@@ -357,6 +357,7 @@ textarea:focus {
 }
 .message img {
    max-width: 100%;
+   vertical-align: text-top;
 }
 .message pre, .message code {
    white-space: pre-wrap;

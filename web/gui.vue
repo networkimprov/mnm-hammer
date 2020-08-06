@@ -2663,8 +2663,9 @@
    });
 
    var kUrlStart = /^[A-Za-z][A-Za-z0-9+.\-]*:/;
+
    mnm._mdi.renderer.rules.link_open = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
-      var aHref = iTokens[iIdx].attrs[iTokens[iIdx].attrIndex('href')];
+      var aHref = iTokens[iIdx].attrs[0]; // assume 0 == iTokens[iIdx].attrIndex('href')
       if (aHref[1].charAt(0) === '#') {
          iTokens[iIdx].attrs.push(['onclick', "mnm.NavigateLink(this.innerText,this.href);return false"]);
       } else if (!kUrlStart.test(aHref[1])) {
@@ -2676,6 +2677,15 @@
          //todo add download icon and viewer
       }
       return iSelf.renderToken(iTokens, iIdx, iOptions);
+   };
+
+   //todo replace this with CSS background?
+   mnm._mdi.renderer.rules.link_close = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
+      var aClose = iSelf.renderToken(iTokens, iIdx, iOptions);
+      while (iTokens[--iIdx].tag !== 'a') {} // assume .level values are equal
+      if (kUrlStart.test(iTokens[iIdx].attrs[0][1]))
+         return '<span uk-icon="expand"></span>' + aClose;
+      return aClose;
    };
 
    var sMdiRenderImg = mnm._mdi.renderer.rules.image;
