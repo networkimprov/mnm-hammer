@@ -105,7 +105,9 @@ textarea {
    line-height: 1.25;
 }
 input[type=text]:focus,
-textarea:focus {
+textarea:focus,
+.message-list:focus,
+.thread-list:focus {
    outline: none;
 }
 

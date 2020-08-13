@@ -79,11 +79,11 @@
          <button @click="mnm.ThreadNew({alias:cf.Alias, cc:[]})"
                  title="New thread draft"
                  class="btn btn-icon"><span uk-icon="pencil"></span></button>
-         <button onclick="this.blur(); mnm.NavigateHistory(-1)"
+         <button @click="$refs.msglist.focus(), mnm.NavigateHistory(-1)"
                  :disabled="!cs.History || !cs.History.Prev"
                  class="uk-button uk-button-link">
             <span uk-icon="icon:arrow-left; ratio:1.6"></span></button>
-         <button onclick="this.blur(); mnm.NavigateHistory( 1)"
+         <button @click="$refs.msglist.focus(), mnm.NavigateHistory( 1)"
                  :disabled="!cs.History || !cs.History.Next"
                  class="uk-button uk-button-link">
             <span uk-icon="icon:arrow-right; ratio:1.6"></span></button>
@@ -119,6 +119,7 @@
    </div>
    <div @scroll="msglistGetScroll"
         ref="msglist"
+        tabindex="-1"
         uk-height-viewport="offset-top:true; offset-bottom:true"
         class="firefox-minheight-fix uk-overflow-auto message-bg message-list"
         style="position:relative">
@@ -264,16 +265,8 @@
    </div>
    <div :class="{vishide: mnm._isLocal}"
         uk-grid class="uk-grid-collapse">
-      <ul uk-tab class="uk-width-expand"><li style="display:none"></li>
-         <li v-for="(aTerm, aI) in mnm._tabsStdService"
-             :class="{'uk-active': cs.SvcTabs.PosFor === 0 && cs.SvcTabs.Pos === aI}">
-            <a @click.prevent="mnm.TabSelect({type:cs.SvcTabs.Type, posfor:0, pos:aI})"
-               href="#">
-               <span v-if="aTerm.Term === 'Unread'"
-                     >{{svcSelf.UnreadN || null}}</span>
-               {{aTerm.Label || aTerm.Term}}<!---->
-            </a>
-         </li></ul>
+      <mnm-tabs :set="[mnm._tabsStdService]" :state="cs.SvcTabs"
+                class="uk-width-expand"/>
       <span>
          <span v-show="fl.length" x--todo="switch to v-if when uk-dropdown replaced"
                title="Filled form results"
@@ -304,7 +297,9 @@
    </div>
    <mnm-tabs v-if="cs.SvcTabs.Pinned.length || cs.SvcTabs.Terms.length"
              :set="svcTabset" :state="cs.SvcTabs"/>
-   <div uk-height-viewport="offset-top:true"
+   <div ref="threadlist"
+        tabindex="-1"
+        uk-height-viewport="offset-top:true"
         class="thread-list firefox-minheight-fix uk-overflow-auto">
       <template v-if="ffn">
          <table class="uk-table uk-table-small uk-table-hover uk-text-small">
@@ -337,7 +332,7 @@
          </table></template>
       <template v-else>
          <div v-for="aRow in tl" :key="aRow.Id"
-              @click="mnm.NavigateThread(aRow.Id)"
+              @click="$root.$refs.msglist.focus(), mnm.NavigateThread(aRow.Id)"
               uk-grid class="uk-grid uk-grid-small thread"
               :class="{'thread-current': aRow.Id === cs.Thread}">
             <div class="uk-width-auto"
@@ -2392,10 +2387,12 @@
       <template v-for="(aTabs, aI) in set">
          <li v-for="(aTerm, aJ) in aTabs"
              :class="{'uk-active': aI === state.PosFor && aJ === state.Pos}">
-            <a @click.prevent="mnm.TabSelect({type:state.Type, posfor:aI, pos:aJ})" href="#">
-               {{ getLabel(aTerm) }}
+            <a @click.prevent="xlist.focus(), mnm.TabSelect({type:state.Type, posfor:aI, pos:aJ})" href="#">
+               <span v-if="set.length === 1 && aTerm.Term === 'Unread'"
+                     >{{$root.svcSelf.UnreadN || null}}</span>
+               {{ getLabel(aTerm) }}<!---->
                <span v-if="aI > 0"
-                     @click.prevent.stop="mnm.TabDrop(state.Type)"
+                     @click.prevent.stop="xlist.focus(), mnm.TabDrop(state.Type)"
                      :class="{vishide: aI !== state.PosFor || aJ !== state.Pos}">&times;</span>
             </a>
          </li></template></ul>
@@ -2403,7 +2400,10 @@
    Vue.component('mnm-tabs', {
       template: '#mnm-tabs',
       props: {set:Array, state:Object},
-      computed: { mnm: function() { return mnm } },
+      computed: {
+         mnm: function() { return mnm },
+         xlist: function() { return this.$root.$refs[this.state.Type === 0 ? 'msglist' : 'threadlist'] },
+      },
       methods: {
          getLabel: function(iTerm) {
             if (this.state.Type === 1)
@@ -2588,6 +2588,7 @@
             for (var a=0; a < iState.Terms.length; ++a)
                if (iState.Terms[a].Term === iText)
                   return;
+            sApp.$refs[iState.Type === 0 ? 'msglist' : 'threadlist'].focus();
             mnm.TabAdd({type:iState.Type, term:iText});
          },
          msgToggle: function(iId) {
@@ -3091,6 +3092,7 @@
       console.error(iErr);
    };
    sApp.$mount('#app');
+   sApp.$refs.threadlist.focus();
 
 }).call(this);
 </script>
