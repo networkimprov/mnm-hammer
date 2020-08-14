@@ -236,18 +236,13 @@
               "LastDate":"*d", "LastAuthor":"Gold#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] },
    "Name": "poll_delivery.a"
 },{
-   "Updt": {"Op":"test", "Test":{"Request":["ml"], "ThreadId":"last"}},
+   "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
    "Poll": 4,
    "Result": {
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"", "Seen":"", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward", "Seen":"",
-              "Queued":false}] },
-   "Name": "poll_confirm.a"
-},{
-   "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"last"}},
-   "Result": {
+              "Queued":false}] ,
       "mo": [] ,
-      "ml": "poll_confirm.a" ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
              "History":{"Prev":true, "Next":false},

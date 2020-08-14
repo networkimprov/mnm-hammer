@@ -1004,8 +1004,10 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
       if err != nil { return fErr, nil }
       aToAll = []string{"/g"}
    case "navigate_thread":
+      aDiff := iUpdt.Navigate.ThreadId != iState.getThread()
       iState.addThread(iUpdt.Navigate.ThreadId)
-      aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}
+      aFn = fOne
+      aResult = []string{"cs"}; if aDiff { aResult = []string{"cs", "cl", "al", "_t", "ml", "mo"} }
    case "navigate_history":
       iState.goThread(iUpdt.Navigate.History)
       aFn, aResult = fOne, []string{"cs", "cl", "al", "_t", "ml", "mo"}
