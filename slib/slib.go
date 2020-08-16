@@ -285,7 +285,6 @@ const ( _ int8 = iota; eLogRetry; eLogNone )
 
 type UpdateTest struct {
    Request []string
-   ThreadId string
    Notice []tNoticeEl
 }
 

@@ -658,7 +658,6 @@ func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
         "open":
       // nothing to do
    case "test":
-      _applyLastId(&iUpdt.Test.ThreadId,     &aApply, iCtx.lastId, "tl")
       if len(iUpdt.Test.Request) >= 2 {
          if iUpdt.Test.Request[0] == "mn" { // assume Request[1] is valid
             _applyLastId(&iUpdt.Test.Request[1], &aApply, iCtx.lastId, "ml")
