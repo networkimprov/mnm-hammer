@@ -5,94 +5,115 @@ reorganize this file using section numbers from docs
 
 common function and syncDir for placeholder symlinks
 slib/Readme and code comments re commit safety
-re-send on missed ack may cause dup with unique msgid at receiver
 checksum thread index and service config
   Add storeFile checksum
 synchronize access to thread/* form/* adrsbk etc (verify)
 storeReceivedThread fConsume() msg with excessive subhead length
 storeReceivedAttach prevent dup & invalid filename
+storeFwdNotify reject request if sender not in Cc list
 Handle*Service limit aResult to op codes with changes
-  op code "ma" to insert new message
-  op code "mx" to delete message
+  op _m,a,- to delete message if client mo has it
 thread_savetext message for subject & body?
-loadThread return set of msgids
-ClientState keeps form-table; send "tl" op if changed
-  keeps msg panel scroll position
+state: keeps msg panel scroll position?
   drop old states
+thread: on forward, do notified nodes confirm to sender?
+  verify forwarding when thread missing recently-sent messages from other senders
+all: use string(bytes.ToValidUTF8(buf, nil)) for unknown buf contents
 slib: %-encode initial '.' in filename
+  makeLocalId() could yield identical string on different nodes
 form: Add() reject filename ".*"
   blankform update msg to all clients, include ID
   flag update in msg editor if form is attached
+    verify that form-save creates new file
   form-fill option to log data in ..._recv FFT
 attach size set on save
 util: app or script to find hard-linked files, run robocopy, replace found files with hard-links
 search: sort threads with a draft to top for T+n hours
+  +n in OrigAuthor for outbound msgs?
+  mouseover LastAuthor to see all authors
 config file: path for store/, http host & port, ...
 test-in: add op open to Gold
+  replace Op:test with Poll on prior Order
+  poll on send ops
 test:
+  setupTestDir() use http conn
+  try repeated complete functions via defer sCrashFn()
+  create test blob in test-run, checksum, symlink in upload, attach, verify checksum on receipt
   Orders[n].Note == "print this // hide this"
   watch for unexpected changes: get all "xy" ops after each Order, compare with expected state
 main: TLS1.3, call api correctly https://github.com/golang/go/issues/31224
+  stream audio/video to client
   secure link to clients
   revise disconnected ClientState files on rename/discard
+  tTmtpInput log error; retry .Temporary(); drop logging in HandleTmtpService & its calls
+    _readLink check tTmtpInput for error
 ohi: on receipt, add to adrsbk if missing
-  SendAllOhi allow empty .For (currently disallowed by server)
-    editOhi() set .status=pending
-    SendAllOhi() omit .status==pending items
-    tmtp "ohiedit" set .status=confirm
+  what is impact of nodes on server ohi list
 service: allow *.tmp service names
   allow svcid change
   "registered" needs transaction with adrsbk & config
   add-account: check whether net address works
+  add getUidService()
 mswin: can't fsync directory, so verify that dirctory updates are durable after syscall returns
   if not, can recover lost files via FILE_OPEN_BY_FILE_ID?
 clean
+  os.RemoveAll doesn't return os.IsNotExist(err)
   slib: add fileThread, fileForm->fileFft?, fileBlank ...
   use file.readat where offset known
   service: "ack" default aResult = []string{"",...}
   tError to fmt.Errorf; separate line
-  writestring vs write([]byte(s))
+  fprintf or writestring vs write([]byte(s))
   form: kSuffix* -> kFfnSuffix* 
   thread: mv t*El to read/write section, mv completeThread to top
     tComplete methods to encapsulate msgid logic
   test: _prepUpdt closures
+  main: logError() prints err msg
 gui
-  all: fixes for narrow window
-    name sorts case-insensitive
-  ao: clear on thread change
+  sleeping Catalina MacOS drops browser websocket
+  change ml/tl panel width via centerline drag
+  template: test <%.isLocal%> with template, so browser doesn't need to
+  tour: better graphics
+  date: delimiter character per locale
+    am/pm option
+  ao: rename ano
   mo: drop draft object after send/discard
   formview: default field values in form-def "defaults" object
     create component with parent param?
-    handle multiple form instances
+    allow multiple results from a form via [?n](...), where n=0 is unlimited
     attach-fill to paperclip button that changes to checkmark
   markdown: attachment hyperlinks display mnm-viewer or download icon
-    foreign hyperlinks display arrows icon
+    disable h2/h1 heading style by -/= on next line
     prevent excess rendering
-  draft: fix body edit position reset for long text
-    update editors when shown in other message list tabs
+  draft:
+    preview panel link to locate associated draft, scrolling msg-list to right place
+    recipients hyperlink next to [self] when no recipients
     to-summary abbrev names
     bug causes occasional reopen after update & close
-    reply started in a search tab isn't open in Open tab
     attachmt menu has links to clip markdown
+    drag/drop attachment (also in files menu)
     progress bar on long outgoing msgs
-    prevent send if missing attachment for ref to (this_...)
-    markdown guide in popup menu
+    indicate when msg sent
+    button to insert quoted markdown
+    _m updates ml & tl fields; omit ml & tl in results
   blankform listsort only when edit pane closed
-    .spec preview shows ffn, or list of field name/type
     validate on send
   docs: pin menu open?, resize pane
-    chrome bug: restored scroll position inaccurate
   cc: bold last alias added
     no recipients indicates [self]?
-  attachments: escape special chars in markdown ref links
-    add sender name
+    note-field tooltip; swap position with to-field?
+    tab-key from to-field sets focus in draft textarea
+  attachments:
   FFT: indicate empty records when $empty:true
   svcadd: indicate success/failure
   notice: audio tone option
     count in window title
+    show errors on local site
   adrsbk: change ohi-to selection via enter-key?
-  msg-list: in ALL tab, open msg shouldn't mark it unread?
-  thread-list: UNREAD tab title include count
+  msg-list: outside OPEN tab, open msg shouldn't mark it seen?
+    or open unread msg in any tab sets it open in OPEN tab
+    keep scroll offsets for certain tabs
+    goLink scrolls to referenced msg; result include "_l",msgid
+  thread-list: keep scroll offsets for certain tabs?
   clean:
     css use .outer .inner {...} when .inner not standalone
     after text use <!----> to eliminate whitespace before </tag>
@@ -105,17 +126,52 @@ server try-back-later msg
   reconnect to send
   disconnect when send queue empty
 
+minimize browser update traffic
+  websocket.js keep list of request types, with isVisible & isCurrent state
+  on user action, gui.vue update visible types, via mnm.Xyz()
+    call xhr when type becomes visible, if !isCurrent, set isCurrent=true
+  on updt msg, websocket skip xhr, if !isVisible, set isCurrent=false
+
+nodes
+  local service list all known nodes, sublist of accounts per-node
+    button to disable node's accounts
+  node list
+    ui show online status (from ohi msg)
+    ui to change name for non-pending
+    on pin fail, prompt for new pin&addr
+    "user" broadcast item not "active" on arrival; 2nd broadcast for "active"
+      on first login, check status; disconnect if already confirmed/active
+    status:ready must complete on matching nodeid, or be deactivated?
+  synchronize: thread draft, ping draft
+    for tag sync, send names of svc tags, don't reuse those names on receiver
+    p2p xfer to local nodes
+    log original thread draft
+      tService index of logged drafts, map[string]bool
+      sendThread & sendPing append drop-draft to log
+      sendSync lock thread drafts, send diff of original vs current data
+        clear log, unlock drafts
+    recv msg & ping clear draft at nodes
+  files & forms replication
+    svc: list items previously attached in threads
+  on receiver
+    indicate xfers in settings menu
+    timeout listen mode
+    separate http.server instance? 
+    MakeNode(bodyReader)
+      syscall.o_direct; syscall.open patch
+      handle duplicate upload items or omit
+  on sender
+    drop thread drafts, update indexes
+    checksum archive
+    HandleUpdtService reject calls during op
+
 tags
+  blurb to describe tag?
+  rebuild file on search-index build?
   in search result, textbox to rename tag
     button to remove tag
   on open msgs
     select-tag adds search tab?
-    _completeTouch stores new tag in global list?
-    on change, distribute to nodes
-  kTagsFile
-    blurb to describe tag?
-    rebuild file on search-index build?
-  tags.go impl global interface
 
 forwarding
   verify correct when forwarded thread lacks in-transit msgs from other senders
@@ -210,8 +266,8 @@ ohi panel
   normally hidden, can pin panel
 
 files menu
-  attach on "browse..." form
   search box, adds a tab after Date, Name
+  copy msg body to text file
 
 services (notifications) panel
   search box searches svc name, description, etc
@@ -235,13 +291,18 @@ msg viewer
   reply-chain button opens reply-to tab
   way to link attachment in upload dir for future use
   button to copy form to our collection
+  attachment viewer: list files in archive, zip, tar, etc
+    display contents of archive item; show path of item in panel
   enable revision of last-sent msg
     single item on msg panel if no intervening msgs (ie combine consecutive)
     list rev history on revised msgs
     limit size of total revs to N% or N characters
-  lookup/rewrite bit.ly etc links
+  on click, lookup & notify redirected links; bit.ly etc
 
 msg editor
+  send-with-delay option to allow editing
+    edit stops timer
+    stopwatch animation to show time left?
   import alias list into Cc
   search & replace
   use markdown format
@@ -250,13 +311,13 @@ msg editor
     change em & strong to ~
     insert > when dividing >'d paragraph
     video/audio object via ![>](ref)
-    help pane shows formatting characters; click or ctrl-? to pop-up docs
     can render tables as charts, or chart input as table?
     select from menu of common & service-supplied stylesheets
+  lookup & suggest rewrite of redirecting links
   preview pop-up on ctrl-J/F?, repeat/esc to close
     highlight line for current cursor position
     scroll with cursor position changes
-  upload attachment via drag/drop, copy/paste file or data, file dialog box
+  upload attachment via drag/drop, copy/paste file or data
   attach by reference to previous attachment
   create & attach icalendar object, markdown ![@](ref)
   attach-list expand to multiple columns if nec
@@ -266,21 +327,28 @@ msg editor
     make new thread with copy/excerpt of (or ref-to for recipients of original) replied msg
     button copy-next adds msg from reply-chain
     ref parent thread & msg
-  reply with tag (continues at link, closed, defer until date, priority, user-defined)
+  reply with meta-msg (continues at link, closed, defer until date, priority, user-defined)
   slides/pages; markdown hrefs
+    set background & foreground colors of slides
+  embedded tags via '\tag/tags/tagged #name...'; drop prior tag with !name
   thread/message hyperlinks may indicate excerpts (list of byte ranges)
   charts menu; outputs templates
+  poll/vote component
   form-table queries?
   message templates menu
 
-error log section for unseen errors
+error log: section for unseen errors
 
 meta-messages
+  sender-specified opts
+  request response
+  intent to ack/respond
   reader ack/opinion (-5 to +5 or none)
     msg SubHead.RequestAck enables ack UI
       auto-tag msg with Todo?
     summaries in index
     display as bar graph, y-axis gives totals
+  poll/vote response
 
 UI controls that change data state get hand cursor, others get arrow
   certain buttons show confirmation pop-up next to click point
@@ -303,10 +371,6 @@ groups
   group-invite option on compose/reply UI
   SubHead.Attn []string: aliases of members to be flagged
   choose number of months to store unreplied incoming threads from group (or service?)
-
-nodes
-  popup with ref names on local service
-  distribute tool state: services, saved searches, tags, contacts
 
 make browser cache data URIs for fast service reload
 
@@ -370,5 +434,4 @@ storage
     can pin items in place?
   index directory
     attachment index: checksum, filename
-  nodes file
   rebuild index from files to recover from db corruption
