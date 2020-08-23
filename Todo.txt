@@ -1,0 +1,181 @@
+Things to fix, polish, optimize, or clean up. See also "todo" comments in code.
+
+all:
+  use string(bytes.ToValidUTF8(buf, nil)) for unknown buf contents
+  replace json lib with faster third-party one
+  slib/Readme and code comments re commit safety
+  checksum thread index and service config
+    Add storeFile checksum
+  synchronize access to thread/* form/* adrsbk etc (verify)
+  Handle*Service limit aResult to op codes with changes
+    op _m,a,- to delete message if client mo has it
+  mswin can't fsync directory, so verify that dirctory updates are durable after syscall returns
+    if not, can recover lost files via FILE_OPEN_BY_FILE_ID?
+
+state:
+  keeps msg panel scroll position?
+  drop old states
+  revise disconnected ClientState files on service rename/discard
+
+thread:
+  storeReceivedThread fConsume() msg with excessive subhead length
+  storeFwdNotify reject request if sender not in Cc list
+  thread_savetext message for subject & body?
+  on forward, do notified nodes confirm to sender?
+  verify forwarding when thread missing recently-sent messages from other senders
+
+slib:
+  %-encode initial '.' in filename
+  makeLocalId() could yield identical string on different nodes
+
+form:
+  Add() reject filename ".*"
+  blankform update msg to all clients, include ID
+  flag update in msg editor if form is attached
+    verify that form-save creates new file
+
+attach:
+  storeReceivedAttach prevent dup & invalid filename
+  size set on save
+  streaming de/compression on get/post attachment, except for compressed formats
+    binary diff for previously-sent attachment?
+  store 1 of any attachment received/sent multiple times
+
+search:
+  +n in OrigAuthor for outbound msgs?
+  mouseover LastAuthor to see all authors
+
+config file:
+  path for store/, http host & port, ...
+
+test-in:
+  add op open to Gold
+  replace Op:test with Poll on prior Order
+  poll on send ops
+
+test:
+  setupTestDir() use http conn
+  try repeated complete functions via defer sCrashFn()
+  create test blob in test-run, checksum, symlink in upload, attach, verify checksum on receipt
+  Orders[n].Note == "print this // hide this"
+  watch for unexpected changes: get all "xy" ops after each Order, compare with expected state
+
+main:
+  TLS1.3, call api correctly https://github.com/golang/go/issues/31224
+  stream audio/video to client
+  secure link to clients
+  tTmtpInput log error; retry .Temporary(); drop logging in HandleTmtpService & its calls
+    _readLink check tTmtpInput for error
+  make browser not cache files?
+
+ohi:
+  on receipt, add to adrsbk if missing
+  what is impact of nodes on server ohi list
+
+service:
+  allow *.tmp service names
+  allow svcid change
+  "registered" needs transaction with adrsbk & config
+  add-account: check whether net address works
+  add getUidService()
+
+clean
+  package name convention in main & codestyle: pThirdParty lDomestic?
+  common function and syncDir for placeholder symlinks
+  os.RemoveAll doesn't return os.IsNotExist(err)
+  slib: add fileThread, fileForm->fileFft?, fileBlank ...
+  use file.readat where offset known
+  service: "ack" default aResult = []string{"",...}
+  tError to fmt.Errorf; separate line
+  fprintf or writestring vs write([]byte(s))
+  form: kSuffix* -> kFfnSuffix* 
+  thread: mv t*El to read/write section, mv completeThread to top
+    tComplete methods to encapsulate msgid logic
+  test: _prepUpdt closures
+  main: logError() prints err msg
+
+gui
+  UI controls that change data state get hand cursor, others get arrow
+    certain buttons show confirmation pop-up next to click point
+      send, discard new msg, close search tab
+  sleeping Catalina MacOS drops browser websocket
+  template: test <%.isLocal%> with template, so browser doesn't need to
+  date: delimiter character per locale, am/pm option
+  ao: rename ano
+  mo: drop draft object after send/discard
+  formview:
+    default field values in form-def "defaults" object
+    create component with parent param?
+    attach-fill to paperclip button that changes to checkmark
+  markdown:
+    attachment hyperlinks display mnm-viewer or download icon
+    disable h2/h1 heading style by -/= on next line
+    prevent excess rendering
+  draft:
+    preview panel link to locate associated draft, scrolling msg-list to right place
+    recipients hyperlink next to [self] when no recipients
+    to-summary abbrev names
+    bug causes occasional reopen after update & close
+    attachmt menu links to clip markdown
+    progress bar on long outgoing msgs
+    indicate when msg sent
+    button to insert quoted markdown
+    _m updates ml & tl fields; omit ml & tl in results
+  blankform:
+    listsort only when edit pane closed
+    validate on send
+  cc:
+    bold last alias added
+    no recipients indicates [self]?
+    note-field tooltip; swap position with to-field?
+    tab-key from to-field sets focus in draft textarea
+  FFT: indicate empty records when $empty:true
+  svcadd: indicate success/failure
+  notice:
+    count in window title
+    show errors on local site
+    error log: section for unseen errors
+  adrsbk: change ohi-to selection via enter-key?
+  msg-list:
+    outside OPEN tab, open msg shouldn't mark it seen?
+    or open unread msg in any tab sets it open in OPEN tab
+    keep scroll offsets for certain tabs
+    goLink scrolls to referenced msg; result include "_l",msgid
+  thread-list: keep scroll offsets for certain tabs?
+  clean:
+    css use .outer .inner {...} when .inner not standalone
+    after text use <!----> to eliminate whitespace before </tag>
+    use v-show instead of v-if/else where both elements appear frequently
+    use ref/$refs instead of id/getElementById
+    hrefs meaningful, or change element to button/span
+
+server try-back-later msg
+  gives: reconnect time in tenths of second, reason eg max-idle/shutdown/etc
+  reconnect to send
+  disconnect when send queue empty
+
+minimize browser update traffic
+  websocket.js keep list of request types, with isVisible & isCurrent state
+  on user action, gui.vue update visible types, via mnm.Xyz()
+    call xhr when type becomes visible, if !isCurrent, set isCurrent=true
+  on updt msg, websocket skip xhr, if !isVisible, set isCurrent=false
+
+windows copy util
+  app or script to find hard-linked files, run robocopy, replace found files with hard-links
+
+storage
+  service directory, subdirectory per service
+    styling directory: css & image files
+    icalendar directory: year & json index per file
+    attachment directory: link file if checksum matches
+    thread directory
+      push old threads into zip
+  upload directory
+    flag unsent items with name_
+    drop items sent and untouched for >N days
+    can pin items in place?
+  index directory
+    attachment index: checksum, filename
+  rebuild index from files to recover from db corruption
+
+
