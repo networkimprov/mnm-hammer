@@ -322,18 +322,18 @@ func storeReceivedAdrsbk(iSvc string, iHead *Header, iR io.Reader) error {
    }
    if aFromSelf {
       aEl := tAdrsbkEl{Date:iHead.Posted, Gid:iHead.Gid, Text:string(aBuf),
-                       Alias:iHead.To, MyAlias:iHead.SubHead.Alias, MsgId:iHead.Id}
+                       Alias:iHead.To, MyAlias:iHead.Alias, MsgId:iHead.Id}
       _storeSentAdrsbk(iSvc, aSvc, &aEl, "")
       return nil
    }
-   aUid := aSvc.aliasIdx[iHead.SubHead.Alias]
+   aUid := aSvc.aliasIdx[iHead.Alias]
    if aUid != "" && aUid != kUidUnknown && aUid != iHead.From {
       fmt.Fprintf(os.Stderr, "storeReceivedAdrsbk %s: blocked ping from %s aka %s\n",
                              iSvc, iHead.From, aUid)
       return nil
    }
    aEl := tAdrsbkEl{Date:iHead.Posted, Gid:iHead.Gid, Text:string(aBuf),
-                    Alias:iHead.SubHead.Alias, Uid:iHead.From, MyAlias:iHead.To, MsgId:iHead.Id}
+                    Alias:iHead.Alias, Uid:iHead.From, MyAlias:iHead.To, MsgId:iHead.Id}
    aEl.Type = eAbPingFrom; if iHead.Op == "invite" { aEl.Type = eAbInviteFrom }
    if aEl.Type == eAbInviteFrom {
       aEl.Qid = makeLocalId(iHead.Gid)
@@ -584,18 +584,15 @@ func sendDraftAdrsbk(iW io.Writer, iSvc string, iQid, iId string) error {
       fmt.Fprintf(os.Stderr, "sendDraftAdrsbk %s: ping draft was cleared %s\n", iSvc, iQid)
       return tError("already sent")
    }
-   aSubh, err := json.Marshal(Msg{"Alias":aEl.MyAlias}) //todo drop when ping takes from:
-   if err != nil { quit(err) }
    aData := []byte(aEl.Text)
-   aMsg := Msg{"Op":9, "Id":iId, "To":aEl.Alias, "From":aEl.MyAlias,
-               "DataHead":len(aSubh), "DataLen": len(aSubh) + len(aData)}
+   aMsg := Msg{"Op":9, "Id":iId, "To":aEl.Alias, "From":aEl.MyAlias, "DataLen": len(aData)}
    if aEl.Gid != "" {
       aMsg["Op"] = 5
       aMsg["Gid"] = aEl.Gid
    }
    aHead, err := json.Marshal(aMsg)
    if err != nil { quit(err) }
-   err = writeHeaders(iW, aHead, aSubh)
+   err = writeHeaders(iW, aHead, nil)
    if err != nil { return err }
    _, err = iW.Write(aData)
    return err
