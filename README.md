@@ -72,19 +72,21 @@ You'll need Firefox or Chrome. (I endorse [Firefox](https://www.mozilla.org/en-U
 You'll need an invitation to a TMTP service. 
 To run your own service, see the [mnm TMTP server](https://github.com/networkimprov/mnm).
 
-#### _Windows_ &bull; [MacOS](#macos) &bull; [Linux](#linux)
+#### Windows &nbsp; &bull; [_MacOS_](#macos) &nbsp; &bull; [_Linux_](#linux)
 
 1. Download & save  
 a) Click [mnm-app-windows-amd64-v0.7.0.zip](https://github.com/networkimprov/mnm-hammer/releases/download/v0.7.0/mnm-app-windows-amd64-v0.7.0.zip).  
-b) Open the browser downloads menu, find the above file and click "Open File".  
+b) In the browser downloads list, find the above file and click "Open File".  
 c) Drag the item `mnm-app-v0.7.0` to the `Downloads` folder in the left-hand pane.
 
 1. If a previous version is running  
 a) Go to its log window and press _Ctrl-C_ and then _Y_ to stop it.
 
 1. Start app  
-a) Open the `mnm-app-v0.7.0` folder now in `Downloads`, and double-click `App.cmd`.  
-b) You'll see a notice, "The publisher could not be verified..." Click "Run".  
+a) Open the `mnm-app-v0.7.0` folder now in `Downloads`, and double-click `App` (aka `App.cmd`).  
+b) You'll see a notice, either  
+b.1) "Windows protected your PC..." Click "More info" and then "Run anyway".  
+b.2) "The publisher could not be verified..." Click "Run".  
 c) You'll see a system notice, "Do you want to allow ...?" Click "Yes".  
 +&nbsp; You'll see the mnm log window.  
 +&nbsp; If you have a previous version in `Downloads`, it will offer to update it.  
@@ -95,11 +97,11 @@ c) You'll see a system notice, "Do you want to allow ...?" Click "Yes".
 a) Right-click [localhost:8123](http://localhost:8123/), and select "Open link in new tab".  
 +&nbsp; You'll see the landing page, with a tour.
 
-#### _MacOS_
+#### MacOS
 
 1. Download & save  
 a) Click [mnm-app-macos-v0.7.0.tgz](https://github.com/networkimprov/mnm-hammer/releases/download/v0.7.0/mnm-app-macos-v0.7.0.tgz).  
-b) Open the browser downloads menu, find the file above and click "Open File".
+b) In the browser downloads list, find the file above and click "Open File".
 
 1. If a previous version is running  
 a) Go to its log window and press _Ctrl-C_ to stop it, then close the window.
@@ -116,7 +118,7 @@ b) You'll see a notice, "_App_ is from an unidentified developer..." Click "Open
 a) Ctrl-click (or two-finger tap) [localhost:8123](http://localhost:8123/), and select "Open link in new tab".  
 +&nbsp; You'll see the landing page, with a tour.
 
-#### _Linux_
+#### Linux
 
 1. Download & save  
 a) Click [mnm-app-linux-amd64-v0.7.0.tgz](https://github.com/networkimprov/mnm-hammer/releases/download/v0.7.0/mnm-app-linux-amd64-v0.7.0.tgz).  
