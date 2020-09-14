@@ -513,6 +513,7 @@ span.draftpv-doctab {
 }
 
 .paperclip {
+   font-family: "Segoe UI Symbol", sans-serif;
    font-size: 20px;
    line-height: 1;
    vertical-align: -2px;
