@@ -127,7 +127,7 @@
               "Qid":"*", "Text":"", "Queued":true}] }
 },{
    "Updt": {"Op":"test", "Test":{"Request":["pf", "nl"]}},
-   "Poll": 3,
+   "Poll": 5,
    "Result": {
       "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
               "Gid":"Gold-G#tdg", "Uid":"*uid", "MsgId":"*mid", "Response":"**"}] ,
