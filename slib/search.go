@@ -335,7 +335,7 @@ func _reindex(iCfg *tSvcConfig, iBi pBleve.Index) {
       fmt.Printf("_reindex %s: Indexing %d threads...", iCfg.Name, len(aDir))
    }
    for _, aFn := range aDir {
-      if strings.ContainsRune(aFn[1:], '_') { continue }
+      if strings.ContainsRune(aFn[1:], '_') || strings.HasSuffix(aFn, ".bak") { continue }
       var aFd *os.File
       aFd, err = os.Open(dirThread(iCfg.Name) + aFn)
       if err != nil { quit(err) }

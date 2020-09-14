@@ -216,6 +216,7 @@ func GetIdxFilledForm(iSvc string) interface{} {
    if err != nil { quit(err) }
    aList := make([]_tFfEl, len(aDir))
    for a := range aDir {
+      if strings.HasSuffix(aDir[a].Name(), ".bak") { continue }
       var aId string
       aId, err = url.QueryUnescape(aDir[a].Name())
       if err != nil { quit(err) }
