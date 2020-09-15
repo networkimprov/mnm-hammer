@@ -341,7 +341,9 @@ textarea:focus,
 }
 .message-subhead .message-attach {
    margin-left: 2.5em;
-   width: 55%;
+   width: 21em;
+   min-width: 45%;
+   max-width: calc(100% - 2.5em);
    line-height: 1.75;
    overflow-wrap: break-word;
    border-bottom: 1px solid burlywood;
