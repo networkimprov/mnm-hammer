@@ -295,13 +295,6 @@ textarea:focus,
    color: black;
 }
 
-.message-list > ul {
-   border-bottom: 4px double lightgray;
-}
-.message-list > ul > li {
-   padding: 10px 0.2em 0 0.5em;
-}
-
 .tagset-icon {
    margin-right: 0.5em;
    cursor: default;
@@ -314,6 +307,17 @@ textarea:focus,
    border: 1px solid lightgray;
    border-radius: 4px;
    background: white;
+}
+
+.message-item {
+   padding: 10px 0.2em 0 0.5em;
+   border-bottom: 1px solid #e5e5e5;
+}
+.message-item:last-child {
+   border-bottom: 4px double lightgray;
+}
+.message-item::after {
+   clear: both; content: ""; display: block;
 }
 
 .message-title {

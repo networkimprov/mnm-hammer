@@ -125,98 +125,97 @@
         style="position:relative">
       <mnm-viewer ref="viewer" :noparent="true"/>
       <mnm-tagset ref="tagset"/><!--nextElementSibling is message list-->
-      <ul class="uk-list uk-list-divider" style="margin:0">
-         <li v-for="aMsg in ml" :key="aMsg.Id"
-             :class="{'message-edit': aMsg.From === '' && !aMsg.Queued}" style="margin:0">
-            <span @click="msgToggle(aMsg.Id)"
-                  class="message-title" :class="{'message-title-unread': aMsg.Seen === ''}">
-               <mnm-date :iso="aMsg.Date" ymd="md" hms="hm"/>
-               {{ aMsg.Alias || aMsg.From }}
-               <span v-if="aMsg.ForwardBy"
-                     :title="'Forward by: '+aMsg.ForwardBy"
-                     >{{/failed$/.test(aMsg.ForwardBy) ? '[possibly forged]' : '[unverified]'}}</span>
+      <div v-for="aMsg in ml" :key="aMsg.Id"
+           class="message-item" :class="{'message-edit': aMsg.From === '' && !aMsg.Queued}">
+         <span @click="msgToggle(aMsg.Id)"
+               class="message-title" :class="{'message-title-unread': aMsg.Seen === ''}">
+            <mnm-date :iso="aMsg.Date" ymd="md" hms="hm"/>
+            {{ aMsg.Alias || aMsg.From }}
+            <span v-if="aMsg.ForwardBy"
+                  :title="'Forward by: '+aMsg.ForwardBy"
+                  >{{/failed$/.test(aMsg.ForwardBy) ? '[possibly forged]' : '[unverified]'}}</span>
+         </span>
+         <div v-if="aMsg.Queued"
+              title="Awaiting link to server"
+              style="float:right; font-weight:bold"><span uk-icon="bolt"></span></div>
+         <template v-if="aMsg.Id in mo">
+            <span v-show="'msg_data' in mo[aMsg.Id]">
+               <button v-if="aMsg.From === '' && !aMsg.Queued"
+                       @click="mnm.ThreadDiscard(aMsg.Id)"
+                       title="Discard draft"
+                       class="btn btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
+               <div v-else-if="!aMsg.Queued"
+                    class="uk-float-right">
+                  <a @click.prevent="mnm._toClipboard('[msg_link](#'+ cs.Thread +'&'+ aMsg.Id +')')"
+                     title="Copy markdown to clipboard"
+                     :href="'#'+ cs.Thread +'&'+ aMsg.Id"><span uk-icon="link"></span></a>
+                  <button @click="mnm.ThreadReply(getReplyTemplate(aMsg))"
+                          title="New reply draft"
+                          class="btn btn-icon"><span uk-icon="comment"></span></button>
+               </div>
+               <div @click.stop="$refs.tagset.open(aMsg.Id, $event.currentTarget)"
+                    title="Message tags"
+                    class="uk-float-right tagset-icon">
+                  <span uk-icon="tag">{{aMsg.Tags ? aMsg.Tags.length : '&numsp;'}}</span></div>
             </span>
-            <div v-if="aMsg.Queued"
-                 title="Awaiting link to server"
-                 style="float:right; font-weight:bold"><span uk-icon="bolt"></span></div>
-            <template v-if="aMsg.Id in mo">
-               <span v-show="'msg_data' in mo[aMsg.Id]">
-                  <button v-if="aMsg.From === '' && !aMsg.Queued"
-                          @click="mnm.ThreadDiscard(aMsg.Id)"
-                          title="Discard draft"
-                          class="btn btn-iconred btn-floatr"><span uk-icon="trash"></span></button>
-                  <div v-else-if="!aMsg.Queued"
-                       class="uk-float-right">
-                     <a @click.prevent="mnm._toClipboard('[msg_link](#'+ cs.Thread +'&'+ aMsg.Id +')')"
-                        title="Copy markdown to clipboard"
-                        :href="'#'+ cs.Thread +'&'+ aMsg.Id"><span uk-icon="link"></span></a>
-                     <button @click="mnm.ThreadReply(getReplyTemplate(aMsg))"
-                             title="New reply draft"
-                             class="btn btn-icon"><span uk-icon="comment"></span></button>
-                  </div>
-                  <div @click.stop="$refs.tagset.open(aMsg.Id, $event.currentTarget)"
-                       title="Message tags"
-                       class="uk-float-right tagset-icon">
-                     <span uk-icon="tag">{{aMsg.Tags ? aMsg.Tags.length : '&numsp;'}}</span></div>
-               </span>
-               <div v-if="!('msg_data' in mo[aMsg.Id])"
-                    class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
-               <mnm-draft v-else-if="aMsg.From === '' && !aMsg.Queued"
-                          :msgid="aMsg.Id"/>
-               <template v-else>
-                  <div class="message-subhead">
-                     <template v-if="mo[aMsg.Id].SubHead.Attach">
-                        <!--todo move _hideAtc to state-->
-                        <div @click="$set(mo[aMsg.Id], '_hideAtc', !mo[aMsg.Id]._hideAtc)"
-                             title="Hide/show attachments"
-                             class="uk-float-left message-paperclip"
-                             :class="{'message-paperclip-close': mo[aMsg.Id]._hideAtc}">
-                           {{ (mo[aMsg.Id].SubHead.Attach.length < 10 ? '&numsp;' : '') +
-                              mo[aMsg.Id].SubHead.Attach.length }}<mnm-paperclip/></div>
-                        <div v-show="mo[aMsg.Id]._hideAtc && !aMsg.Subject"
-                             >&nbsp;</div>
-                        <div v-for="aAtc in mo[aMsg.Id].SubHead.Attach"
-                             v-show="!mo[aMsg.Id]._hideAtc"
-                             class="message-attach">
-                           <template v-if="'ForwardBy' in aMsg && !/failed$/.test(aMsg.ForwardBy)">
-                              <span class="icon-blank"></span>
-                              <span :title="'Awaiting receipt from '+ aMsg.ForwardBy">
-                                 <span uk-icon="bolt"></span> {{aAtc.Name.substr(2)}}</span>
-                           </template>
-                           <template v-else-if="aAtc.Name.charAt(0) === 'r'">
-                              <span class="icon-blank"></span>
-                              <span @click="tabSearch('ffn:'+ aAtc.Ffn +
-                                              (aMsg.From === cf.Uid ? '_sent' : '_recv'), cs.SvcTabs)"
-                                    title="Open filled-form table"
-                                    class="uk-link">
-                                 <span uk-icon="file-edit"></span> {{aAtc.Name.substr(2)}}</span>
-                           </template>
-                           <template v-else>
-                              <a :href="'?ad=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)" download
-                                 title="Download attachment">
-                                 <span uk-icon="download"></span></a>
-                              <span v-if="!mnm._viewerType('svc', aMsg.Id +'_'+ aAtc.Name)">
-                                 <span class="icon-blank"></span> {{aAtc.Name.substr(2)}}</span>
-                              <a v-else
-                                 @click.stop.prevent="$refs.viewer.open('svc', aMsg.Id +'_'+ aAtc.Name,
-                                                                        $event.currentTarget, 'rhs')"
-                                 :href="'?an=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)">
-                                 <span uk-icon="triangle-right">&nbsp;</span>{{aAtc.Name.substr(2)}}</a>
-                              <div class="uk-float-right">{{aAtc.Size}}</div>
-                           </template>
-                        </div>
-                     </template>
-                     <div v-if="aMsg.Subject"
-                          >Re: {{aMsg.Subject}}</div>
-                  </div>
-                  <div v-if="!mo[aMsg.Id].msg_data">
-                     <p><span uk-icon="comment"></span></p></div>
-                  <mnm-markdown v-else
-                                :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"
-                                :formreply="aMsg.Queued ? 'Q' : getReplyTemplate(aMsg)"/>
-               </template>
+            <div v-if="!('msg_data' in mo[aMsg.Id])"
+                 class="uk-text-center"><span uk-icon="future"><!-- todo hourglass --></span></div>
+            <mnm-draft v-else-if="aMsg.From === '' && !aMsg.Queued"
+                       :msgid="aMsg.Id"/>
+            <template v-else>
+               <div class="message-subhead">
+                  <template v-if="mo[aMsg.Id].SubHead.Attach">
+                     <!--todo move _hideAtc to state-->
+                     <div @click="$set(mo[aMsg.Id], '_hideAtc', !mo[aMsg.Id]._hideAtc)"
+                          title="Hide/show attachments"
+                          class="uk-float-left message-paperclip"
+                          :class="{'message-paperclip-close': mo[aMsg.Id]._hideAtc}">
+                        {{ (mo[aMsg.Id].SubHead.Attach.length < 10 ? '&numsp;' : '') +
+                           mo[aMsg.Id].SubHead.Attach.length }}<mnm-paperclip/></div>
+                     <div v-show="mo[aMsg.Id]._hideAtc && !aMsg.Subject"
+                          >&nbsp;</div>
+                     <div v-for="aAtc in mo[aMsg.Id].SubHead.Attach"
+                          v-show="!mo[aMsg.Id]._hideAtc"
+                          class="message-attach">
+                        <template v-if="'ForwardBy' in aMsg && !/failed$/.test(aMsg.ForwardBy)">
+                           <span class="icon-blank"></span>
+                           <span :title="'Awaiting receipt from '+ aMsg.ForwardBy">
+                              <span uk-icon="bolt"></span> {{aAtc.Name.substr(2)}}</span>
+                        </template>
+                        <template v-else-if="aAtc.Name.charAt(0) === 'r'">
+                           <span class="icon-blank"></span>
+                           <span @click="tabSearch('ffn:'+ aAtc.Ffn +
+                                           (aMsg.From === cf.Uid ? '_sent' : '_recv'), cs.SvcTabs)"
+                                 title="Open filled-form table"
+                                 class="uk-link">
+                              <span uk-icon="file-edit"></span> {{aAtc.Name.substr(2)}}</span>
+                        </template>
+                        <template v-else>
+                           <a :href="'?ad=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)" download
+                              title="Download attachment">
+                              <span uk-icon="download"></span></a>
+                           <span v-if="!mnm._viewerType('svc', aMsg.Id +'_'+ aAtc.Name)">
+                              <span class="icon-blank"></span> {{aAtc.Name.substr(2)}}</span>
+                           <a v-else
+                              @click.stop.prevent="$refs.viewer.open('svc', aMsg.Id +'_'+ aAtc.Name,
+                                                                     $event.currentTarget, 'rhs')"
+                              :href="'?an=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)">
+                              <span uk-icon="triangle-right">&nbsp;</span>{{aAtc.Name.substr(2)}}</a>
+                           <div class="uk-float-right">{{aAtc.Size}}</div>
+                        </template>
+                     </div>
+                  </template>
+                  <div v-if="aMsg.Subject"
+                       >Re: {{aMsg.Subject}}</div>
+               </div>
+               <div v-if="!mo[aMsg.Id].msg_data">
+                  <p><span uk-icon="comment"></span></p></div>
+               <mnm-markdown v-else
+                             :src="mo[aMsg.Id].msg_data" :msgid="aMsg.Id"
+                             :formreply="aMsg.Queued ? 'Q' : getReplyTemplate(aMsg)"/>
             </template>
-         </li></ul>
+         </template>
+      </div>
    </div>
 </div>
 
