@@ -2553,7 +2553,7 @@
       fo:'', // populated by f requests
       toSaveFo:{}, // populated locally
    // per client
-      cs:{SvcTabs:{Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
+      cs:{Thread:'', SvcTabs:{Pinned:[], Terms:[]}, ThreadTabs:{Terms:[]}, Sort:{}},
       ohiFrom: !mnm._isLocal, //todo move to cs
       adrsbkmenuId: {},
       errors: [], errorFlag: false,
@@ -2858,6 +2858,9 @@
          : iKey === 'Size'
          ? function(cA, cB) { return cA.Size > cB.Size ? -1 : cA.Size < cB.Size ? 1 :
                                      cA.Date > cB.Date ? -1 : cA.Date < cB.Date ? 1 : 0 }
+         : iName === 'cl' && mnm._data.cs.Thread[0] === '_'
+         ? function(cA, cB) { return cA.WhoUid === cA.ByUid ? -1 :
+                                     cA.Who.localeCompare(cB.Who, undefined, {sensitivity:'base'}) }
          : function(cA, cB) { return cA[iKey].localeCompare(cB[iKey], undefined, {sensitivity:'base'}) ||
                                      (cA.Date > cB.Date ? -1 : cA.Date < cB.Date ? 1 : 0) }
       );
