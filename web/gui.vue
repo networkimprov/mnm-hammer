@@ -354,7 +354,9 @@
             <div v-else
                  :title="'Initial recipient'+ (aRow.OrigCc.length ? 's:\n'+ aRow.OrigCc.join('\n')
                                                                   : ': this account')"
-                 class="uk-width-1-6 overxhide thread-self">{{aRow.OrigCc[0] || 'self'}}</div>
+                 class="uk-width-1-6 overxhide"
+                 :class="{'thread-self': !aRow.OrigCc[0], 'thread-recipient': aRow.OrigCc[0]}"
+                 >{{aRow.OrigCc[0] || 'self'}}</div>
          </div></template>
       <div style="margin-top:1em">
          <div onclick="this.nextSibling.style.display = (this.nextSibling.style.display === 'none' ? 'block' : 'none')"
