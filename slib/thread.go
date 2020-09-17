@@ -1364,6 +1364,9 @@ func _updateCc(iSvc string, iCc []tCcEl, iOmitSelf bool) []tCcEl {
    aCfg := GetConfigService(iSvc)
    aDate := dateRFC3339() //todo obtain from service or ntp prior to send
    for a := range iCc {
+      if iCc[a].WhoUid == aCfg.Uid && a != 0 {
+         quit(tError("author must be first in Cc list"))
+      }
       iOmitSelf = iOmitSelf || iCc[a].WhoUid == aCfg.Uid
       iCc[a].Date = aDate
       iCc[a].ByUid = aCfg.Uid
