@@ -674,7 +674,7 @@
                              :placeholder="ccSet ? 'To' : 'Forward to'"
                              name="resets" autocomplete="off"
                              style="width:calc(50% - 1em)"/>
-            <button @click="addUser"
+            <button @click="addUser" onclick="this.form.reset('bugChrome85')"
                     :disabled="!(alias && alias in mnm._data.adrsbkmenuId)"
                     title="Add contact"
                     class="btn btn-icon btn-floatr"><span uk-icon="list"></span></button>
