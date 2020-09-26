@@ -2674,7 +2674,9 @@
          aHref[1] = decodeURIComponent(aHref[1]);
          if (!_isDurableRef(aHref[1], iEnv.thisVal))
             iEnv.parent.checkAttach(aHref[1].slice('this_'.length));
-         aHref[1] = '?ad='+ encodeURIComponent(aHref[1].replace(/^this_/, iEnv.thisVal +'_'));
+         var aParam = aHref[1].replace(/^this_/, iEnv.thisVal +'_');
+         aHref[1] = mnm._data.al.find(function(c) { return c.Id === aParam }) ?
+                    '?ad='+ encodeURIComponent(aParam) : '#';
          iTokens[iIdx].attrs.push(['download', '']);
          //todo add download icon and viewer
       }
@@ -2705,7 +2707,8 @@
          return '<component'+ iSelf.renderAttrs({attrs:[['id',aId]]}) +'></component>';
       }
       if (_isDurableRef(aSrc[1], iEnv.thisVal)) {
-         aSrc[1] = '?an='+ encodeURIComponent(aParam);
+         aSrc[1] = mnm._data.al.find(function(c) { return c.Id === aParam }) ?
+                   '?an='+ encodeURIComponent(aParam) : 'data:,';
       } else if (aParam in iEnv.imgsrc) {
          aSrc[1] = iEnv.imgsrc[aParam];
       } else {
