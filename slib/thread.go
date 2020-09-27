@@ -365,7 +365,7 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
       fClean()
       return "", err
    }
-   aIncrUnread := true
+   aIncrUnread := aEl.Seen == ""
    if aThreadId == aMsgId {
       if aNewCc != nil { //todo handle invalid/missing SubHead.Cc
          aCc = aNewCc
@@ -383,10 +383,9 @@ func storeReceivedThread(iSvc string, iHead *Header, iR io.Reader) (string, erro
       }
       defer aFd.Close()
       aPos = _readIndex(aFd, &aIdx, &aCc)
-      for a := range aIdx {
+      for a := 0; aIncrUnread && a < len(aIdx); a++ {
          if aIdx[a].Seen == "" {
             aIncrUnread = false
-            break
          }
       }
       aIdxN := len(aIdx)
