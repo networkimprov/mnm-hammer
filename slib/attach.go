@@ -64,9 +64,8 @@ func GetIdxAttach(iSvc string, iState *ClientState) interface{} {
    return aSend
 }
 
-func GetPathAttach(iSvc string, iState *ClientState, iFile string) string {
-   aDel := strings.IndexRune(iFile, '_')
-   return fileAtc(iSvc, iState.getThread(), iFile[:aDel], iFile[aDel+1:])
+func GetPathAttach(iSvc string, iState *ClientState, iMsgId string, iFile string) string {
+   return fileAtc(iSvc, iState.getThread(), iMsgId, iFile)
 }
 
 func sizeDraftAttach(iSvc string, iSubHead *tHeader2, iId tLocalId) int64 {

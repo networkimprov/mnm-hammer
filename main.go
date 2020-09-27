@@ -616,13 +616,19 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       }
       err = pSl.WriteMessagesThread(iResp, aSvcId, aState, aOp_Id[1])
    case "an", "ad":
+      aDelim := strings.IndexByte(aOp_Id[1], '_')
+      if aDelim < 0 || len(aOp_Id[1]) <= aDelim+3 {
+         err = tError("invalid id")
+         break
+      }
       if aOp_Id[0] == "ad" {
-         aSaveName := url.QueryEscape(aOp_Id[1][strings.IndexByte(aOp_Id[1], '_')+3 :])
-         iResp.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''"+ aSaveName)
+         iResp.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''" +
+                                                   url.QueryEscape(aOp_Id[1][aDelim+3:]))
       }
       iResp.Header().Del("Content-Type") // let ServeFile() infer type
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
-      http.ServeFile(iResp, iReq, pSl.GetPathAttach(aSvcId, aState, aOp_Id[1]))
+      http.ServeFile(iResp, iReq, pSl.GetPathAttach(aSvcId, aState, aOp_Id[1][:aDelim],
+                                                                    aOp_Id[1][aDelim+1:]))
    default:
       if err == nil {
          err = tError("unknown op")
