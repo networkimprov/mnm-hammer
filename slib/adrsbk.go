@@ -386,14 +386,32 @@ func _storeSentAdrsbk(iSvc string, iAbk *tAdrsbk, iEl *tAdrsbkEl, iQid string) {
    _storeAdrsbkQid(iSvc, []tAdrsbkEl{*iEl}, iQid)
 }
 
-func resolveReceivedAdrsbk(iSvc string, iDate string, iCc []tCcEl, iTid string) {
+func resolveReceivedAdrsbk(iSvc string, iDate string, iCc []tCcEl, iTid string, iCcSelf *tCcEl) {
    if len(iCc) == 0 {
       return
    }
+   aViaSelf := iCcSelf == nil
    aSvc := _loadAdrsbk(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
-   aEls := make([]tAdrsbkEl, 0, len(iCc))
+   aEls := make([]tAdrsbkEl, 0, 2*len(iCc))
    for a := range iCc {
+      if aSvc.aliasIdx[iCc[a].Who] == "" {
+         aSvc.aliasIdx[iCc[a].Who] = iCc[a].WhoUid
+         if iCcSelf == nil {
+            aCfg := GetConfigService(iSvc)
+            for a1 := range iCc {
+                if iCc[a1].WhoUid == aCfg.Uid {
+                   iCcSelf = &iCc[a1]
+                   break
+                }
+            }
+         }
+         aEl := tAdrsbkEl{Type:eAbPingFrom, Date:iDate, Text:"via ",
+                          Alias:iCc[a].Who, Uid:iCc[a].WhoUid, MyAlias:iCcSelf.Who, MsgId:iTid}
+         if aViaSelf { aEl.Text += iCcSelf.By } else { aEl.Text += iCc[a].By }
+         aSvc.pingFromIdx[iCc[a].WhoUid] = _appendLog(aSvc.pingFromIdx[iCc[a].WhoUid], &aEl)
+         aEls = append(aEls, aEl)
+      }
       aEl := tAdrsbkEl{Type:eAbResolveFrom, Date:iDate, Tid:iTid, Uid:iCc[a].WhoUid}
       if _respondLog(aSvc.pingFromIdx[iCc[a].WhoUid], &aEl) {
          aEls = append(aEls, aEl)

@@ -493,7 +493,7 @@ func _completeStoreReceived(iSvc string, iTmp string, iFd, iTd *os.File, iHead *
    aTempOk := dirTemp(iSvc) + iTmp
 
    resolveSentAdrsbk    (iSvc, iHead.Posted, iCc, aRec.tid())
-   resolveReceivedAdrsbk(iSvc, iHead.Posted, iCc, aRec.tid())
+   resolveReceivedAdrsbk(iSvc, iHead.Posted, iCc, aRec.tid(), nil)
    storeReceivedAttach(iSvc, &iHead.SubHead, aRec)
 
    if aRec.tid() == aRec.mid() {
@@ -703,7 +703,7 @@ func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsg
 
    aRec := _parseFtmp(iTmp)
 
-   resolveReceivedAdrsbk(iSvc, iHead.Posted, iCc, aRec.tid())
+   resolveReceivedAdrsbk(iSvc, iHead.Posted, iCc, aRec.tid(), nil)
    storeSentAttach(iSvc, &iHead.SubHead, aRec)
 
    aTid := ""; if aRec.tid() != aRec.mid() { aTid = aRec.tid() }
@@ -1152,16 +1152,24 @@ func _completeStoreFwdNotify(iSvc string, iTmp string, iFd, iTd *os.File, iCc []
 
    a := len(iCc)-1
    if iCc[a].WhoUid == aUid { aCcRes = iCc }
-   for aD, aB := iCc[a].Date, iCc[a].ByUid; a > 0 && iCc[a-1].Date == aD && iCc[a-1].ByUid == aB; a-- {
+   for aLast := &iCc[a]; a > 0 && iCc[a-1].Date == aLast.Date && iCc[a-1].ByUid == aLast.ByUid; a-- {
       if iCc[a-1].WhoUid == aUid { aCcRes = iCc }
    }
-   if aCcRes == nil { aCcRes = iCc[a:] }
-   iCc = iCc[a:]
+   var aCcSelf *tCcEl
+   if aCcRes == nil {
+      aCcRes = iCc[a:]
+      for a1 := range iCc[:a] {
+         if iCc[a1].WhoUid == aUid {
+            aCcSelf = &iCc[a1]
+            break
+         }
+      }
+   }
 
    resolveSentAdrsbk    (iSvc, iCc[0].Date, aCcRes, aRec.tid())
-   resolveReceivedAdrsbk(iSvc, iCc[0].Date, aCcRes, aRec.tid())
+   resolveReceivedAdrsbk(iSvc, iCc[0].Date, aCcRes, aRec.tid(), aCcSelf)
 
-   _finishStoreFwd(iSvc, iTmp, iFd, iTd, iCc)
+   _finishStoreFwd(iSvc, iTmp, iFd, iTd, iCc[a:])
 }
 
 func storeFwdSentThread(iSvc string, iHead *Header, iQid string) {
@@ -1229,7 +1237,7 @@ func _completeStoreFwdSent(iSvc string, iTmp string, iFd, iTd *os.File, iCc []tC
    for aD, aB := iCc[a].Date, iCc[a].ByUid; a > 0 && iCc[a-1].Date == aD && iCc[a-1].ByUid == aB; a-- {}
    iCc = iCc[a:]
 
-   resolveReceivedAdrsbk(iSvc, iCc[0].Date, iCc, aRec.tid())
+   resolveReceivedAdrsbk(iSvc, iCc[0].Date, iCc, aRec.tid(), nil)
 
    if iFwdN >= 0 {
       err = os.Remove(aFwdOrig)
