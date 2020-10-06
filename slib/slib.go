@@ -222,12 +222,7 @@ type Update struct {
       FormFill map[string]string
       New int8
    } `json:",omitempty"`
-   Touch *struct {
-      ThreadId, MsgId string
-      TagId string
-      TagName string `json:",omitempty"`
-      Act int8
-   } `json:",omitempty"`
+   Touch *UpdateTouch `json:",omitempty"`
    Forward *struct {
       ThreadId string
       Cc []tCcEl
@@ -282,6 +277,13 @@ type Update struct {
 }
 
 const ( _ int8 = iota; eLogRetry; eLogNone )
+
+type UpdateTouch struct { //todo move into Update when draft sync'd
+   ThreadId, MsgId string
+   TagId string
+   TagName string `json:",omitempty"`
+   Act int8
+}
 
 type UpdateTest struct {
    Request []string

@@ -695,10 +695,11 @@ func storeSentThread(iSvc string, iHead *Header, iQid string) {
    if err != nil { quit(err) }
    err = syncDir(dirTemp(iSvc))
    if err != nil { quit(err) }
-   _completeStoreSent(iSvc, path.Base(aTempOk), aFd, aTd, aMh, aHeadCc)
+   _completeStoreSent(iSvc, path.Base(aTempOk), aFd, aTd, aMh, aHeadCc, aIdx)
 }
 
-func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead, iCc []tCcEl) {
+func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsgHead,
+                        iCc []tCcEl, iIdx []tIndexEl) { //todo drop iIdx when draft sync'd
    sCrashFn(iSvc, "store-sent-thread")
 
    aRec := _parseFtmp(iTmp)
@@ -713,6 +714,9 @@ func _completeStoreSent(iSvc string, iTmp string, iFd, iTd *os.File, iHead *tMsg
       deleteThreadSearch(iSvc, "_"+ aRec.lms())
    }
    dropQueue(iSvc, _makeQid(eSrecThread, aTid, aRec.lms()))
+   a := -1
+   for a = 0; iIdx[a].Id != aRec.mid(); a++ {}
+   syncTagService(iSvc, aRec.tid(), aRec.mid(), iIdx[a].Tags)
 
    _completeStoreReceived(iSvc, iTmp, iFd, iTd, &tMsgHead{}, nil)
 }
@@ -1804,7 +1808,7 @@ func completeThread(iSvc string, iTempOk string) {
    switch aRec.op() {
    case "sc": _completeStoreConfirm    (iSvc, iTempOk, aFd, aTd, fMsgHead(), fIdx())
    case "sr": _completeStoreReceived   (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
-   case "ss": _completeStoreSent       (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"))
+   case "ss": _completeStoreSent       (iSvc, iTempOk, aFd, aTd, fMsgHead(), fCc("orig"), fIdx())
    case "ws": _completeStoreDraft      (iSvc, iTempOk, aFd, aTd, fMsgHead())
    case "ds": _completeDeleteDraft     (iSvc, iTempOk, aFd, aTd)
    case "fr": _completeStoreFwdReceived(iSvc, iTempOk,      aTd)

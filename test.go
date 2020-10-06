@@ -478,16 +478,21 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
    defer aSoc.Close()
    var aBuf []byte
 
-   for a := range iTc.Orders {
+   for a := 0; a < len(iTc.Orders); a++ {
       if sTestOrderN[iTc.SvcId] != nil {
          atomic.StoreUint64(sTestOrderN[iTc.SvcId], uint64(a))
       }
       if iTc.Orders[a].Client != nil {
          aCl := iTc.Orders[a].Client
-         iTc.Orders[a].Client = nil
-         aTc := tTestClient{Name:aCl.Name, SvcId:aCl.SvcId, Orders:iTc.Orders[a:a+1]}
+         aOrig := a
+         for ; a == aOrig || (a < len(iTc.Orders) && iTc.Orders[a].Client != nil &&
+                              iTc.Orders[a].Client.Name == "^"); a++ {
+            iTc.Orders[a].Client = nil
+         }
+         aTc := tTestClient{Name:aCl.Name, SvcId:aCl.SvcId, Orders:iTc.Orders[aOrig:a]}
          iWg.Add(1)
          go _runTestClient(&aTc, iWg)
+         a--
          continue
       }
       aUpdt := &iTc.Orders[a].Updt

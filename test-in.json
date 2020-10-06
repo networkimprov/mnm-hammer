@@ -230,15 +230,33 @@
       "cl": "thread_save.b" ,
       "al": "thread_save.b" }
 },{
+   "Updt": {"Op":"tag_add", "Tag":{"Name":"ondraft"}},
+   "Result": null
+},{
+   "Updt": {"Op":"test", "Test":{"Request":["/g"]}},
+   "Poll": 3,
+   "Result": {
+      "/g": [{"Name":"ondraft", "Id":"*d"  },
+             {"Name":"Todo",    "Id":"Todo"}] }
+},{
+   "Updt": {"Op":"thread_tag", "Touch":{"MsgId":"last", "Act":116, "TagId":"ondraft"}},
+   "Result": {
+      "/g": [{"Name":"ondraft", "Id":"*d"  },
+             {"Name":"Todo",    "Id":"Todo"}] ,
+      "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi",
+              "Seen":".", "Queued":false, "Tags":["*d"]}] }
+},{
    "Updt": {"Op":"thread_send", "Thread":{"Id":"last"}},
    "Result": {
-      "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":true}] },
+      "ml": [{"Id":"*midt", "From":"", "Alias":"", "Date":"*d", "Subject":"ohi",
+              "Seen":".", "Queued":true, "Tags":["*d"]}] },
    "Name": "thread_send.a"
 },{
    "Updt": {"Op":"test", "Test":{"Request":["ml"]}},
    "Poll": 3,
    "Result": {
-      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] },
+      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi",
+              "Seen":".", "Queued":false, "Tags":["*d"]}] },
    "Name": "poll_ack.a"
 },{
    "Updt": {"Op":"thread_save", "Thread":{"New":2, "Alias":"Blue"}},
@@ -246,7 +264,8 @@
       "tl": [{"Id":"*mid", "Count":1, "Subject":"ohi", "OrigCc":["Gold#td"],
               "LastDate":"*d", "LastAuthor":"Blue#td", "OrigDate":"*d", "OrigAuthor":"Blue#td"}] ,
       "ml": [{"Id":"*midm", "From":"", "Alias":"", "Date":"*d", "Subject":"", "Seen":".", "Queued":false},
-             {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+             {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi",
+              "Seen":".", "Queued":false, "Tags":["*d"]}] ,
       "mn": [{"From":"self", "Id":"*midm", "Len":0, "Size":0, "Posted":"draft",
               "SubHead":{"Alias":"Blue#td", "ThreadId":"*mid", "Subject":""},
               "msg_data":"" }] ,
@@ -257,7 +276,8 @@
    "Updt": {"Op":"thread_discard", "Thread":{"Id":"last"}},
    "Result": {
       "tl": "thread_save.c" ,
-      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+      "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi",
+              "Seen":".", "Queued":false, "Tags":["*d"]}] ,
       "al": "thread_save.c" }
 },{
    "Updt": {"Op":"test", "Test":{"Request":["tl"]}},
@@ -311,8 +331,9 @@
 },{
    "Updt": {"Op":"thread_tag", "Touch":{"MsgId":"last", "Act":116, "TagId":"Todo"}},
    "Result": {
-      "/g": [{"Name":"flag", "Id":"*d"  },
-             {"Name":"Todo", "Id":"Todo"}] ,
+      "/g": [{"Name":"flag",    "Id":"*d"  },
+             {"Name":"ondraft", "Id":"*d"  },
+             {"Name":"Todo",    "Id":"Todo"}] ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"",
               "Seen":"", "Queued":false, "Tags":["Todo"]},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward",
@@ -361,7 +382,8 @@
                                     "Ffn":"mnmnotmail.github.io/registry/test1"}] },
               "msg_data":"all good and true words\u00d7" }] ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"reply ohi", "Seen":"", "Queued":false},
-             {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi", "Seen":".", "Queued":false}] ,
+             {"Id":"*mid", "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi",
+              "Seen":".", "Queued":false, "Tags":["*d"]}] ,
       "cs": {"Thread":"*mid",
              "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
              "History":{"Prev":false, "Next":true},
@@ -553,7 +575,8 @@
               "msg_data":"" }] ,
       "ml": [{"Id":"*midm", "From":"",     "Alias":"",        "Date":"*d", "Subject":"no replica", "Seen":".", "Queued":false},
              {"Id":"*mid",  "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"reply ohi",  "Seen":"", "Queued":false},
-             {"Id":"*mid",  "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi",        "Seen":".", "Queued":false}] ,
+             {"Id":"*mid",  "From":"*uid", "Alias":"Blue#td", "Date":"*d", "Subject":"ohi",
+              "Seen":".", "Queued":false, "Tags":["*d"]}] ,
       "al": [{"File":"BlueFile.txt",  "Size":26,  "Who":"",        "MsgId":"*midm", "Id":"*", "Date":"*d"},
              {"File":"Blue.original", "Size":416, "Who":"Blue#td", "MsgId":"*mid",  "Id":"*", "Date":"*d"},
              {"File":"BlueFile.txt",  "Size":26,  "Who":"Blue#td", "MsgId":"*mid",  "Id":"*", "Date":"*d"}] ,
@@ -611,13 +634,14 @@
 },{
    "Client": {"Name":"Blue2", "SvcId":"Blue.later"},
    "Updt": {"Op":"open"},
+   "Poll": 3,
    "Result": {
       "/t": "open.a" ,
       "/f": "open.a" ,
       "/g": "open.a" ,
-      "/v": [{"Name":"Blue",       "NoticeN":1, "UnreadN":2},
-             {"Name":"Blue.early", "NoticeN":1, "UnreadN":2},
-             {"Name":"Blue.later", "NoticeN":1, "UnreadN":2},
+      "/v": [{"Name":"Blue",       "NoticeN":0, "UnreadN":2},
+             {"Name":"Blue.early", "NoticeN":0, "UnreadN":2},
+             {"Name":"Blue.later", "NoticeN":0, "UnreadN":2},
              {"Name":"Gold",       "NoticeN":1, "UnreadN":-1}] ,
       "/l": "open.a" ,
       "of": "open.a" ,
@@ -626,7 +650,7 @@
       "pt": "open.a" ,
       "pf": "open.a" ,
       "gl": "open.a" ,
-      "cf": {"Name":"Blue.later", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
+      "cf": {"Name":"Blue.later", "HistoryLen":88, "LoginPeriod":0, "Addr":"*", "Verify":false,
              "Uid":"*uid", "Alias":"Blue#td",
              "NodeSet":[{"Name":"first", "Status":97},
                         {"Name":"early", "Status":97},
@@ -667,10 +691,7 @@
       "/t": "open.b" ,
       "/f": "open.b" ,
       "/g": "open.b" ,
-      "/v": [{"Name":"Blue",       "NoticeN":0, "UnreadN":2},
-             {"Name":"Blue.early", "NoticeN":0, "UnreadN":2},
-             {"Name":"Blue.later", "NoticeN":0, "UnreadN":2},
-             {"Name":"Gold",       "NoticeN":1, "UnreadN":-1}] ,
+      "/v": "open.b" ,
       "/l": "open.b" ,
       "of": "open.b" ,
       "ot": "open.b" ,
@@ -694,6 +715,19 @@
       "tl": "open.b" ,
       "cs": "open.b" },
    "Name": "open.c"
+},{
+   "Client": {"Name":"^"},
+   "Updt": {"Op":"navigate_thread", "Navigate":{"ThreadId":"2ndlast"}},
+   "Result": {
+      "ml": "open.a" ,
+      "cl": "open.a" ,
+      "al": "open.a" ,
+      "mo": "open.a" ,
+      "cs": {"Thread":"*mid",
+             "ThreadTabs":{"Pos":0, "PosFor":0, "Terms":[], "Type":0},
+             "History":{"Prev":false, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[{"Term":"-- -+ohi +"}], "Type":1},
+             "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 },{
    "Updt": {"Op":"test", "Test":{"Notice":[
                  {"Type":"i", "MsgId":"0", "Date":"-9", "Seen":1, "Alias":"discard"},

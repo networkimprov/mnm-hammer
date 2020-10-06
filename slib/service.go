@@ -82,6 +82,8 @@ func initServices(iSs func(string), iMts func(string, *Header)) {
          // some adrsbk ops stem from thread ops; complete them first
          if strings.HasPrefix(aTmp, "adrsbk_") {
             completeAdrsbk(aSvc, aTmp)
+         } else if strings.HasPrefix(aTmp, "syncupdt_") {
+            completeUpdtNode(aSvc, aTmp) //todo move to 2nd loop when draft sync'd
          }
       }
       for _, aTmp := range aTmps {
@@ -99,7 +101,7 @@ func initServices(iSs func(string), iMts func(string, *Header)) {
             // could be a valid attachment or forward from thread transaction
             defer os.Remove(dirTemp(aSvc) + aTmp)
          } else if strings.HasPrefix(aTmp, "syncupdt_") {
-            completeUpdtNode(aSvc, aTmp)
+            // handled above
          } else if strings.HasPrefix(aTmp, "syncack_") {
             dropSyncNode(aSvc, aTmp[8+1:], aTmp[8:], "complete")
          } else {
@@ -441,6 +443,19 @@ func dropTabService(iSvc string, iPos int) {
    aSvc.tabs = aSvc.tabs[:iPos + copy(aSvc.tabs[iPos:], aSvc.tabs[iPos+1:])]
    err := storeFile(fileTab(iSvc), aSvc.tabs)
    if err != nil { quit(err) }
+}
+
+func syncTagService(iSvc string, iTid, iMid string, iTagId []string) { //todo drop when draft sync'd
+   if len(iTagId) == 0 {
+      return
+   }
+   aUpdt := Update{Op: "thread_tag",
+                   Touch: &UpdateTouch{ThreadId: iTid, MsgId: iMid, Act: 't'}}
+   aState := ClientState{id: "sendDraftThread", History: []string{iTid}}
+   for a := range iTagId {
+      aUpdt.Touch.TagId = iTagId[a]
+      syncUpdtNode(iSvc, &aUpdt, &aState, func() error { return nil })
+   }
 }
 
 func sendAliasService(iW io.Writer, iSvc string, iQid, iId string) error {
@@ -964,7 +979,8 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
             addTag(iSvc, iUpdt.Touch.TagName, iUpdt.Touch.TagId)
          }
          touchThread(iSvc, iUpdt)
-         if strings.IndexByte(iUpdt.Touch.MsgId, '_') >= 0 { //todo drop on draft sync
+         if iUpdt.Touch.TagName == "" &&
+            strings.IndexByte(iUpdt.Touch.MsgId, '_') >= 0 { //todo drop on draft sync
             return tError("")
          }
          return nil
