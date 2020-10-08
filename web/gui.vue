@@ -68,7 +68,8 @@
             </div></div></div>
       <div class="uk-float-right">
          <span uk-icon="social" class="dropdown-icon"
-               title="Recipients of thread">{{ml.length === 1 && !ml[0].From ? '' : cl[1].length}}</span>
+               title="Recipients of thread"
+               >{{cl[1].length - (cs.Thread[0] === '_') || ''}}</span>
          <mnm-cc ref="cl"
                  :tid="ml.length ? ml[ml.length-1].Id : 'none'"/>
          &nbsp;
