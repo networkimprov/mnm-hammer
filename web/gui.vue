@@ -380,10 +380,14 @@
          <template v-else>
             <div v-show="of.length === 0"
                  class="uk-text-warning">no o/</div>
-            <ul class="uk-list uk-text-success" style="margin:0">
-               <li v-for="aUser in of" :key="aUser.Uid"
-                   >{{aUser.Alias}}</li>
-            </ul>
+            <div v-for="aUser in of" :key="aUser.Uid"
+                 uk-grid class="uk-grid-collapse uk-text-success">
+               <div class="ohifromto">
+                  <span v-show="ot.find(function(c) { return c.Uid === aUser.Uid })"
+                        title="Ohi-to sent to contact"
+                        >&#x25ce;</span></div>
+               <div>{{aUser.Alias}}</div>
+            </div>
          </template>
       </div></div>
 </div>

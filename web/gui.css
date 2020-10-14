@@ -242,6 +242,11 @@ textarea:focus,
    font-style: italic;
 }
 
+.ohifromto {
+   width: 1em;
+   cursor: default;
+}
+
 .viewer {
    min-width: 16em;
 }
