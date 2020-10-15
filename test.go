@@ -887,9 +887,13 @@ func _hasExpected(iName string, iExpect, iGot interface{}) (string, interface{})
    case nil, bool, float64:
       if iExpect != iGot { return iName, iGot }
    case []interface{}:
+      switch iGot.(type) {
+      case []interface{}, nil:
+      default: return iName, iGot
+      }
       aGot, _ := iGot.([]interface{})
       aDiff := len(aGot) - len(aExpect)
-      if aDiff != 0 { return fmt.Sprintf("%s%+d", iName, aDiff), iGot } // allow aGot == nil
+      if aDiff != 0 { return fmt.Sprintf("%s%+d", iName, aDiff), iGot }
       var aName string
       for a := range aExpect {
          aName, iGot = _hasExpected(fmt.Sprintf("%s.%d", iName, a), aExpect[a], aGot[a])
