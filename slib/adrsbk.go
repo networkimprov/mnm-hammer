@@ -17,7 +17,6 @@ import (
    "strconv"
    "strings"
    "sync"
-   "net/url"
 )
 
 const kPingTextMax = 120 //todo 140 when .DataHead dropped// UTF-16 units
@@ -522,8 +521,7 @@ func _completeAdrsbk(iSvc string, iTmp string, iEls []tAdrsbkEl) {
       if err != nil { quit(err) }
    }
    if aRec[2] != "" {
-      aRec[2], err = url.QueryUnescape(aRec[2])
-      if err != nil { quit(err) }
+      aRec[2] = unescapeFile(aRec[2])
       dropQueue(iSvc, aRec[2])
    }
    err = os.Remove(dirTemp(iSvc) + iTmp)

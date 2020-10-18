@@ -219,18 +219,17 @@ func _checkSvcPath(iPath string) (string, error) {
    }
    aPath := strings.SplitN(iPath, "/", aMax)
    for a := range aPath {
-      if aPath[a] == ".." || aPath[a] == "." || aPath[a] == "" ||
-         isReservedFile(strings.ToLower(aPath[a])) {
+      if aPath[a] == ".." || aPath[a] == "." || aPath[a] == "" || IsReservedFile(aPath[a]) {
          return "", tError("disallowed path element: "+ aPath[a])
       }
-      if aPath[a] != url.QueryEscape(aPath[a]) &&
-         !((aPath[0] == "attach" || aPath[0] == "form") && a == len(aPath)-1) {
+      if !(a == len(aPath)-1 && (aPath[0] == "attach" || aPath[0] == "form")) &&
+         aPath[a] != escapeFile(aPath[a]) {
          return "", tError("invalid character in "+ aPath[a])
       }
    }
    if aPath[0] == "attach" || aPath[0] == "form" {
       aFile := aPath[len(aPath)-1]
-      return iPath[:len(iPath) - len(aFile)] + url.QueryEscape(aFile), nil
+      return iPath[:len(iPath) - len(aFile)] + escapeFile(aFile), nil
    }
    return iPath, nil
 }
@@ -364,8 +363,7 @@ func _runTar(iSvc string, iW *io.PipeWriter, iNode *tNode, iToNode *tToNode) {
             }
             cPathHead := cPath
             if strings.HasPrefix(cPath, "form/") {
-               cPathHead, err = url.QueryUnescape(cPath)
-               if err != nil { quit(err) }
+               cPathHead = unescapeFile(cPath)
             }
             aHead = tar.Header{Name: cPathHead, Size: cFi.Size(),
                                ModTime: cFi.ModTime(), Typeflag: cHeadType, Mode: int64(cFi.Mode())}
@@ -419,11 +417,8 @@ func _runTar(iSvc string, iW *io.PipeWriter, iNode *tNode, iToNode *tToNode) {
          err = fPut(dirAttach(iSvc) + aAtc[a].path)
          if err != nil { return }
       }
-      var aPath string
-      aPath, err = url.QueryUnescape(aAtc[a].path)
-      if err != nil { quit(err) }
-      aHead = tar.Header{Name: "attach/"+ aPath, Linkname: fmt.Sprintf("temp/%d", aAtc[a].inode),
-                         Typeflag: tar.TypeLink}
+      aHead = tar.Header{Name: "attach/"+ unescapeFile(aAtc[a].path),
+                         Linkname: fmt.Sprintf("temp/%d", aAtc[a].inode), Typeflag: tar.TypeLink}
       err = aTf.WriteHeader(&aHead)
       if err != nil { return }
    }

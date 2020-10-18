@@ -629,8 +629,8 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          break
       }
       if aOp_Id[0] == "ad" {
-         iResp.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''" +
-                                                   url.QueryEscape(aOp_Id[1][aDelim+3:]))
+         iResp.Header().Set("Content-Disposition",
+                            "attachment; filename*=UTF-8''" + escapeFile(aOp_Id[1][aDelim+3:]))
       }
       iResp.Header().Del("Content-Type") // let ServeFile() infer type
       iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache") //todo compare checksums
@@ -775,7 +775,7 @@ func runGlobal(iResp http.ResponseWriter, iReq *http.Request) {
    } else {
       if aId[0] == '=' {
          aId = aId[1:]
-         iResp.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''"+ url.QueryEscape(aId))
+         iResp.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''"+ escapeFile(aId))
       }
       aPath := aSet.GetPath(aId)
       if aPath == "" {
@@ -935,6 +935,13 @@ func packMsg(iJso tMsg, iData []byte) []byte {
    aBuf = append(aBuf, aHead...)
    aBuf = append(aBuf, iData...)
    return aBuf
+}
+
+func escapeFile(i string) string {
+   if i == ".." || i == "." || pSl.IsReservedFile(i) {
+      return i + url.QueryEscape("\u25a1")
+   }
+   return url.QueryEscape(i)
 }
 
 func dateRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }

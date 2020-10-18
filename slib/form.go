@@ -217,10 +217,8 @@ func GetIdxFilledForm(iSvc string) interface{} {
    aList := make([]_tFfEl, len(aDir))
    for a := range aDir {
       if strings.HasSuffix(aDir[a].Name(), ".bak") { continue }
-      var aId string
-      aId, err = url.QueryUnescape(aDir[a].Name())
-      if err != nil { quit(err) }
-      aList[a] = _tFfEl{Id: aId, Date: aDir[a].ModTime().UTC().Format(time.RFC3339)}
+      aList[a] = _tFfEl{Id: unescapeFile(aDir[a].Name()),
+                        Date: aDir[a].ModTime().UTC().Format(time.RFC3339)}
    }
    sort.Slice(aList, func(cA, cB int)bool { return aList[cA].Date > aList[cB].Date })
    return aList

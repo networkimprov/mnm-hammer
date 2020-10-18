@@ -12,7 +12,6 @@ import (
    "os"
    "sort"
    "time"
-   "net/url"
 )
 
 type tGlobalUpload struct{} // implements GlobalSet
@@ -39,10 +38,7 @@ func (tGlobalUpload) GetIdx() interface{} {
    aList := make([]tUploadEl, 0, len(aDir)-1) // omit temp/
    for _, aFi := range aDir {
       if aFi.Name() == "temp" { continue }
-      var aFile string
-      aFile, err = url.QueryUnescape(aFi.Name())
-      if err != nil { quit(err) }
-      aList = append(aList, tUploadEl{Name:aFile, Size:aFi.Size(),
+      aList = append(aList, tUploadEl{Name:unescapeFile(aFi.Name()), Size:aFi.Size(),
                                       Date:aFi.ModTime().UTC().Format(time.RFC3339)})
    }
    sort.Slice(aList, func(cA, cB int)bool { return aList[cA].Name < aList[cB].Name })
@@ -54,10 +50,10 @@ func (tGlobalUpload) GetPath(iId string) string {
 }
 
 func (tGlobalUpload) Add(iId, iDup string, iR io.Reader) error {
-   if iId == "" {
-      return tError("missing filename")
+   if iId == "" || iId == ".." || iId == "." {
+      return tError("missing or invalid filename")
    }
-   if iDup != "" && iDup[0] != '.' {
+   if iDup != "" && iDup[0] != '.' { //todo iDup as base of new name with ext from iId
       iDup = "." + iDup
    }
    aOrig := fileUpload(iId + iDup)

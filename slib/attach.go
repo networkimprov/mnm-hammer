@@ -15,7 +15,6 @@ import (
    "sort"
    "strings"
    "time"
-   "net/url"
 )
 
 const kSuffixRecv = "_recv"
@@ -40,9 +39,7 @@ func GetIdxAttach(iSvc string, iState *ClientState) interface{} {
    aSend := make([]tAttachEl, 0, len(aDir))
    for _, aFi := range aDir {
       if aFi.Name() == "ffnindex" { continue }
-      var aFile string
-      aFile, err = url.QueryUnescape(aFi.Name())
-      if err != nil { quit(err) }
+      aFile := unescapeFile(aFi.Name())
       aPair := strings.SplitN(aFile, "_", 2)
       aEl := tAttachEl{Id: aFile, Size: aFi.Size(),
                        MsgId: aPair[0], File: aPair[1][2:], // omit x: tag

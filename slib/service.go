@@ -16,7 +16,6 @@ import (
    "strings"
    "sync"
    "time"
-   "net/url"
 )
 
 const kServiceNameMin = 2
@@ -63,8 +62,7 @@ func initServices(iSs func(string), iMts func(string, *Header)) {
 
    os.Remove(kStorageDir + "tags") //todo remove in 0.8
    for _, aSvc := range aSvcs {
-      aSvc, err = url.QueryUnescape(aSvc)
-      if err != nil { quit(err) }
+      aSvc = unescapeFile(aSvc)
       if strings.HasSuffix(aSvc, ".tmp") {
          err = os.RemoveAll(dirSvc(aSvc))
          if err != nil { quit(err) }
@@ -392,7 +390,7 @@ func getDoorService(iSvc string, iId string, iMake func()tDoor) tDoor {
 func checkNameService(iName string) bool {
    iName = strings.ToLower(iName)
    return !(len(iName) < kServiceNameMin || strings.HasSuffix(iName, ".tmp") ||
-            isReservedFile(iName) || iName == ".." || iName == "favicon.ico" )
+            iName == ".." || iName == "favicon.ico")
 }
 
 func _newService(iCfg *tSvcConfig) *tService {
@@ -1102,7 +1100,7 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
 
 // only for testing
 func WipeDataService(iSvc string) error {
-   aCfgTmp := kStorageDir +"svc-"+ url.QueryEscape(iSvc) +"-config"
+   aCfgTmp := kStorageDir +"svc-"+ escapeFile(iSvc) +"-config"
    err := os.Rename(fileCfg(iSvc), aCfgTmp)
    if err != nil { return err }
    err = os.RemoveAll(dirSvc(iSvc))

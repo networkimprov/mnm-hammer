@@ -18,6 +18,7 @@ import (
    "os"
    "path"
    pBleve "github.com/blevesearch/bleve"
+   "strings"
    "sync"
    "time"
    "net/url"
@@ -32,16 +33,16 @@ const kFormDir    = kStorageDir + "form/"
 const kFormRegDir = kStorageDir + "reg-cache/"
 const kTempDir    = kStorageDir + "temp/"
 
-func fileState(iCli, iSvc string) string { return kStateDir + iCli +"/"+ url.QueryEscape(iSvc) }
+func fileState(iCli, iSvc string) string { return kStateDir + iCli +"/"+ escapeFile(iSvc) }
 
-func fileUpload(iFil string) string { return kUploadDir + url.QueryEscape(iFil) }
-func fileUptmp (iFil string) string { return kUploadTmp + url.QueryEscape(iFil) }
+func fileUpload(iFil string) string { return kUploadDir + escapeFile(iFil) }
+func fileUptmp (iFil string) string { return kUploadTmp + escapeFile(iFil) }
 
-func fileFormReg(iFfn string) string { return kFormRegDir + url.QueryEscape(iFfn) }
+func fileFormReg(iFfn string) string { return kFormRegDir + escapeFile(iFfn) }
 
-func fileTemp(iFil string) string { return kTempDir + url.QueryEscape(iFil) }
+func fileTemp(iFil string) string { return kTempDir + escapeFile(iFil) }
 
-func dirSvc(iSvc string) string { return kServiceDir + url.QueryEscape(iSvc) + "/" }
+func dirSvc(iSvc string) string { return kServiceDir + escapeFile(iSvc) + "/" }
 
 // node.go uses some of these literals
 func dirTemp  (iSvc string) string { return dirSvc(iSvc) + "temp/" }
@@ -62,10 +63,10 @@ func fileDraft(iSvc, iTid, iLms string) string { return dirThread(iSvc) + iTid +
 func fileFwd  (iSvc, iTid       string) string { return dirThread(iSvc) + iTid + "_forward" }
 
 func fileAtc(iSvc, iSub, iMid, iFil string) string { return dirAttach(iSvc) + iSub +"/"+
-                                                            iMid +"_"+ url.QueryEscape(iFil) }
+                                                            iMid +"_"+ escapeFile(iFil) }
 func fileFfn(iSvc, iSub             string) string { return dirAttach(iSvc) + iSub + "/ffnindex" }
 
-func fileForm(iSvc, iFft string) string { return dirForm(iSvc) + url.QueryEscape(iFft) }
+func fileForm(iSvc, iFft string) string { return dirForm(iSvc) + escapeFile(iFft) }
 
 // these have either ".tmp" or a decimal string appended
 func ftmpSr(iSvc, iTid, iMid string) string { return dirTemp(iSvc) +"sr_"+ iTid +"_"+ iMid +"__" }
@@ -83,11 +84,11 @@ func ftmpFwdS(iSvc, iTid string) string { return dirTemp(iSvc) + iTid +"_fwd.tmp
 func ftmpFwdD(iSvc, iTid string) string { return dirTemp(iSvc) +"forward_"+ iTid }
 
 func ftmpAtc(iSvc, iMid, iFil string) string { return dirTemp(iSvc) +
-                                                      iMid +"_"+ url.QueryEscape(iFil) +"_atc.tmp" }
+                                                      iMid +"_"+ escapeFile(iFil) +"_atc.tmp" }
 
 func ftmpFfn   (iSvc, iTid       string) string { return dirTemp(iSvc) +"ffnindex_"+ iTid }
 func ftmpAdrsbk(iSvc, iPos, iQid string) string { return dirTemp(iSvc) +"adrsbk_"+ iPos +"_"+
-                                                         url.QueryEscape(iQid) }
+                                                         escapeFile(iQid) }
 
 func ftmpSyncLog (iSvc       string) string { return dirTemp(iSvc) +"synclog" }
 func ftmpSyncLogQ(iSvc, iQid string) string { return dirTemp(iSvc) +"synclog_"+ iQid }
@@ -450,10 +451,33 @@ func renameRemove(iA, iB string) error {
    return err
 }
 
-func isReservedFile(iN string) bool {
-   // iN must be lowercase
-   return iN == "con" || iN == "prn" || iN == "aux" || iN == "nul" ||
-          len(iN) == 4 && (iN[:3] == "com" || iN[:3] == "lpt") && iN[3] >= '1' && iN[3] <= '9'
+func escapeFile(i string) string {
+   if i == "" {
+      return i
+   } else if i[0] == '.' {
+      return "%2E" + url.QueryEscape(i[1:])
+   } else if IsReservedFile(i) {
+      aEnd := len(i) - 1
+      return fmt.Sprintf("%s%%%X", i[:aEnd], i[aEnd])
+   }
+   return url.QueryEscape(i)
+}
+
+func unescapeFile(i string) string {
+   i, err := url.QueryUnescape(i)
+   if err != nil { quit(err) }
+   return i
+}
+
+func IsReservedFile(i string) bool {
+   if len(i) < 3 || len(i) > 4 {
+      return false
+   }
+   i = strings.ToLower(i)
+   if len(i) == 3 {
+      return i == "con" || i == "prn" || i == "aux" || i == "nul"
+   }
+   return (i[:3] == "com" || i[:3] == "lpt") && i[3] >= '1' && i[3] <= '9'
 }
 
 func dateRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
