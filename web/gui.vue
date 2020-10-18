@@ -2867,7 +2867,7 @@
          ? function(cA, cB) { return cA.Size > cB.Size ? -1 : cA.Size < cB.Size ? 1 :
                                      cA.Date > cB.Date ? -1 : cA.Date < cB.Date ? 1 : 0 }
          : iName === 'cl' && mnm._data.cs.Thread[0] === '_'
-         ? function(cA, cB) { return cA.WhoUid === cA.ByUid ? -1 :
+         ? function(cA, cB) { return cA.WhoUid === cA.ByUid ? -1 : cB.WhoUid === cB.ByUid ? 1 :
                                      cA.Who.localeCompare(cB.Who, undefined, {sensitivity:'base'}) }
          : function(cA, cB) { return cA[iKey].localeCompare(cB[iKey], undefined, {sensitivity:'base'}) ||
                                      (cA.Date > cB.Date ? -1 : cA.Date < cB.Date ? 1 : 0) }
