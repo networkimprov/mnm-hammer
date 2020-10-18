@@ -587,6 +587,13 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
          aClientId.Expires = time.Date(5678, 1, 2, 3, 4, 56, 78, time.UTC)
          http.SetCookie(iResp, aClientId)
       }
+      aAboutTag := getAbout().etag()
+      iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache")
+      iResp.Header().Set("ETag", aAboutTag)
+      if iReq.Header.Get("If-None-Match") == aAboutTag {
+         iResp.WriteHeader(http.StatusNotModified)
+         return
+      }
       iResp.Header().Set("Content-Type", "text/html; charset=utf-8")
       aSvcIdJs := strings.ReplaceAll(template.JSEscapeString(aSvcId), `"`, `x22`) // avoid v-attr="'\"'"
       aParams := pSl.GetConstants(tMsg{"Title":aSvcId, "TitleJs":aSvcIdJs, "Addr":sHttpSrvr.Addr})
@@ -661,6 +668,8 @@ func getAbout() *tAbout {
    return &tAbout{ fmt.Sprintf("%d.%d.%d", kVersionA, kVersionB, kVersionC),
                    kVersionDate, sHttpSrvr.Addr }
 }
+
+func (o *tAbout) etag() string { return o.Version +" "+ o.VersionDate }
 
 func runNodeListen(iResp http.ResponseWriter, iReq *http.Request) {
    if sTestHost == "" {
@@ -847,6 +856,13 @@ func runWebsocket(iResp http.ResponseWriter, iReq *http.Request) {
 }
 
 func runFile(iResp http.ResponseWriter, iReq *http.Request) {
+   aAboutTag := getAbout().etag()
+   iResp.Header().Set("Cache-Control", "private, max-age=0, no-cache")
+   iResp.Header().Set("ETag", aAboutTag)
+   if iReq.Header.Get("If-None-Match") == aAboutTag {
+      iResp.WriteHeader(http.StatusNotModified)
+      return
+   }
    http.ServeFile(iResp, iReq, "web"+ iReq.URL.Path[2:])
 }
 
