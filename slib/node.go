@@ -27,6 +27,7 @@ import (
 const kNodeFlagUpload = ".../"
 var kNodeListen = []string{"/l"}
 var kNodeStart  = []string{"/l", "/v"}
+const kNodeEot = "*"
 
 var sNodeSyncPeriod = time.Duration(2 * time.Minute)
 var sNodePin = ""
@@ -107,7 +108,7 @@ func MakeNode(iR io.Reader) error {
       return tError("account type not directory")
    }
    aSvc := aHead.Name
-   if !checkNameService(aSvc) || aSvc == "EOT" {
+   if aSvc == kNodeEot || !checkNameService(aSvc) {
       return tError("account name invalid: "+ aSvc)
    }
    if getService(aSvc) != nil {
@@ -134,7 +135,7 @@ func MakeNode(iR io.Reader) error {
    for {
       aHead, err = aTf.Next()
       if err != nil { return err }
-      if aHead.Name == "EOT" {
+      if aHead.Name == kNodeEot {
          aHead, err = aTf.Next()
          if err != io.EOF {
             return tError("got record after EOT: "+ aHead.Name)
@@ -423,7 +424,7 @@ func _runTar(iSvc string, iW *io.PipeWriter, iNode *tNode, iToNode *tToNode) {
       if err != nil { return }
    }
 
-   aHead = tar.Header{Name: "EOT", Typeflag: tar.TypeDir}
+   aHead = tar.Header{Name: kNodeEot, Typeflag: tar.TypeDir}
    err = aTf.WriteHeader(&aHead)
    if err != nil { return }
    err = aTf.Close()

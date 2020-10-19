@@ -623,7 +623,7 @@
       "cn": {"Addr":"localhost:8123", "Pin":"*", "Xfer":0} }
 },{
    "Updt": {"Op":"test", "Test":{"Request":["cf", "cn"]}},
-   "Poll": 9,
+   "Poll": 12,
    "Result": {
       "cf": {"Name":"Blue", "HistoryLen":128, "LoginPeriod":0, "Addr":"*", "Verify":false,
              "Uid":"*uid", "Alias":"Blue#td",
