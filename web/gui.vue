@@ -2544,7 +2544,7 @@
 ;(function() {
    var sChange = 0;
    var sChangeNew = false;
-   var sTemp = {ml:null, mo:null};
+   var sTemp = {al:null, ml:null, mo:null};
    var sMsglistPos = 0;
 
    mnm._isLocal = '<%.TitleJs%>' === 'local';
@@ -2950,14 +2950,16 @@
       if (i.charAt(0) === '/')
          i = i.substr(1);
 
-      if (sChange && (i === 'ml' || i === 'mo')) {
+      if (sChange && (i === 'al' || i === 'ml' || i === 'mo')) {
          sTemp[i] = iEtc || JSON.parse(iData);
-         if (++sChange === 2)
+         if (++sChange <= 3)
             return;
          sChange = 0;
          mnm._data.ao = {};
+         mnm._data.al = sTemp.al;
          mnm._data.ml = sTemp.ml;
          mnm._data.mo = sTemp.mo;
+         sTemp.al = sTemp.ml = sTemp.mo = null;
          for (var aK in mnm._data.toSave)
             if (!mnm._data.toSave[aK].timer[0])
                Vue.delete(mnm._data.toSave, aK);
