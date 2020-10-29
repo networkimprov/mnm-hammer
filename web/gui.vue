@@ -2692,9 +2692,11 @@
    mnm._mdi.renderer.rules.link_close = function(iTokens, iIdx, iOptions, iEnv, iSelf) {
       var aClose = iSelf.renderToken(iTokens, iIdx, iOptions);
       while (iTokens[--iIdx].tag !== 'a') {} // assume .level values are equal
+      if (iTokens[iIdx].attrs[0][1].charAt(0) === '#')
+         return '<span uk-icon="mail"></span>' + aClose;
       if (kUrlStart.test(iTokens[iIdx].attrs[0][1]))
          return '<span uk-icon="expand"></span>' + aClose;
-      return aClose;
+      return '<span uk-icon="download"></span>' + aClose;
    };
 
    var sMdiRenderImg = mnm._mdi.renderer.rules.image;

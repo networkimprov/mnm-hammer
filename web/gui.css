@@ -406,6 +406,9 @@ textarea:focus,
 .message th, .message td {
    padding: 0.1em 0.5em;
 }
+.message a > [uk-icon=mail] {
+   margin-left: 3px;
+}
 .message div.md-deck {
    position: relative;
 }
