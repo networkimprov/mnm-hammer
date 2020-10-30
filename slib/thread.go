@@ -764,6 +764,7 @@ func storeDraftThread(iSvc string, iUpdt *Update) bool {
       aSd, err = os.Open(aDraft)
       if err != nil {
          if !os.IsNotExist(err) { quit(err) }
+         aEl.Tags = []string{"Todo"}
       } else {
          _readIndex(aSd, &aIdx, &aCc)
          aIdxN = 0
