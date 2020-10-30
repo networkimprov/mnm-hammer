@@ -395,7 +395,7 @@
 <div class="uk-width-expand service-panel">
    <div class="uk-clearfix uk-light">
       <span uk-icon="plus-circle" class="dropdown-icon"
-            title="Add account"></span>
+            title="New account"></span>
       <mnm-svcadd ref="svcadd"/>
       <div style="float:right; margin:0 1em 1em 0">
          <span uk-icon="cog" class="dropdown-icon"
@@ -477,9 +477,9 @@
                <div>Linking mnm to a place</div>
                <img src="/w/img/tour-link.png">
             </div>
-            <b>1.</b> Click the add account icon, then<br>
+            <b>1.</b> Click the new account icon, then<br>
             <span @click.stop="UIkit.dropdown($root.$refs.svcadd.$el).show()"
-                  uk-icon="plus-circle" title="Add account"></span>
+                  uk-icon="plus-circle" title="New account"></span>
             <div>
                a) Fill out the form:<div style="margin-left: 1.1em">
                   <i>Site Address</i> is provided by the site admin,<br>
@@ -2238,7 +2238,7 @@
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
         class="widthmin20 menu-bg dropdown-static"
         @hidden="addr = name = alias = sent = lpin = loginperiod = null">
-      <div class="uk-float-right uk-text-small">ADD ACCOUNT</div>
+      <div class="uk-float-right uk-text-small">NEW ACCOUNT</div>
       <form :action="'/v/+' + encodeURIComponent(name)"
             method="POST" enctype="multipart/form-data"
             onsubmit="mnm.Upload(this); return false;">
@@ -2251,7 +2251,8 @@
                  title="Register new account"
                  class="btn btn-icon"><span uk-icon="forward"></span></button>
          <span v-show="sent && name && !nameUnused"
-               class="uk-text-small">Done!</span>
+               title="Account added"
+               uk-icon="check"></span>
          <input v-model="addr"
                 placeholder="Site Address" type="text"
                 title="Starts with '+' or '=' and may end with ':number'"
