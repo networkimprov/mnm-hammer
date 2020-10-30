@@ -1867,8 +1867,8 @@
               :disabled="!mnm._data.nlo.length || mnm._data.nlo[0].Seen > 0"
               title="Mark all as seen"
               class="btn btn-icon btn-floatr dropdown-scroll-item"><span uk-icon="check"></span></button>
-      <div style="min-height:2em; font-style:oblique; color:#1e87f0"><!--uk-light workaround-->
-         <span v-for="aType in [['i', 'invites']]"
+      <div style="min-height:2em; font-size:0.875rem; color:#1e87f0"><!--uk-light workaround-->
+         <span v-for="aType in [['i', 'INVITES']]"
                v-show="!showErr"
                @click="$data[aType[0]] = !$data[aType[0]]"
                style="margin-right:0.5em; cursor:pointer">
