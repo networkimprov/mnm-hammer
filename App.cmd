@@ -43,6 +43,8 @@ if not exist "store" (
 netsh advfirewall firewall delete rule name=mnm-hammer >nul
 netsh advfirewall firewall add rule action=allow protocol=tcp enable=yes direction=in ^
       profile=domain,private,public name=mnm-hammer program="%~dp0mnm-hammer.exe" >nul || goto error
+netsh advfirewall firewall add rule action=allow protocol=tcp enable=yes direction=out ^
+      profile=domain,private,public name=mnm-hammer program="%~dp0mnm-hammer.exe" >nul || goto error
 
 :loop
    mnm-hammer.exe -http :8123
