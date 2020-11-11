@@ -21,7 +21,7 @@ cd /d "%~dp0"
 setlocal EnableDelayedExpansion
 
 if not exist "store" (
-   set findStore=get-item ..\mnm-*-v0.*.0\store ^| ^
+   set findStore=get-item ..\mnm-*-v0.*.?\store ^| ^
                  sort -property LastWriteTime ^| ^
                  select -last 1 -expandproperty FullName
    set findStore=powershell -noprofile -command "!findStore!"

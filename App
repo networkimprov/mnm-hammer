@@ -12,7 +12,7 @@ echo "Welcome to mnm!"
 cd "$(dirname "$0")"
 
 if [ ! -e 'store' ]; then
-   found=$(ls -dt ../mnm-*-v0.*.0/store | head -1)
+   found=$(ls -dt ../mnm-*-v0.*.?/store | head -1)
    if [ "$found" ]; then
       echo "It looks like you're updating from $(dirname $found)."
       echo "Press U to update, N to start anew, or Q to quit."
