@@ -24,10 +24,12 @@ table { border-spacing: 0; }
 }
 .uk-dropdown {
    min-width: unset;
+   color: #505050;
 }
 
 body {
    background-color: #f0f8f5;
+   color: #505050;
 }
 
 .menu-bg {
