@@ -599,8 +599,11 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       aToAll = []string{"/v"}
    case "member":
       if iHead.Act == "join" {
-         groupJoinedAdrsbk(iSvc, iHead)
-         aFn, aResult = fAll, []string{"pt"}
+         if groupJoinedAdrsbk(iSvc, iHead) {
+            aFn, aResult = fAll, []string{"pf", "gl"}
+         } else {
+            aFn, aResult = fAll, []string{"pt"}
+         }
       }
    case "delivery":
       aGot := "thread"
@@ -681,7 +684,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          if iHead.Error != "" {
             aFn, aResult = fAll, []string{"pf", "_e", iHead.Error}
          } else {
-            aFn, aResult = fAll, []string{"pf", "gl"}
+            aFn, aResult = fAll, []string{"pf"}
          }
          dropQueue(iSvc, aQid)
       case eSrecThread:

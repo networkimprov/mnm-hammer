@@ -443,7 +443,7 @@ func resolveSentAdrsbk(iSvc string, iDate string, iCc []tCcEl, iTid string) {
    }
 }
 
-func groupJoinedAdrsbk(iSvc string, iHead *Header) {
+func groupJoinedAdrsbk(iSvc string, iHead *Header) bool {
    aSvc := _loadAdrsbk(iSvc)
    aSvc.Lock(); defer aSvc.Unlock()
    if iHead.From == GetConfigService(iSvc).Uid {
@@ -453,11 +453,13 @@ func groupJoinedAdrsbk(iSvc string, iHead *Header) {
          aSvc.aliasIdx[aEl.Gid] = aEl.Gid
          _storeAdrsbk(iSvc, []tAdrsbkEl{aEl})
       }
+      return true
    } else {
       aEl := tAdrsbkEl{Type:eAbMsgJoin, Date:iHead.Posted, Gid:iHead.Gid, Alias:iHead.Alias}
       if _respondLog(aSvc.inviteToIdx[aEl.Alias + "\x00" + aEl.Gid], &aEl) {
          _storeAdrsbk(iSvc, []tAdrsbkEl{aEl})
       }
+      return false
    }
 }
 
