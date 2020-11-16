@@ -11,7 +11,12 @@ Learn more at [mnmnotmail.org](https://mnmnotmail.org).
 
 ### Status
 
-[_20 April 2020_ - v0.7](https://github.com/networkimprov/mnm-hammer/releases/latest)
+[_15 November 2020_ - v0.8](https://github.com/networkimprov/mnm-hammer/releases/latest)
+is released for Windows 7+ & MacOS & Linux. Its UI has been tested on Chrome & Firefox.  
+_New:_ Markdown reference panel, "Todo" tag on new threads, menu of filled-form tables, 
+and dozens of other enhancements and fixes.
+
+_20 April 2020_ - v0.7
 is released for Windows 7+ & MacOS & Linux. It has been tested with Chrome & Firefox.  
 _New:_ slide deck layouts, replication to multiple PCs, simplified startup.
 
