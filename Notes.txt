@@ -12,9 +12,14 @@ tour
   more slides
 
 docs
+  enable in-msg links to docs
   move panel by dragging border
   pin menu open?
   resize pane
+
+search
+  keep list of abbreviations & original words, per language
+  extensible by service
 
 nodes
   local service list all known nodes, sublist of accounts per-node
@@ -50,6 +55,7 @@ nodes
     HandleUpdtService reject calls during op
 
 tags
+  msg-list tags-menu buttons to clear all msgs of that tag
   blurb to describe tag?
   rebuild file on search-index build?
   in search result, textbox to rename tag
@@ -60,7 +66,7 @@ tags
 forwarding
   CC menu: forward form + button, unsubscribe button, CC list
     dropped CCs have strikethrough
-    on drop CC, send unsubscribe
+    on drop CC, send unsubscribe, drop Todo tag
   sent threads: disable reply buttons if unsubscribed or CC empty
   client notify
     add to notice list
@@ -69,6 +75,7 @@ forwarding
   client confirm
     store mismatched forwarded message alongside thread?
   client unsubscribe
+    option to tag thread "hidden"
   add non-pinged CCs to adrsbk
 
 notices menu
@@ -79,6 +86,7 @@ notices menu
   accrete related items in not-seen set
   overwrite not-seen items on new entry
   audio tone option
+  include hyperlink to relevant menu/thread/etc
 
 alias
   add, drop, list; store in sep file
@@ -90,6 +98,7 @@ invites
   msg-from: log cc aliases?
     log group msg froms (not preceeded by ping)
   storeSent: if group unknown, make file for members in groups/gid?
+  service member directories; invite to directory name returns directory members
 
 forms
   allow multiple results from a form via [?n](...), where n=0 is unlimited
@@ -117,6 +126,8 @@ forms
     on reply, copy selected form ref to text
 
 msg panel
+  menu of visited threads next to back/forward arrows
+  tab NONE to collapse all?
   tabs, per client: reply-to chain
     pin tab? saves state, broadcasts to clients & nodes
     search tabs highlight result text
@@ -131,6 +142,8 @@ msg panel
     to add item, select text in msg, right-click for add-to-summary, write optional note
 
 thread panel
+  dragging thread to a tag tab applies tag to first/latest message
+  threads tagged hidden omitted from ALL
   change panel width via centerline drag
   infinite scrolling or back/forward buttons
   sort by first/latest toggle
@@ -180,6 +193,7 @@ services (notifications) panel
   form to disconnect or delete service
 
 msg viewer
+  text length limit with new-browsertab link for whole msg
   reply-chain button opens reply-to tab
   way to link attachment in upload dir for future use
   button to copy form to our collection
@@ -224,6 +238,8 @@ msg editor
   slides/pages; markdown hrefs
     set background & foreground colors of slides
   embedded tags via '\tag/tags/tagged #name...'; drop prior tag with !name
+    prefix to identify source, e.g. hr-benefits
+    prefix list on server
   thread/message hyperlinks may indicate excerpts (list of byte ranges)
   charts menu; outputs templates
   poll/vote component

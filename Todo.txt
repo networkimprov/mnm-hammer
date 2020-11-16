@@ -13,23 +13,29 @@ all:
     if not, can recover lost files via FILE_OPEN_BY_FILE_ID?
 
 state:
+  threadtabs includes tags by default
   keeps msg panel scroll position?
   drop old states
   revise disconnected ClientState files on service rename/discard
 
 thread:
+  storeFwdReceivedThread disable forward & msg-send until storeFwdNotify completed
   storeReceivedThread fConsume() msg with excessive subhead length
   storeFwdNotify reject request if sender not in Cc list
   thread_savetext message for subject & body?
   on forward, do notified nodes confirm to sender?
   verify forwarding when thread missing recently-sent messages from other senders
 
+node:
+  encode NUL in svcid and attach/ & form/ files
+
 slib:
-  %-encode initial '.' in filename
+  some unicode space characters aren't classified as "space"
+    https://github.com/golang/go/issues/42274
   makeLocalId() could yield identical string on different nodes
 
 form:
-  Add() reject filename ".*"
+  Add() allow any character except '.' in name; reject filename ".*"
   blankform update msg to all clients, include ID
   flag update in msg editor if form is attached
     verify that form-save creates new file
@@ -41,8 +47,11 @@ attach:
     binary diff for previously-sent attachment?
   store 1 of any attachment received/sent multiple times
 
+adrsbk:
+  omit .MsgId in _listLogs()
+
 search:
-  +n in OrigAuthor for outbound msgs?
+  append "+n" in OrigAuthor for outbound msgs?
   mouseover LastAuthor to see all authors
 
 config file:
@@ -54,6 +63,7 @@ test-in:
   poll on send ops
 
 test:
+  crash-test replication
   setupTestDir() use http conn
   try repeated complete functions via defer sCrashFn()
   create test blob in test-run, checksum, symlink in upload, attach, verify checksum on receipt
@@ -73,6 +83,9 @@ ohi:
   what is impact of nodes on server ohi list
 
 service:
+  don't dropQueue on certain ack errors
+  _node message return cf result on error after eNodeReady
+  tag_add extraneous err check
   allow *.tmp service names
   allow svcid change
   "registered" needs transaction with adrsbk & config
@@ -84,6 +97,8 @@ clean
   common function and syncDir for placeholder symlinks
   os.RemoveAll doesn't return os.IsNotExist(err)
   slib: add fileThread, fileForm->fileFft?, fileBlank ...
+  loop seeking array item may not need a < len(array)
+  clone slice: append([]T{}, src...)[:len(src):len(src)]
   use file.readat where offset known
   service: "ack" default aResult = []string{"",...}
   tError to fmt.Errorf; separate line
@@ -96,8 +111,11 @@ clean
 
 gui
   UI controls that change data state get hand cursor, others get arrow
-    certain buttons show confirmation pop-up next to click point
-      send, discard new msg, close search tab
+  button to dequeue message, ping, etc
+    configure minimum dequeue period
+  certain buttons show confirmation pop-up next to click point
+    discard new msg, close search tab
+  pink background for text fields with invalid input
   sleeping Catalina MacOS drops browser websocket
   template: test <%.isLocal%> with template, so browser doesn't need to
   date: delimiter character per locale, am/pm option
@@ -112,6 +130,7 @@ gui
     disable h2/h1 heading style by -/= on next line
     prevent excess rendering
   draft:
+    Win10 + chrome bug on F11 key window max/normalize?
     preview panel link to locate associated draft, scrolling msg-list to right place
     recipients hyperlink next to [self] when no recipients
     to-summary abbrev names
@@ -122,6 +141,7 @@ gui
     button to insert quoted markdown
     _m updates ml & tl fields; omit ml & tl in results
   blankform:
+    larger window for editing
     listsort only when edit pane closed
     validate on send
   cc:
@@ -137,12 +157,18 @@ gui
     error log: section for unseen errors
   adrsbk: change ohi-to selection via enter-key?
   msg-list:
+    year in header when all msgs in prior year, or some msgs in prior year are >N months
+    set tag search when thread selected in thread panel tab for tag
     outside OPEN tab, open msg shouldn't mark it seen?
     or open unread msg in any tab sets it open in OPEN tab
     keep scroll offsets for certain tabs
     goLink scrolls to referenced msg; result include "_l",msgid
   thread-list: keep scroll offsets for certain tabs?
+  tour: describe thread-list columns
   clean:
+    use position:fixed for 3 main panels
+    css use # for single-element rules
+    use grid instead of <ul> for menus, etc
     css use .outer .inner {...} when .inner not standalone
     after text use <!----> to eliminate whitespace before </tag>
     use v-show instead of v-if/else where both elements appear frequently
