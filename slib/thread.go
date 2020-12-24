@@ -1538,7 +1538,7 @@ func (o *tThreadStream) Read(iBuf []byte) (int, error) { // for io.Reader
 
 type tMsgHead struct {
    Id string
-   Len int64
+   Len int64 `json:",omitempty"` //todo drop eventually
    Size int64
    Posted string
    From string
@@ -1557,8 +1557,10 @@ func _readMsgHead(iFd *os.File) *tMsgHead {
    if err != nil { quit(err) }
    _, err = iFd.Seek(1, io.SeekCurrent) // consume newline
    if err != nil { quit(err) }
-   if aHead.Size == 0 { // .Size added in 0.8
+   if aHead.Size == 0 && aHead.Len > 0 { // .Size added in 0.8
       aHead.Size = aHead.Len
+      fmt.Fprintf(os.Stderr, "## _readMsgHead: in %s on %s, msgid %s lacks .Size\n",
+                             iFd.Name(), aHead.Posted, aHead.Id)
    }
    return &aHead
 }
@@ -1640,8 +1642,7 @@ func _writeMsg(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) (*tMsgH
    if aSize < 0 {
       return nil, tError("attachment size total exceeds DataLen for msgid "+ iHead.Id)
    }
-   aHead := tMsgHead{Id:iHead.Id, From:iHead.From, Posted:iHead.Posted, Size:aSize, Len:aSize,
-                     SubHead:*iHead.SubHead}
+   aHead := tMsgHead{Id:iHead.Id, From:iHead.From, Posted:iHead.Posted, Size:aSize, SubHead:*iHead.SubHead}
    aBuf, err := json.Marshal(aHead)
    if err != nil { quit(err) }
    aLen, err := aTee.Write([]byte(fmt.Sprintf("%04x", len(aBuf))))
@@ -1649,38 +1650,16 @@ func _writeMsg(iTd *os.File, iHead *Header, iR io.Reader, iEl *tIndexEl) (*tMsgH
    if aLen != 4 {
       return nil, tError("header too long for msgid "+ iHead.Id)
    }
-   _, err = iTd.Write(aBuf) // header checksum added below
+   _, err = aTee.Write(aBuf)
    if err != nil { quit(err) }
    _, err = aTee.Write([]byte{'\n'})
    if err != nil { quit(err) }
-   if aSize > 0 {
-      aUtf8 := NewCountUtf8(iR, aSize)
-      _, err = io.CopyN(aTee, aUtf8, aSize)
-      if err != nil {
-         return nil, err //todo only net errors
-      }
-      aHead.Len = aUtf8.Utf16Len()
-      if aHead.Len > aSize {
-         quit(tError("tCountUtf8 failed for msgid "+ iHead.Id))
-      }
+   _, err = io.CopyN(aTee, iR, aSize)
+   if err != nil {
+      return nil, err //todo only net errors
    }
    _, err = iTd.Write([]byte{'\n'}) // omitted from checksum
    if err != nil { quit(err) }
-   if aSize > aHead.Len {
-      aLen = len(aBuf)-1
-      aBuf, err = json.Marshal(aHead)
-      if err != nil { quit(err) }
-      for a := len(aBuf)-1; a < aLen; a++ {
-         aBuf = append(aBuf, '}')
-         aBuf[a] = ' '
-      }
-      _, err = iTd.Seek(4, io.SeekStart)
-      if err != nil { quit(err) }
-      _, err = aTee.Write(aBuf)
-      if err != nil { quit(err) }
-   } else {
-      _, _ = aCw.Write(aBuf)
-   }
    if iEl.Seen == eSeenClear {
       iEl.Seen = ""
    } else {

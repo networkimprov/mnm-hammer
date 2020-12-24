@@ -256,7 +256,7 @@ func test() int {
 }
 
 func _algorithms(iClient *tTestClient) bool {
-   aSet := iClient.CountUtf8
+   aSet := iClient.CountUtf8 //todo drop in 1.0 if not used elsewhere
    aBuf := bytes.Buffer{}
    for a := range aSet {
       aUtf8 := pSl.NewCountUtf8(&aSet[a], aSet[a].inSum())
@@ -808,24 +808,22 @@ func _parseMessageStream(iBuf []byte) ([]interface{}, error) {
       SubHead struct { Attach []struct{ Name string; Size uint64 } }
    }
    aList := []interface{}{}
-   aRune := []rune(string(iBuf)) // assume no utf16 surrogate pairs
-   for a, aBufLen := uint64(0), uint64(len(aRune)); a < aBufLen; a++ {
+   for a, aBufLen := uint64(0), uint64(len(iBuf)); a < aBufLen; a++ {
       var aHead map[string]interface{}
       var aHeadType tHeader
 
       if a+4 > aBufLen { return nil, tError("head len missing") }
-      aHeadLen, err := strconv.ParseUint(string(aRune[a : a+4]), 16, 0)
+      aHeadLen, err := strconv.ParseUint(string(iBuf[a : a+4]), 16, 0)
       if err != nil { return nil, err }
 
       if a+4+aHeadLen > aBufLen { return nil, tError("head len invalid") }
-      aBuf := []byte(string(aRune[a+4 : a+4+aHeadLen]))
-      err = json.Unmarshal(aBuf, &aHead)
-      _   = json.Unmarshal(aBuf, &aHeadType)
+      err = json.Unmarshal(iBuf[a+4 : a+4+aHeadLen], &aHead)
+      _   = json.Unmarshal(iBuf[a+4 : a+4+aHeadLen], &aHeadType)
       if err != nil { return nil, err }
 
-      aMsgLen, ok := aHead["Len"].(float64)
-      if !ok || a+4+aHeadLen+1+uint64(aMsgLen) > aBufLen { return nil, tError("msg len invalid") }
-      aHead["msg_data"] = string(aRune[a+4+aHeadLen+1 : a+4+aHeadLen+1+uint64(aMsgLen)])
+      aMsgLen, ok := aHead["Size"].(float64)
+      if !ok || a+4+aHeadLen+1+uint64(aMsgLen) > aBufLen { return nil, tError("msg size invalid") }
+      aHead["msg_data"] = string(iBuf[a+4+aHeadLen+1 : a+4+aHeadLen+1+uint64(aMsgLen)])
 
       a += 4 + aHeadLen + 1 + uint64(aMsgLen)
       aFfPos := a
@@ -835,7 +833,7 @@ func _parseMessageStream(iBuf []byte) ([]interface{}, error) {
          }
       }
       if a > aFfPos {
-         aHead["form_fill"] = string(aRune[aFfPos : a])
+         aHead["form_fill"] = string(iBuf[aFfPos : a])
       }
       aList = append(aList, aHead)
    }

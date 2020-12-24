@@ -221,11 +221,15 @@
       if (iCb) {
          aXhr.responseType = i[2] === 'b' ? 'blob' : '';
          i = i.slice(0, 2);
+      } else if (i === 'mo' || i === 'mn') {
+         aXhr.responseType = 'arraybuffer';
       }
       aXhr.onload = function() {
          --sXhrPending;
          if (aXhr.status !== 200) {
-            var aTxt = iId +' '+ (aXhr.responseType === 'blob' ? aXhr.statusText : aXhr.responseText);
+            var aTxt = (iId ? iId +' ' : '') +
+                       (aXhr.responseType === 'arraybuffer' ? _decode(aXhr) :
+                        aXhr.responseType === 'blob' ? aXhr.statusText : aXhr.responseText);
             mnm.Log('get '+ i +' '+ aTxt);
             mnm.Err(aTxt);
             return;
@@ -238,11 +242,12 @@
             return;
          }
          var aMap = {};
-         for (var a=0; a < aXhr.responseText.length; ++a) {
-            var aHeadLen = parseInt(aXhr.responseText.substr(a, 4), 16);
-            var aHead = JSON.parse(aXhr.responseText.substr(a+4, aHeadLen));
-            aHead.msg_data = aXhr.responseText.substr(a+4+aHeadLen+1, aHead.Len);
-            a += 4 + aHeadLen + 1 + aHead.Len;
+         for (var a=0; a < aXhr.response.byteLength; ++a) {
+            var aHeadLen = parseInt(_decode(aXhr, a, 4), 16);
+            var aHead = JSON.parse(_decode(aXhr, a+4, aHeadLen));
+            var aMsgLen = 'Size' in aHead ? aHead.Size : aHead.Len; // .Size appears in v0.8.0
+            aHead.msg_data = _decode(aXhr, a+4+aHeadLen+1, aMsgLen);
+            a += 4 + aHeadLen + 1 + aMsgLen;
             if (aHead.From === 'self' && aHead.SubHead.Attach) {
                aHead.form_fill = null;
                var aFormFill = {};
@@ -250,13 +255,13 @@
                for (var aA=0; aA < aAtc.length; ++aA) {
                   if (!/^r:/.test(aAtc[aA].Name))
                      continue;
-                  aFormFill[aAtc[aA].FfKey] = aXhr.responseText.substr(a, aAtc[aA].Size);
+                  aFormFill[aAtc[aA].FfKey] = _decode(aXhr, a, aAtc[aA].Size);
                   a += aAtc[aA].Size;
                   aHead.form_fill = aFormFill;
                }
             }
             if (i === 'mn') {
-               mnm.Render(i, aXhr.responseText, aHead);
+               mnm.Render(i, null, aHead);
                if (iOpen)
                   _wsSend({op:'thread_open', touch:{act:sTouchSeen, msgid:aHead.Id,
                                                     threadid:aHead.SubHead.ThreadId || aHead.Id}});
@@ -264,7 +269,7 @@
             }
             aMap[aHead.Id] = aHead;
          }
-         mnm.Render(i, aXhr.responseText, aMap);
+         mnm.Render(i, null, aMap);
       };
       if (i === 'nlo') {
          aXhr.open('GET', '/'+ encodeURIComponent(iId) +'?nl');
@@ -281,6 +286,11 @@
       } else {
          sWs.send(JSON.stringify(i));
       }
+   }
+
+   var sUtf8 = new TextDecoder();
+   function _decode(iXhr, iPos, iLen) {
+      return sUtf8.decode(new Uint8Array(iXhr.response, iPos, iLen));
    }
 
 }).call(this);
