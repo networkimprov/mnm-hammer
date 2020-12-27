@@ -21,6 +21,7 @@ import (
 
 const kPingTextMax = 120 //todo 140 when .DataHead dropped// UTF-16 units
 const kUidUnknown = "\x00unknown"
+var   kResponseNone = tAdrsbkEl{}
 
 type tAdrsbk struct {
    sync.RWMutex
@@ -138,8 +139,11 @@ func _loadAdrsbk(iSvc string) *tAdrsbk {
 }
 
 func _appendLog(iLog tAdrsbkLog, iEl *tAdrsbkEl) tAdrsbkLog {
-   if iLog != nil {
-      iEl.Response = iLog[0].Response
+   if iLog != nil && iLog[0].Response != nil {
+      if iEl.Response != nil {
+         quit(tError("adrsbk item response already set"))
+      }
+      iEl.Response = &kResponseNone
    }
    return append(iLog, iEl)
 }
@@ -148,9 +152,13 @@ func _respondLog(iLog tAdrsbkLog, iEl *tAdrsbkEl) bool {
    if iLog == nil || iLog[0].Response != nil {
       return false
    }
-   for a, _ := range iLog {
+   for a := range iLog {
       iLog[a].Response = iEl
    }
+   if iEl.Response != nil {
+      quit(tError("adrsbk item response already set"))
+   }
+   iEl.Response = &kResponseNone
    return true
 }
 

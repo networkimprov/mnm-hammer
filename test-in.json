@@ -165,13 +165,23 @@
    "Poll": 5,
    "Result": {
       "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Qid":"*",
-              "Gid":"Gold-G#tdg", "Uid":"*uid", "MsgId":"*mid", "Response":"**"}] ,
+              "Gid":"Gold-G#tdg", "Uid":"*uid", "MsgId":"*mid", "Response":{}}] ,
       "nl": [{"Type":"i", "Alias":"Gold#td", "Gid":"Gold-G#tdg", "MsgId":"*mid", "Date":"*d", "Seen":0}] }
 },{
    "Updt": {"Op":"accept_send", "Accept":{"Qid":"lastqid"}},
    "Result": {
       "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "Queued":true,
-              "Gid":"Gold-G#tdg", "Uid":"*uid", "MsgId":"*mid", "Response":"**"}] }
+              "Gid":"Gold-G#tdg", "Uid":"*uid", "MsgId":"*mid", "Response":{}}] }
+},{
+   "Updt": {"Op":"ping_save", "Ping":{"Alias":"Blue", "To":"Gold", "Text":"followup"}},
+   "Result": {
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
+              "Qid":"*", "Text":"followup"}] }
+},{
+   "Updt": {"Op":"ping_send", "Ping":{"Qid":"last"}},
+   "Result": {
+      "ps": [{"Type":1, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
+              "Qid":"*", "Text":"followup", "Queued":true}] }
 },{
    "Updt": {"Op":"thread_save", "Thread":{
                  "New":1, "Alias":"Blue", "Subject":"ohi",
@@ -324,7 +334,7 @@
       "tl": "poll_delivery.a" ,
       "/v": [{"Name":"Blue",       "NoticeN":1, "UnreadN":-1},
              {"Name":"Blue.early", "NoticeN":1, "UnreadN":2},
-             {"Name":"Gold",       "NoticeN":1, "UnreadN":-1}] ,
+             {"Name":"Gold",       "NoticeN":2, "UnreadN":-1}] ,
       "ml": [{"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"",
               "Seen":"", "Queued":false},
              {"Id":"*mid", "From":"*uid", "Alias":"Gold#td", "Date":"*d", "Subject":"to forward",
@@ -541,18 +551,19 @@
       "/g": "thread_tag.a" ,
       "/v": [{"Name":"Blue",       "NoticeN":1, "UnreadN":2},
              {"Name":"Blue.early", "NoticeN":1, "UnreadN":2},
-             {"Name":"Gold",       "NoticeN":1, "UnreadN":-1}] ,
+             {"Name":"Gold",       "NoticeN":2, "UnreadN":-1}] ,
       "/l": {"Addr":"*", "Pin":"*"} ,
       "of": [{"Alias":"Gold#td", "Uid":"*uid", "Date":"*d"}] ,
       "ot": [] ,
       "ps": [] ,
       "pt": [{"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
+              "Text":"followup", "Response":{}},
+             {"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
               "Response":{"Type":8, "Date":"*d", "Uid":"*uid", "Alias":"Gold#td", "MyAlias":"Blue#td",
-                          "MsgId":"*mid", "Gid":"Gold-G#tdg", "Qid":"*", "Response":"**"}}] ,
-      "pf": [{"Type":8, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td",
-              "Gid":"Gold-G#tdg", "Uid":"*uid", "MsgId":"*mid",
-              "Response":{"Type":5, "Date":"*d", "Uid":"*uid", "Tid":"*mid"},
-              "ResponseInvt":{"Type":9, "Date":"*d", "Gid":"Gold-G#tdg"}}] ,
+                          "Gid":"Gold-G#tdg", "MsgId":"*mid", "Qid":"*", "Response":{}}}] ,
+      "pf": [{"Type":8, "Date":"*d", "Uid":"*uid", "Alias":"Gold#td", "MyAlias":"Blue#td",
+              "Gid":"Gold-G#tdg", "MsgId":"*mid", "Response":{},
+              "ResponseInvt":{"Type":9, "Date":"*d", "Gid":"Gold-G#tdg", "Response":{}}}] ,
       "gl": [{"Gid":"Gold-G#tdg", "Date":"*d", "Admin":false}] ,
       "cf": "node_add.a" ,
       "cn": "node_add.a" ,
@@ -644,7 +655,7 @@
       "/v": [{"Name":"Blue",       "NoticeN":0, "UnreadN":2},
              {"Name":"Blue.early", "NoticeN":0, "UnreadN":2},
              {"Name":"Blue.later", "NoticeN":0, "UnreadN":2},
-             {"Name":"Gold",       "NoticeN":1, "UnreadN":-1}] ,
+             {"Name":"Gold",       "NoticeN":2, "UnreadN":-1}] ,
       "/l": "open.a" ,
       "of": "open.a" ,
       "ot": "open.a" ,
@@ -699,8 +710,10 @@
       "ot": "open.b" ,
       "ps": "open.b" ,
       "pt": [{"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "MsgId":"*mid",
+              "Text":"followup", "Response":{}},
+             {"Type":3, "Date":"*d", "Alias":"Gold#td", "MyAlias":"Blue#td", "MsgId":"*mid",
               "Response":{"Type":8, "Date":"*d", "Uid":"*uid", "Alias":"Gold#td", "MyAlias":"Blue#td",
-                          "MsgId":"*mid", "Gid":"Gold-G#tdg", "Qid":"*", "Response":"**"}}] ,
+                          "Gid":"Gold-G#tdg", "MsgId":"*mid", "Qid":"*", "Response":{}}}] ,
       "pf": "open.b" ,
       "gl": "open.b" ,
       "cf": {"Name":"Blue.early", "HistoryLen":88, "LoginPeriod":0, "Addr":"*", "Verify":"**",
