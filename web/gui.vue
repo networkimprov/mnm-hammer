@@ -2136,10 +2136,14 @@
             onclick="mnm.NavigateLink('Response', this.href); return false"
             title="Find message with response"
             :href="'#'+ ping.Response.Tid"><span uk-icon="mail"></span></a>
-         <span v-else
+         <span v-else-if="ping.Response.Date"
                title="Responded by invite"
                uk-icon="rss"></span>
-         <mnm-date :iso="ping.Response.Date" ymd="md"/>
+         <span v-else
+               title="Invite is a reply"
+               uk-icon="reply"></span>
+         <mnm-date v-if="ping.Response.Date"
+                   :iso="ping.Response.Date" ymd="md"/>
       </div>
       <div v-if="ping.ResponseInvt">
          <span v-if="ping.ResponseInvt.Type === 9"
