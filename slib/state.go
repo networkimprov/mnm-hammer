@@ -97,7 +97,6 @@ type tThreadState struct {
    CcSort, AtcSort string `json:",omitempty"`
    Open tOpenState
    Tabs tTabs
-   Discard bool
    Refs int
 }
 
@@ -344,16 +343,19 @@ func (o *ClientState) discardThread(iId string) {
    if aT == nil {
       return
    }
-   aT.Discard = true
-   if iId == o.History[len(o.History)-1] {
-      aT.Refs--
-      if aT.Refs == 0 {
-         delete(o.Thread, iId)
-      }
-      if o.Hpos == len(o.History)-1 {
+   delete(o.Thread, iId)
+   for a := len(o.History) - 1; a >= 0; a-- {
+      if o.History[a] != iId { continue }
+      aCount := 1; if a > 0 && a < len(o.History)-1 && o.History[a-1] == o.History[a+1] { aCount = 2 }
+      o.History = o.History[:a + copy(o.History[a:], o.History[a+aCount:])]
+      if o.Hpos == a {
          o.Hpos--
+      } else if o.Hpos > a {
+         o.Hpos -= aCount
       }
-      o.History = o.History[:len(o.History)-1]
+      if o.Hpos < 0 && len(o.History) > 0 {
+         o.Hpos = 0
+      }
    }
    err := storeFile(o.filePath, o)
    if err != nil { quit(err) }
