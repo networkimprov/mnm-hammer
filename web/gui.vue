@@ -990,10 +990,12 @@
                                   msg_data: aMo.msg_data,        mdUpdt:false,
                                   Subject:  aMo.SubHead.Subject, suUpdt:false});
             var aToSave = mnm._data.toSave[this.msgid];
-            if (!iNoTimer)
+            if (!iNoTimer) {
+               var aCc = mnm._data.cl[1];
                mnm._autoSaveSet(aToSave.timer, fDing, this);
+            }
             return aToSave;
-            function fDing() { this.save(null, null, aToSave, aMo) }
+            function fDing() { this.save(aCc, null, aToSave, aMo) }
          },
          save: function(iCc, iAttach, iToSave, iMo) {
             if (!iToSave) iToSave = this.getToSave(true);
