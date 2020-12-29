@@ -2592,15 +2592,18 @@
          tabSearch: function(iText, iState) {
             if (iText.length === 0)
                return;
-            if (iState.Pinned)
-               for (var a=0; a < iState.Pinned.length; ++a)
-                  if (iState.Pinned[a].Term === iText)
-                     return;
-            for (var a=0; a < iState.Terms.length; ++a)
-               if (iState.Terms[a].Term === iText)
-                  return;
             sApp.$refs[iState.Type === 0 ? 'msglist' : 'threadlist'].focus();
+            if (iState.Pinned && fSelect(iState.Pinned, 1) || fSelect(iState.Terms, 2))
+               return;
             mnm.TabAdd({type:iState.Type, term:iText});
+            function fSelect(cTabset, cPosFor) {
+               for (var c=0; c < cTabset.length; ++c)
+                  if (cTabset[c].Term === iText) {
+                     mnm.TabSelect({type:iState.Type, posfor:cPosFor, pos:c});
+                     return true;
+                  }
+               return false;
+            }
          },
          msgToggle: function(iId) {
             if (!(iId in mnm._data.mo)) {
