@@ -2570,7 +2570,7 @@
       adrsbkmenuId: {},
       errors: [], errorFlag: false,
    // per service
-      cf:{NodeSet:[]}, cn:{}, tl:[],
+      cf:{NodeSet:[], Error:''}, cn:{}, tl:[],
       ffn:'', // derived from tl
       fl:[], ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
       toSavePs:{}, // populated locally //todo rename toSave -> toSaveMo
