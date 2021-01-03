@@ -2142,7 +2142,7 @@
                title="Responded by invite"
                uk-icon="rss"></span>
          <span v-else
-               title="Invite is a reply"
+               title="Invite is a reply/followup"
                uk-icon="reply"></span>
          <mnm-date v-if="ping.Response.Date"
                    :iso="ping.Response.Date" ymd="md"/>
