@@ -140,25 +140,22 @@ func _loadAdrsbk(iSvc string) *tAdrsbk {
 
 func _appendLog(iLog tAdrsbkLog, iEl *tAdrsbkEl) tAdrsbkLog {
    if iLog != nil && iLog[0].Response != nil {
-      if iEl.Response != nil {
-         quit(tError("adrsbk item response already set"))
-      }
       iEl.Response = &kResponseNone
    }
    return append(iLog, iEl)
 }
 
 func _respondLog(iLog tAdrsbkLog, iEl *tAdrsbkEl) bool {
-   if iLog == nil || iLog[0].Response != nil {
+   if iLog == nil {
+      return false
+   }
+   iEl.Response = &kResponseNone
+   if iLog[0].Response != nil {
       return false
    }
    for a := range iLog {
       iLog[a].Response = iEl
    }
-   if iEl.Response != nil {
-      quit(tError("adrsbk item response already set"))
-   }
-   iEl.Response = &kResponseNone
    return true
 }
 
@@ -416,6 +413,7 @@ func resolveReceivedAdrsbk(iSvc string, iDate string, iCc []tCcEl, iTid string, 
          aEl := tAdrsbkEl{Type:eAbPingFrom, Date:iDate, Text:"via ",
                           Alias:iCc[a].Who, Uid:iCc[a].WhoUid, MyAlias:iCcSelf.Who, MsgId:iTid}
          if aViaSelf { aEl.Text += iCcSelf.By } else { aEl.Text += iCc[a].By }
+         _respondLog(aSvc.pingToIdx[iCc[a].Who], &aEl)
          aSvc.pingFromIdx[iCc[a].WhoUid] = _appendLog(aSvc.pingFromIdx[iCc[a].WhoUid], &aEl)
          aEls = append(aEls, aEl)
       }
