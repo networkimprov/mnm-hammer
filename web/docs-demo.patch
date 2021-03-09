@@ -1,0 +1,22 @@
+diff --git a/web/docs-demo.html b/web/docs-demo.html
+index d42e713..8d4df88 100644
+--- a/web/docs-demo.html
++++ b/web/docs-demo.html
+@@ -22,14 +22,9 @@
+ 
+    <script>
+       window.onload = function() {
+-         var aXhr = new XMLHttpRequest();
+-         aXhr.onload = function() {
+-            var cAbout = JSON.parse(aXhr.responseText);
+-            var cEl = document.getElementById('version');
+-            cEl.innerText = cAbout.Version +' '+ cAbout.VersionDate;
+-         };
+-         aXhr.open('GET', '/a');
+-         aXhr.send();
++         var aAbout = {Version: '0.9.0-demo', VersionDate: '2021.03.09'};
++         var aEl = document.getElementById('version');
++         aEl.innerText = aAbout.Version +' '+ aAbout.VersionDate;
+       };
+       var mnm_lastScroll = 0;
+       window.mnm_resetScroll = function() {

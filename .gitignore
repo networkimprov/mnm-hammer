@@ -3,6 +3,10 @@
 /store/
 /test-run/
 
+/demo/
+/web/service-demo.html
+/web/docs-demo.html
+
 /web/img/
 /web/luxon-*
 /web/markdown-it-*

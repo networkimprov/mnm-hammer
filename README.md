@@ -11,6 +11,9 @@ Learn more at [mnmnotmail.org](https://mnmnotmail.org).
 
 ### Status
 
+_09 March 2021_ - the [online demo](https://mnmnotmail.org/demo.html) is released. 
+It has been tested on Chrome & Firefox.
+
 [_03 January 2021_ - v0.9](https://github.com/networkimprov/mnm-hammer/releases/latest)
 is released. It fixes a panic and a few flaws, but is otherwise identical to v0.8.
 
@@ -100,6 +103,25 @@ e) `(cd test-run/TPD/ && ../../mnm-hammer --http :8123)`
 f) Open a browser tab, go to `localhost:8123/w/coverage.html`
 
 Ref: https://www.elastic.co/blog/code-coverage-for-your-golang-system-tests
+
+
+### Demo Files
+
+To generate the demo files:  
+a) `cp web/{gui.vue,service-demo.html}`  
+b) `cp web/docs{,-demo}.html`  
+c) `git apply web/*demo.patch`  
+
+To recreate the `web/...-demo.patch` files after changing the demo files:  
+a) `git diff --no-index web/gui.vue web/service-demo.html > web/service-demo.patch`  
+b) `git diff --no-index web/docs.html web/docs-demo.html > web/docs-demo.patch`  
+c) Edit the patches to use `a/web/...-demo.html` as the origin path.  
+
+To create a JSON object for use in `web/data-demo.js` from an mnm client instance:  
+a) Edit `web/gui.vue` to insert `<script src="/w/demodata.js"></script>` after all other `<head>` scripts.  
+b) Quit and restart the app, then _Shift-Reload_ the page at `http://localhost:8123`.  
+c) Invoke `http://localhost:8123/#demodata` and wait while it steps through each account.  
+d) Open the web console and copy the JSON result.  
 
 
 ### License

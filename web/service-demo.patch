@@ -1,0 +1,286 @@
+diff --git a/web/service-demo.html b/web/service-demo.html
+index f964dc7..6108682 100644
+--- a/web/service-demo.html
++++ b/web/service-demo.html
+@@ -8,7 +8,7 @@
+    file, You can obtain one at http://mozilla.org/MPL/2.0/
+ -->
+ <html><head>
+-   <title><%html .Title%> - mnm</title>
++   <title>Live_Demo - mnm</title>
+    <link rel="icon" href="/w/img/logo-48nobg-bleed-bright.png"/>
+ 
+    <meta charset="utf-8">
+@@ -25,7 +25,8 @@
+    <script src="/w/vue-formgen-23.js"></script>
+ 
+    <link  href="/w/service.css" rel="stylesheet"/>
+-   <script src="/w/socket.js"></script>
++   <script src="/w/socket-demo.js"></script>
++   <script src="/w/data-demo.js"></script>
+ 
+    <!-- generated id attributes require 'x[y]_' prefix -->
+ </head><body>
+@@ -192,7 +193,7 @@
+                               <span uk-icon="file-edit"></span> {{aAtc.Name.substr(2)}}</span>
+                         </template>
+                         <template v-else>
+-                           <a :href="'?ad=' + encodeURIComponent(aMsg.Id +'_'+ aAtc.Name)" download
++                           <a :href="'/t/' + encodeURIComponent(aAtc.Name.slice(2))" download
+                               title="Download attachment">
+                               <span uk-icon="download"></span></a>
+                            <span v-if="!mnm._viewerType('svc', aMsg.Id +'_'+ aAtc.Name)">
+@@ -231,27 +232,27 @@
+         class="uk-clearfix">
+       <span class="uk-text-large">
+          <span uk-icon="star" title="Placeholder for site logo"></span>
+-         <%html .Title%>
++         {{mnm.demoId}}
+       </span>
+       <div class="uk-float-right">
+          <span uk-icon="bell" class="dropdown-icon" style="font-weight:bold"
+-               :title="'Notices for <%.TitleJs%>'">
++               :title="'Notices for '+ mnm.demoId">
+             <span v-show="mnm._data.errorFlag"
+                   style="color:crimson" uk-icon="warning"></span>
+             {{svcSelf.NoticeN || null}}<!---->
+          </span>
+          <mnm-notice ref="notice"
+-                     @beforeshow.native="mnm.NoticeOpen('<%.TitleJs%>')"
++                     @beforeshow.native="mnm.NoticeOpen(mnm.demoId)"
+                      @hide.native="mnm.NoticeClose()"
+                      offset="2" pos="bottom-right"/>
+          <span uk-icon="users" class="dropdown-icon"
+-               :title="'Contacts for <%.TitleJs%>'">&nbsp;</span>
++               :title="'Contacts for '+ mnm.demoId">&nbsp;</span>
+          <mnm-adrsbk ref="adrsbk"/>
+          <span @mousedown="ohiFrom = !ohiFrom"
+                class="ohilink"
+                title="Toggle ohi-from panel">&nbsp;o/</span>
+          <span uk-icon="laptop" class="dropdown-icon"
+-               :title="'Replicas for <%.TitleJs%>'">&nbsp;</span>
++               :title="'Replicas for '+ mnm.demoId">&nbsp;</span>
+          <mnm-nodes/>
+          &nbsp;
+          <span uk-icon="file-text" class="dropdown-icon"
+@@ -407,15 +408,15 @@
+               uk-dropdown="mode:click; offset:2; pos:bottom-right"
+               onshow="this.firstElementChild.contentWindow.mnm_resetScroll()"
+               class="width60v height75v menu-bg dropdown-scroll">
+-            <iframe src="/w/docs.html" style="width:100%; height:100%"></iframe></div>
++            <iframe src="/w/docs-demo.html" style="width:100%; height:100%"></iframe></div>
+       </div>
+    </div>
+    <div uk-height-viewport="offset-top:true" class="firefox-minheight-fix uk-overflow-auto uk-light">
+       <ul class="uk-list uk-list-divider">
+          <li v-for="aSvc in v" :key="aSvc.Name">
+-            <template v-if="aSvc.Name === '<%.TitleJs%>'">
++            <template v-if="aSvc.Name === mnm.demoId">
+                <span uk-icon="settings" class="dropdown-icon"
+-                     :title="'Settings for <%.TitleJs%>'">&numsp;</span>
++                     :title="'Settings for '+ mnm.demoId">&numsp;</span>
+                <mnm-svccfg/>
+                {{aSvc.Name}}
+             </template>
+@@ -426,7 +427,7 @@
+                            @beforeshow.native="mnm.NoticeOpen(aSvc.Name)"
+                            @hide.native="mnm.NoticeClose()"
+                            offset="-4" pos="left-top"/><!--todo single notice menu-->
+-               <a :href="'/'+ encodeURIComponent(aSvc.Name) +(mnm._isLocal ? '#tour' : '')"
++               <a :href="'?'+ encodeURIComponent(aSvc.Name) +(mnm._isLocal ? '#tour' : '')"
+                   :target="mnm._isLocal ? '_self' : 'mnm_svc_'+ aSvc.Name">{{aSvc.Name}}</a>
+             </template>
+          </li></ul>
+@@ -497,7 +498,7 @@
+                      >awaiting link. . .</span>
+                <div v-else>
+                   <span uk-icon="bell" class="dropdown-icon">{{mnm._data.v[0].NoticeN || '&numsp;'}}</span>
+-                  <a :href="'/'+ encodeURIComponent(mnm._data.v[0].Name) +'#tour'"
++                  <a :href="'?'+ encodeURIComponent(mnm._data.v[0].Name) +'#tour'"
+                      target="_self"
+                      title="Continue tour">{{mnm._data.v[0].Name}}</a>
+                </div>
+@@ -801,7 +802,7 @@
+                     :title="'Copy to '+ (aFile.Id[17] === 'u' ? 'attachable files' : 'blank forms')"
+                     class="btn btn-icon"><span uk-icon="push"></span></button>
+             &nbsp;-->
+-            <a :href="'?ad=' + encodeURIComponent(aFile.Id)" download
++            <a :href="'/t/' + encodeURIComponent(aFile.File)" download
+                title="Download attachment">
+                <span uk-icon="download"></span></a>
+             <span v-if="!mnm._viewerType('svc', aFile.Id)">
+@@ -1590,7 +1591,7 @@
+                     @click="$emit('attach', 'upload/'+aFile.Name)"
+                     title="Attach file"
+                     class="btn btn-icon"><mnm-paperclip/></button>
+-            <a :href="'/t/=' + encodeURIComponent(aFile.Name)" download
++            <a :href="'/t/' + encodeURIComponent(aFile.Name)" download
+                title="Download file">
+                <span uk-icon="download">&nbsp;</span></a>
+             <span v-if="!mnm._viewerType(null, aFile.Name)">
+@@ -1958,7 +1959,7 @@
+                     style="width:calc(50% - 2em); display:inline-block; vertical-align:top">
+                   <input v-model="draft.gid"
+                          name="gid" autocomplete="off" type="text"
+-                         placeholder="Group (<%.aliasMin%>+)"
++                         placeholder="Group (8+)"
+                          class="width100">
+                   <br>
+                   <mnm-adrsbkinput @keyup.enter.native="setField('gid', $event.target)"
+@@ -1970,7 +1971,7 @@
+                <div style="width:calc(50% - 2em); display:inline-block; vertical-align:top">
+                   <input v-model="draft.to"
+                          name="to" autocomplete="off" type="text"
+-                         placeholder="To (<%.aliasMin%>+ characters)"
++                         placeholder="To (8+ characters)"
+                          class="width100">
+                   <mnm-adrsbkinput v-show="hasGroup"
+                                    @keyup.enter.native="setField('to', $event.target)"
+@@ -2005,13 +2006,13 @@
+                       <button v-else
+                               @click="sendPing(aRec)"
+                               :disabled="(mnm._data.toSavePs[rowId(aRec)] || aRec).Text.length >
+-                                         <%.pingTextMax%>"
++                                         140"
+                               title="Send invitation"
+                               class="btn btn-icon"><span uk-icon="forward"></span></button></td>
+                   <td><textarea @input="editPing(aRec, $event.target.value)"
+                                 :value="(mnm._data.toSavePs[rowId(aRec)] || aRec).Text"
+                                 :disabled="aRec.Queued"
+-                                cols="40" rows="3" maxlength="<%.pingTextMax%>"
++                                cols="40" rows="3" maxlength="140"
+                                 class="pingtext"></textarea></td>
+                   <td><button v-if="!aRec.Queued"
+                               @click="mnm.PingDiscard({to:aRec.Alias, gid:aRec.Gid})"
+@@ -2079,8 +2080,8 @@
+       computed: {
+          mnm: function() { return mnm },
+          validDraft: function() {
+-            if (this.draft.to.length < <%.aliasMin%> ||
+-                this.draft.gid && this.draft.gid.length < <%.aliasMin%>)
++            if (this.draft.to.length < 8 ||
++                this.draft.gid && this.draft.gid.length < 8)
+                return false;
+             for (var a=0; a < mnm._data.ps.length; ++a)
+                if (mnm._data.ps[a].Alias ===  this.draft.to &&
+@@ -2186,7 +2187,7 @@
+                 style="width:60%">
+          <button @click="mnm.NodeAdd(mnm._data.cn.Addr, mnm._data.cn.Pin, name)"
+                  :disabled="anyInProgress || !mnm._data.cn.Addr || !validPin || !validName"
+-                 :title="'Replicate <%.TitleJs%>'"
++                 :title="'Replicate '+ mnm.demoId"
+                  class="btn btn-icon btn-floatr"><span uk-icon="laptop"></span></button>
+       </form>
+       <div style="margin-top:0.5em" class="dropdown-scroll-list">
+@@ -2198,7 +2199,7 @@
+                              aNode.Status === 'r'.charCodeAt(0)"
+                        @click="mnm.NodeAdd(mnm._data.cn.Addr, mnm._data.cn.Pin, aNode.Name)"
+                        :disabled="!mnm._data.cn.Addr || !validPin"
+-                       :title="'Replicate <%.TitleJs%>'"
++                       :title="'Replicate '+ mnm.demoId"
+                        class="btn btn-icon"><span uk-icon="laptop"></span></button>
+                {{status(aNode.Status)}}
+             </div>
+@@ -2250,8 +2251,8 @@
+             onsubmit="mnm.Upload(this); return false;">
+          <input type="hidden" name="filename" :value="JSON.stringify($data)">
+          <button @click="sent = true"
+-                 :disabled="!(name  && name.length  >= <%.serviceMin%> && nameUnused &&
+-                              alias && alias.length >= <%.aliasMin%> &&
++                 :disabled="!(name  && name.length  >= 2 && nameUnused &&
++                              alias && alias.length >= 8 &&
+                               addr  && addr.length  >= 2 && (addr[0] === '+' || addr[0] === '=') &&
+                               !isNaN(loginperiod))"
+                  title="Register new account"
+@@ -2264,11 +2265,11 @@
+                 title="Starts with '+' or '=' and may end with ':number'"
+                 class="width100">
+          <input v-model="alias"
+-                placeholder="Your Name/Alias (<%.aliasMin%>+ characters)" type="text"
++                placeholder="Your Name/Alias (8+ characters)" type="text"
+                 title="Name by which other site members know you"
+                 class="width100">
+          <input v-model="name"
+-                placeholder="Account Title (<%.serviceMin%>+ characters)" type="text"
++                placeholder="Account Title (2+ characters)" type="text"
+                 title="Private label for the new account"
+                 class="width100">
+          <!--todo input v-model="lpin"
+@@ -2323,7 +2324,7 @@
+             <tr><td>Alias<br>{{mnm._data.cf.Error && '(taken)'}}</td><td>
+                <input v-if="mnm._data.cf.Uid && !mnm._data.cf.Alias"
+                       v-model="alias"
+-                      placeholder="Your Name/Alias (<%.aliasMin%>+ chars)" type="text"
++                      placeholder="Your Name/Alias (8+ chars)" type="text"
+                       title="Name by which other site members know you"
+                       class="width100">
+                {{mnm._data.cf.Alias ||
+@@ -2440,7 +2441,7 @@
+         @click.stop>
+       <a v-show="kind !== 'form'"
+          :href="url[kind] || ''"
+-         :target="((url[kind] || '/')[0] === '/' ? 'mnm_upl_' : 'mnm_atc_<%.TitleJs%>_') + file"
++         :target="((url[kind] || '/')[0] === '/' ? 'mnm_upl_' : 'mnm_atc_'+ mnm.demoId +'_') + file"
+          title="Open file in new tab"
+          ><span uk-icon="expand"></span></a>
+       <div class="uk-text-small viewer-name dropdown-scroll-item">{{title}}</div>
+@@ -2509,7 +2510,7 @@
+             this.file = iId;
+             this.kind = mnm._viewerType(iSvc, iId);
+             this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
+-            this.url[this.kind] = (iSvc ? '?an=' : '/t/') + encodeURIComponent(iId); //todo Vue.set?
++            this.url[this.kind] = '/t/'+ encodeURIComponent(iSvc ? iId.slice(iId.indexOf('_')+3) : iId);
+             if (this.kind === 'form') {
+                iSvc ? mnm.AttachForm(iId, function(c) { Vue.set(mnm._data.ao, iId, c) }) : undefined;
+             } else if (this.kind !== 'page') {
+@@ -2554,11 +2555,11 @@
+    var sTemp = {al:null, ml:null, mo:null};
+    var sMsglistPos = 0;
+ 
+-   mnm._isLocal = '<%.TitleJs%>' === 'local';
++   mnm._isLocal = mnm.demoId === 'local';
+    mnm._mdi = markdownit();
+    mnm._lastPreview = '';
+-   mnm._tabsStdService = <%.tabsStdService%>;
+-   mnm._tabsStdThread = <%.tabsStdThread%>;
++   mnm._tabsStdService = [{"Term":"All"},{"Term":"Unread"},{"Term":"#Todo"}];
++   mnm._tabsStdThread = [{"Term":"Open"},{"Term":"All"}];
+    mnm._data = {
+    // global
+       v:[], g:[], l:{Pin:''}, t:[], f:[], nlo:[],
+@@ -2640,7 +2641,7 @@
+             return aList;
+          },
+          svcSelf: function() {
+-            return mnm._data.v.find(function(c) { return c.Name === '<%.TitleJs%>' }) || {};
++            return mnm._data.v.find(function(c) { return c.Name === mnm.demoId }) || {};
+          },
+          ffnCol: function() {
+             if (!mnm._data.ffn)
+@@ -2691,7 +2692,7 @@
+             iEnv.parent.checkAttach(aHref[1].slice('this_'.length));
+          var aParam = aHref[1].replace(/^this_/, iEnv.thisVal +'_');
+          aHref[1] = mnm._data.al.find(function(c) { return c.Id === aParam }) ?
+-                    '?ad='+ encodeURIComponent(aParam) : '#';
++                    '/t/'+ encodeURIComponent(aParam.slice(aParam.indexOf('_')+3)) : '#';
+          iTokens[iIdx].attrs.push(['download', '']);
+          //todo add download icon and viewer
+       }
+@@ -2725,7 +2726,7 @@
+       }
+       if (_isDurableRef(aSrc[1], iEnv.thisVal)) {
+          aSrc[1] = mnm._data.al.find(function(c) { return c.Id === aParam }) ?
+-                   '?an='+ encodeURIComponent(aParam) : 'data:,';
++                   '/t/'+ encodeURIComponent(aParam.slice(aParam.indexOf('_')+3)) : 'data:,';
+       } else if (aParam in iEnv.imgsrc) {
+          aSrc[1] = iEnv.imgsrc[aParam];
+       } else {
+@@ -3109,7 +3110,7 @@
+       }
+    });
+ 
+-   window.name = 'mnm_svc_<%.TitleJs%>';
++   window.name = 'mnm_svc_'+ mnm.demoId;
+    window.onload = mnm.Connect;
+    window.onerror = function(iMsg /*etc*/) { mnm.Err(iMsg) };
+ 
