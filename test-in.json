@@ -1,6 +1,6 @@
 [{
 
-"Version": "0.9.0",
+"Version": "0.10.0",
 
 "CountUtf8": [{
    "In":  ["\\xf0\\x9f\\x8f\\x81",          "\\xf0\\x9f", "\\x8f\\x81",
