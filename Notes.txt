@@ -22,6 +22,9 @@ search
   extensible by service
 
 nodes
+  per-client setting to limit attachment size in received msgs
+    attachments over limit are replaced with placeholder
+    handled on server via node parameters
   local service list all known nodes, sublist of accounts per-node
     button to disable node's accounts
   node list
@@ -126,6 +129,7 @@ forms
     on reply, copy selected form ref to text
 
 msg panel
+  thread printable page; link opens tab; chronological order
   menu of visited threads next to back/forward arrows
   tab NONE to collapse all?
   tabs, per client: reply-to chain
@@ -235,7 +239,8 @@ msg editor
     button copy-next adds msg from reply-chain
     ref parent thread & msg
   reply with meta-msg (continues at link, closed, defer until date, priority, user-defined)
-  slides/pages; markdown hrefs
+  slides/pages/tabs; markdown hrefs
+    slide-title for table of contents and tab-names
     set background & foreground colors of slides
   embedded tags via '\tag/tags/tagged #name...'; drop prior tag with !name
     prefix to identify source, e.g. hr-benefits

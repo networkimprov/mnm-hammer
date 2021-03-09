@@ -35,6 +35,7 @@ slib:
   makeLocalId() could yield identical string on different nodes
 
 form:
+  send form may be missing data
   Add() allow any character except '.' in name; reject filename ".*"
   blankform update msg to all clients, include ID
   flag update in msg editor if form is attached
@@ -53,6 +54,7 @@ adrsbk:
 search:
   append "+n" in OrigAuthor for outbound msgs?
   mouseover LastAuthor to see all authors
+  check bleve index size over time https://github.com/blevesearch/bleve/issues/1274
 
 config file:
   path for store/, http host & port, ...
@@ -130,6 +132,9 @@ gui
     disable h2/h1 heading style by -/= on next line
     prevent excess rendering
   draft:
+    attached & displayed image disappears on send, reappears on reload
+    text box is one line short
+    scroll text to include cursor insertion position on undo/redo
     Win10 + chrome bug on F11 key window max/normalize?
     preview panel link to locate associated draft, scrolling msg-list to right place
     recipients hyperlink next to [self] when no recipients
@@ -141,6 +146,7 @@ gui
     button to insert quoted markdown
     _m updates ml & tl fields; omit ml & tl in results
   blankform:
+    exception thrown for incorrect formdef; should produce same result as json parse error
     larger window for editing
     listsort only when edit pane closed
     validate on send
@@ -155,7 +161,9 @@ gui
     count in window title
     show errors on local site
     error log: section for unseen errors
-  adrsbk: change ohi-to selection via enter-key?
+  adrsbk:
+    dates show prior year
+    change ohi-to selection via enter-key?
   msg-list:
     year in header when all msgs in prior year, or some msgs in prior year are >N months
     set tag search when thread selected in thread panel tab for tag
@@ -163,7 +171,12 @@ gui
     or open unread msg in any tab sets it open in OPEN tab
     keep scroll offsets for certain tabs
     goLink scrolls to referenced msg; result include "_l",msgid
-  thread-list: keep scroll offsets for certain tabs?
+  thread-list:
+    orig-date hide prev year for 4 months
+    keep scroll offsets for certain tabs?
+    on large screen, extra column for search results
+  docs:
+    draft composition: suggest editing by starting each sentence and significant phrase on a new line
   tour: describe thread-list columns
   clean:
     use position:fixed for 3 main panels
@@ -185,6 +198,11 @@ minimize browser update traffic
   on user action, gui.vue update visible types, via mnm.Xyz()
     call xhr when type becomes visible, if !isCurrent, set isCurrent=true
   on updt msg, websocket skip xhr, if !isVisible, set isCurrent=false
+
+prevent client from overwriting pending draft of another client?
+  on draft edit, browser pings app, app tracks and forwards pending status to clients with that thread
+    client bars edit for pending draft
+  on draft update, app clears pending status
 
 windows copy util
   app or script to find hard-linked files, run robocopy, replace found files with hard-links
