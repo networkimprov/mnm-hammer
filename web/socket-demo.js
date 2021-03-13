@@ -1,4 +1,4 @@
-// Copyright 2017, 2019 Liam Breck
+// Copyright 2021 Liam Breck
 // Published at https://github.com/networkimprov/mnm-hammer
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -8,13 +8,14 @@
 ;var mnm = {};
 
 (function() {
-   var sUrl = 'ws://'+ location.host +'/s/'+ location.pathname.split('/')[1];
-   var sTouchSeen = 's'.charCodeAt(0);
-   var sTouchTag = 't'.charCodeAt(0);
-   var sTouchUntag = 'u'.charCodeAt(0);
-   var sWs = {};
-   var sXhrPending = 0;
    var sNotice = '';
+   var sFfn = 'mnmnotmail.net/reg/demo';
+   var sSvc = null;
+   var sHlist = [], sHpos = -1;
+   var sLocalId = 900000000000;
+   var sD = {'/v': [], '/t': [], '/f': [], '/g': [], '/l': {"Addr":"","Pin":""}, S: {}};
+
+   mnm.demoId = location.search === '' ? 'local' : decodeURIComponent(location.search.slice(1));
 
    // caller implements these
    mnm.Log =
@@ -368,133 +369,31 @@
                  'cs', 'cf', 'cn', 'tl', 'fl', 'ps', 'pt', 'pf', 'gl', 'ot', 'of',
                  'cl', '_t', 'al', 'ml', 'mo');
       }
-/*      sWs = new WebSocket(sUrl);
-      sWs.onopen = function() {
-         sWs.send(JSON.stringify({op:'open'}));
-      };
-      sWs.onmessage = function(iEvent, iMs) {
-         if (sXhrPending > 0) {
-            setTimeout(sWs.onmessage, 6, iEvent, iMs || Date.now());
-            mnm.Log('ws message deferred for pending xhr');
-            return;
-         }
-         if (iMs) //todo verify that deferred msgs are handled in order
-            mnm.Log('ws handle deferred from '+ iMs);
-         mnm.Log('ws '+ iEvent.data);
-
-         var aObj = JSON.parse(iEvent.data);
-         for (var a=0; a < aObj.length; ++a) {
-            if (aObj[a] === '_n') {
-               mnm.Render('nameset', null, aObj.slice(a+1));
-               break;
-            }
-            switch (aObj[a]) {
-            case '_t': case '_T':  mnm.ThreadChange(aObj[a] === '_T'); break;
-            case '_e':             mnm.Err(aObj[++a]);                 break;
-            case 'mn': case 'an':  _xhr(aObj[a], aObj[++a]);           break;
-            case '_m':
-               var aOld = aObj[++a], aNew = aObj[++a];
-               if (mnm.HasMoId(aOld === '' ? aNew : aOld))
-                  _xhr('mn', aNew);
-               break;
-            default:
-               _xhr(aObj[a]);
-               if (aObj[a] === '/v' && sNotice)
-                  _xhr('nlo', sNotice);
-            }
-         }
-      };
-      sWs.onclose = function(iEvent) {
-         mnm.Log('ws closed');
-         mnm.Quit();
-      };
-      sWs.onerror = function(iEvent) {
-         mnm.Log('ws error: ' + iEvent.data);
-         mnm.Err(iEvent.data);
-      }; */
    };
 
-   function _xhr(i, iId, iCb, iOpen) {
-      ++sXhrPending;
+   function _xhr(i, iId, iCb) {
       var aXhr = new XMLHttpRequest();
-      if (iCb) {
-         aXhr.responseType = i[2] === 'b' ? 'blob' : '';
-         i = i.slice(0, 2);
-      } else if (i === 'mo' || i === 'mn') {
-         aXhr.responseType = 'arraybuffer';
-      }
+      aXhr.responseType = i[2] === 'b' ? 'blob' : '';
+      i = i.slice(0, 2);
       aXhr.onload = function() {
-         --sXhrPending;
          if (aXhr.status !== 200) {
             var aTxt = (iId ? iId +' ' : '') + aXhr.statusText;
             mnm.Log('get '+ i +' '+ aTxt);
             mnm.Err(aTxt);
             return;
          }
-         if (i !== 'mo' && i !== 'mn') {
-            if (iCb)
-               iCb(aXhr.response, iId);
-            else
-               mnm.Render(i, aXhr.responseText, iId);
-            return;
-         }
-         var aMap = {};
-         for (var a=0; a < aXhr.response.byteLength; ++a) {
-            var aHeadLen = parseInt(_decode(aXhr, a, 4), 16);
-            var aHead = JSON.parse(_decode(aXhr, a+4, aHeadLen));
-            var aMsgLen = 'Size' in aHead ? aHead.Size : aHead.Len; // .Size appears in v0.8.0
-            aHead.msg_data = _decode(aXhr, a+4+aHeadLen+1, aMsgLen);
-            a += 4 + aHeadLen + 1 + aMsgLen;
-            if (aHead.From === 'self' && aHead.SubHead.Attach) {
-               aHead.form_fill = null;
-               var aFormFill = {};
-               var aAtc = aHead.SubHead.Attach;
-               for (var aA=0; aA < aAtc.length; ++aA) {
-                  if (!/^r:/.test(aAtc[aA].Name))
-                     continue;
-                  aFormFill[aAtc[aA].FfKey] = _decode(aXhr, a, aAtc[aA].Size);
-                  a += aAtc[aA].Size;
-                  aHead.form_fill = aFormFill;
-               }
-            }
-            if (i === 'mn') {
-               mnm.Render(i, null, aHead);
-               if (iOpen)
-                  _wsSend({op:'thread_open', touch:{act:sTouchSeen, msgid:aHead.Id,
-                                                    threadid:aHead.SubHead.ThreadId || aHead.Id}});
-               return;
-            }
-            aMap[aHead.Id] = aHead;
-         }
-         mnm.Render(i, null, aMap);
+         iCb(aXhr.response, iId);
       };
-      if (i === 'nlo') {
-         aXhr.open('GET', '/'+ encodeURIComponent(iId) +'?nl');
+      if (i === 'an') {
+         var aN = iId.slice(iId.indexOf('_')+1);
+         i = aN[0] === 'f' ? '/f' : '/t';
+         aN = sSvc.T[sSvc.cs.Thread].al.find(function(c) { return c.Id === iId }) ?
+              encodeURIComponent(aN.slice(2)) : 'NoSuchFile';
       } else {
-         if (i === 'an') {
-            var aN = iId.slice(iId.indexOf('_')+1);
-            i = aN[0] === 'f' ? '/f' : '/t';
-            aN = sSvc.T[sSvc.cs.Thread].al.find(function(c) { return c.Id === iId }) ?
-                 encodeURIComponent(aN.slice(2)) : 'NoSuchFile';
-         } else {
-            var aN = iId ? encodeURIComponent(iId) : '';
-         }
-         aXhr.open('GET', i.charAt(0) === '/' ? i+'/'+aN : '?'+i+(aN && '='+aN));
+         var aN = iId ? encodeURIComponent(iId) : '';
       }
+      aXhr.open('GET', i +'/'+ aN);
       aXhr.send();
-   }
-
-   function _wsSend(i) {
-      if (sWs.readyState !== 1) {
-         mnm.Log('ws op failed on closed socket');
-      } else {
-         sWs.send(JSON.stringify(i));
-      }
-   }
-
-   var sUtf8 = new TextDecoder();
-   function _decode(iXhr, iPos, iLen) {
-      return sUtf8.decode(new Uint8Array(iXhr.response, iPos, iLen));
    }
 
    function _tlSubject(iT) {
@@ -636,14 +535,6 @@
             mnm.Render(aOp, aData && JSON.stringify(aData), aId);
       }
    }
-
-   var sFfn = 'mnmnotmail.net/reg/demo';
-   var sSvc = null;
-   var sHlist = [], sHpos = -1;
-   var sLocalId = 900000000000;
-   var sD = {'/v': [], '/t': [], '/f': [], '/g': [], '/l': {"Addr":"","Pin":""}, S: {}};
-
-   mnm.demoId = location.search === '' ? 'local' : decodeURIComponent(location.search.slice(1));
 
 }).call(this);
 
