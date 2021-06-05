@@ -117,6 +117,7 @@ type tService struct {
    toNode tToNode
    sync.RWMutex // protects the following
    config tSvcConfig
+   siteData struct { Name string }
    sendQ []*tQueueEl
    sendQPost func(...*SendRecord)
    notice []tNoticeEl
@@ -135,6 +136,9 @@ type tDoor interface {
 type Header struct {
    Op string
    Error string
+   Name string
+   Auth byte
+   AuthBy [][2]string
    Id, MsgId, PostId string
    Uid, NodeId string
    NewNode, Node string

@@ -305,6 +305,18 @@ func _dropNode(iSvc string, iNode *tNode) {
    _updateNode(iSvc, iNode)
 }
 
+func _setSiteData(iSvc string, iName string) {
+   aSvc := getService(iSvc)
+   aSvc.Lock(); defer aSvc.Unlock()
+   aSvc.siteData.Name = iName
+}
+
+func GetSiteDataService(iSvc string) interface{} {
+   aSvc := getService(iSvc)
+   aSvc.RLock(); defer aSvc.RUnlock()
+   return aSvc.siteData
+}
+
 func GetConfigService(iSvc string) *tSvcConfig {
    if iSvc == "local" {
       return &tSvcConfig{Name:"local"}
@@ -501,7 +513,8 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
 
    switch iHead.Op {
    case "tmtprev":
-      //todo
+      _setSiteData(iSvc, iHead.Name)
+      //todo check version
    case "registered":
       var aAlias, aUid string
       _editConfig(iSvc, func(cCfg *tSvcConfig) error {
@@ -514,16 +527,16 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
          return nil
       })
       if iHead.Error != "" {
-         aFn, aResult = fAll, []string{"cf", "_e", iHead.Error}
+         aFn, aResult = fAll, []string{"sd", "cf", "_e", iHead.Error}
          break
       }
       storeSelfAdrsbk(iSvc, aAlias, aUid) //todo check for this on init
-      aFn, aResult = fAll, []string{"cf"}
+      aFn, aResult = fAll, []string{"sd", "cf"}
    case "login":
       //todo fmt.Printf("HandleTmtpService %s: login %s\n", iSvc, iHead.Node)
    case "info":
       setFromOhi(iSvc, iHead)
-      aFn, aResult = fAll, []string{"of"}
+      aFn, aResult = fAll, []string{"sd", "of"}
    case "user":
       if iHead.NewAlias != "" {
          _editConfig(iSvc, func(cCfg *tSvcConfig) error {
@@ -802,13 +815,13 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
 
    switch iUpdt.Op {
    case "open":
-      aResult = []string{"cf", "cn", "of", "ot", "ps", "pt", "pf", "gl",
+      aResult = []string{"sd", "cf", "cn", "of", "ot", "ps", "pt", "pf", "gl",
                          "fl", "tl", "cs", "cl", "al", "_t", "ml", "mo",
                          "/v", "/t", "/f", "/g", "/l",
                          "_e", ""}
       aLen := len(aResult) - 2
       if iSvc == "local" {
-         aFn, aResult = fOne, aResult[16:aLen]
+         aFn, aResult = fOne, aResult[17:aLen]
       } else {
          //todo aToAll return []string{"/v"} to update .UnreadN everywhere? (also thread_open & delivery)
          _initUnreadCount(iSvc)

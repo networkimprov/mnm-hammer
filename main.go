@@ -599,6 +599,7 @@ func runService(iResp http.ResponseWriter, iReq *http.Request) {
       aParams := pSl.GetConstants(tMsg{"Title":aSvcId, "TitleJs":aSvcIdJs, "Addr":sHttpSrvr.Addr})
       err = sServiceTmpl.Execute(iResp, aParams)
    case "cs": aResult = aState.GetSummary()
+   case "sd": aResult = pSl.GetSiteDataService(aSvcId)
    case "cf": aResult = pSl.GetCfService(aSvcId)
    case "cn": aResult = pSl.GetCnNode(aSvcId)
    case "nl": aResult = pSl.GetIdxNotice(aSvcId)
