@@ -2308,7 +2308,7 @@
                       placeholder="Length (4 to 1024)" type="text"
                       class="width100"></td></tr>
             <tr><td>Site</td><td>
-               {{mnm._data.cf.Addr}}
+               {{mnm._data.sd.Name || '[site name]'}}<br>{{mnm._data.cf.Addr}}
                <input v-if="!mnm._data.cf.Uid"
                       v-model="addr"
                       placeholder="Site Address" type="text"
@@ -2570,7 +2570,7 @@
       adrsbkmenuId: {},
       errors: [], errorFlag: false,
    // per service
-      cf:{NodeSet:[], Error:''}, cn:{}, tl:[],
+      sd:{Name:''}, cf:{NodeSet:[], Error:''}, cn:{}, tl:[],
       ffn:'', // derived from tl
       fl:[], ps:[], pt:[], pf:[], gl:[], ot:[], of:null,
       toSavePs:{}, // populated locally //todo rename toSave -> toSaveMo
@@ -2979,7 +2979,7 @@
       }
 
       switch (i) {
-      case 'cf': case 'cn': case 'cl': case 'al': case 'ml':
+      case 'sd': case 'cf': case 'cn': case 'cl': case 'al': case 'ml':
       case 'fl': case 'pt': case 'pf': case 'gl': case 'ot': case 'of':
       case 't' : case 'f' : case 'v' : case 'g' : case 'l' : case 'nlo':
          mnm._data[i] = JSON.parse(iData);
