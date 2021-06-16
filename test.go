@@ -351,6 +351,23 @@ func _setupTestDir(iDir string, iClients []tTestClient) bool {
       return false
 }
 
+/*todo test global post ops
+func _postForm(iReq string, iData string) error {
+   aBody := bytes.Buffer{}
+   aForm := multipart.NewWriter(&aBody)
+   err := aForm.WriteField("filename", iData)
+   if err != nil { return err }
+   err = aForm.Close()
+   if err != nil { return err }
+   aResp, err := http.Post("http://"+ sTestWebAddr + iReq, "multipart/form-data", &aBody)
+   if err != nil { return err }
+   aResp.Body.Close()
+   if aResp.StatusCode != http.StatusOK {
+      return tError("_postForm "+ iReq +" got "+ aResp.Status)
+   }
+   return nil
+}*/
+
 func _setupTestCrash(iClients []tTestClient) (_ string, err error) {
    const ( eDir = iota; eDst; eDstOrder; eOp; eSrc; eSrcOrder; eArgLen )
    aArg := make([]string, eArgLen)
