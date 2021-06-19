@@ -160,7 +160,7 @@
       aXhr.onload = function() {
          mnm.Log('post '+ iForm.action +' '+ aXhr.responseText);
          if (aXhr.status !== 200)
-            mnm.Err(aXhr.responseText);
+            mnm.Err(aXhr.statusText +' '+ aXhr.responseText);
          else if (iCb)
             iCb();
       };
@@ -229,9 +229,9 @@
          if (aXhr.status !== 200) {
             var aTxt = (iId ? iId +' ' : '') +
                        (aXhr.responseType === 'arraybuffer' ? _decode(aXhr) :
-                        aXhr.responseType === 'blob' ? aXhr.statusText : aXhr.responseText);
+                        aXhr.responseType === 'blob' ? '[blob]' : aXhr.responseText);
             mnm.Log('get '+ i +' '+ aTxt);
-            mnm.Err(aTxt);
+            mnm.Err(aXhr.statusText +' '+ aTxt);
             return;
          }
          if (i !== 'mo' && i !== 'mn') {
