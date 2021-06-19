@@ -25,6 +25,15 @@
    mnm.HasMoId =
    mnm.ThreadChange = null;
 
+   mnm.SiteAdd = function(iAddr) {
+      sSvc.cs.Site = {Addr:iAddr, Name:'Chocolate Heaven', Auth:0, Token:{}};
+      _render('cs');
+   };
+   mnm.SiteDrop = function() {
+      sSvc.cs.Site = null;
+      _render('cs');
+   };
+
    mnm.ConfigUpdt = function(iObj) { // with addr, verify
       mnm.Err('config update not enabled in demo');
    };

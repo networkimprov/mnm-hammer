@@ -107,7 +107,7 @@ func mainResult() int {
          err = os.Chdir(path.Dir(os.Args[0]))
          if err != nil { return 1 }
       }
-      pSl.Init(StartService, MsgToSelf, crashTest)
+      pSl.Init(StartTrySite, StartService, MsgToSelf, crashTest)
    }
 
    sServiceTmpl, err = template.New("service.html").Delims(`<%`,`%>`).ParseFiles("web/service.html")
@@ -115,6 +115,8 @@ func mainResult() int {
 
    http.HandleFunc("/"  , runService)
    http.HandleFunc("/a/", runAbout)
+   http.HandleFunc("/u/", runAuthCallback)
+   http.HandleFunc("/7/", runTokenTest)
    http.HandleFunc("/l/", runNodeListen)
    http.HandleFunc("/n/", runNodeRecv)
    http.HandleFunc("/t/", runGlobal)
@@ -146,6 +148,22 @@ type tService struct {
    queue *tQueue
    ccs *tClientConns
    toSelf chan *pSl.Header
+}
+
+func StartTrySite(iClientId string, iSvcId string, iAddr string, iVerify bool) {
+   sServicesDoor.Lock(); defer sServicesDoor.Unlock()
+   aSvcWs := sServices[iSvcId]
+   aWsConn := aSvcWs.ccs.Get(iClientId)
+   if aWsConn == nil {
+      quit(tError("client "+ iClientId +" not at service "+ iSvcId))
+   }
+   aSvcId := fmt.Sprintf("\x00try_%s_%s", iClientId, iSvcId)
+   if _, ok := sServices[aSvcId]; !ok {
+      sServices[aSvcId] = tService{queue: &tQueue{}, ccs: newClientConns(), toSelf: nil}
+      //todo drop tService after long inactivity?
+   }
+   sServices[aSvcId].ccs.Set(iClientId, aWsConn)
+   go runTrySiteRecv(aSvcId, iAddr, iVerify)
 }
 
 func StartService(iSvcId string) {
@@ -318,6 +336,33 @@ Closed:
    close(o.out)
 }
 
+func runTrySiteRecv(iSvcId string, iAddr string, iVerify bool) {
+   aDlr := net.Dialer{Timeout: 8*time.Second}
+   aCfgTls := tls.Config{InsecureSkipVerify: !iVerify}
+   aConn, err := tls.DialWithDialer(&aDlr, "tcp", iAddr, &aCfgTls)
+   if err == nil {
+      defer aConn.Close()
+      _, err = aConn.Write(packMsg(tMsg{"Op":eOpTmtpRev, "Id":"1"}, nil))
+      if err == nil {
+         err = _readLink(iSvcId, aConn, 8*time.Second)
+      }
+   }
+   aSvc := getService(iSvcId)
+   aSvc.ccs.Range(func(c *tWsConn) {
+      if err != nil {
+         if !c.test {
+            c.WriteJSON(pSl.ErrorService(err))
+         }
+         c.state.ClearSite()
+      } else if sTestHost != "" {
+         authCallbackTest("/u", c.state.GetCallbackParams(0))
+      }
+      if !c.test {
+         c.WriteJSON([]string{"cs"})
+      }
+   })
+}
+
 func runTmtpRecv(iSvcId string) {
    aSvc := getService(iSvcId)
    aRng := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -361,6 +406,9 @@ func runTmtpRecv(iSvcId string) {
       aConn.Write(packMsg(aMsg, nil))
       if aCfg.Uid == "" {
          aMsg = tMsg{"Op":eOpRegister, "NewAlias":aCfg.Alias, "NewNode":"x"}
+         if aCfg.Oidc != nil {
+            aMsg["Oidc"] = aCfg.Oidc
+         }
       } else {
          aMsg = tMsg{"Op":eOpLogin, "Uid":aCfg.Uid, "Node":aCfg.Node}
       }
@@ -490,7 +538,12 @@ func _readLink(iSvcId string, iConn net.Conn, iIdleMax time.Duration) error {
          aEnd := aHeadEnd + aHead.DataLen; if aPos < aEnd { aEnd = aPos }
          aData = aBuf[aHeadEnd:aEnd]
       }
-      if aHead.Op == "ack" && aHead.Id == kFirstOhiId {
+      if aHead.Op == "tmtprev" && iSvcId[0] == '\x00' { //todo more specific svcid test
+         aSvc.ccs.Range(func(c *tWsConn) { // has only one member
+            c.state.SetSiteData(aHead.Name, aHead.Auth, aHead.AuthBy)
+         })
+         return nil
+      } else if aHead.Op == "ack" && aHead.Id == kFirstOhiId {
          // no-op
       } else {
          if aHead.Op == "info" && aHead.Info == "login ok" {
@@ -671,6 +724,70 @@ func getAbout() *tAbout {
 }
 
 func (o *tAbout) etag() string { return o.Version +" "+ o.VersionDate }
+
+func runAuthCallback(iResp http.ResponseWriter, iReq *http.Request) {
+   if sTestHost == "" {
+      fmt.Printf("runAuthCallback %s %s\n", iReq.Method, iReq.URL.Path)
+   }
+   if iReq.Method != "GET" {
+      fmt.Fprintf(os.Stderr, "runAuthCallback: unexpected method %s\n", iReq.Method)
+      iResp.WriteHeader(http.StatusMethodNotAllowed)
+      return
+   }
+   aQuery := iReq.URL.Query()
+   if aQuery.Get("error") != "" {
+      fmt.Fprintf(os.Stderr, "runAuthCallback: %s: %s\n",
+                             aQuery.Get("error"), aQuery.Get("error_description"))
+      iResp.WriteHeader(http.StatusNotAcceptable)
+      return
+   }
+   aState := aQuery.Get("state")
+   aId_Svc := strings.SplitN(aState, "_", 3)
+   var aSvc tService
+   if len(aId_Svc) == 3 {
+      aId_Svc = aId_Svc[1:] // drop addr
+      sServicesDoor.RLock()
+      aSvc = sServices["\x00try_"+ aId_Svc[0] +"_"+ aId_Svc[1]]
+      sServicesDoor.RUnlock()
+   }
+   if aSvc.ccs == nil {
+      fmt.Fprintf(os.Stderr, "runAuthCallback: unexpected state %s\n", aState)
+      iResp.WriteHeader(http.StatusNotAcceptable)
+      return
+   }
+   aClient := aSvc.ccs.Get(aId_Svc[0])
+   aUrl, aBody, err := aClient.state.GetTokenUrl(aState, aQuery.Get("code"))
+   if err == nil {
+      if sTestHost != "" && aQuery.Get("code") == "test" {
+         aUrl = "http://"+ sNetAddr +"/7"
+      }
+      aHttp := http.Client{Timeout: 6 * time.Second}
+      var aResp *http.Response
+      aResp, err = aHttp.Post(aUrl, "application/x-www-form-urlencoded", strings.NewReader(aBody))
+      if err == nil {
+         defer aResp.Body.Close()
+         var aToken pSl.OpenidToken
+         err = json.NewDecoder(aResp.Body).Decode(&aToken)
+         if err == nil {
+            err = aClient.state.SetSiteToken(aState, &aToken)
+            if err == nil {
+               if !aClient.test {
+                  aClient.WriteJSON([]string{"cs"})
+               }
+               iResp.Header().Set("Content-Type", "text/html") //todo redirect to /w/something
+               iResp.Write([]byte(`<html><head></head><body onload="` +
+                                  `setTimeout(function(){window.close()}, 3000)">` +
+                                  `<h1 style="text-align:center; font-family:sans-serif">` +
+                                  `Logged in; closing tab...</h1></body></html>`))
+            }
+         }
+      }
+   }
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "runAuthCallback: %v\n", err)
+      iResp.WriteHeader(http.StatusNotAcceptable)
+   }
+}
 
 func runNodeListen(iResp http.ResponseWriter, iReq *http.Request) {
    if sTestHost == "" {

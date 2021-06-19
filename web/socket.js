@@ -24,6 +24,13 @@
    mnm.HasMoId =
    mnm.ThreadChange = null;
 
+   mnm.SiteAdd = function(iAddr) {
+      _wsSend({op:'site_add', site:{addr:iAddr}})
+   };
+   mnm.SiteDrop = function() {
+      _wsSend({op:'site_drop', site:{}})
+   };
+
    mnm.ConfigUpdt = function(iObj) { // with addr, verify
       _wsSend({op:'config_update', config:iObj})
    };

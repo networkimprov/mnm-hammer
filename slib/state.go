@@ -8,11 +8,15 @@
 package slib
 
 import (
+   "encoding/base64"
    "fmt"
    "encoding/json"
    "os"
+   "crypto/rand"
+   "crypto/sha256"
    "strings"
    "sync"
+   "net/url"
 )
 
 var kSortDefault = tSummarySort{Cc:"Who", Atc:"Date", Upload:"Date", Form:"Date"}
@@ -85,12 +89,31 @@ type ClientState struct {
    sync.RWMutex
    id, svc string
    filePath string
+   site *tSiteData
    historyMax int
    Hpos int // indexes History
    History []string // thread id
    Thread map[string]*tThreadState // key thread id
    SvcTabs tTabs
    UploadSort, FormSort string `json:",omitempty"`
+}
+
+type tSiteData struct {
+   Addr string
+   Pending bool
+   Name string
+   Auth byte
+   AuthBy []tAuthBy
+   verifier string
+   state string
+   Token OpenidToken
+}
+
+type OpenidToken struct { // see OpenID Connect spec
+   Scope, Token_type string
+   Expires_in uint
+   Access_token, Id_token string
+   Refresh_token string `json:",omitempty"`
 }
 
 type tThreadState struct {
@@ -153,6 +176,7 @@ func (o tOpenState) MarshalJSON() ([]byte, error) {
 }
 
 type tSummary struct {
+   Site *tSiteData `json:",omitempty"`
    Sort tSummarySort
    Thread string
    ThreadTabs *tSummaryTabs `json:",omitempty"`
@@ -179,7 +203,7 @@ func (o *ClientState) GetSummary() interface{} {
    aPinned := getTabsService(o.svc)
 
    o.RLock(); defer o.RUnlock()
-   aS := &tSummary{ Sort: kSortDefault, Thread: "none",
+   aS := &tSummary{ Site: o.site, Sort: kSortDefault, Thread: "none",
                     SvcTabs: tSummaryTabs{Type: eTabService, tTabs: *o.SvcTabs.copy(), Pinned: &aPinned} }
    if o.UploadSort != "" { aS.Sort.Upload = o.UploadSort }
    if o.FormSort   != "" { aS.Sort.Form   = o.FormSort }
@@ -194,6 +218,82 @@ func (o *ClientState) GetSummary() interface{} {
       aS.History.Next = o.Hpos < len(o.History)-1
    }
    return aS
+}
+
+func (o *ClientState) setSite(iAddr string) error {
+   o.Lock(); defer o.Unlock()
+   if o.site == nil {
+      if iAddr == "" {
+         return tError("ClientState.setSite: missing address")
+      }
+      o.site = &tSiteData{Addr:iAddr, Pending:true}
+   } else {
+      if iAddr != "" {
+         return tError("ClientState.setSite: cannot overwrite address")
+      } else if o.site.Pending {
+         return tError("ClientState.setSite: response pending")
+      }
+      o.site = nil
+   }
+   return nil
+}
+
+func (o *ClientState) ClearSite() {
+   o.Lock(); defer o.Unlock()
+   o.site = nil
+}
+
+func (o *ClientState) SetSiteData(iName string, iAuth byte, iAuthBy []tAuthBy) {
+   o.Lock(); defer o.Unlock()
+   if o.site == nil {
+      quit(tError("ClientState.SetSiteData: site empty"))
+   }
+   aS := o.site
+   aS.Pending = false
+   aS.Name, aS.Auth, aS.AuthBy = iName, iAuth, iAuthBy
+   if len(aS.AuthBy) == 0 {
+      aS.Auth = 0
+   } else if len(aS.AuthBy) > 26 { // limited by state parameter
+      aS.AuthBy = aS.AuthBy[:26]
+   }
+   if len(aS.AuthBy) > 0 {
+      aS.state = o.site.Addr +"_"+ o.id +"_"+ o.svc
+      aRand := make([]byte, 32)
+      _, err := rand.Read(aRand)
+      if err != nil { quit(err) }
+      aS.verifier = base64.RawURLEncoding.EncodeToString(aRand)
+      aHash := sha256.Sum256([]byte(aS.verifier))
+      aHashEnc := base64.RawURLEncoding.EncodeToString(aHash[:])
+      for a := range aS.AuthBy {
+         aS.AuthBy[a].Login[1] += fmt.Sprintf("&code_challenge_method=S256&code_challenge=%s&state=%c%s",
+                                              aHashEnc, a+'A', url.QueryEscape(aS.state))
+      }
+   }
+}
+
+func (o *ClientState) GetCallbackParams(i int) string { // for testing
+   if i >= len(o.site.AuthBy) {
+      return ""
+   }
+   return fmt.Sprintf("code=test&state=%c%s", i+'A', url.QueryEscape(o.site.state))
+}
+
+func (o *ClientState) GetTokenUrl(iState string, iCode string) (aUrl string, aBody string, _ error) {
+   o.RLock(); defer o.RUnlock()
+   if o.site == nil || iState[1:] != o.site.state {
+      return "", "", tError("site state is not "+ iState)
+   }
+   aPair := o.site.AuthBy[iState[0]-'A'].Token
+   return aPair[0], aPair[1] +"&code="+ iCode +"&code_verifier="+ o.site.verifier, nil
+}
+
+func (o *ClientState) SetSiteToken(iState string, iT *OpenidToken) error {
+   o.Lock(); defer o.Unlock()
+   if o.site == nil || iState[1:] != o.site.state {
+      return tError("site state is not "+ iState)
+   }
+   o.site.Token = *iT
+   return nil
 }
 
 func (o *ClientState) setHistoryMax(iLen int) {

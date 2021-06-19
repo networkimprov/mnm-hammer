@@ -99,6 +99,9 @@ func ftmpSyncUpdt(iSvc, iCid string) string { return dirTemp(iSvc) +"syncupdt_"+
 
 var kCrc32c = crc32.MakeTable(crc32.Castagnoli)
 
+var sTrySiteFn func(string, string, string, bool)
+var sServiceStartFn func(string)
+var sMsgToSelfFn func(string, *Header)
 var sCrashFn func(string, string)
 var sLocalId = time.Now().UnixNano() / 1e6 // milliseconds
 
@@ -138,7 +141,7 @@ type Header struct {
    Error string
    Name string
    Auth byte
-   AuthBy [][2]string
+   AuthBy []tAuthBy
    Id, MsgId, PostId string
    Uid, NodeId string
    NewNode, Node string
@@ -156,6 +159,11 @@ type Header struct {
    Type string
    DataLen, DataHead int64
    SubHead *tHeader2
+}
+
+type tAuthBy struct {
+   Label string
+   Login, Token [2]string
 }
 
 type tHeader2 struct {
@@ -211,6 +219,9 @@ type Update struct {
    LogThreadId string `json:",omitempty"`
    LogOp string `json:",omitempty"`
    Op string
+   Site *struct {
+      Addr string
+   }
    Config *struct {
       HistoryLen int
       Addr string
@@ -308,8 +319,9 @@ const (
 type Msg map[string]interface{}
 
 
-func Init(iStart func(string), iMts func(string, *Header), iCrash func(string, string)) {
-   sCrashFn = iCrash
+func Init(iTry func(string, string, string, bool), iStart func(string), iMts func(string, *Header),
+          iCrash func(string, string)) {
+   sTrySiteFn, sServiceStartFn, sMsgToSelfFn, sCrashFn = iTry, iStart, iMts, iCrash
    for _, aDir := range [...]string{kUploadTmp, kServiceDir, kStateDir, kFormDir, kFormRegDir, kTempDir} {
       err := os.MkdirAll(aDir, 0700)
       if err != nil { quit(err) }
@@ -317,7 +329,7 @@ func Init(iStart func(string), iMts func(string, *Header), iCrash func(string, s
    initUpload()
    initForms()
    initStates()
-   initServices(iStart, iMts)
+   initServices()
    startAllService()
 }
 

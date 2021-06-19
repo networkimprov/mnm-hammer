@@ -85,6 +85,11 @@ After a test pass completes, the app provides http on port 8123 (unless --http i
 To access a previous test pass:  
 `(cd test-run/TPD/ && ../../mnm-hammer --http :8123)` # TPD is a directory name
 
+If the TMTP site at `server:port` is not configured for optional third party authentication, 
+the test sequence will produce an expect/got message from "local1 local" re "cs" 
+(which can be ignored).
+The test sequence cannot run against a TMTP site that requires third party authentication.
+
 Crash testing  
 a) `./mnm-hammer --test server:port --crash  init` # make test directory  
 b) `./mnm-hammer --test server:port --crash  dir:service:order:op[:sender:order]` # crash here in test sequence  

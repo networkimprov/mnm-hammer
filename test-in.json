@@ -37,6 +37,32 @@
       "/v": [{"Name":"Blue", "NoticeN":0, "UnreadN":-1},
              {"Name":"Gold", "NoticeN":0, "UnreadN":-1}] ,
       "/l": {"Addr":"*", "Pin":"*"} }
+},{
+   "Updt": {"Op":"site_add", "Site":{"Addr":"test"}},
+   "Result": {
+      "cs": {"Site":{"Addr":"*site", "Name":"", "Auth":0, "Pending":true, "AuthBy":null,
+                     "Token":{"Scope":"", "Token_type":"", "Expires_in":0,
+                              "Id_token":"", "Access_token":""}},
+             "Thread":"none", "History":{"Prev":false, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
+             "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
+},{
+   "Updt": {"Op":"test", "Test":{"Request":["cs"]}},
+   "Poll": 6,
+   "Result": {
+      "cs": {"Site":{"Addr":"*site", "Name":"*", "Auth":1, "Pending":false,
+                     "AuthBy":[{"Label":"*", "Login":["*", "*"], "Token":["*", "*"]}],
+                     "Token":{"Scope":"openid", "Token_type":"Bearer", "Expires_in":3600,
+                              "Id_token":"id", "Access_token":"access"}},
+             "Thread":"none", "History":{"Prev":false, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
+             "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
+},{
+   "Updt": {"Op":"site_drop", "Site":{"Addr":""}},
+   "Result": {
+      "cs": {"Thread":"none", "History":{"Prev":false, "Next":false},
+             "SvcTabs":{"Pos":0, "PosFor":0, "Terms":[], "Pinned":[], "Type":1},
+             "Sort":{"cl":"Who", "al":"Date", "t":"Date", "f":"Date"}} }
 }]
 
 },{

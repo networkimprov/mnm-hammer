@@ -26,8 +26,6 @@ var Service tGlobalService
 
 var sServicesDoor sync.RWMutex
 var sServices = make(map[string]*tService)
-var sServiceStartFn func(string)
-var sMsgToSelfFn func(string, *Header)
 
 type tSvcConfig struct {
    Name string
@@ -36,6 +34,7 @@ type tSvcConfig struct {
    LoginPeriod int // seconds
    Addr string // for tls.Dial()
    Verify bool // for tls.Config
+   Oidc *OpenidToken `json:",omitempty"` // dropped after registration; optional
    Alias string
    Uid string
    Node string `json:",omitempty"`
@@ -54,8 +53,7 @@ type tNode struct {
 const ( eNodePending = 'p'; eNodeSent = 's'; eNodeAllowed = 'l'
         eNodeReady = 'r'; eNodeActive = 'a'; eNodeDefunct = 'd' ) // reserve 0xFF
 
-func initServices(iSs func(string), iMts func(string, *Header)) {
-   sServiceStartFn, sMsgToSelfFn = iSs, iMts
+func initServices() {
    var err error
    aSvcs, err := readDirNames(kServiceDir)
    if err != nil { quit(err) }
@@ -181,11 +179,8 @@ func (tGlobalService) Add(iName, iDup string, iR io.Reader) error {
    if iName != aCfg.Name || !checkNameService(iName) {
       return tError("name not valid: "+ iName)
    }
-   if aCfg.Addr[0] != '+' && aCfg.Addr[0] != '=' {
-      return tError("address missing +/= prefix")
-   }
-   aCfg.Verify = aCfg.Addr[0] == '+'
-   aCfg.Addr = aCfg.Addr[1:]
+   aCfg.Addr, aCfg.Verify, err = checkAddrService(aCfg.Addr)
+   if err != nil { return err }
 
    sServicesDoor.Lock()
    if sServices[iName] != nil {
@@ -303,6 +298,13 @@ func _updateNode(iSvc string, iNode *tNode) {
 func _dropNode(iSvc string, iNode *tNode) {
    iNode.Status = 0xFF
    _updateNode(iSvc, iNode)
+}
+
+func checkAddrService(iAddr string) (string, bool, error) {
+   if iAddr[0] != '+' && iAddr[0] != '=' {
+      return "", false, tError("address missing +/= prefix")
+   }
+   return iAddr[1:], iAddr[0] == '+', nil
 }
 
 func _setSiteData(iSvc string, iName string) {
@@ -428,6 +430,9 @@ func makeTreeService(iSvc string) {
 }
 
 func getTabsService(iSvc string) []tTermEl {
+   if iSvc == "local" {
+      return []tTermEl{}
+   }
    aSvc := getService(iSvc)
    aSvc.RLock(); defer aSvc.RUnlock()
    return append([]tTermEl{}, aSvc.tabs...)
@@ -519,6 +524,7 @@ func HandleTmtpService(iSvc string, iHead *Header, iR io.Reader) (
       var aAlias, aUid string
       _editConfig(iSvc, func(cCfg *tSvcConfig) error {
          cCfg.Uid, cCfg.Node = iHead.Uid, iHead.NodeId
+         cCfg.Oidc = nil
          if iHead.Error != "" {
             cCfg.Alias = ""
             cCfg.Error = iHead.Error
@@ -806,11 +812,14 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
 
    if iUpdt.Op != "open" {
       if iSvc == "local" {
-         err = tError("not supported")
-         return fErr, nil
+         if iUpdt.Op != "site_add" && iUpdt.Op != "site_drop" && iUpdt.Op != "test" {
+            err = tError("not supported")
+            return fErr, nil
+         }
+      } else {
+         aSvc := getService(iSvc)
+         aSvc.updt.RLock(); defer aSvc.updt.RUnlock() //todo use TryRLock()
       }
-      aSvc := getService(iSvc)
-      aSvc.updt.RLock(); defer aSvc.updt.RUnlock() //todo use TryRLock()
    }
 
    switch iUpdt.Op {
@@ -832,6 +841,19 @@ func HandleUpdtService(iSvc string, iState *ClientState, iUpdt *Update) (
          }
          aFn, aResult = fOne, aResult[:aLen]
       }
+   case "site_add":
+      var aAddr string
+      var aVerify bool
+      aAddr, aVerify, err = checkAddrService(iUpdt.Site.Addr)
+      if err != nil { return fErr, nil }
+      err = iState.setSite(iUpdt.Site.Addr)
+      if err != nil { return fErr, nil }
+      sTrySiteFn(iState.id, iState.svc, aAddr, aVerify)
+      aFn, aResult = fOne, []string{"cs"}
+   case "site_drop":
+      err = iState.setSite("")
+      if err != nil { return fErr, nil }
+      aFn, aResult = fOne, []string{"cs"}
    case "config_update":
       if iUpdt.Config.Addr != "" && iUpdt.Config.Addr[0] != '+' && iUpdt.Config.Addr[0] != '=' {
          err = tError("address requires prefix + or =")

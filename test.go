@@ -133,6 +133,32 @@ func init() {
                   "resume after crash and check result for dir:service:order:count")
 }
 
+func authCallbackTest(iPath, iParams string) {
+   if iParams == "" {
+      return
+   }
+   aHttp := http.Client{Timeout: 4*time.Second}
+   aResp, err := aHttp.Get("http://"+ sNetAddr + iPath +"?"+ iParams)
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "testAuthCallback: %v for %s\n", err, iParams)
+      return
+   }
+   aResp.Body.Close()
+   if aResp.StatusCode != http.StatusOK {
+      fmt.Fprintf(os.Stderr, "testAuthCallback: got status %s for %s\n", aResp.Status, iParams)
+   }
+}
+
+func runTokenTest(iResp http.ResponseWriter, iReq *http.Request) {
+   iResp.Header().Set("Content-Type", "application/json")
+   aToken := pSl.OpenidToken{Token_type: "Bearer", Scope: "openid", Expires_in: 3600,
+                             Id_token: "id", Access_token: "access"}
+   err := json.NewEncoder(iResp).Encode(&aToken)
+   if err != nil {
+      fmt.Fprintf(os.Stderr, "runTokenTest: %v\n", err)
+   }
+}
+
 func crashTest(iSvc string, iOp string) {
    if iSvc != sTestCrashDst || iOp != sTestCrashOp ||
       atomic.LoadUint64(sTestOrderN[sTestCrashSrc]) < sTestOrderSrc ||
@@ -284,7 +310,7 @@ func _setupTestDir(iDir string, iClients []tTestClient) bool {
    err = os.Symlink("../../web", "web")
    if err != nil { quit(err) }
 
-   pSl.Init(StartService, MsgToSelf, crashTest)
+   pSl.Init(StartTrySite, StartService, MsgToSelf, crashTest)
    pSl.ListenNode()
    aPin := pSl.GetPinNode(sNetAddr)
    sTestNodePin = aPin.Pin
@@ -403,7 +429,7 @@ func _setupTestCrash(iClients []tTestClient) (_ string, err error) {
       err = pSl.WipeDataService(iClients[a].SvcId)
       if err != nil { return }
    }
-   pSl.Init(StartService, MsgToSelf, crashTest)
+   pSl.Init(StartTrySite, StartService, MsgToSelf, crashTest)
    if sServices[sTestCrashDst].queue == nil || sServices[sTestCrashSrc].queue == nil {
       return "", tError("invalid service")
    }
@@ -429,7 +455,7 @@ func _setupTestVerify(iClients []tTestClient) (_ string, err error) {
 
    err = os.Chdir(aArg[eDir])
    if err != nil { return }
-   pSl.Init(StartService, MsgToSelf, crashTest)
+   pSl.Init(StartTrySite, StartService, MsgToSelf, crashTest)
    if sServices[aArg[eSvc]].queue == nil {
       return "", tError("invalid service")
    }
@@ -590,6 +616,10 @@ func _runTestClient(iTc *tTestClient, iWg *sync.WaitGroup) {
 func _prepUpdt(iUpdt *pSl.Update, iCtx *tTestContext, iPrefix string) bool {
    var aApply string
    switch iUpdt.Op {
+   case "site_add", "site_drop":
+      if iUpdt.Site.Addr == "test" {
+         iUpdt.Site.Addr = "="+ sTestHost
+      }
    case "config_update":
       if iUpdt.Config.Addr == "orig" {
          iUpdt.Config.Addr = "=" + sTestHost
@@ -896,6 +926,8 @@ func _hasExpected(iName string, iExpect, iGot interface{}) (string, interface{})
       } else if aExpect == "*uid" {
          aBuf, err := kTestBase32.DecodeString(aGot)
          if err != nil || len(aBuf) != 20 { return iName, iGot }
+      } else if aExpect == "*site" {
+         if aGot != "="+ sTestHost { return iName, iGot }
       } else if aExpect != "*" {
          if aExpect != aGot { return iName, iGot }
       }
