@@ -10,6 +10,12 @@
 
 table { border-spacing: 0; }
 
+fieldset {
+   margin: 0;
+   border-width: 0;
+   padding: 0;
+}
+
 .uk-tab {
    margin-left: 0;
 }
@@ -25,6 +31,14 @@ table { border-spacing: 0; }
 .uk-dropdown {
    min-width: unset;
    color: #505050;
+}
+.uk-dropdown .uk-link,
+.uk-dropdown a {
+   color: #1e87f0;
+}
+.uk-dropdown .uk-link:hover,
+.uk-dropdown a:hover {
+   color: #0f6ecd;
 }
 
 body {
@@ -690,6 +704,12 @@ span.draftpv-doctab {
    font-size: 125%;
    line-height: 1;
    cursor: default;
+}
+
+.svcadd tt {
+   font-family: "Courier New", monospace;
+   font-size: 82%;
+   color: black;
 }
 
 .svccfg tr td {

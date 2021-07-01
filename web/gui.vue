@@ -2242,35 +2242,64 @@
 
 <script type="text/x-template" id="mnm-svcadd">
    <div uk-dropdown="mode:click; offset:2; pos:bottom-right"
-        class="widthmin20 menu-bg dropdown-static"
-        @hidden="addr = name = alias = sent = lpin = loginperiod = null">
-      <div class="uk-float-right uk-text-small">NEW ACCOUNT</div>
-      <form :action="'/v/+' + encodeURIComponent(name)"
-            method="POST" enctype="multipart/form-data"
-            onsubmit="mnm.Upload(this); return false;">
-         <input type="hidden" name="filename" :value="JSON.stringify($data)">
-         <button @click="sent = true"
-                 :disabled="!(name  && name.length  >= <%.serviceMin%> && nameUnused &&
-                              alias && alias.length >= <%.aliasMin%> &&
-                              addr  && addr.length  >= 2 && (addr[0] === '+' || addr[0] === '=') &&
-                              !isNaN(loginperiod))"
-                 title="Register new account"
-                 class="btn btn-icon"><span uk-icon="forward"></span></button>
-         <span v-show="sent && name && !nameUnused"
-               title="Account added"
-               uk-icon="check"></span>
+        class="widthmin20 menu-bg dropdown-static">
+      <div class="uk-text-right uk-text-small">NEW ACCOUNT</div>
+      <form v-show="!site"
+            onsubmit="return false">
          <input v-model="addr"
                 placeholder="Site Address" type="text"
                 title="Starts with '+' or '=' and may end with ':number'"
-                class="width100">
-         <input v-model="alias"
-                placeholder="Your Name/Alias (<%.aliasMin%>+ characters)" type="text"
-                title="Name by which other site members know you"
-                class="width100">
-         <input v-model="name"
-                placeholder="Account Title (<%.serviceMin%>+ characters)" type="text"
-                title="Private label for the new account"
-                class="width100">
+                style="width:calc(100% - 3em)">
+         <button @click="mnm.SiteAdd(addr)"
+                 :disabled="!(addr && addr.length >= 2 && (addr[0] === '+' || addr[0] === '='))"
+                 title="Get site data"
+                 class="btn btn-icon btn-floatr"><span uk-icon="list"></span></button>
+      </form>
+      <div v-show="site"
+           class="svcadd">
+         <tt>{{site && site.Addr}}</tt>
+         <button @click="mnm.SiteDrop(addr),
+                         sent && sent === name && !nameUnused &&
+                         (addr = name = alias = sent = lpin = loginperiod = null)"
+                 :disabled="site && site.Pending"
+                 :title="sent && sent === name && !nameUnused ? 'Clear form' : 'Drop site data'"
+                 style="font-size:125%"
+                 class="btnx btn-floatr"><span>&times;</span></button>
+      </div>
+      <form :action="'/v/+' + encodeURIComponent(name)"
+            method="POST" enctype="multipart/form-data"
+            onsubmit="mnm.Upload(this); return false">
+         <input type="hidden" name="filename" :value="regData">
+         <button @click="sent = name"
+                 :disabled="!(name  && name.length  >= <%.serviceMin%> && nameUnused &&
+                              alias && alias.length >= <%.aliasMin%> &&
+                              site && !site.Pending && (!site.Auth || site.Token.Scope) &&
+                              !isNaN(loginperiod))"
+                 title="Register new account"
+                 class="btn btn-icon"><span uk-icon="forward"></span></button>
+         <span v-show="site && site.Pending"
+               title="Seeking site info"
+               uk-icon="future"></span>
+         {{site && site.Name}}
+         <span v-show="sent && sent === name && !nameUnused"
+               title="Account added"
+               uk-icon="check"></span>
+         <div v-if="site && site.Auth">
+            <div v-for="aBy in site.AuthBy">
+               <a :href="aBy.Login[0] +'?'+ aBy.Login[1]" target="mnm_aub"
+                  >Sign in with {{aBy.Label}}<span uk-icon="expand"></span></a>
+            </div>
+         </div>
+         <fieldset :disabled="!(site && !site.Pending && (!site.Auth || site.Token.Scope))">
+            <input v-model="alias"
+                   placeholder="Your Name/Alias (<%.aliasMin%>+ characters)" type="text"
+                   title="Name by which other site members know you"
+                   class="width100">
+            <input v-model="name"
+                   placeholder="Account Title (<%.serviceMin%>+ characters)" type="text"
+                   title="Private label for the new account"
+                   class="width100">
+         </fieldset>
          <!--todo input v-model="lpin"
                 @input="loginperiod = mnm._stringToSeconds($event.target.value)"
                 placeholder="(Pd days:hh:mm:ss)"                  size="19" type="text">
@@ -2283,6 +2312,13 @@
       template: '#mnm-svcadd',
       data: function() { return {addr:null, name:null, alias:null, sent:null, lpin:null, loginperiod:null} },
       computed: {
+         mnm: function() { return mnm },
+         site: function() { return mnm._data.cs.Site },
+         regData: function() {
+            return JSON.stringify({addr: this.site && this.site.Addr,
+                                   oidc: this.site && this.site.Token,
+                                   name: this.name, alias: this.alias});
+         },
          nameUnused: function() {
             return !mnm._data.v.find(function(c){ return c.Name === this.name }, this);
          },
