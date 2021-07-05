@@ -16,18 +16,6 @@ fieldset {
    padding: 0;
 }
 
-.uk-tab {
-   margin-left: 0;
-}
-.uk-tab::before {
-   left: 0;
-}
-.uk-tab > li {
-   padding: 0; /* todo create a nicer tab layout */
-}
-.uk-tab > li > a {
-   cursor: default;
-}
 .uk-dropdown {
    min-width: unset;
    color: #505050;
@@ -39,6 +27,25 @@ fieldset {
 .uk-dropdown .uk-link:hover,
 .uk-dropdown a:hover {
    color: #0f6ecd;
+}
+.uk-tab {
+   margin-left: 0;
+}
+.uk-tab::before {
+   left: 0;
+}
+.uk-tab > li {
+   padding: 0; /* todo create a nicer tab layout */
+}
+.uk-tab > li > a {
+   color: #999;
+   cursor: default;
+}
+.uk-tab > li:not(.uk-active) > a:hover {
+   color: #666;
+}
+.uk-tab > li.uk-active > a {
+   color: #333;
 }
 
 body {
@@ -222,6 +229,15 @@ textarea:focus,
 }
 .dropdown-static {
    padding: 1em;
+}
+
+.titleswitch {
+   min-height: 2em;
+}
+.titleswitch > a {
+   margin-right: 0.5em;
+   font-size: 0.875rem;
+   text-decoration: none;
 }
 
 .attach-who {

@@ -1869,14 +1869,11 @@
               :disabled="!mnm._data.nlo.length || mnm._data.nlo[0].Seen > 0"
               title="Mark all as seen"
               class="btn btn-icon btn-floatr dropdown-scroll-item"><span uk-icon="check"></span></button>
-      <div style="min-height:2em; font-size:0.875rem; color:#1e87f0"><!--uk-light workaround-->
-         <span v-for="aType in [['i', 'INVITES']]"
-               v-show="!showErr"
-               @click="$data[aType[0]] = !$data[aType[0]]"
-               style="margin-right:0.5em; cursor:pointer">
-            <span :class="{vishide: !$data[aType[0]]}">&bull; </span>
-            {{ aType[1] }}
-         </span>
+      <div class="titleswitch">
+         <a v-for="aType in [['i', 'INVITES']]"
+            v-show="!showErr"
+            @click.prevent="$data[aType[0]] = !$data[aType[0]]" href="#"
+            ><span :class="{vishide: !$data[aType[0]]}">&bull; </span>{{aType[1]}}</a>
       </div>
       <div v-show="showErr"
            class="dropdown-scroll-list notice">
