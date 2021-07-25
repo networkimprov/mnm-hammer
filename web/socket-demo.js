@@ -157,12 +157,14 @@
       var aEl = {Id:_makeId(sSvc.cs.Thread), Date:luxon.DateTime.utc().toISO(),
                  From:'', Alias:'', Subject:iObj.subject, Seen:'.', Queued:false};
       aT.ml.unshift(aEl);
-      aT.mo[aEl.Id] = {Id:aEl.Id, Size:0, Posted:'draft', From:'self',
+      aT.mo[aEl.Id] = {Id:aEl.Id, Size:iObj.data.length, Posted:'draft', From:'self',
                        msg_data:iObj.data, form_fill:iObj.formFill,
          SubHead:{Alias:iObj.alias, Subject:iObj.subject, ThreadId:sSvc.cs.Thread, Attach:iObj.attach}};
-      if (iObj.attach)
-         aT.al.unshift({Date:aEl.Date, File:iObj.attach[0].Name, Id:iObj.attach[0].FfKey,
-                        MsgId:aEl.Id, Size:2, Who:''});
+      if (iObj.attach && iObj.attach[0].Name.startsWith('form_fill/')) {
+         //todo handle other attachment types?
+         iObj.attach[0].Name = 'r:'+ iObj.attach[0].Name.slice(10);
+         iObj.attach[0].Ffn = sFfn;
+      }
       _tlSubject(aT);
       _render('tl', 'al', 'ml', 'mn', aEl.Id);
    };
@@ -173,6 +175,7 @@
       var aEl = aT.ml.find(function(c) { return c.Id === iObj.Id });
       aEl.Subject = iObj.Subject;
       aT.mo[iObj.Id].msg_data = iObj.Data;
+      aT.mo[iObj.Id].Size = iObj.Data.length;
       aT.mo[iObj.Id].form_fill = aFormFill;
       aT.mo[iObj.Id].SubHead.Attach = aAttach;
       aT.mo[iObj.Id].SubHead.Subject = iObj.Subject;
@@ -181,7 +184,8 @@
       if (aAttach) {
          var aLms = iObj.Id.slice(iObj.Id.length-12);
          for (var a = aT.al.length-1; a >= 0; --a)
-            if (!aAttach.find(function(c) { return aLms +'_'+ c.Name === aT.al[a].Id }))
+            if (aT.al[a].Id.startsWith(aLms +'_') &&
+                !aAttach.find(function(c) { return aLms +'_'+ c.Name === aT.al[a].Id }))
                aT.al.splice(a, 1);
          for (var a in aFormFill)
             if (!aAttach.find(function(c) { return c.FfKey === a }))
