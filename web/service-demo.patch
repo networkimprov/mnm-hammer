@@ -1,5 +1,5 @@
 diff --git a/web/service-demo.html b/web/service-demo.html
-index f964dc7..6108682 100644
+index 50eb668..e4ffd13 100644
 --- a/web/service-demo.html
 +++ b/web/service-demo.html
 @@ -8,7 +8,7 @@
@@ -118,7 +118,7 @@ index f964dc7..6108682 100644
                 title="Download file">
                 <span uk-icon="download">&nbsp;</span></a>
              <span v-if="!mnm._viewerType(null, aFile.Name)">
-@@ -1958,7 +1959,7 @@
+@@ -1955,7 +1956,7 @@
                      style="width:calc(50% - 2em); display:inline-block; vertical-align:top">
                    <input v-model="draft.gid"
                           name="gid" autocomplete="off" type="text"
@@ -127,7 +127,7 @@ index f964dc7..6108682 100644
                           class="width100">
                    <br>
                    <mnm-adrsbkinput @keyup.enter.native="setField('gid', $event.target)"
-@@ -1970,7 +1971,7 @@
+@@ -1967,7 +1968,7 @@
                 <div style="width:calc(50% - 2em); display:inline-block; vertical-align:top">
                    <input v-model="draft.to"
                           name="to" autocomplete="off" type="text"
@@ -136,7 +136,7 @@ index f964dc7..6108682 100644
                           class="width100">
                    <mnm-adrsbkinput v-show="hasGroup"
                                     @keyup.enter.native="setField('to', $event.target)"
-@@ -2005,13 +2006,13 @@
+@@ -2002,13 +2003,13 @@
                        <button v-else
                                @click="sendPing(aRec)"
                                :disabled="(mnm._data.toSavePs[rowId(aRec)] || aRec).Text.length >
@@ -152,7 +152,7 @@ index f964dc7..6108682 100644
                                  class="pingtext"></textarea></td>
                    <td><button v-if="!aRec.Queued"
                                @click="mnm.PingDiscard({to:aRec.Alias, gid:aRec.Gid})"
-@@ -2079,8 +2080,8 @@
+@@ -2076,8 +2077,8 @@
        computed: {
           mnm: function() { return mnm },
           validDraft: function() {
@@ -163,7 +163,7 @@ index f964dc7..6108682 100644
                 return false;
              for (var a=0; a < mnm._data.ps.length; ++a)
                 if (mnm._data.ps[a].Alias ===  this.draft.to &&
-@@ -2186,7 +2187,7 @@
+@@ -2183,7 +2184,7 @@
                  style="width:60%">
           <button @click="mnm.NodeAdd(mnm._data.cn.Addr, mnm._data.cn.Pin, name)"
                   :disabled="anyInProgress || !mnm._data.cn.Addr || !validPin || !validName"
@@ -172,7 +172,7 @@ index f964dc7..6108682 100644
                   class="btn btn-icon btn-floatr"><span uk-icon="laptop"></span></button>
        </form>
        <div style="margin-top:0.5em" class="dropdown-scroll-list">
-@@ -2198,7 +2199,7 @@
+@@ -2195,7 +2196,7 @@
                               aNode.Status === 'r'.charCodeAt(0)"
                         @click="mnm.NodeAdd(mnm._data.cn.Addr, mnm._data.cn.Pin, aNode.Name)"
                         :disabled="!mnm._data.cn.Addr || !validPin"
@@ -181,32 +181,32 @@ index f964dc7..6108682 100644
                         class="btn btn-icon"><span uk-icon="laptop"></span></button>
                 {{status(aNode.Status)}}
              </div>
-@@ -2250,8 +2251,8 @@
-             onsubmit="mnm.Upload(this); return false;">
-          <input type="hidden" name="filename" :value="JSON.stringify($data)">
-          <button @click="sent = true"
+@@ -2268,8 +2269,8 @@
+             onsubmit="mnm.Upload(this); return false">
+          <input type="hidden" name="filename" :value="regData">
+          <button @click="sent = name"
 -                 :disabled="!(name  && name.length  >= <%.serviceMin%> && nameUnused &&
 -                              alias && alias.length >= <%.aliasMin%> &&
 +                 :disabled="!(name  && name.length  >= 2 && nameUnused &&
 +                              alias && alias.length >= 8 &&
-                               addr  && addr.length  >= 2 && (addr[0] === '+' || addr[0] === '=') &&
+                               site && !site.Pending && (!site.Auth || site.Token.Scope) &&
                                !isNaN(loginperiod))"
                   title="Register new account"
-@@ -2264,11 +2265,11 @@
-                 title="Starts with '+' or '=' and may end with ':number'"
-                 class="width100">
-          <input v-model="alias"
--                placeholder="Your Name/Alias (<%.aliasMin%>+ characters)" type="text"
-+                placeholder="Your Name/Alias (8+ characters)" type="text"
-                 title="Name by which other site members know you"
-                 class="width100">
-          <input v-model="name"
--                placeholder="Account Title (<%.serviceMin%>+ characters)" type="text"
-+                placeholder="Account Title (2+ characters)" type="text"
-                 title="Private label for the new account"
-                 class="width100">
-          <!--todo input v-model="lpin"
-@@ -2323,7 +2324,7 @@
+@@ -2289,11 +2290,11 @@
+          </div>
+          <fieldset :disabled="!(site && !site.Pending && (!site.Auth || site.Token.Scope))">
+             <input v-model="alias"
+-                   placeholder="Your Name/Alias (<%.aliasMin%>+ characters)" type="text"
++                   placeholder="Your Name/Alias (8+ characters)" type="text"
+                    title="Name by which other site members know you"
+                    class="width100">
+             <input v-model="name"
+-                   placeholder="Account Title (<%.serviceMin%>+ characters)" type="text"
++                   placeholder="Account Title (2+ characters)" type="text"
+                    title="Private label for the new account"
+                    class="width100">
+          </fieldset>
+@@ -2356,7 +2357,7 @@
              <tr><td>Alias<br>{{mnm._data.cf.Error && '(taken)'}}</td><td>
                 <input v-if="mnm._data.cf.Uid && !mnm._data.cf.Alias"
                        v-model="alias"
@@ -215,7 +215,7 @@ index f964dc7..6108682 100644
                        title="Name by which other site members know you"
                        class="width100">
                 {{mnm._data.cf.Alias ||
-@@ -2440,7 +2441,7 @@
+@@ -2473,7 +2474,7 @@
          @click.stop>
        <a v-show="kind !== 'form'"
           :href="url[kind] || ''"
@@ -224,7 +224,7 @@ index f964dc7..6108682 100644
           title="Open file in new tab"
           ><span uk-icon="expand"></span></a>
        <div class="uk-text-small viewer-name dropdown-scroll-item">{{title}}</div>
-@@ -2509,7 +2510,7 @@
+@@ -2542,7 +2543,7 @@
              this.file = iId;
              this.kind = mnm._viewerType(iSvc, iId);
              this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
@@ -233,7 +233,7 @@ index f964dc7..6108682 100644
              if (this.kind === 'form') {
                 iSvc ? mnm.AttachForm(iId, function(c) { Vue.set(mnm._data.ao, iId, c) }) : undefined;
              } else if (this.kind !== 'page') {
-@@ -2554,11 +2555,11 @@
+@@ -2587,11 +2588,11 @@
     var sTemp = {al:null, ml:null, mo:null};
     var sMsglistPos = 0;
  
@@ -248,7 +248,7 @@ index f964dc7..6108682 100644
     mnm._data = {
     // global
        v:[], g:[], l:{Pin:''}, t:[], f:[], nlo:[],
-@@ -2640,7 +2641,7 @@
+@@ -2673,7 +2674,7 @@
              return aList;
           },
           svcSelf: function() {
@@ -257,7 +257,7 @@ index f964dc7..6108682 100644
           },
           ffnCol: function() {
              if (!mnm._data.ffn)
-@@ -2691,7 +2692,7 @@
+@@ -2724,7 +2725,7 @@
              iEnv.parent.checkAttach(aHref[1].slice('this_'.length));
           var aParam = aHref[1].replace(/^this_/, iEnv.thisVal +'_');
           aHref[1] = mnm._data.al.find(function(c) { return c.Id === aParam }) ?
@@ -266,7 +266,7 @@ index f964dc7..6108682 100644
           iTokens[iIdx].attrs.push(['download', '']);
           //todo add download icon and viewer
        }
-@@ -2725,7 +2726,7 @@
+@@ -2758,7 +2759,7 @@
        }
        if (_isDurableRef(aSrc[1], iEnv.thisVal)) {
           aSrc[1] = mnm._data.al.find(function(c) { return c.Id === aParam }) ?
@@ -275,7 +275,7 @@ index f964dc7..6108682 100644
        } else if (aParam in iEnv.imgsrc) {
           aSrc[1] = iEnv.imgsrc[aParam];
        } else {
-@@ -3109,7 +3110,7 @@
+@@ -3142,7 +3143,7 @@
        }
     });
  
