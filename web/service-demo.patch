@@ -1,8 +1,8 @@
 diff --git a/web/service-demo.html b/web/service-demo.html
-index 50eb668..e4ffd13 100644
+index 50eb668..d64f33c 100644
 --- a/web/service-demo.html
 +++ b/web/service-demo.html
-@@ -8,7 +8,7 @@
+@@ -8,12 +8,15 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/
  -->
  <html><head>
@@ -11,7 +11,15 @@ index 50eb668..e4ffd13 100644
     <link rel="icon" href="/w/img/logo-48nobg-bleed-bright.png"/>
  
     <meta charset="utf-8">
-@@ -25,7 +25,8 @@
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+ 
++   <script src="//gc.zgo.at/count.js" async
++           data-goatcounter="https://mnmnotmail.goatcounter.com/count"></script>
++
+    <link  href="/w/uikit-30.min.css" rel="stylesheet"/>
+    <script src="/w/uikit-30.min.js"></script>
+    <script src="/w/uikit-icons-30.min.js"></script>
+@@ -25,7 +28,8 @@
     <script src="/w/vue-formgen-23.js"></script>
  
     <link  href="/w/service.css" rel="stylesheet"/>
@@ -21,7 +29,7 @@ index 50eb668..e4ffd13 100644
  
     <!-- generated id attributes require 'x[y]_' prefix -->
  </head><body>
-@@ -192,7 +193,7 @@
+@@ -192,7 +196,7 @@
                                <span uk-icon="file-edit"></span> {{aAtc.Name.substr(2)}}</span>
                          </template>
                          <template v-else>
@@ -30,7 +38,7 @@ index 50eb668..e4ffd13 100644
                                title="Download attachment">
                                <span uk-icon="download"></span></a>
                             <span v-if="!mnm._viewerType('svc', aMsg.Id +'_'+ aAtc.Name)">
-@@ -231,27 +232,27 @@
+@@ -231,27 +235,27 @@
          class="uk-clearfix">
        <span class="uk-text-large">
           <span uk-icon="star" title="Placeholder for site logo"></span>
@@ -63,7 +71,7 @@ index 50eb668..e4ffd13 100644
           <mnm-nodes/>
           &nbsp;
           <span uk-icon="file-text" class="dropdown-icon"
-@@ -407,15 +408,15 @@
+@@ -407,15 +411,15 @@
                uk-dropdown="mode:click; offset:2; pos:bottom-right"
                onshow="this.firstElementChild.contentWindow.mnm_resetScroll()"
                class="width60v height75v menu-bg dropdown-scroll">
@@ -82,7 +90,7 @@ index 50eb668..e4ffd13 100644
                 <mnm-svccfg/>
                 {{aSvc.Name}}
              </template>
-@@ -426,7 +427,7 @@
+@@ -426,7 +430,7 @@
                             @beforeshow.native="mnm.NoticeOpen(aSvc.Name)"
                             @hide.native="mnm.NoticeClose()"
                             offset="-4" pos="left-top"/><!--todo single notice menu-->
@@ -91,7 +99,7 @@ index 50eb668..e4ffd13 100644
                    :target="mnm._isLocal ? '_self' : 'mnm_svc_'+ aSvc.Name">{{aSvc.Name}}</a>
              </template>
           </li></ul>
-@@ -497,7 +498,7 @@
+@@ -497,7 +501,7 @@
                       >awaiting link. . .</span>
                 <div v-else>
                    <span uk-icon="bell" class="dropdown-icon">{{mnm._data.v[0].NoticeN || '&numsp;'}}</span>
@@ -100,7 +108,7 @@ index 50eb668..e4ffd13 100644
                       target="_self"
                       title="Continue tour">{{mnm._data.v[0].Name}}</a>
                 </div>
-@@ -801,7 +802,7 @@
+@@ -801,7 +805,7 @@
                      :title="'Copy to '+ (aFile.Id[17] === 'u' ? 'attachable files' : 'blank forms')"
                      class="btn btn-icon"><span uk-icon="push"></span></button>
              &nbsp;-->
@@ -109,7 +117,7 @@ index 50eb668..e4ffd13 100644
                 title="Download attachment">
                 <span uk-icon="download"></span></a>
              <span v-if="!mnm._viewerType('svc', aFile.Id)">
-@@ -1590,7 +1591,7 @@
+@@ -1590,7 +1594,7 @@
                      @click="$emit('attach', 'upload/'+aFile.Name)"
                      title="Attach file"
                      class="btn btn-icon"><mnm-paperclip/></button>
@@ -118,7 +126,7 @@ index 50eb668..e4ffd13 100644
                 title="Download file">
                 <span uk-icon="download">&nbsp;</span></a>
              <span v-if="!mnm._viewerType(null, aFile.Name)">
-@@ -1955,7 +1956,7 @@
+@@ -1955,7 +1959,7 @@
                      style="width:calc(50% - 2em); display:inline-block; vertical-align:top">
                    <input v-model="draft.gid"
                           name="gid" autocomplete="off" type="text"
@@ -127,7 +135,7 @@ index 50eb668..e4ffd13 100644
                           class="width100">
                    <br>
                    <mnm-adrsbkinput @keyup.enter.native="setField('gid', $event.target)"
-@@ -1967,7 +1968,7 @@
+@@ -1967,7 +1971,7 @@
                 <div style="width:calc(50% - 2em); display:inline-block; vertical-align:top">
                    <input v-model="draft.to"
                           name="to" autocomplete="off" type="text"
@@ -136,7 +144,7 @@ index 50eb668..e4ffd13 100644
                           class="width100">
                    <mnm-adrsbkinput v-show="hasGroup"
                                     @keyup.enter.native="setField('to', $event.target)"
-@@ -2002,13 +2003,13 @@
+@@ -2002,13 +2006,13 @@
                        <button v-else
                                @click="sendPing(aRec)"
                                :disabled="(mnm._data.toSavePs[rowId(aRec)] || aRec).Text.length >
@@ -152,7 +160,7 @@ index 50eb668..e4ffd13 100644
                                  class="pingtext"></textarea></td>
                    <td><button v-if="!aRec.Queued"
                                @click="mnm.PingDiscard({to:aRec.Alias, gid:aRec.Gid})"
-@@ -2076,8 +2077,8 @@
+@@ -2076,8 +2080,8 @@
        computed: {
           mnm: function() { return mnm },
           validDraft: function() {
@@ -163,7 +171,7 @@ index 50eb668..e4ffd13 100644
                 return false;
              for (var a=0; a < mnm._data.ps.length; ++a)
                 if (mnm._data.ps[a].Alias ===  this.draft.to &&
-@@ -2183,7 +2184,7 @@
+@@ -2183,7 +2187,7 @@
                  style="width:60%">
           <button @click="mnm.NodeAdd(mnm._data.cn.Addr, mnm._data.cn.Pin, name)"
                   :disabled="anyInProgress || !mnm._data.cn.Addr || !validPin || !validName"
@@ -172,7 +180,7 @@ index 50eb668..e4ffd13 100644
                   class="btn btn-icon btn-floatr"><span uk-icon="laptop"></span></button>
        </form>
        <div style="margin-top:0.5em" class="dropdown-scroll-list">
-@@ -2195,7 +2196,7 @@
+@@ -2195,7 +2199,7 @@
                               aNode.Status === 'r'.charCodeAt(0)"
                         @click="mnm.NodeAdd(mnm._data.cn.Addr, mnm._data.cn.Pin, aNode.Name)"
                         :disabled="!mnm._data.cn.Addr || !validPin"
@@ -181,7 +189,7 @@ index 50eb668..e4ffd13 100644
                         class="btn btn-icon"><span uk-icon="laptop"></span></button>
                 {{status(aNode.Status)}}
              </div>
-@@ -2268,8 +2269,8 @@
+@@ -2268,8 +2272,8 @@
              onsubmit="mnm.Upload(this); return false">
           <input type="hidden" name="filename" :value="regData">
           <button @click="sent = name"
@@ -192,7 +200,7 @@ index 50eb668..e4ffd13 100644
                                site && !site.Pending && (!site.Auth || site.Token.Scope) &&
                                !isNaN(loginperiod))"
                   title="Register new account"
-@@ -2289,11 +2290,11 @@
+@@ -2289,11 +2293,11 @@
           </div>
           <fieldset :disabled="!(site && !site.Pending && (!site.Auth || site.Token.Scope))">
              <input v-model="alias"
@@ -206,7 +214,7 @@ index 50eb668..e4ffd13 100644
                     title="Private label for the new account"
                     class="width100">
           </fieldset>
-@@ -2356,7 +2357,7 @@
+@@ -2356,7 +2360,7 @@
              <tr><td>Alias<br>{{mnm._data.cf.Error && '(taken)'}}</td><td>
                 <input v-if="mnm._data.cf.Uid && !mnm._data.cf.Alias"
                        v-model="alias"
@@ -215,7 +223,7 @@ index 50eb668..e4ffd13 100644
                        title="Name by which other site members know you"
                        class="width100">
                 {{mnm._data.cf.Alias ||
-@@ -2473,7 +2474,7 @@
+@@ -2473,7 +2477,7 @@
          @click.stop>
        <a v-show="kind !== 'form'"
           :href="url[kind] || ''"
@@ -224,7 +232,7 @@ index 50eb668..e4ffd13 100644
           title="Open file in new tab"
           ><span uk-icon="expand"></span></a>
        <div class="uk-text-small viewer-name dropdown-scroll-item">{{title}}</div>
-@@ -2542,7 +2543,7 @@
+@@ -2542,7 +2546,7 @@
              this.file = iId;
              this.kind = mnm._viewerType(iSvc, iId);
              this.title = (iSvc ? iId.substring(iId.indexOf('_')+3) : iId).toUpperCase();
@@ -233,7 +241,7 @@ index 50eb668..e4ffd13 100644
              if (this.kind === 'form') {
                 iSvc ? mnm.AttachForm(iId, function(c) { Vue.set(mnm._data.ao, iId, c) }) : undefined;
              } else if (this.kind !== 'page') {
-@@ -2587,11 +2588,11 @@
+@@ -2587,11 +2591,11 @@
     var sTemp = {al:null, ml:null, mo:null};
     var sMsglistPos = 0;
  
@@ -248,7 +256,7 @@ index 50eb668..e4ffd13 100644
     mnm._data = {
     // global
        v:[], g:[], l:{Pin:''}, t:[], f:[], nlo:[],
-@@ -2673,7 +2674,7 @@
+@@ -2673,7 +2677,7 @@
              return aList;
           },
           svcSelf: function() {
@@ -257,7 +265,7 @@ index 50eb668..e4ffd13 100644
           },
           ffnCol: function() {
              if (!mnm._data.ffn)
-@@ -2724,7 +2725,7 @@
+@@ -2724,7 +2728,7 @@
              iEnv.parent.checkAttach(aHref[1].slice('this_'.length));
           var aParam = aHref[1].replace(/^this_/, iEnv.thisVal +'_');
           aHref[1] = mnm._data.al.find(function(c) { return c.Id === aParam }) ?
@@ -266,7 +274,7 @@ index 50eb668..e4ffd13 100644
           iTokens[iIdx].attrs.push(['download', '']);
           //todo add download icon and viewer
        }
-@@ -2758,7 +2759,7 @@
+@@ -2758,7 +2762,7 @@
        }
        if (_isDurableRef(aSrc[1], iEnv.thisVal)) {
           aSrc[1] = mnm._data.al.find(function(c) { return c.Id === aParam }) ?
@@ -275,7 +283,7 @@ index 50eb668..e4ffd13 100644
        } else if (aParam in iEnv.imgsrc) {
           aSrc[1] = iEnv.imgsrc[aParam];
        } else {
-@@ -3142,7 +3143,7 @@
+@@ -3142,7 +3146,7 @@
        }
     });
  
