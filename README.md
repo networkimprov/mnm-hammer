@@ -1,12 +1,13 @@
 ### mnm is not mail[<img width="200" hspace="50" align="right" src="https://user-images.githubusercontent.com/458838/65545951-535f6980-decb-11e9-8f46-6122198097b0.png">](https://mnmnotmail.org)
 
 The mnm project is building a legitimate replacement for email: 
-a client (see below), a [server](https://github.com/networkimprov/mnm), and 
+a client (see below), 
+a [server](https://github.com/networkimprov/mnm), and 
 a [simple protocol](https://github.com/networkimprov/mnm/blob/master/Protocol.md) between them. 
 
 Learn more at [mnmnotmail.org](https://mnmnotmail.org). 
 
-[**Download the mnm client app**](https://mnmnotmail.org/#quick-start) 
+[**Download the mnm client app**](https://mnmnotmail.org/#download--startup) 
 
 
 ### Status
